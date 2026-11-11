@@ -1,4 +1,10 @@
-import { type RefObject, useCallback, useEffect, useRef } from 'react'
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+} from 'react'
 
 import { popStateGuard } from '~/utils/history/popstate-guard'
 
@@ -27,9 +33,20 @@ const isViewerEntry = (state: unknown) =>
  * fire reliably on `<dialog>`.
  *
  * @param ref - The dialog.
+ * @param onBack - Closes the dialog on Back, maybe after an animation; the
+ *   `popstate` tells whether the browser already played its own. Without it,
+ *   Back closes the dialog at once.
  * @returns `open`, which shows the dialog as a modal and pushes the entry.
  */
-export const useViewerHistory = (ref: RefObject<HTMLDialogElement | null>) => {
+export const useViewerHistory = (
+  ref: RefObject<HTMLDialogElement | null>,
+  onBack?: (event: PopStateEvent) => void,
+) => {
+  const closeByBack = useEffectEvent((event: PopStateEvent) => {
+    if (onBack === undefined) ref.current?.close()
+    else onBack(event)
+  })
+
   // Set while a pop that this hook started, or that closes the dialog, is due.
   const isOwnPopDueRef = useRef(false)
   const isClosingByBackRef = useRef(false)
@@ -54,8 +71,9 @@ export const useViewerHistory = (ref: RefObject<HTMLDialogElement | null>) => {
       }
 
       if (dialog.open) {
+        // Stays set until the close event, which an animation may delay.
         isClosingByBackRef.current = true
-        dialog.close()
+        closeByBack(event)
         return true
       }
 

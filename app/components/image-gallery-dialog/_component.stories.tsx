@@ -64,6 +64,7 @@ const OpenDialog = ({ images, initialIndex = 0 }: DemoProps) => {
         images={images}
         index={index}
         isOpen={true}
+        onCloseRequest={() => dialogRef.current?.close()}
         onIndexChange={setIndex}
         ref={dialogRef}
       />

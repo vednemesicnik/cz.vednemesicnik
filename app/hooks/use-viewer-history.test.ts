@@ -104,6 +104,36 @@ describe('useViewerHistory', () => {
     expect(routerListener).not.toHaveBeenCalled()
   })
 
+  test('Back hands the close to onBack, with its popstate', () => {
+    const dialog = createDialog()
+    const onBack = vi.fn()
+    const { result } = renderHook(() =>
+      useViewerHistory({ current: dialog }, onBack),
+    )
+
+    result.current()
+    pressBack({ idx: 3, key: 'article' })
+
+    expect(onBack).toHaveBeenCalledTimes(1)
+    expect(onBack.mock.lastCall?.[0]).toBeInstanceOf(PopStateEvent)
+    expect(dialog.open).toBe(true)
+    expect(routerListener).not.toHaveBeenCalled()
+  })
+
+  test('a close after onBack does not step back again', () => {
+    const back = vi.spyOn(window.history, 'back')
+    const dialog = createDialog()
+    const { result } = renderHook(() =>
+      useViewerHistory({ current: dialog }, () => dialog.close()),
+    )
+
+    result.current()
+    pressBack({ idx: 3, key: 'article' })
+
+    expect(dialog.open).toBe(false)
+    expect(back).not.toHaveBeenCalled()
+  })
+
   test('closing another way steps back over the entry, unseen by the router', () => {
     const back = vi
       .spyOn(window.history, 'back')
