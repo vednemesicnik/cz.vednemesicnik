@@ -7,16 +7,10 @@ import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
-  /** Still attached but out of play (archived): dashed, grey (24a). */
   muted?: boolean
   className?: string
 } & (
-  | {
-      /** Makes the chip removable with a × button. */
-      onRemove?: () => void
-      /** The × button's name, e.g. *Odebrat {label}*. */
-      removeLabel: string
-    }
+  | { onRemove?: () => void; removeLabel: string }
   | { onRemove?: never; removeLabel?: never }
 )
 
@@ -26,6 +20,11 @@ type Props = {
  *
  * @param props.children - The `ChipLabel`, then a `ChipNote` where the value
  *   has one.
+ * @param props.muted - Still attached but out of play (archived): dashed,
+ *   grey (24a).
+ * @param props.onRemove - Makes the chip removable with a × button.
+ * @param props.removeLabel - The × button's name, e.g. *Odebrat {label}*;
+ *   required with `onRemove`.
  */
 export const Chip = ({
   children,

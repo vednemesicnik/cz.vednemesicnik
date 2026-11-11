@@ -13,25 +13,17 @@ type Args = {
   label: string
   note?: string
   muted: boolean
+  onRemove: () => void
 }
 
 const meta = {
-  args: {
-    label: 'podzim',
-    muted: false,
-  },
+  component: Chip,
   parameters: {
     layout: 'centered',
   },
-  render: ({ label, note, muted }) => (
-    <Chip muted={muted} onRemove={fn()} removeLabel={`Odebrat ${label}`}>
-      <ChipLabel>{label}</ChipLabel>
-      {note !== undefined && <ChipNote>{note}</ChipNote>}
-    </Chip>
-  ),
   tags: ['autodocs'],
   title: 'Primitives/Chip',
-} satisfies Meta<Args>
+} satisfies Meta
 
 export default meta
 type Story = StoryObj<Args>
@@ -39,7 +31,22 @@ type Story = StoryObj<Args>
 /**
  * Interactive base case (controls enabled): a picked tag (design 24a).
  */
-export const Playground: Story = {}
+export const Playground: Story = {
+  args: {
+    label: 'podzim',
+    muted: false,
+    onRemove: fn(),
+  },
+  argTypes: {
+    note: { control: 'text' },
+  },
+  render: ({ label, note, muted, onRemove }) => (
+    <Chip muted={muted} onRemove={onRemove} removeLabel={`Odebrat ${label}`}>
+      <ChipLabel>{label}</ChipLabel>
+      {note !== undefined && <ChipNote>{note}</ChipNote>}
+    </Chip>
+  ),
+}
 
 /**
  * A picked value, an archived one still attached, and one without the ×.

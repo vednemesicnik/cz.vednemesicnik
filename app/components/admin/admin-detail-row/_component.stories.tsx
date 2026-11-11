@@ -65,7 +65,7 @@ export const Overview: Story = {
         <AdminDetailRowLabel>Odkaz v e-mailu</AdminDetailRowLabel>
         <AdminDetailRowValue>
           <span>k dispozici</span>
-          <span>Na redakce@vednemesicnik.cz. Nic se nenastavuje.</span>
+          <span>Na redakce@priklad.cz. Nic se nenastavuje.</span>
         </AdminDetailRowValue>
       </AdminDetailRow>
       <AdminDetailRow align="start">

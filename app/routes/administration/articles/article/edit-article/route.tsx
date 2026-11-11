@@ -1525,8 +1525,6 @@ export default function RouteComponent({
                             ? authorReplaceFrame.frameProps
                             : {})}
                         >
-                          {/* At most one action, each its own node, so a
-                              click meant for one never lands on another. */}
                           <AuthorRow>
                             <AuthorRowAvatar
                               image={author?.image ?? NO_IMAGE}
@@ -1538,6 +1536,8 @@ export default function RouteComponent({
                                 <AuthorRowNote>vy</AuthorRowNote>
                               )}
                             </AuthorRowText>
+                            {/* At most one action, each its own node, so a
+                                click meant for one never lands on another. */}
                             {isReplacing ? (
                               <AuthorRowButton
                                 aria-label={'Zrušit výměnu autora'}

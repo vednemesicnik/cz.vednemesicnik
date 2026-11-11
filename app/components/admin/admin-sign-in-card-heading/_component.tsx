@@ -9,6 +9,7 @@ import styles from './_styles.module.css'
 type Props = {
   children: ReactNode
   wordmark?: boolean
+  className?: string
 }
 
 /**
@@ -22,6 +23,7 @@ type Props = {
 export const AdminSignInCardHeading = ({
   children,
   wordmark = false,
+  className,
 }: Props) => {
   const title = (
     <h1 className={clsx(styles.title, wordmark && styles.wordmarkTitle)}>
@@ -30,7 +32,7 @@ export const AdminSignInCardHeading = ({
   )
 
   return (
-    <div className={styles.heading}>
+    <div className={clsx(styles.heading, className)}>
       <VdmLogo className={styles.logo} />
       {wordmark ? (
         <div className={styles.names}>

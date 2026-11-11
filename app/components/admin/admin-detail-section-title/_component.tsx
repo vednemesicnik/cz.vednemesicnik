@@ -1,14 +1,16 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
 }
 
 /**
  * The heading of an `AdminDetailSection`, e.g. „Údaje“.
  */
-export const AdminDetailSectionTitle = ({ children }: Props) => (
-  <h2 className={styles.title}>{children}</h2>
+export const AdminDetailSectionTitle = ({ children, className }: Props) => (
+  <h2 className={clsx(styles.title, className)}>{children}</h2>
 )

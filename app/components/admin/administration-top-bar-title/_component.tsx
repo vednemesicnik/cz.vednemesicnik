@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 import { useSidebarHighlight } from '~/components/admin/sidebar-highlight-provider'
@@ -6,6 +7,7 @@ import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
 }
 
 /**
@@ -16,10 +18,10 @@ type Props = {
  *
  * @param props.children - The label.
  */
-export const AdministrationTopBarTitle = ({ children }: Props) => {
+export const AdministrationTopBarTitle = ({ children, className }: Props) => {
   const highlightsSection = useSidebarHighlight()
 
   if (!highlightsSection) return null
 
-  return <span className={styles.title}>{children}</span>
+  return <span className={clsx(styles.title, className)}>{children}</span>
 }

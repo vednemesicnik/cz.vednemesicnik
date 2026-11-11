@@ -1,9 +1,11 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
 }
 
 /**
@@ -11,6 +13,6 @@ type Props = {
  * `AdminDetailSectionTitle` on the left, the `AdminDetailSectionActions` on
  * its right. A title without actions stands on its own.
  */
-export const AdminDetailSectionHead = ({ children }: Props) => (
-  <div className={styles.head}>{children}</div>
+export const AdminDetailSectionHead = ({ children, className }: Props) => (
+  <div className={clsx(styles.head, className)}>{children}</div>
 )
