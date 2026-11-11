@@ -17,6 +17,11 @@ type Props = {
   className?: string
 }
 
+// The least scroll that shows a tile, clear of the header (its
+// scroll-margin); none when it is in view.
+const revealTile = (tile: HTMLElement | null | undefined) =>
+  tile?.scrollIntoView({ behavior: 'instant', block: 'nearest' })
+
 /**
  * The gallery under an article: small 3 : 2 tiles, four per row and three below
  * 640 px, and one dialog that opens at the clicked tile and pages through all of
@@ -56,6 +61,9 @@ export const ImageGallery = ({ images, className }: Props) => {
 
     if (dialog === null || !dialog.open) return
 
+    // Under the open viewer, so the reader doesn't see the page move.
+    revealTile(tileRefs.current[currentIndexRef.current])
+
     if (!animate) {
       dialog.close()
       return
@@ -63,11 +71,6 @@ export const ImageGallery = ({ images, className }: Props) => {
 
     // A zoomed photo is whole again in the first frame (design 12b).
     dialog.dataset.closing = ''
-    // Under the open viewer, the page brings the tile into view.
-    tileRefs.current[currentIndexRef.current]?.scrollIntoView({
-      behavior: 'instant',
-      block: 'nearest',
-    })
 
     runViewerTransition({
       from: getFrame(),
@@ -103,7 +106,7 @@ export const ImageGallery = ({ images, className }: Props) => {
 
   // Safari doesn't focus a button on click, so the dialog's own return of the
   // focus can land on the page. The focus goes to the tile the photo went
-  // back into, which the close has brought into view.
+  // back into, shown first also when the browser closed the viewer itself.
   useEffect(() => {
     const dialog = dialogRef.current
 
@@ -112,7 +115,9 @@ export const ImageGallery = ({ images, className }: Props) => {
     const handleClose = () => {
       delete dialog.dataset.closing
       setIsOpen(false)
-      tileRefs.current[currentIndexRef.current]?.focus({ preventScroll: true })
+      const tile = tileRefs.current[currentIndexRef.current]
+      revealTile(tile)
+      tile?.focus({ preventScroll: true })
     }
 
     dialog.addEventListener('close', handleClose)

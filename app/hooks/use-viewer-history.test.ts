@@ -118,6 +118,12 @@ describe('useViewerHistory', () => {
     expect(onBack.mock.lastCall?.[0]).toBeInstanceOf(PopStateEvent)
     expect(dialog.open).toBe(true)
     expect(routerListener).not.toHaveBeenCalled()
+
+    // The close comes later, after an animation: Back already left the entry.
+    const back = vi.spyOn(window.history, 'back')
+    dialog.close()
+
+    expect(back).not.toHaveBeenCalled()
   })
 
   test('a close after onBack does not step back again', () => {

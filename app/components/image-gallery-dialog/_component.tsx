@@ -104,11 +104,12 @@ export const ImageGalleryDialog = ({
       stageRef,
     })
 
-  // Each image opens whole.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: resets on a new image
+  // Each image, and each opening, starts whole, with the tile's image over it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resets on a new image or opening
   useEffect(() => {
     reset()
-  }, [currentIndex, reset])
+    if (!isOpen) setLoadedImageId(null)
+  }, [currentIndex, isOpen, reset])
 
   // Put back after the close has played, so the photo leaves the way it went.
   useEffect(() => {
@@ -133,6 +134,8 @@ export const ImageGalleryDialog = ({
   // Esc goes the way of the ×, so it animates too. A browser that won't let
   // the close be cancelled (Esc again, no click between) closes it plainly.
   const requestCloseByEscape = useEffectEvent((event: Event) => {
+    if (!event.cancelable) return
+
     event.preventDefault()
     onCloseRequest()
   })
@@ -276,6 +279,7 @@ export const ImageGalleryDialog = ({
                     className={styles.tileImage}
                     data-tile-image={true}
                     decoding={'async'}
+                    key={String(isOpen)}
                     src={tileImageSource}
                   />
                 )}
