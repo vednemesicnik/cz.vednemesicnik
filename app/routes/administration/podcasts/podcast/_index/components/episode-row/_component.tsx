@@ -17,6 +17,7 @@ import {
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
@@ -91,6 +92,13 @@ export const EpisodeRow = ({
     episode.linkLabels.length === 0
       ? 'odkazy zatím chybí'
       : episode.linkLabels.join(' · ')
+  // Who edits it comes first: it changes what the row allows (27b).
+  const stateDetail = getLiveStateDetail({
+    factLine: episode.factLine,
+    holdLine: episode.holdLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow
@@ -127,16 +135,11 @@ export const EpisodeRow = ({
           : formatNumericDate(new Date(episode.publishedAt))}
       </TableCell>
       <TableStateCell>
-        <StatusTag
-          // Who edits it comes first: it changes what the row allows (27b).
-          detail={getLiveStateDetail({
-            factLine: episode.factLine,
-            holdLine: episode.holdLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={episode.submission ?? episode.state}
-        />
+        <StatusTag state={episode.submission ?? episode.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       <TableDetailsCell>
         <TableDetailsLine>{platforms}</TableDetailsLine>

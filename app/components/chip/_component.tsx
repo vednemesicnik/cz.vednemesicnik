@@ -1,39 +1,41 @@
 import { clsx } from 'clsx'
+import type { ReactNode } from 'react'
 
 import { CloseIcon } from '~/components/icons/close-icon'
 
 import styles from './_styles.module.css'
 
 type Props = {
-  children: string
-  /** A word after the label, e.g. *archivovaný*. */
-  note?: string
+  children: ReactNode
   /** Still attached but out of play (archived): dashed, grey (24a). */
   muted?: boolean
-  /** Makes the chip removable with a × button. */
-  onRemove?: () => void
-  /** The × button's name; *Odebrat {label}* by default. */
-  removeLabel?: string
   className?: string
-}
+} & (
+  | {
+      /** Makes the chip removable with a × button. */
+      onRemove?: () => void
+      /** The × button's name, e.g. *Odebrat {label}*. */
+      removeLabel: string
+    }
+  | { onRemove?: never; removeLabel?: never }
+)
 
 /**
  * The design system's `Chip` (components/core/Chip, yv8gi9i0): a picked value
  * in a multi-select, removable with a ×.
  *
- * @param props.children - The value's name.
+ * @param props.children - The `ChipLabel`, then a `ChipNote` where the value
+ *   has one.
  */
 export const Chip = ({
   children,
-  note,
   muted = false,
   onRemove,
-  removeLabel = `Odebrat ${children}`,
+  removeLabel,
   className,
 }: Props) => (
   <span className={clsx(styles.chip, muted && styles.muted, className)}>
-    <span>{children}</span>
-    {note !== undefined && <span className={styles.note}>{note}</span>}
+    {children}
     {onRemove !== undefined && (
       <button
         aria-label={removeLabel}

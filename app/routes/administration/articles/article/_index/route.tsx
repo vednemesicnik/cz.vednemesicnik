@@ -12,10 +12,13 @@ import {
 import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
@@ -26,6 +29,7 @@ import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { ContentRenderer } from '~/components/content-renderer'
 import { FeaturedImage } from '~/components/featured-image'
+import { FeaturedImageCaption } from '~/components/featured-image-caption'
 import { HistoryList } from '~/components/history-list'
 import { HistoryListActor } from '~/components/history-list-actor'
 import { HistoryListEntry } from '~/components/history-list-entry'
@@ -298,64 +302,87 @@ export default function RouteComponent({
             {article.featuredImage && (
               <FeaturedImage
                 alt={article.featuredImage.altText}
-                description={
+                image={article.featuredImage.sources}
+                imageClassName={styles.featuredImage}
+              >
+                <FeaturedImageCaption>
                   <ContentRenderer
                     content={article.featuredImage.description}
                   />
-                }
-                image={article.featuredImage.sources}
-                imageClassName={styles.featuredImage}
-              />
+                </FeaturedImageCaption>
+              </FeaturedImage>
             )}
             <ContentRenderer content={article.content} />
           </article>
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Adresa'}>
-                {articlePath === null ? (
-                  '—'
-                ) : article.state === 'published' ? (
-                  articlePath
-                ) : (
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Adresa</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {articlePath === null ? (
+                    '—'
+                  ) : article.state === 'published' ? (
+                    articlePath
+                  ) : (
+                    <span className={styles.stack}>
+                      <Hyperlink
+                        // Only a published address is unique: the id says which
+                        // draft to show (log 0039).
+                        href={`${articlePath}?id=${articleId}`}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Náhled na webu
+                      </Hyperlink>
+                      <span className={styles.tertiary}>{articlePath}</span>
+                    </span>
+                  )}
+                </AdminDetailItemValue>
+              </AdminDetailItem>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Perex</AdminDetailItemLabel>
+                <AdminDetailItemValue>
                   <span className={styles.stack}>
-                    <Hyperlink
-                      // Only a published address is unique: the id says which
-                      // draft to show (log 0039).
-                      href={`${articlePath}?id=${articleId}`}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Náhled na webu
-                    </Hyperlink>
-                    <span className={styles.tertiary}>{articlePath}</span>
+                    <span>{article.perex ?? '—'}</span>
+                    <span className={styles.note}>
+                      pro vyhledávače a sdílení
+                    </span>
                   </span>
-                )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Perex'}>
-                <span className={styles.stack}>
-                  <span>{article.perex ?? '—'}</span>
-                  <span className={styles.note}>pro vyhledávače a sdílení</span>
-                </span>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autoři</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {authorNames.join(', ')}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autoři'}>
-                {authorNames.join(', ')}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Rubriky</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {joinNames(article.categories)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Rubriky'}>
-                {joinNames(article.categories)}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Štítky</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {joinNames(article.tags)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Štítky'}>
-                {joinNames(article.tags)}
-              </AdminDetailItem>
-              <AdminDetailItem label={'Obrázky'}>
-                {article.imageCount}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Obrázky</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {article.imageCount}
+                </AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Historie'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
             <HistoryList
               entries={article.history.entries}
               isIncomplete={article.history.isIncomplete}

@@ -12,6 +12,7 @@ import {
 import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { AdministrationContent } from '~/components/admin/administration-content'
 import { AdministrationTopBar } from '~/components/admin/administration-top-bar'
+import { AdministrationTopBarTitle } from '~/components/admin/administration-top-bar-title'
 import { SidebarHighlightProvider } from '~/components/admin/sidebar-highlight-provider'
 import { AdministrationSidebarFoot } from '~/components/administration-sidebar-foot'
 import { AdministrationSidebarItem } from '~/components/administration-sidebar-item'
@@ -166,8 +167,13 @@ export default function RouteComponent({
               controls={menuId}
               expanded={isMenuOpen}
               onMenu={open}
-              title={activeItem?.label}
-            />
+            >
+              {activeItem !== undefined && (
+                <AdministrationTopBarTitle>
+                  {activeItem.label}
+                </AdministrationTopBarTitle>
+              )}
+            </AdministrationTopBar>
             <ColumnAdministrationSidebar className={styles.sidebar}>
               {sidebarContent}
             </ColumnAdministrationSidebar>

@@ -5,6 +5,8 @@ import { useState } from 'react'
 import { within } from 'storybook/test'
 
 import { Chip } from '~/components/chip'
+import { ChipLabel } from '~/components/chip-label'
+import { ChipNote } from '~/components/chip-note'
 import { foldForSearch } from '~/utils/fold-for-search'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 
@@ -61,17 +63,19 @@ const ChipInputDemo = ({
       >
         {values.map((value) => {
           const note = stateNotes[value]
+          const label = TAGS.find((tag) => tag.value === value)?.label ?? value
 
           return (
             <Chip
               key={value}
               muted={note !== undefined}
-              note={note}
               onRemove={() =>
                 setValues(values.filter((picked) => picked !== value))
               }
+              removeLabel={`Odebrat ${label}`}
             >
-              {TAGS.find((tag) => tag.value === value)?.label ?? value}
+              <ChipLabel>{label}</ChipLabel>
+              {note !== undefined && <ChipNote>{note}</ChipNote>}
             </Chip>
           )
         })}

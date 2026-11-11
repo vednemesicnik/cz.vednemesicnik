@@ -33,7 +33,11 @@ import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { AuthorRemoveButton } from '~/components/author-remove-button'
 import { AuthorRow } from '~/components/author-row'
+import { AuthorRowAvatar } from '~/components/author-row-avatar'
 import { AuthorRowButton } from '~/components/author-row-button'
+import { AuthorRowName } from '~/components/author-row-name'
+import { AuthorRowNote } from '~/components/author-row-note'
+import { AuthorRowText } from '~/components/author-row-text'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
@@ -41,6 +45,8 @@ import { CaptionEditor } from '~/components/caption-editor'
 import { Checkbox } from '~/components/checkbox'
 import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
+import { ChipLabel } from '~/components/chip-label'
+import { ChipNote } from '~/components/chip-note'
 import { CompactImageTile } from '~/components/compact-image-tile'
 import { CompactUploadStatus } from '~/components/compact-upload-status'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
@@ -1521,11 +1527,17 @@ export default function RouteComponent({
                         >
                           {/* At most one action, each its own node, so a
                               click meant for one never lands on another. */}
-                          <AuthorRow
-                            image={author?.image ?? NO_IMAGE}
-                            isOwn={authorId === ownAuthorId}
-                            name={name}
-                          >
+                          <AuthorRow>
+                            <AuthorRowAvatar
+                              image={author?.image ?? NO_IMAGE}
+                              name={name}
+                            />
+                            <AuthorRowText>
+                              <AuthorRowName>{name}</AuthorRowName>
+                              {authorId === ownAuthorId && (
+                                <AuthorRowNote>vy</AuthorRowNote>
+                              )}
+                            </AuthorRowText>
                             {isReplacing ? (
                               <AuthorRowButton
                                 aria-label={'Zrušit výměnu autora'}
@@ -1725,16 +1737,16 @@ export default function RouteComponent({
                       const tag = tagOptions.find(
                         (option) => option.id === tagId,
                       )
+                      const tagName = tag?.name ?? tagId
+                      const tagNote =
+                        tag === undefined
+                          ? undefined
+                          : TAG_STATE_NOTE[tag.state]
 
                       return (
                         <Chip
                           key={tagId}
                           muted={tag?.state !== 'published'}
-                          note={
-                            tag === undefined
-                              ? undefined
-                              : TAG_STATE_NOTE[tag.state]
-                          }
                           onRemove={
                             isReadOnly
                               ? undefined
@@ -1745,8 +1757,12 @@ export default function RouteComponent({
                                     ),
                                   )
                           }
+                          removeLabel={`Odebrat ${tagName}`}
                         >
-                          {tag?.name ?? tagId}
+                          <ChipLabel>{tagName}</ChipLabel>
+                          {tagNote !== undefined && (
+                            <ChipNote>{tagNote}</ChipNote>
+                          )}
                         </Chip>
                       )
                     })}

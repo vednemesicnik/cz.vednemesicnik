@@ -6,8 +6,8 @@ import styles from './_styles.module.css'
 
 type Props = {
   alt: string
-  description?: ReactNode
   image: ImageSources
+  children?: ReactNode
   className?: string
   imageClassName?: string
 }
@@ -16,13 +16,14 @@ type Props = {
  * The article's main image above its text, cropped to the page's fixed height
  * (design 12a), with its caption.
  *
+ * @param props.children - The caption, a `FeaturedImageCaption`.
  * @param props.imageClassName - Styles the image frame, e.g. a ratio instead of
  *   the fixed height where the column is narrower.
  */
 export const FeaturedImage = ({
   alt,
-  description,
   image,
+  children,
   className,
   imageClassName,
 }: Props) => {
@@ -36,9 +37,7 @@ export const FeaturedImage = ({
         loading={'eager'}
         sizes={'(min-width: 60rem) 940px, 100vw'}
       />
-      {description && (
-        <figcaption className={styles.caption}>{description}</figcaption>
-      )}
+      {children}
     </figure>
   )
 }

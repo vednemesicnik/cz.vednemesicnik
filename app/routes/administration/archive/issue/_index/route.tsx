@@ -12,10 +12,13 @@ import {
 import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
@@ -245,7 +248,8 @@ export default function RouteComponent({
       {/* The files are the issue's content, so they stand where an article has its text (26b). */}
       <AdminDetailLayout>
         <AdminDetailMain>
-          <AdminDetailSection title={'Soubory'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Soubory</AdminDetailSectionTitle>
             <div className={styles.files}>
               <figure className={styles.cover}>
                 {issue.cover === null ? (
@@ -305,73 +309,89 @@ export default function RouteComponent({
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Pořadí'}>
-                {issue.orderLabel ?? '—'}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Pořadí</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {issue.orderLabel ?? '—'}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Název'}>
-                {issue.name ?? '—'}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Název</AdminDetailItemLabel>
+                <AdminDetailItemValue>{issue.name ?? '—'}</AdminDetailItemValue>
               </AdminDetailItem>
               {supplementLinks.kind === 'supplements' ? (
                 supplementLinks.supplements.length > 0 && (
-                  <AdminDetailItem label={'Doplňky'}>
-                    <span className={styles.stack}>
-                      {supplementLinks.supplements.map(({ id, label }) => (
-                        <Link
-                          key={id}
-                          to={href('/administration/archive/:issueId', {
-                            issueId: id,
-                          })}
-                        >
-                          {label}
-                        </Link>
-                      ))}
-                    </span>
+                  <AdminDetailItem>
+                    <AdminDetailItemLabel>Doplňky</AdminDetailItemLabel>
+                    <AdminDetailItemValue>
+                      <span className={styles.stack}>
+                        {supplementLinks.supplements.map(({ id, label }) => (
+                          <Link
+                            key={id}
+                            to={href('/administration/archive/:issueId', {
+                              issueId: id,
+                            })}
+                          >
+                            {label}
+                          </Link>
+                        ))}
+                      </span>
+                    </AdminDetailItemValue>
                   </AdminDetailItem>
                 )
               ) : (
-                <AdminDetailItem label={'Doplněk k'}>
-                  {/* Without its issue, or one the viewer can't see, only the order (26b, wo02u3xq). */}
-                  {supplementLinks.mainIssue === null ? (
-                    (supplementLinks.orderLabel ?? '—')
-                  ) : (
-                    <Link
-                      to={href('/administration/archive/:issueId', {
-                        issueId: supplementLinks.mainIssue.id,
-                      })}
-                    >
-                      {supplementLinks.mainIssue.title}
-                    </Link>
-                  )}
+                <AdminDetailItem>
+                  <AdminDetailItemLabel>Doplněk k</AdminDetailItemLabel>
+                  <AdminDetailItemValue>
+                    {/* Without its issue, or one the viewer can't see, only the order (26b, wo02u3xq). */}
+                    {supplementLinks.mainIssue === null ? (
+                      (supplementLinks.orderLabel ?? '—')
+                    ) : (
+                      <Link
+                        to={href('/administration/archive/:issueId', {
+                          issueId: supplementLinks.mainIssue.id,
+                        })}
+                      >
+                        {supplementLinks.mainIssue.title}
+                      </Link>
+                    )}
+                  </AdminDetailItemValue>
                 </AdminDetailItem>
               )}
-              <AdminDetailItem label={'Adresa'}>
-                {issue.pdf?.path == null ? (
-                  '—'
-                ) : issue.isPreviewable ? (
-                  // Signed in, the web shows the draft in the archive (26b).
-                  <span className={styles.stack}>
-                    <Hyperlink
-                      href={archivePath}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Náhled archivu na webu
-                    </Hyperlink>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Adresa</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {issue.pdf?.path == null ? (
+                    '—'
+                  ) : issue.isPreviewable ? (
+                    // Signed in, the web shows the draft in the archive (26b).
+                    <span className={styles.stack}>
+                      <Hyperlink
+                        href={archivePath}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Náhled archivu na webu
+                      </Hyperlink>
+                      <span className={styles.tertiary}>{issue.pdf.path}</span>
+                    </span>
+                  ) : (
                     <span className={styles.tertiary}>{issue.pdf.path}</span>
-                  </span>
-                ) : (
-                  <span className={styles.tertiary}>{issue.pdf.path}</span>
-                )}
+                  )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autor'}>
-                {issue.authorName}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autor</AdminDetailItemLabel>
+                <AdminDetailItemValue>{issue.authorName}</AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Historie'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
             <HistoryList
               entries={issue.history.entries}
               isIncomplete={issue.history.isIncomplete}

@@ -4,6 +4,7 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
@@ -57,7 +58,8 @@ export default function RouteComponent({
 
   // The emergency password sign-in (design 20d). Copy approved (gs905c2e).
   return (
-    <AdminSignInCard title={'Nouzové přihlášení'}>
+    <AdminSignInCard>
+      <AdminSignInCardHeading>Nouzové přihlášení</AdminSignInCardHeading>
       <AdminSignInText>
         Pro případ, že nefunguje Google, passkey ani odkaz v e-mailu.
       </AdminSignInText>

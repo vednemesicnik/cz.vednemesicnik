@@ -6,6 +6,7 @@ import { Badge } from '~/components/badge'
 import { BadgeList } from '~/components/badge-list'
 import { ContentRenderer } from '~/components/content-renderer'
 import { FeaturedImage } from '~/components/featured-image'
+import { FeaturedImageCaption } from '~/components/featured-image-caption'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { ImageGallery } from '~/components/image-gallery'
@@ -78,11 +79,12 @@ export default function ArticleRoute({
       {article.featuredImage && (
         <FeaturedImage
           alt={article.featuredImage.altText}
-          description={
-            <ContentRenderer content={article.featuredImage.description} />
-          }
           image={article.featuredImage.sources}
-        />
+        >
+          <FeaturedImageCaption>
+            <ContentRenderer content={article.featuredImage.description} />
+          </FeaturedImageCaption>
+        </FeaturedImage>
       )}
 
       <ContentRenderer className={styles.text} content={article.content} />

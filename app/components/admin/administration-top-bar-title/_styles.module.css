@@ -1,0 +1,11 @@
+.title {
+  @layer component {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}

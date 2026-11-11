@@ -2,10 +2,12 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { StatusTagDetail } from '../status-tag-detail'
 import { StatusTag } from './_component'
 
 const meta: Meta<typeof StatusTag> = {
   argTypes: {
+    children: { control: false },
     state: {
       control: 'select',
       options: ['draft', 'pending', 'approved', 'published', 'archived'],
@@ -27,7 +29,7 @@ type Story = StoryObj<typeof meta>
  */
 export const Playground: Story = {
   args: {
-    detail: 'od 25. 9. 2026',
+    children: <StatusTagDetail>od 25. 9. 2026</StatusTagDetail>,
     state: 'pending',
   },
 }
@@ -39,11 +41,21 @@ export const Overview: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
-      <StatusTag detail={'uloženo dnes v 14:02'} state={'draft'} />
-      <StatusTag detail={'od 25. 9. 2026'} state={'pending'} />
-      <StatusTag detail={'27. 9. 2026'} state={'approved'} />
-      <StatusTag detail={'24. 9. 2026'} state={'published'} />
-      <StatusTag detail={'2. 6. 2026'} state={'archived'} />
+      <StatusTag state={'draft'}>
+        <StatusTagDetail>uloženo dnes v 14:02</StatusTagDetail>
+      </StatusTag>
+      <StatusTag state={'pending'}>
+        <StatusTagDetail>od 25. 9. 2026</StatusTagDetail>
+      </StatusTag>
+      <StatusTag state={'approved'}>
+        <StatusTagDetail>27. 9. 2026</StatusTagDetail>
+      </StatusTag>
+      <StatusTag state={'published'}>
+        <StatusTagDetail>24. 9. 2026</StatusTagDetail>
+      </StatusTag>
+      <StatusTag state={'archived'}>
+        <StatusTagDetail>2. 6. 2026</StatusTagDetail>
+      </StatusTag>
     </div>
   ),
 }

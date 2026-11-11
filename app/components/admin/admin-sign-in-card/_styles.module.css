@@ -31,60 +31,6 @@
   }
 }
 
-.heading {
-  @layer component {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    text-align: center;
-  }
-}
-
-.logo {
-  @layer component {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-/* No negative tracking: Inter's optical size tightens large cuts (0zgyl1ao). */
-.title {
-  @layer component {
-    margin: 0;
-    font-size: 24px;
-    font-weight: var(--font-weight-semibold);
-    line-height: 1.25;
-    letter-spacing: 0;
-    text-wrap: balance;
-  }
-}
-
-/* The name and the smaller title under it, on the sign-in chooser (hhcprc34). */
-.names {
-  @layer component {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
-}
-
-.name {
-  @layer component {
-    margin: 0;
-    font-size: 28px;
-    line-height: 1.15;
-  }
-}
-
-.wordmarkTitle {
-  @layer variant {
-    font-size: 17px;
-    line-height: 1.4;
-  }
-}
-
 /* A phone has no card: the content stands on the white page, from the top
    (20e). */
 @media (width < 768px) {

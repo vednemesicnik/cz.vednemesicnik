@@ -2,6 +2,10 @@
 
 import { href } from 'react-router'
 import { ArticleHero } from '~/components/article-hero'
+import { ArticleHeroAuthor } from '~/components/article-hero-author'
+import { ArticleHeroAuthors } from '~/components/article-hero-authors'
+import { ArticleHeroMeta } from '~/components/article-hero-meta'
+import { ArticleHeroTitle } from '~/components/article-hero-title'
 import { ContentLinkAuthor } from '~/components/content-link-author'
 import { ContentLinkFooter } from '~/components/content-link-footer'
 import { ContentLinkImage } from '~/components/content-link-image'
@@ -39,19 +43,27 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       {latestArticle && (
         <ArticleHero
-          authors={latestArticle.authors}
           image={latestArticle.featuredImage?.sources}
           imageAlt={latestArticle.featuredImage?.altText}
           isPreview={latestArticle.previewState !== null}
-          title={latestArticle.title}
           to={href('/articles/:articleSlug', {
             articleSlug: latestArticle.slug,
           })}
         >
-          <ContentLinkPublishDate
-            date={latestArticle.publishedAt}
-            previewState={latestArticle.previewState}
-          />
+          <ArticleHeroTitle>{latestArticle.title}</ArticleHeroTitle>
+          <ArticleHeroMeta>
+            <ArticleHeroAuthors>
+              {latestArticle.authors.map((author) => (
+                <ArticleHeroAuthor key={author.name}>
+                  {author.name}
+                </ArticleHeroAuthor>
+              ))}
+            </ArticleHeroAuthors>
+            <ContentLinkPublishDate
+              date={latestArticle.publishedAt}
+              previewState={latestArticle.previewState}
+            />
+          </ArticleHeroMeta>
         </ArticleHero>
       )}
 

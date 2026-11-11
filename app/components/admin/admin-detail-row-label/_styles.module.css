@@ -1,0 +1,10 @@
+.label {
+  @layer component {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+
+    @container (width < 440px) {
+      grid-column: 1 / -1;
+    }
+  }
+}

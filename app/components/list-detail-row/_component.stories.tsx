@@ -2,8 +2,11 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { AdminDetailRowLabel } from '~/components/admin/admin-detail-row-label'
+import { AdminDetailRowValue } from '~/components/admin/admin-detail-row-value'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { Button } from '~/components/button'
+import { ListDetailRowActions } from '~/components/list-detail-row-actions'
 
 import { ListDetailRow } from './_component'
 
@@ -60,7 +63,6 @@ const PasskeyList = ({ count }: { count: number }) =>
 
 const meta: Meta<typeof ListDetailRow> = {
   argTypes: {
-    actions: { control: false },
     children: { control: false },
   },
   component: ListDetailRow,
@@ -86,21 +88,23 @@ type Story = StoryObj<typeof meta>
 
 export const Playground: Story = {
   args: {
-    actions: (
-      <Button size="sm" type="button" variant="outline">
-        Přidat passkey
-      </Button>
-    ),
     children: (
       <>
-        <PasskeyList count={2} />
-        <span style={{ paddingBlockStart: '8px' }}>
-          Přihlášení bez hesla pomocí passkey v zařízení nebo na bezpečnostním
-          klíči.
-        </span>
+        <AdminDetailRowLabel>Passkey</AdminDetailRowLabel>
+        <AdminDetailRowValue>
+          <PasskeyList count={2} />
+          <span style={{ paddingBlockStart: '8px' }}>
+            Přihlášení bez hesla pomocí passkey v zařízení nebo na bezpečnostním
+            klíči.
+          </span>
+          <ListDetailRowActions>
+            <Button size="sm" type="button" variant="outline">
+              Přidat passkey
+            </Button>
+          </ListDetailRowActions>
+        </AdminDetailRowValue>
       </>
     ),
-    label: 'Passkey',
   },
 }
 
@@ -110,16 +114,16 @@ export const Overview: Story = {
   render: () => (
     <div>
       {[0, 1, 3].map((count) => (
-        <ListDetailRow
-          actions={
-            <Button size="sm" type="button" variant="outline">
-              Přidat passkey
-            </Button>
-          }
-          key={count}
-          label="Passkey"
-        >
-          <PasskeyList count={count} />
+        <ListDetailRow key={count}>
+          <AdminDetailRowLabel>Passkey</AdminDetailRowLabel>
+          <AdminDetailRowValue>
+            <PasskeyList count={count} />
+            <ListDetailRowActions>
+              <Button size="sm" type="button" variant="outline">
+                Přidat passkey
+              </Button>
+            </ListDetailRowActions>
+          </AdminDetailRowValue>
         </ListDetailRow>
       ))}
     </div>
