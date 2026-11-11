@@ -14,6 +14,8 @@
     margin: 0;
     padding: 0;
     border: none;
+    /* The dialog takes the focus on open; a ring round the window says nothing. */
+    outline: none;
     overflow: hidden;
     overscroll-behavior: contain;
     background: transparent;

@@ -34,6 +34,9 @@ export const ImageGallery = ({ images, className }: Props) => {
     setCurrentIndex(index)
     setIsOpen(true)
     openViewer()
+    // The dialog, not the ×: Safari shows the focus ring and tooltip of a
+    // button focused on open, a tap included.
+    dialogRef.current?.focus({ preventScroll: true })
   }
 
   // Safari doesn't focus a button on click, so the dialog's own return of the

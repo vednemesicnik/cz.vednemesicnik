@@ -155,6 +155,7 @@ export const ImageGalleryDialog = ({
       onKeyDown={handleKeyDown}
       ref={ref}
       style={{ '--drag-progress': dragProgress } as CSSProperties}
+      tabIndex={-1}
     >
       {image && (
         <>
