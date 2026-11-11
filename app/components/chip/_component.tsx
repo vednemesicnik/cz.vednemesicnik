@@ -23,8 +23,10 @@ type Props = {
  * @param props.muted - Still attached but out of play (archived): dashed,
  *   grey (24a).
  * @param props.onRemove - Makes the chip removable with a × button.
- * @param props.removeLabel - The × button's name, e.g. *Odebrat {label}*;
- *   required with `onRemove`.
+ * @param props.removeLabel - The × button's name, e.g. *Odebrat {label}*.
+ *   Required wherever `onRemove` may be passed, so a × always has a name; a
+ *   caller whose handler is `undefined` while read-only passes it anyway, and
+ *   without `onRemove` it is unused.
  */
 export const Chip = ({
   children,
