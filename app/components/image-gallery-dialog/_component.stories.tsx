@@ -104,3 +104,40 @@ export const SingleImage: Story = {
     images: images.slice(0, 1),
   },
 }
+
+/** A caption of several paragraphs with a link: at most 30 % high, it
+ * scrolls inside (zn43av9y). */
+export const LongCaption: Story = {
+  args: {
+    images: images.slice(0, 1).map((image) => ({
+      ...image,
+      description: (
+        <>
+          <p>
+            Tichá místnost v Café Záhorská. Telefonovat se chodí na chodbu a u
+            okna se dá sedět až do zavírací doby.
+          </p>
+          <p>
+            Večer se tu sejde víc studentů než kdekoli jinde v okolí, proto je
+            lepší přijít před šestou. Zásuvky jsou u každého druhého stolu.
+          </p>
+          <p>
+            Celou trasu sedmi kaváren najdete v{' '}
+            <a href={'#mapa'}>mapě na konci článku</a>.
+          </p>
+          <p>
+            Ceny kávy se pohybují mezi čtyřiceti a sedmdesáti korunami, čaj je o
+            něco levnější.
+          </p>
+        </>
+      ),
+    })),
+  },
+}
+
+/** No caption: the photo takes its room too. */
+export const NoCaption: Story = {
+  args: {
+    images: images.map(({ description: _description, ...image }) => image),
+  },
+}
