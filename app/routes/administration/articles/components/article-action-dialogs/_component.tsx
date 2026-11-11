@@ -1,8 +1,16 @@
 import type { ContentState } from '@generated/prisma/enums'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
-import { NOT_SUBMITTED_NOTE } from '../../utils/article-actions'
+import {
+  ARTICLE_CHANGE_DATE_DESCRIPTION,
+  NOT_SUBMITTED_NOTE,
+} from '../../utils/article-actions'
 import type { useArticleActions } from '../../utils/use-article-actions'
 import { ArticleChangeDateDialog } from '../article-change-date-dialog'
 import { ArticleMissingDialog } from '../article-missing-dialog'
@@ -40,16 +48,18 @@ export const ArticleActionDialogs = ({
 }: Props) => (
   <>
     {canDelete && (
-      <AdminDeleteConfirmationDialog
-        description={'Smazání je nevratné.'}
-        ref={actions.deleteDialogRef}
-        subject={article.title}
-        title={
-          article.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={actions.deleteDialogRef}>
+        <AdminModalTitle>
+          {article.state === 'archived'
             ? 'Smazat archivovaný článek?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{article.title}</AdminModalSubject>
+        <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
     )}
     {actions.isChangeDateOpen && (
       <ArticleChangeDateDialog
@@ -57,8 +67,12 @@ export const ArticleActionDialogs = ({
         fetcherKey={actions.fetcherKey}
         onClose={actions.closeChangeDate}
         publishedAt={article.publishedAt}
-        title={article.title}
-      />
+      >
+        <AdminModalSubject>{article.title}</AdminModalSubject>
+        <AdminModalDescription>
+          {ARTICLE_CHANGE_DATE_DESCRIPTION}
+        </AdminModalDescription>
+      </ArticleChangeDateDialog>
     )}
     {actions.stateDialog !== null && (
       <ArticleStateDialog
@@ -77,10 +91,13 @@ export const ArticleActionDialogs = ({
         authorNames={article.authorNames}
         fetcherKey={actions.fetcherKey}
         isApproval={actions.publishDialog.isApproval}
-        note={article.isNotSubmitted ? NOT_SUBMITTED_NOTE : null}
         onClose={actions.closePublishDialog}
         originalPublishedAt={article.publishedAt}
-      />
+      >
+        {article.isNotSubmitted && (
+          <AdminModalNote>{NOT_SUBMITTED_NOTE}</AdminModalNote>
+        )}
+      </ArticlePublishDialog>
     )}
     {actions.missingList !== null && (
       <ArticleMissingDialog

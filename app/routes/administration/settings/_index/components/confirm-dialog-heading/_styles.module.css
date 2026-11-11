@@ -1,0 +1,7 @@
+.heading {
+  @layer route {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+  }
+}

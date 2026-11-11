@@ -9,12 +9,17 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
@@ -47,6 +52,7 @@ import {
 } from '../../components/article-state-dialog'
 import {
   ARTICLE_ACTION_LABELS,
+  ARTICLE_CHANGE_DATE_DESCRIPTION,
   ARTICLE_DIRECT_INTENTS,
   ARTICLE_HEADER_SENTENCES,
   type ArticleAction,
@@ -378,16 +384,18 @@ export default function RouteComponent({
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog
-        description={'Smazání je nevratné.'}
-        ref={deleteConfirmationDialogRef}
-        subject={article.title}
-        title={
-          article.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef}>
+        <AdminModalTitle>
+          {article.state === 'archived'
             ? 'Smazat archivovaný článek?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{article.title}</AdminModalSubject>
+        <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
 
       {stateDialog !== null && (
         <ArticleStateDialog
@@ -415,13 +423,14 @@ export default function RouteComponent({
           authorNames={authorNames}
           fetcherKey={fetcherKey}
           isApproval={publishDialog.isApproval}
-          // A draft not submitted is published from „⋯“ (23d); the dialog says so.
-          note={
-            headerActions.menu.includes('publish') ? NOT_SUBMITTED_NOTE : null
-          }
           onClose={() => setPublishDialog(null)}
           originalPublishedAt={article.publishedAt.iso}
-        />
+        >
+          {/* A draft not submitted is published from „⋯“ (23d); the dialog says so. */}
+          {headerActions.menu.includes('publish') && (
+            <AdminModalNote>{NOT_SUBMITTED_NOTE}</AdminModalNote>
+          )}
+        </ArticlePublishDialog>
       )}
 
       {isChangeDateOpen && (
@@ -430,8 +439,12 @@ export default function RouteComponent({
           fetcherKey={fetcherKey}
           onClose={() => setIsChangeDateOpen(false)}
           publishedAt={article.publishedAt.iso}
-          title={article.title}
-        />
+        >
+          <AdminModalSubject>{article.title}</AdminModalSubject>
+          <AdminModalDescription>
+            {ARTICLE_CHANGE_DATE_DESCRIPTION}
+          </AdminModalDescription>
+        </ArticleChangeDateDialog>
       )}
     </AdminPage>
   )

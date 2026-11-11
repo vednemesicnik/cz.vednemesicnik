@@ -13,6 +13,8 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailRow } from '~/components/admin/admin-detail-row'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -47,6 +49,9 @@ import type { Route } from './+types/route'
 import { AddPasskeyDialog } from './components/add-passkey-dialog'
 import { ChangePasswordDialog } from './components/change-password-dialog'
 import { ConfirmDialog } from './components/confirm-dialog'
+import { ConfirmDialogActions } from './components/confirm-dialog-actions'
+import { ConfirmDialogHeading } from './components/confirm-dialog-heading'
+import { ConfirmDialogSubject } from './components/confirm-dialog-subject'
 import { IdentityCheckDialog } from './components/identity-check-dialog'
 import { PasskeyProblem } from './components/passkey-problem'
 import { ProfileDialog } from './components/profile-dialog'
@@ -307,6 +312,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     removedPasskey === undefined || removedPasskey.name !== null
       ? null
       : getPasskeyLabel(removedPasskey)
+  const removedPasskeyTitle =
+    removedPasskey === undefined || removedPasskey.name === null
+      ? 'Odebrat passkey z účtu?'
+      : `Odebrat passkey ${removedPasskey.name}?`
 
   return (
     <AdminPage measure={'text'}>
@@ -739,32 +748,32 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       {openDialog?.name === 'disable-two-factor' && (
         <ConfirmDialog
-          confirmLabel={'Vypnout'}
-          description={
-            'Při přihlášení heslem už nebude potřeba kód z aplikace. Záložní kódy přestanou platit.'
-          }
           onClose={closeDialog(openDialog)}
           onConfirm={handleDisableTwoFactor}
-          title={'Vypnout dvoufázové ověření?'}
-        />
+        >
+          <AdminModalTitle>Vypnout dvoufázové ověření?</AdminModalTitle>
+          <AdminModalDescription>
+            Při přihlášení heslem už nebude potřeba kód z aplikace. Záložní kódy
+            přestanou platit.
+          </AdminModalDescription>
+          <ConfirmDialogActions>Vypnout</ConfirmDialogActions>
+        </ConfirmDialog>
       )}
 
       {openDialog?.name === 'remove-passkey' &&
         removedPasskey !== undefined && (
           <ConfirmDialog
-            confirmLabel={'Odebrat'}
-            description={`Tento passkey už nepůjde použít k přihlášení do tohoto účtu. ${
-              removedPasskey.kind === 'security_key'
-                ? 'Z bezpečnostního klíče'
-                : 'Ze zařízení'
-            } ho můžete smazat také.`}
             onClose={closeDialog(openDialog)}
             onConfirm={() => handleRemovePasskey(removedPasskey.id)}
-            // A named passkey says which one in the title; a key, a phone and
-            // a passkey without a name get the row's line under it (29d).
-            subject={
-              removedPasskeyLabel === null ? undefined : (
-                <>
+          >
+            {removedPasskeyLabel === null ? (
+              <AdminModalTitle>{removedPasskeyTitle}</AdminModalTitle>
+            ) : (
+              // A named passkey says which one in the title; a key, a phone
+              // and a passkey without a name get the row's line under it (29d).
+              <ConfirmDialogHeading>
+                <AdminModalTitle>{removedPasskeyTitle}</AdminModalTitle>
+                <ConfirmDialogSubject>
                   {removedPasskeyLabel.type === null ? (
                     // Without a name the type is the title, so it stands once.
                     removedPasskeyLabel.title
@@ -777,15 +786,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     </>
                   )}
                   {` · přidán ${removedPasskey.createdAt}`}
-                </>
-              )
-            }
-            title={
-              removedPasskey.name === null
-                ? 'Odebrat passkey z účtu?'
-                : `Odebrat passkey ${removedPasskey.name}?`
-            }
-          />
+                </ConfirmDialogSubject>
+              </ConfirmDialogHeading>
+            )}
+            <AdminModalDescription>
+              {`Tento passkey už nepůjde použít k přihlášení do tohoto účtu. ${
+                removedPasskey.kind === 'security_key'
+                  ? 'Z bezpečnostního klíče'
+                  : 'Ze zařízení'
+              } ho můžete smazat také.`}
+            </AdminModalDescription>
+            <ConfirmDialogActions>Odebrat</ConfirmDialogActions>
+          </ConfirmDialog>
         )}
     </AdminPage>
   )

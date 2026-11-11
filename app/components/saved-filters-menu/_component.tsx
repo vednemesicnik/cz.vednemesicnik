@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { useFilterBar } from '~/components/filter-bar'
 import { RenameFilterDialog } from '~/components/rename-filter-dialog'
 import { SaveFilterDialog } from '~/components/save-filter-dialog'
@@ -168,20 +171,15 @@ export const SavedFiltersMenu = ({
           currentQuery={currentQuery}
           defaultHint={defaultHint}
           onClose={handleSaveDialogClose}
-          sharedHint={'Ostatní ho mohou použít, měnit ho můžete jen vy.'}
-          summary={
-            <>
-              <p className={styles.summaryIntro}>Uloží se:</p>
-              <ul className={styles.summaryList}>
-                {summaryLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </>
-          }
           tableKey={tableKey}
-          title={'Uložit filtry'}
-        />
+        >
+          <p className={styles.summaryIntro}>Uloží se:</p>
+          <ul className={styles.summaryList}>
+            {summaryLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </SaveFilterDialog>
       )}
       {renameTarget !== null && (
         <RenameFilterDialog
@@ -190,15 +188,17 @@ export const SavedFiltersMenu = ({
         />
       )}
       {/* Stays mounted: its hook attaches the `close` listener that submits. */}
-      <AdminDeleteConfirmationDialog
-        description={
-          deleteTarget?.isShared
+      <AdminDeleteConfirmationDialog ref={deleteDialogRef}>
+        <AdminModalTitle>{`Smazat filtr „${deleteTarget?.name ?? ''}“?`}</AdminModalTitle>
+        <AdminModalDescription>
+          {deleteTarget?.isShared
             ? 'Smazání je nevratné. Filtr zmizí i ostatním.'
-            : 'Smazání je nevratné.'
-        }
-        ref={deleteDialogRef}
-        title={`Smazat filtr „${deleteTarget?.name ?? ''}“?`}
-      />
+            : 'Smazání je nevratné.'}
+        </AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
     </div>
   )
 }

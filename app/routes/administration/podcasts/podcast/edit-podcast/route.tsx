@@ -20,6 +20,7 @@ import {
 } from 'react'
 import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -27,6 +28,7 @@ import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentChangedDialogActions } from '~/components/content-changed-dialog-actions'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
@@ -53,7 +55,6 @@ import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { getPodcastFixTarget } from '~/routes/administration/podcasts/utils/get-podcast-fix-target'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
-import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import { getFirstFileControl } from '~/utils/get-first-file-control'
 import {
@@ -983,17 +984,18 @@ export default function RouteComponent({
 
       {deletion?.isDialogOpen && (
         <ContentDeletedDialog
-          description={
-            'Podcast už nelze upravovat. Zobrazené údaje zůstanou jen do obnovení stránky, odchodu nebo zavření editoru.'
-          }
           onOpenList={() => navigate(listHref)}
           onStay={() =>
             setDeletion((current) =>
               current === null ? null : { ...current, isDialogOpen: false },
             )
           }
-          title={'Podcast byl smazán'}
         >
+          <AdminModalTitle>Podcast byl smazán</AdminModalTitle>
+          <AdminModalDescription>
+            Podcast už nelze upravovat. Zobrazené údaje zůstanou jen do obnovení
+            stránky, odchodu nebo zavření editoru.
+          </AdminModalDescription>
           {deletion.hadCover && (
             <AdminModalDescription>
               Obálka podcastu byla smazána.
@@ -1013,11 +1015,11 @@ export default function RouteComponent({
 
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
-          description={holdTakenLead}
           holderName={holdLoss.holderName}
           onOpenDetail={() => navigate(closeHref)}
           onStay={closeHoldLossDialog}
         >
+          <AdminModalDescription>{holdTakenLead}</AdminModalDescription>
           {[
             ...holdTakenRest,
             ...formatUnsavedPodcastAdvice(
@@ -1035,16 +1037,18 @@ export default function RouteComponent({
         editHold.state.status === 'changed' && (
           <ContentChangedDialog
             canReload={canReloadChanged}
-            description={formatPodcastChangedDescription({
-              awayMilliseconds: editHold.state.awayMilliseconds,
-              now: new Date(),
-              savedAt: hasSaved ? savedAt : null,
-            })}
             onClose={closeHoldLossDialog}
             onOpenDetail={() => navigate(closeHref)}
             onReload={reload}
-            title={'Podcast se mezitím změnil'}
           >
+            <AdminModalTitle>Podcast se mezitím změnil</AdminModalTitle>
+            <AdminModalDescription>
+              {formatPodcastChangedDescription({
+                awayMilliseconds: editHold.state.awayMilliseconds,
+                now: new Date(),
+                savedAt: hasSaved ? savedAt : null,
+              })}
+            </AdminModalDescription>
             {[
               `Neuložené změny: ${holdLoss.unsentLabels.join(', ')}.`,
               ...formatUnsavedPodcastAdvice(
@@ -1058,6 +1062,7 @@ export default function RouteComponent({
                 {paragraph}
               </AdminModalDescription>
             ))}
+            <ContentChangedDialogActions />
           </ContentChangedDialog>
         )}
 
@@ -1065,11 +1070,7 @@ export default function RouteComponent({
       {editHold.state.status === 'held-by-other' && isApprover && (
         <EditHoldDialog
           content={'podcast'}
-          description={formatTakeOverDescription(
-            editHold.state.holder,
-            new Date(),
-            'podcast',
-          )}
+          holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
           onCancel={() => navigate(closeHref)}

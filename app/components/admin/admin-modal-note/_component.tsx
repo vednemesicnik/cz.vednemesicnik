@@ -9,13 +9,13 @@ type Props = {
 }
 
 /**
- * A sentence of a `BulkConfirmDialog` in full ink (22c, 26f): Smazání je
- * nevratné. where the list says so, and publishing, the records that wait,
- * were not submitted or are incomplete.
+ * A dialog's sentence in full ink (22c, 23f, 26f), where the secondary ink of
+ * `AdminModalDescription` would hide it: Smazání je nevratné. where a list says
+ * so, and the records a publish waits on or skips.
  *
  * @param props.children - The sentence
  * @returns The paragraph
  */
-export const BulkConfirmDialogNote = ({ children, className }: Props) => {
+export const AdminModalNote = ({ children, className }: Props) => {
   return <p className={clsx(styles.note, className)}>{children}</p>
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
@@ -26,7 +26,7 @@ type Props = {
   episodeTitle: string
   authorName: string
   isApproval: boolean
-  note: string | null
+  children?: ReactNode
   originalPublishedAt: string | null
   onClose: () => void
 }
@@ -39,8 +39,8 @@ type Props = {
  * (fge4es3p). Opens as it mounts.
  *
  * @param props.isApproval - Schválit a publikovat? instead of Publikovat?
- * @param props.note - A line in full ink before the date, e.g. that nobody
- *   submitted the episode (23f).
+ * @param props.children - A line in full ink before the date
+ *   (`AdminModalNote`), e.g. that nobody submitted the episode (23f).
  * @param props.originalPublishedAt - The stored publish date (ISO), or `null`.
  */
 export const EpisodePublishDialog = ({
@@ -49,7 +49,7 @@ export const EpisodePublishDialog = ({
   episodeTitle,
   authorName,
   isApproval,
-  note,
+  children,
   originalPublishedAt,
   onClose,
 }: Props) => {
@@ -92,7 +92,7 @@ export const EpisodePublishDialog = ({
         <AdminModalDescription>
           Epizoda bude publikována na webu.
         </AdminModalDescription>
-        {note !== null && <p className={styles.note}>{note}</p>}
+        {children}
 
         <fetcher.Form
           action={action}

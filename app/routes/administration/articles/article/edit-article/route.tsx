@@ -27,6 +27,7 @@ import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -43,6 +44,7 @@ import { ChipInput } from '~/components/chip-input'
 import { CompactImageTile } from '~/components/compact-image-tile'
 import { CompactUploadStatus } from '~/components/compact-upload-status'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentChangedDialogActions } from '~/components/content-changed-dialog-actions'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { Form } from '~/components/form'
@@ -72,7 +74,6 @@ import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useReplaceFrame } from '~/hooks/use-replace-frame'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
-import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import { foldForSearch } from '~/utils/fold-for-search'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
@@ -1271,15 +1272,15 @@ export default function RouteComponent({
 
       {isDeletedDialogOpen && (
         <ContentDeletedDialog
-          description={
-            hasText
-              ? 'Článek už nelze upravovat. Text zůstal jen v tomto editoru. Při obnovení stránky, odchodu nebo zavření editoru se ztratí.'
-              : 'Článek už nelze upravovat.'
-          }
           onOpenList={() => navigate(listHref)}
           onStay={() => setIsDeletedDialogOpen(false)}
-          title={'Článek byl smazán'}
         >
+          <AdminModalTitle>Článek byl smazán</AdminModalTitle>
+          <AdminModalDescription>
+            {hasText
+              ? 'Článek už nelze upravovat. Text zůstal jen v tomto editoru. Při obnovení stránky, odchodu nebo zavření editoru se ztratí.'
+              : 'Článek už nelze upravovat.'}
+          </AdminModalDescription>
           {hasText && (
             <>
               <div className={styles.dialogCopy}>
@@ -1296,15 +1297,17 @@ export default function RouteComponent({
 
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
-          description={formatHoldTakenDescription({
-            hasUnsentChanges: holdLoss.hasUnsentChanges,
-            now: new Date(),
-            savedAt,
-          })}
           holderName={holdLoss.holderName}
           onOpenDetail={() => navigate(closeHref)}
           onStay={closeHoldLossDialog}
         >
+          <AdminModalDescription>
+            {formatHoldTakenDescription({
+              hasUnsentChanges: holdLoss.hasUnsentChanges,
+              now: new Date(),
+              savedAt,
+            })}
+          </AdminModalDescription>
           {holdLoss.hasUnsentChanges && (
             <>
               <div className={styles.dialogCopy}>
@@ -1322,7 +1325,12 @@ export default function RouteComponent({
         editHold.state.status === 'changed' && (
           <ContentChangedDialog
             canReload={canReloadChanged}
-            description={`${formatArticleChangedDescription({
+            onClose={closeHoldLossDialog}
+            onOpenDetail={() => navigate(closeHref)}
+            onReload={reload}
+          >
+            <AdminModalTitle>Článek se mezitím změnil</AdminModalTitle>
+            <AdminModalDescription>{`${formatArticleChangedDescription({
               awayMilliseconds: editHold.state.awayMilliseconds,
               now: new Date(),
               savedAt,
@@ -1330,28 +1338,21 @@ export default function RouteComponent({
               canReloadChanged
                 ? 'Před načtením aktuální verze si zkopírujte text článku.'
                 : 'Před otevřením detailu si zkopírujte text článku.'
-            }`}
-            onClose={closeHoldLossDialog}
-            onOpenDetail={() => navigate(closeHref)}
-            onReload={reload}
-            rescueAction={
+            }`}</AdminModalDescription>
+            <ContentChangedDialogActions>
               <CopyArticleTextButton
                 getContent={getContent}
                 variant={'ghost'}
               />
-            }
-            title={'Článek se mezitím změnil'}
-          />
+            </ContentChangedDialogActions>
+          </ContentChangedDialog>
         )}
 
       {/* Someone else's edit, only the Coordinator's to take (24g). */}
       {editHold.state.status === 'held-by-other' && isApprover && (
         <EditHoldDialog
           content={'article'}
-          description={formatTakeOverDescription(
-            editHold.state.holder,
-            new Date(),
-          )}
+          holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
           onCancel={() => navigate(closeHref)}

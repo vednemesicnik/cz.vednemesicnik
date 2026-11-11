@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
@@ -27,7 +27,7 @@ type Props = {
   articleTitle: string
   authorNames: string[]
   isApproval: boolean
-  note: string | null
+  children?: ReactNode
   originalPublishedAt: string | null
   onClose: () => void
 }
@@ -40,8 +40,8 @@ type Props = {
  * sends no date, so the server keeps the stored one.
  *
  * @param props.isApproval - Schválit a publikovat? instead of Publikovat?
- * @param props.note - A line in full ink before the date, e.g. that nobody
- *   submitted the article.
+ * @param props.children - A line in full ink before the date
+ *   (`AdminModalNote`), e.g. that nobody submitted the article.
  * @param props.originalPublishedAt - The stored publish date (ISO), or `null`.
  */
 export const ArticlePublishDialog = ({
@@ -50,7 +50,7 @@ export const ArticlePublishDialog = ({
   articleTitle,
   authorNames,
   isApproval,
-  note,
+  children,
   originalPublishedAt,
   onClose,
 }: Props) => {
@@ -94,7 +94,7 @@ export const ArticlePublishDialog = ({
         <AdminModalDescription>
           Článek bude publikován na webu.
         </AdminModalDescription>
-        {note !== null && <p className={styles.note}>{note}</p>}
+        {children}
 
         <fetcher.Form
           action={action}

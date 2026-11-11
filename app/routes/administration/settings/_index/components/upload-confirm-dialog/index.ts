@@ -1,1 +1,1 @@
-export { UploadConfirmDialog } from './_component'
+export { UploadConfirmDialog, useUploadConfirmDialog } from './_component'

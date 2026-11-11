@@ -1,1 +1,1 @@
-export { EditHoldDialog, type EditHoldDialogKind } from './_component'
+export { EditHoldDialog } from './_component'

@@ -24,28 +24,24 @@ type Props = {
   currentQuery: string
   onClose: () => void
   tableKey: AdminListTableKey
-  title?: string
-  summary?: ReactNode
   defaultHint?: string
-  sharedHint?: string
+  children?: ReactNode
 }
 
 /**
  * Saves the list's current state as a named filter.
  *
- * @param props.title - The dialog's title.
- * @param props.summary - What is saved, a sentence or a list (design 22d).
- * @param props.defaultHint - The hint under Nastavit jako výchozí.
- * @param props.sharedHint - The hint under Sdílet s ostatními.
+ * @param props.defaultHint - The hint under Nastavit jako výchozí, in the
+ *   list's words; a prop, since the checkbox belongs to the dialog's form.
+ * @param props.children - What is saved, a sentence or a list (design 22d),
+ *   between the name and the checkboxes.
  */
 export const SaveFilterDialog = ({
   currentQuery,
   onClose,
   tableKey,
-  title = 'Uložit aktuální filtr',
-  summary,
   defaultHint,
-  sharedHint,
+  children,
 }: Props) => {
   const fetcher = useFetcher<FilterActionData>()
   const dialogRef = useFilterDialog(fetcher, onClose)
@@ -68,7 +64,7 @@ export const SaveFilterDialog = ({
   return (
     <AdminDialog ref={dialogRef}>
       <AdminModalContent>
-        <AdminModalTitle>{title}</AdminModalTitle>
+        <AdminModalTitle>Uložit filtry</AdminModalTitle>
 
         <fetcher.Form
           action={href('/administration/filters')}
@@ -98,8 +94,8 @@ export const SaveFilterDialog = ({
             {...getInputProps(fields.name, { type: 'text' })}
           />
 
-          {summary !== undefined && (
-            <div className={styles.summary}>{summary}</div>
+          {children !== undefined && (
+            <div className={styles.summary}>{children}</div>
           )}
 
           <div className={styles.checkboxes}>
@@ -112,7 +108,7 @@ export const SaveFilterDialog = ({
               Nastavit jako výchozí
             </Checkbox>
             <Checkbox
-              hint={sharedHint}
+              hint={'Ostatní ho mohou použít, měnit ho můžete jen vy.'}
               {...getInputProps(fields.isShared, {
                 type: 'checkbox',
               })}

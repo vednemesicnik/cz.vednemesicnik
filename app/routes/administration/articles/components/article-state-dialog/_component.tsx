@@ -3,6 +3,7 @@ import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { DialogBody } from '~/components/dialog-body'
 import { StateChangeDialog } from '~/components/state-change-dialog'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 import { FORM_CONFIG } from '~/config/form-config'
 
 /** A state change that takes the article off the web (design 23e). */
@@ -55,7 +56,6 @@ export const ArticleStateDialog = ({
   return (
     <StateChangeDialog
       action={action}
-      confirmLabel={copy.confirmLabel}
       fetcherKey={fetcherKey}
       intent={copy.intent}
       onClose={onClose}
@@ -70,6 +70,7 @@ export const ArticleStateDialog = ({
           </AdminModalDescription>
         )}
       </DialogBody>
+      <StateChangeDialogActions>{copy.confirmLabel}</StateChangeDialogActions>
     </StateChangeDialog>
   )
 }

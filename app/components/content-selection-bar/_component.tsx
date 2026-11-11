@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { BulkConfirmDialog } from '~/components/bulk-confirm-dialog'
-import { BulkConfirmDialogNote } from '~/components/bulk-confirm-dialog-note'
 import { Button } from '~/components/button'
 import { BULK_ACTION_INTENTS } from '~/config/bulk-action-intents'
 import { BULK_ACTION_LABELS } from '~/config/bulk-action-labels'
@@ -158,7 +158,7 @@ export const ContentSelectionBar = ({
           records={dialog.records}
         >
           {isPublishing && publishSentence !== '' && (
-            <BulkConfirmDialogNote>{publishSentence}</BulkConfirmDialogNote>
+            <AdminModalNote>{publishSentence}</AdminModalNote>
           )}
           {!isPublishing && heldSkipNote !== null && (
             <AdminModalDescription>{heldSkipNote}</AdminModalDescription>

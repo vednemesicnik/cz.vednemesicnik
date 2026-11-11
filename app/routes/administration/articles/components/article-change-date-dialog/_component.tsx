@@ -1,11 +1,15 @@
-import { type SubmitEvent, useId, useRef, useState } from 'react'
+import {
+  type ReactNode,
+  type SubmitEvent,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
-import { AdminModalDescription } from '~/components/admin/admin-modal-description'
-import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
@@ -21,14 +25,10 @@ import styles from './_styles.module.css'
 type Props = {
   action: string
   fetcherKey: string
-  title: string
-  description?: string
   publishedAt: string | null
   onClose: () => void
+  children: ReactNode
 }
-
-const ARTICLE_DESCRIPTION =
-  'Datum a čas publikace určují pořadí článku na webu.'
 
 const FUTURE_ERROR = 'Zadejte datum a čas, které nejsou v budoucnosti.'
 
@@ -50,18 +50,17 @@ const toLocalMoment = (day: string, time: string) => {
  * Coordinator's (design 23f, 27c): the content by its title, a date and a time
  * prefilled with the current publish date, never in the future.
  *
- * @param props.title - The article's title, or the episode's with its number.
- * @param props.description - What the date decides; the article's sentence
- *   by default, the episode has its own (copy v0m112v3).
  * @param props.publishedAt - The stored publish date (ISO); `null` starts at now.
+ * @param props.children - Under the title: the article's title, or the
+ *   episode's with its number (`AdminModalSubject`), then what the date
+ *   decides (`AdminModalDescription`; the episode's own, copy v0m112v3).
  */
 export const ArticleChangeDateDialog = ({
   action,
   fetcherKey,
-  title,
-  description = ARTICLE_DESCRIPTION,
   publishedAt,
   onClose,
+  children,
 }: Props) => {
   const fetcher = useFetcher({ key: fetcherKey })
   const ref = useModalDialog(onClose)
@@ -104,8 +103,7 @@ export const ArticleChangeDateDialog = ({
     <AdminDialog ref={ref}>
       <AdminModalContent>
         <AdminModalTitle>Změnit datum publikace?</AdminModalTitle>
-        <AdminModalSubject>{title}</AdminModalSubject>
-        <AdminModalDescription>{description}</AdminModalDescription>
+        {children}
 
         <fetcher.Form
           action={action}

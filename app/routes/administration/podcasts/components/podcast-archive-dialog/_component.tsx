@@ -2,6 +2,7 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { DialogBody } from '~/components/dialog-body'
 import { StateChangeDialog } from '~/components/state-change-dialog'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import { formatPublishedEpisodeCount } from '../../utils/format-published-episode-count'
@@ -31,7 +32,6 @@ export const PodcastArchiveDialog = ({
   return (
     <StateChangeDialog
       action={action}
-      confirmLabel={'Archivovat podcast'}
       fetcherKey={fetcherKey}
       intent={FORM_CONFIG.intent.value.archive}
       onClose={onClose}
@@ -44,6 +44,7 @@ export const PodcastArchiveDialog = ({
             : `Podcast ${podcastTitle} i jeho ${formatPublishedEpisodeCount(publishedEpisodeCount)} zmizí z webu. Stav epizod se nezmění. Znovu se zobrazí po obnovení podcastu jako konceptu a jeho publikaci.`}
         </AdminModalDescription>
       </DialogBody>
+      <StateChangeDialogActions>Archivovat podcast</StateChangeDialogActions>
     </StateChangeDialog>
   )
 }
