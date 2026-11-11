@@ -53,11 +53,11 @@ type Props = {
  * The empty state shows only above a list the page really displays empty, so a
  * draft in the editorial preview suppresses it (10d).
  *
- * @param children - The head: the `ParentLink` one level up („‹ Rubriky“),
- *   then a `HeadlineGroup` with the name as the `Headline` and
+ * @param props.children - The head: the `ParentLink` one level up
+ *   („‹ Rubriky“), then a `HeadlineGroup` with the name as the `Headline` and
  *   `TaxonomyPageKind` under it
- * @param totalCount - The articles the visitor can see, which the kind line
- *   counts
+ * @param props.totalCount - The articles the visitor can see, which the kind
+ *   line counts
  * @returns The taxonomy page
  */
 export const TaxonomyPage = ({
