@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Button } from '~/components/button'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 
 import { Form } from './_component'
 
@@ -40,22 +42,22 @@ type Story = StoryObj<typeof Form>
 export const LoginForm: Story = {
   render: () => (
     <Form method="post">
-      <TextField
-        id="email"
-        label="Email"
-        name="email"
-        placeholder="your.email@example.com"
-        required
-        type="email"
-      />
-      <TextField
-        id="password"
-        label="Password"
-        name="password"
-        placeholder="Enter your password"
-        required
-        type="password"
-      />
+      <TextField id="email" required>
+        <TextFieldLabel>Email</TextFieldLabel>
+        <TextFieldControl
+          name="email"
+          placeholder="your.email@example.com"
+          type="email"
+        />
+      </TextField>
+      <TextField id="password" required>
+        <TextFieldLabel>Password</TextFieldLabel>
+        <TextFieldControl
+          name="password"
+          placeholder="Enter your password"
+          type="password"
+        />
+      </TextField>
       <Button type="submit" variant="primary">
         Sign In
       </Button>
@@ -73,22 +75,22 @@ export const WithFieldErrors: Story = {
       <TextField
         errors={['Please enter a valid email address']}
         id="email"
-        label="Email"
-        name="email"
         required
-        type="email"
-      />
+      >
+        <TextFieldLabel>Email</TextFieldLabel>
+        <TextFieldControl name="email" type="email" />
+      </TextField>
       <TextField
         errors={[
           'Password must be at least 8 characters',
           'Password must contain at least one number',
         ]}
         id="password"
-        label="Password"
-        name="password"
         required
-        type="password"
-      />
+      >
+        <TextFieldLabel>Password</TextFieldLabel>
+        <TextFieldControl name="password" type="password" />
+      </TextField>
       <Button type="submit" variant="primary">
         Sign In
       </Button>
@@ -109,22 +111,22 @@ export const WithFormErrors: Story = {
       ]}
       method="post"
     >
-      <TextField
-        id="email"
-        label="Email"
-        name="email"
-        placeholder="your.email@example.com"
-        required
-        type="email"
-      />
-      <TextField
-        id="password"
-        label="Password"
-        name="password"
-        placeholder="Enter your password"
-        required
-        type="password"
-      />
+      <TextField id="email" required>
+        <TextFieldLabel>Email</TextFieldLabel>
+        <TextFieldControl
+          name="email"
+          placeholder="your.email@example.com"
+          type="email"
+        />
+      </TextField>
+      <TextField id="password" required>
+        <TextFieldLabel>Password</TextFieldLabel>
+        <TextFieldControl
+          name="password"
+          placeholder="Enter your password"
+          type="password"
+        />
+      </TextField>
       <Button type="submit" variant="primary">
         Sign In
       </Button>
@@ -139,38 +141,34 @@ export const WithFormErrors: Story = {
 export const RegistrationForm: Story = {
   render: () => (
     <Form method="post">
-      <TextField
-        id="name"
-        label="Full Name"
-        name="name"
-        placeholder="John Doe"
-        required
-        type="text"
-      />
-      <TextField
-        id="email"
-        label="Email"
-        name="email"
-        placeholder="your.email@example.com"
-        required
-        type="email"
-      />
-      <TextField
-        id="password"
-        label="Password"
-        name="password"
-        placeholder="Create a password"
-        required
-        type="password"
-      />
-      <TextField
-        id="confirm-password"
-        label="Confirm Password"
-        name="confirmPassword"
-        placeholder="Confirm your password"
-        required
-        type="password"
-      />
+      <TextField id="name" required>
+        <TextFieldLabel>Full Name</TextFieldLabel>
+        <TextFieldControl name="name" placeholder="John Doe" type="text" />
+      </TextField>
+      <TextField id="email" required>
+        <TextFieldLabel>Email</TextFieldLabel>
+        <TextFieldControl
+          name="email"
+          placeholder="your.email@example.com"
+          type="email"
+        />
+      </TextField>
+      <TextField id="password" required>
+        <TextFieldLabel>Password</TextFieldLabel>
+        <TextFieldControl
+          name="password"
+          placeholder="Create a password"
+          type="password"
+        />
+      </TextField>
+      <TextField id="confirm-password" required>
+        <TextFieldLabel>Confirm Password</TextFieldLabel>
+        <TextFieldControl
+          name="confirmPassword"
+          placeholder="Confirm your password"
+          type="password"
+        />
+      </TextField>
       <Button type="submit" variant="primary">
         Create Account
       </Button>
@@ -185,22 +183,22 @@ export const RegistrationForm: Story = {
 export const FormWithMultipleActions: Story = {
   render: () => (
     <Form method="post">
-      <TextField
-        id="username"
-        label="Username"
-        name="username"
-        placeholder="Enter username"
-        required
-        type="text"
-      />
-      <TextField
-        id="email"
-        label="Email"
-        name="email"
-        placeholder="your.email@example.com"
-        required
-        type="email"
-      />
+      <TextField id="username" required>
+        <TextFieldLabel>Username</TextFieldLabel>
+        <TextFieldControl
+          name="username"
+          placeholder="Enter username"
+          type="text"
+        />
+      </TextField>
+      <TextField id="email" required>
+        <TextFieldLabel>Email</TextFieldLabel>
+        <TextFieldControl
+          name="email"
+          placeholder="your.email@example.com"
+          type="email"
+        />
+      </TextField>
       <div style={{ display: 'flex', gap: '12px' }}>
         <Button type="submit" variant="primary">
           Save

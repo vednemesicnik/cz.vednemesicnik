@@ -1,1 +1,1 @@
-export { FileDropField } from './_component'
+export { FileDropField, useFileDropField } from './_component'

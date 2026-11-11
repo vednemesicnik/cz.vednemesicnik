@@ -17,6 +17,8 @@ import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { CircleCheckIcon } from '~/components/icons/circle-check-icon'
 import { Link } from '~/components/link'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useHydrated } from '~/utils/use-hydrated'
 
 import type { VerificationNotice } from '../../_action'
@@ -150,18 +152,21 @@ export const EmailVerification = ({
         >
           <HoneypotInputs />
           <TextField
-            {...getInputProps(fields.code, { type: 'text' })}
-            autoCapitalize={'characters'}
-            autoComplete={'one-time-code'}
-            autoCorrect={'off'}
             className={styles.codeField}
             errors={fields.code.errors}
-            isRequiredMarkHidden
-            label={'Ověřovací kód'}
-            ref={codeRef}
+            id={fields.code.id}
             required
-            spellCheck={false}
-          />
+          >
+            <TextFieldLabel isRequiredMarkHidden>Ověřovací kód</TextFieldLabel>
+            <TextFieldControl
+              {...getInputProps(fields.code, { type: 'text' })}
+              autoCapitalize={'characters'}
+              autoComplete={'one-time-code'}
+              autoCorrect={'off'}
+              ref={codeRef}
+              spellCheck={false}
+            />
+          </TextField>
         </Form>
       )}
 

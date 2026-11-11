@@ -10,6 +10,8 @@ import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useHydrated } from '~/utils/use-hydrated'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
@@ -94,12 +96,16 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
         <TextField
           errors={fields.email.errors}
-          isRequiredMarkHidden
-          label={'E-mail'}
-          {...getInputProps(fields.email, { type: 'email' })}
-          autoComplete={'email'}
-          placeholder={'jmeno@vednemesicnik.cz'}
-        />
+          id={fields.email.id}
+          required={fields.email.required}
+        >
+          <TextFieldLabel isRequiredMarkHidden>E-mail</TextFieldLabel>
+          <TextFieldControl
+            {...getInputProps(fields.email, { type: 'email' })}
+            autoComplete={'email'}
+            placeholder={'jmeno@vednemesicnik.cz'}
+          />
+        </TextField>
 
         <Button disabled={isSendingLink} type={'submit'} variant={'outline'}>
           {isSendingLink ? 'Odesílám…' : 'Poslat odkaz'}

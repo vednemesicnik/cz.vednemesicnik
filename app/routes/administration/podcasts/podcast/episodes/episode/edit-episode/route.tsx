@@ -47,9 +47,17 @@ import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -1169,33 +1177,30 @@ export default function RouteComponent({
               <fieldset className={styles.lock} disabled={isLocked}>
                 {/* The field as the article's, the grey number after its
                     label; the field Číslo names it (27d, 1iqapiz2). */}
-                <TextareaField
-                  field={fields.title}
-                  label={
-                    <>
-                      Název
-                      {number !== null && (
-                        <span aria-hidden={true} className={styles.number}>
-                          #{number}
-                        </span>
-                      )}
-                    </>
-                  }
-                  textareaProps={{
-                    className: styles.titleInput,
-                    onInput: handleTitleInput,
-                    onKeyDown: handleTitleKeyDown,
-                    rows: 1,
-                  }}
-                />
-                <TextareaField
-                  field={fields.description}
-                  hint={
-                    'Stručně popište epizodu. Na webu se popis zobrazí pod názvem.'
-                  }
-                  label={'Popis'}
-                  textareaProps={{ className: styles.descriptionInput }}
-                />
+                <TextareaField field={fields.title}>
+                  <TextareaFieldLabel>
+                    Název
+                    {number !== null && (
+                      <span aria-hidden={true} className={styles.number}>
+                        #{number}
+                      </span>
+                    )}
+                  </TextareaFieldLabel>
+                  <TextareaFieldControl
+                    className={styles.titleInput}
+                    onInput={handleTitleInput}
+                    onKeyDown={handleTitleKeyDown}
+                    rows={1}
+                  />
+                </TextareaField>
+                <TextareaField field={fields.description}>
+                  <TextareaFieldLabel>Popis</TextareaFieldLabel>
+                  <TextareaFieldControl className={styles.descriptionInput} />
+                  <TextareaFieldHint>
+                    Stručně popište epizodu. Na webu se popis zobrazí pod
+                    názvem.
+                  </TextareaFieldHint>
+                </TextareaField>
                 <fieldset className={styles.links}>
                   <legend className={styles.linksLegend}>
                     Odkazy na epizodu
@@ -1354,11 +1359,16 @@ export default function RouteComponent({
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <div className={styles.fieldGroup}>
                     <TextField
-                      {...getInputProps(fields.number, { type: 'text' })}
                       errors={numberErrors}
-                      inputMode={'numeric'}
-                      label={'Číslo'}
-                    />
+                      id={fields.number.id}
+                      required={fields.number.required}
+                    >
+                      <TextFieldLabel>Číslo</TextFieldLabel>
+                      <TextFieldControl
+                        {...getInputProps(fields.number, { type: 'text' })}
+                        inputMode={'numeric'}
+                      />
+                    </TextField>
                     {/* A taken number: a free one, filled in and saved (27f). */}
                     {isNumberTaken && freeNumber !== null && !isReadOnly && (
                       <ButtonLink
@@ -1372,26 +1382,29 @@ export default function RouteComponent({
                   </div>
                   <div className={styles.fieldGroup}>
                     <TextField
-                      {...getInputProps(fields.slug, { type: 'text' })}
                       errors={fields.slug.errors}
-                      // No hint while it follows the title (27d, tly4a163).
-                      hint={
-                        isSlugFollowing ? undefined : (
-                          <>
-                            Změněno ručně.{' '}
-                            {!isReadOnly && (
-                              <ButtonLink onClick={resumeSlug} type={'button'}>
-                                Obnovit podle názvu
-                              </ButtonLink>
-                            )}
-                          </>
-                        )
-                      }
-                      label={'Adresa'}
-                      onBlur={handleSlugFieldBlur}
-                      onFocus={handleSlugFocus}
-                      onInput={handleSlugInput}
-                    />
+                      id={fields.slug.id}
+                      required={fields.slug.required}
+                    >
+                      <TextFieldLabel>Adresa</TextFieldLabel>
+                      <TextFieldControl
+                        {...getInputProps(fields.slug, { type: 'text' })}
+                        onBlur={handleSlugFieldBlur}
+                        onFocus={handleSlugFocus}
+                        onInput={handleSlugInput}
+                      />
+                      {/* No hint while it follows the title (27d, tly4a163). */}
+                      {!isSlugFollowing && (
+                        <TextFieldHint>
+                          Změněno ručně.{' '}
+                          {!isReadOnly && (
+                            <ButtonLink onClick={resumeSlug} type={'button'}>
+                              Obnovit podle názvu
+                            </ButtonLink>
+                          )}
+                        </TextFieldHint>
+                      )}
+                    </TextField>
                     {/* A taken address: a free one, filled in and saved (27f). */}
                     {fields.slug.errors !== undefined &&
                       slugSuggestion !== null &&
@@ -1408,15 +1421,18 @@ export default function RouteComponent({
                   {/* Only the Coordinator chooses the author (27d, as 25c). */}
                   {authors !== null && (
                     <Select
-                      {...getSelectProps(fields.authorId)}
                       errors={fields.authorId.errors}
-                      label={'Autor'}
+                      id={fields.authorId.id}
+                      required={fields.authorId.required}
                     >
-                      {authors.map((author) => (
-                        <option key={author.id} value={author.id}>
-                          {author.name}
-                        </option>
-                      ))}
+                      <SelectLabel>Autor</SelectLabel>
+                      <SelectControl {...getSelectProps(fields.authorId)}>
+                        {authors.map((author) => (
+                          <option key={author.id} value={author.id}>
+                            {author.name}
+                          </option>
+                        ))}
+                      </SelectControl>
                     </Select>
                   )}
                 </fieldset>

@@ -1,6 +1,11 @@
 import type { FieldMetadata } from '@conform-to/react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldCounter } from '~/components/textarea-field-counter'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
+
 import { TextareaField } from './_component'
 
 const createMockField = (
@@ -16,10 +21,8 @@ const createMockField = (
 
 const meta: Meta<typeof TextareaField> = {
   argTypes: {
-    label: {
-      control: 'text',
-      description: 'Label text for the textarea field',
-    },
+    children: { control: false },
+    field: { control: false },
   },
   component: TextareaField,
   tags: ['autodocs'],
@@ -36,11 +39,13 @@ type Story = StoryObj<typeof TextareaField>
 export const Default: Story = {
   args: {
     field: createMockField({ id: 'description', name: 'description' }),
-    label: 'Description',
-    textareaProps: {
-      placeholder: 'Enter a detailed description...',
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Description</TextareaFieldLabel>
+      <TextareaFieldControl placeholder={'Enter a detailed description...'} />
+    </TextareaField>
+  ),
 }
 
 /**
@@ -54,11 +59,15 @@ export const Required: Story = {
       name: 'content',
       required: true,
     }),
-    label: 'Article Content',
-    textareaProps: {
-      placeholder: 'Write your article content here...',
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Article Content</TextareaFieldLabel>
+      <TextareaFieldControl
+        placeholder={'Write your article content here...'}
+      />
+    </TextareaField>
+  ),
 }
 
 /**
@@ -70,12 +79,13 @@ export const Optional: Story = {
       id: 'interest',
       name: 'interest',
     }),
-    label: 'Interest',
-    optional: true,
-    textareaProps: {
-      rows: 3,
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel optional>Interest</TextareaFieldLabel>
+      <TextareaFieldControl rows={3} />
+    </TextareaField>
+  ),
 }
 
 /**
@@ -84,14 +94,18 @@ export const Optional: Story = {
  */
 export const WithHint: Story = {
   args: {
-    counter: '39 / 500',
     field: createMockField({ id: 'bio', name: 'bio' }),
-    hint: 'Zatím se na webu nezobrazuje.',
-    label: 'Bio',
-    textareaProps: {
-      defaultValue: 'Fotí a píše reportáže ze školních akcí.',
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Bio</TextareaFieldLabel>
+      <TextareaFieldControl
+        defaultValue={'Fotí a píše reportáže ze školních akcí.'}
+      />
+      <TextareaFieldHint>Zatím se na webu nezobrazuje.</TextareaFieldHint>
+      <TextareaFieldCounter>39 / 500</TextareaFieldCounter>
+    </TextareaField>
+  ),
 }
 
 /**
@@ -100,14 +114,19 @@ export const WithHint: Story = {
  */
 export const WithCounterError: Story = {
   args: {
-    counter: '512 / 500',
     field: createMockField({
       errors: ['Zkraťte bio na nejvýše 500 znaků.'],
       id: 'bio-over',
       name: 'bio',
     }),
-    label: 'Bio',
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Bio</TextareaFieldLabel>
+      <TextareaFieldControl />
+      <TextareaFieldCounter>512 / 500</TextareaFieldCounter>
+    </TextareaField>
+  ),
 }
 
 /**
@@ -116,12 +135,19 @@ export const WithCounterError: Story = {
  */
 export const WithCounterAttention: Story = {
   args: {
-    counter: '172 / 160',
-    counterTone: 'attention',
     field: createMockField({ id: 'perex', name: 'perex' }),
-    hint: 'Shrnutí pro vyhledávače a náhled při sdílení. Na webu se nezobrazuje. Doporučeno do 160 znaků.',
-    label: 'Perex',
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Perex</TextareaFieldLabel>
+      <TextareaFieldControl />
+      <TextareaFieldHint>
+        Shrnutí pro vyhledávače a náhled při sdílení. Na webu se nezobrazuje.
+        Doporučeno do 160 znaků.
+      </TextareaFieldHint>
+      <TextareaFieldCounter tone={'attention'}>172 / 160</TextareaFieldCounter>
+    </TextareaField>
+  ),
 }
 
 /**
@@ -138,8 +164,13 @@ export const WithErrors: Story = {
       id: 'bio',
       name: 'bio',
     }),
-    label: 'Biography',
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Biography</TextareaFieldLabel>
+      <TextareaFieldControl />
+    </TextareaField>
+  ),
 }
 
 /**
@@ -149,13 +180,18 @@ export const WithErrors: Story = {
 export const Disabled: Story = {
   args: {
     field: createMockField({ id: 'summary', name: 'summary' }),
-    label: 'Generated Summary',
-    textareaProps: {
-      disabled: true,
-      value:
-        'This is an automatically generated summary that cannot be edited.',
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Generated Summary</TextareaFieldLabel>
+      <TextareaFieldControl
+        disabled={true}
+        value={
+          'This is an automatically generated summary that cannot be edited.'
+        }
+      />
+    </TextareaField>
+  ),
 }
 
 /**
@@ -165,12 +201,17 @@ export const Disabled: Story = {
 export const WithValue: Story = {
   args: {
     field: createMockField({ id: 'comments', name: 'comments' }),
-    label: 'Comments',
-    textareaProps: {
-      value:
-        'This is a pre-filled comment.\n\nIt can contain multiple lines of text.\n\nEach paragraph is separated by line breaks.',
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Comments</TextareaFieldLabel>
+      <TextareaFieldControl
+        value={
+          'This is a pre-filled comment.\n\nIt can contain multiple lines of text.\n\nEach paragraph is separated by line breaks.'
+        }
+      />
+    </TextareaField>
+  ),
 }
 
 /**
@@ -180,12 +221,13 @@ export const WithValue: Story = {
 export const CustomRows: Story = {
   args: {
     field: createMockField({ id: 'note', name: 'note' }),
-    label: 'Short Note',
-    textareaProps: {
-      placeholder: 'Enter a brief note...',
-      rows: 3,
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Short Note</TextareaFieldLabel>
+      <TextareaFieldControl placeholder={'Enter a brief note...'} rows={3} />
+    </TextareaField>
+  ),
 }
 
 /**
@@ -199,10 +241,14 @@ export const LongForm: Story = {
       name: 'articleBody',
       required: true,
     }),
-    label: 'Article Body',
-    textareaProps: {
-      placeholder: 'Write your article here...',
-      rows: 15,
-    },
   },
+  render: (args) => (
+    <TextareaField {...args}>
+      <TextareaFieldLabel>Article Body</TextareaFieldLabel>
+      <TextareaFieldControl
+        placeholder={'Write your article here...'}
+        rows={15}
+      />
+    </TextareaField>
+  ),
 }

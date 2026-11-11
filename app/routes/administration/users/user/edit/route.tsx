@@ -10,11 +10,14 @@ import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
 import { Checkbox } from '~/components/checkbox'
+import { CheckboxHint } from '~/components/checkbox-hint'
 import { Link } from '~/components/link'
 import { PageTitle } from '~/components/page-title'
 import { RecordForm } from '~/components/record-form'
 import { RecordFormActions } from '~/components/record-form-actions'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useToast } from '~/components/toast-provider'
 import { hasEmailChanged } from '~/utils/has-email-changed'
 import { useReturnToOpener } from '~/utils/use-return-to-opener'
@@ -162,18 +165,23 @@ export default function RouteComponent({
 
       <RecordForm fetcher={fetcher} form={form}>
         <TextField
-          label={'E-mail'}
-          {...getInputProps(fields.email, { type: 'email' })}
           errors={fields.email.errors}
-        />
+          id={fields.email.id}
+          required={fields.email.required}
+        >
+          <TextFieldLabel>E-mail</TextFieldLabel>
+          <TextFieldControl
+            {...getInputProps(fields.email, { type: 'email' })}
+          />
+        </TextField>
 
         {!isOwner && (
           <>
             <Checkbox
               {...getInputProps(fields.isAdministrator, { type: 'checkbox' })}
-              hint={USER_RECORD_COPY.administrator.hint}
             >
               {USER_RECORD_COPY.administrator.label}
+              <CheckboxHint>{USER_RECORD_COPY.administrator.hint}</CheckboxHint>
             </Checkbox>
 
             {isGainingAdministration && (

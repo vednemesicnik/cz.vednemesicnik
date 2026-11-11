@@ -35,15 +35,25 @@ import { ErrorMessage } from '~/components/error-message'
 import { FailedFile } from '~/components/failed-file'
 import { FailedFileName } from '~/components/failed-file-name'
 import { FileDropField } from '~/components/file-drop-field'
+import { FileDropFieldHint } from '~/components/file-drop-field-hint'
+import { FileDropFieldLabel } from '~/components/file-drop-field-label'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -824,14 +834,17 @@ export default function RouteComponent({
             errorId={
               coverUpload.rejection === null ? undefined : coverProblemId
             }
-            hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
             isDisabled={
               isLocked || coverUpload.isBusy || coverUpload.isCancelling
             }
-            label={'Vybrat obálku'}
             onPick={coverUpload.pick}
             shape={'square'}
-          />
+          >
+            <FileDropFieldLabel>Vybrat obálku</FileDropFieldLabel>
+            <FileDropFieldHint>
+              nebo ji sem přetáhněte · obrázek do 5 MB
+            </FileDropFieldHint>
+          </FileDropField>
           {coverUpload.rejection !== null && (
             <div id={coverProblemId}>
               <ErrorMessage>{coverUpload.rejection}</ErrorMessage>
@@ -1157,32 +1170,40 @@ export default function RouteComponent({
               <div className={styles.details}>
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <TextField
-                    {...getInputProps(fields.title, { type: 'text' })}
                     errors={fields.title.errors}
-                    label={'Název'}
-                  />
+                    id={fields.title.id}
+                    required={fields.title.required}
+                  >
+                    <TextFieldLabel>Název</TextFieldLabel>
+                    <TextFieldControl
+                      {...getInputProps(fields.title, { type: 'text' })}
+                    />
+                  </TextField>
                   <div className={styles.fieldGroup}>
                     <TextField
-                      {...getInputProps(fields.slug, { type: 'text' })}
                       errors={fields.slug.errors}
-                      // No hint while it follows the title (24a, 27e).
-                      hint={
-                        isSlugFollowing ? undefined : (
-                          <>
-                            Změněno ručně.{' '}
-                            {!isReadOnly && (
-                              <ButtonLink onClick={resumeSlug} type={'button'}>
-                                Obnovit podle názvu
-                              </ButtonLink>
-                            )}
-                          </>
-                        )
-                      }
-                      label={'Adresa'}
-                      onBlur={handleSlugBlur}
-                      onFocus={handleSlugFocus}
-                      onInput={handleSlugInput}
-                    />
+                      id={fields.slug.id}
+                      required={fields.slug.required}
+                    >
+                      <TextFieldLabel>Adresa</TextFieldLabel>
+                      <TextFieldControl
+                        {...getInputProps(fields.slug, { type: 'text' })}
+                        onBlur={handleSlugBlur}
+                        onFocus={handleSlugFocus}
+                        onInput={handleSlugInput}
+                      />
+                      {/* No hint while it follows the title (24a, 27e). */}
+                      {!isSlugFollowing && (
+                        <TextFieldHint>
+                          Změněno ručně.{' '}
+                          {!isReadOnly && (
+                            <ButtonLink onClick={resumeSlug} type={'button'}>
+                              Obnovit podle názvu
+                            </ButtonLink>
+                          )}
+                        </TextFieldHint>
+                      )}
+                    </TextField>
                     {/* A taken address: a free one, filled in and saved (27e). */}
                     {fields.slug.errors !== undefined &&
                       slugSuggestion !== null &&
@@ -1196,24 +1217,28 @@ export default function RouteComponent({
                         </ButtonLink>
                       )}
                   </div>
-                  <TextareaField
-                    field={fields.description}
-                    hint={'Stručně popište, o čem podcast je.'}
-                    label={'Popis'}
-                    textareaProps={{ className: styles.descriptionInput }}
-                  />
+                  <TextareaField field={fields.description}>
+                    <TextareaFieldLabel>Popis</TextareaFieldLabel>
+                    <TextareaFieldControl className={styles.descriptionInput} />
+                    <TextareaFieldHint>
+                      Stručně popište, o čem podcast je.
+                    </TextareaFieldHint>
+                  </TextareaField>
                   {/* Only the Coordinator chooses the author (27e, as 25c). */}
                   {authors !== null && (
                     <Select
-                      {...getSelectProps(fields.authorId)}
                       errors={fields.authorId.errors}
-                      label={'Autor'}
+                      id={fields.authorId.id}
+                      required={fields.authorId.required}
                     >
-                      {authors.map((author) => (
-                        <option key={author.id} value={author.id}>
-                          {author.name}
-                        </option>
-                      ))}
+                      <SelectLabel>Autor</SelectLabel>
+                      <SelectControl {...getSelectProps(fields.authorId)}>
+                        {authors.map((author) => (
+                          <option key={author.id} value={author.id}>
+                            {author.name}
+                          </option>
+                        ))}
+                      </SelectControl>
                     </Select>
                   )}
                 </fieldset>

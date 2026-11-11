@@ -10,6 +10,8 @@ import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useFilterDialog } from '~/hooks/use-filter-dialog'
 import { renameFilterSchema } from '~/routes/administration/filters/_schema'
@@ -63,10 +65,14 @@ export const RenameFilterDialog = ({ filter, onClose }: Props) => {
 
           <TextField
             errors={fields.name.errors}
-            isRequiredMarkHidden
-            label={'Název'}
-            {...getInputProps(fields.name, { type: 'text' })}
-          />
+            id={fields.name.id}
+            required={fields.name.required}
+          >
+            <TextFieldLabel isRequiredMarkHidden>Název</TextFieldLabel>
+            <TextFieldControl
+              {...getInputProps(fields.name, { type: 'text' })}
+            />
+          </TextField>
 
           <ErrorMessageGroup>
             {form.errors?.map((error) => (

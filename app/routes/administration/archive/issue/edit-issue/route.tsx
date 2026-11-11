@@ -40,14 +40,21 @@ import { ErrorMessage } from '~/components/error-message'
 import { FailedFile } from '~/components/failed-file'
 import { FailedFileName } from '~/components/failed-file-name'
 import { FileDropField } from '~/components/file-drop-field'
+import { FileDropFieldHint } from '~/components/file-drop-field-hint'
+import { FileDropFieldLabel } from '~/components/file-drop-field-label'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -1225,12 +1232,15 @@ export default function RouteComponent({
                               ? undefined
                               : rejectionIds.cover
                           }
-                          hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
                           isDisabled={isLocked || coverUpload.isCancelling}
-                          label={'Vybrat obálku'}
                           onPick={coverUpload.pick}
                           shape={'page'}
-                        />
+                        >
+                          <FileDropFieldLabel>Vybrat obálku</FileDropFieldLabel>
+                          <FileDropFieldHint>
+                            nebo ji sem přetáhněte · obrázek do 5 MB
+                          </FileDropFieldHint>
+                        </FileDropField>
                         {renderFileProblem('cover', '')}
                       </>
                     ) : (
@@ -1308,11 +1318,14 @@ export default function RouteComponent({
                               ? undefined
                               : rejectionIds.pdf
                           }
-                          hint={'nebo ho sem přetáhněte · nejvýš 10 MB'}
                           isDisabled={isLocked || pdfUpload.isCancelling}
-                          label={'Vybrat PDF'}
                           onPick={pdfUpload.pick}
-                        />
+                        >
+                          <FileDropFieldLabel>Vybrat PDF</FileDropFieldLabel>
+                          <FileDropFieldHint>
+                            nebo ho sem přetáhněte · nejvýš 10 MB
+                          </FileDropFieldHint>
+                        </FileDropField>
                         {renderFileProblem('pdf', '')}
                       </>
                     ) : (
@@ -1362,52 +1375,78 @@ export default function RouteComponent({
                   <div className={styles.numberGroup}>
                     <div className={styles.number}>
                       <TextField
-                        {...getInputProps(fields.year, { type: 'text' })}
                         errors={withUnsavedChange('year')}
-                        inputMode={'numeric'}
-                        label={'Rok'}
-                        onInput={handleYearInput}
-                      />
+                        id={fields.year.id}
+                        required={fields.year.required}
+                      >
+                        <TextFieldLabel>Rok</TextFieldLabel>
+                        <TextFieldControl
+                          {...getInputProps(fields.year, { type: 'text' })}
+                          inputMode={'numeric'}
+                          onInput={handleYearInput}
+                        />
+                      </TextField>
                       <TextField
-                        {...getInputProps(fields.order, { type: 'text' })}
                         errors={withUnsavedChange('order')}
-                        inputMode={'numeric'}
-                        label={'Pořadí v roce'}
-                        onInput={handleOrderInput}
-                      />
+                        id={fields.order.id}
+                        required={fields.order.required}
+                      >
+                        <TextFieldLabel>Pořadí v roce</TextFieldLabel>
+                        <TextFieldControl
+                          {...getInputProps(fields.order, { type: 'text' })}
+                          inputMode={'numeric'}
+                          onInput={handleOrderInput}
+                        />
+                      </TextField>
                     </div>
                     <div className={styles.numberOffer}>
                       {renderNumberOffer()}
                     </div>
                   </div>
                   <TextField
-                    {...getInputProps(fields.name, { type: 'text' })}
                     errors={fields.name.errors}
-                    hint={'Bez roku. Rok se k názvu přidá automaticky.'}
-                    label={'Název'}
-                  />
+                    id={fields.name.id}
+                    required={fields.name.required}
+                  >
+                    <TextFieldLabel>Název</TextFieldLabel>
+                    <TextFieldControl
+                      {...getInputProps(fields.name, { type: 'text' })}
+                    />
+                    <TextFieldHint>
+                      Bez roku. Rok se k názvu přidá automaticky.
+                    </TextFieldHint>
+                  </TextField>
                   <TextField
-                    {...getInputProps(fields.supplement, { type: 'text' })}
                     errors={withUnsavedChange('supplement')}
-                    hint={
-                      'Název samostatně vytištěné části, která se do čísla nevešla. Zadejte rok a pořadí čísla, ke kterému patří.'
-                    }
-                    label={'Doplněk'}
-                    onInput={handleSupplementInput}
-                    placeholder={'Nepovinné'}
-                  />
+                    id={fields.supplement.id}
+                    required={fields.supplement.required}
+                  >
+                    <TextFieldLabel>Doplněk</TextFieldLabel>
+                    <TextFieldControl
+                      {...getInputProps(fields.supplement, { type: 'text' })}
+                      onInput={handleSupplementInput}
+                      placeholder={'Nepovinné'}
+                    />
+                    <TextFieldHint>
+                      Název samostatně vytištěné části, která se do čísla
+                      nevešla. Zadejte rok a pořadí čísla, ke kterému patří.
+                    </TextFieldHint>
+                  </TextField>
                   {/* Only the Coordinator chooses the author (26c, as 25c). */}
                   {authors !== null && (
                     <Select
-                      {...getSelectProps(fields.authorId)}
                       errors={fields.authorId.errors}
-                      label={'Autor'}
+                      id={fields.authorId.id}
+                      required={fields.authorId.required}
                     >
-                      {authors.map((author) => (
-                        <option key={author.id} value={author.id}>
-                          {author.name}
-                        </option>
-                      ))}
+                      <SelectLabel>Autor</SelectLabel>
+                      <SelectControl {...getSelectProps(fields.authorId)}>
+                        {authors.map((author) => (
+                          <option key={author.id} value={author.id}>
+                            {author.name}
+                          </option>
+                        ))}
+                      </SelectControl>
                     </Select>
                   )}
                 </fieldset>

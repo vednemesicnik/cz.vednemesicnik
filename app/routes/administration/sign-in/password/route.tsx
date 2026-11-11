@@ -12,6 +12,8 @@ import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useHydrated } from '~/utils/use-hydrated'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 import { schema } from './_schema'
@@ -84,18 +86,26 @@ export default function RouteComponent({
 
         <TextField
           errors={fields.email.errors}
-          isRequiredMarkHidden
-          label={'E-mail'}
-          {...getInputProps(fields.email, { type: 'email' })}
-        />
+          id={fields.email.id}
+          required={fields.email.required}
+        >
+          <TextFieldLabel isRequiredMarkHidden>E-mail</TextFieldLabel>
+          <TextFieldControl
+            {...getInputProps(fields.email, { type: 'email' })}
+          />
+        </TextField>
 
         <TextField
           errors={fields.password.errors}
-          isRequiredMarkHidden
-          label={'Heslo'}
-          ref={passwordInputRef}
-          {...getInputProps(fields.password, { type: 'password' })}
-        />
+          id={fields.password.id}
+          required={fields.password.required}
+        >
+          <TextFieldLabel isRequiredMarkHidden>Heslo</TextFieldLabel>
+          <TextFieldControl
+            ref={passwordInputRef}
+            {...getInputProps(fields.password, { type: 'password' })}
+          />
+        </TextField>
 
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}

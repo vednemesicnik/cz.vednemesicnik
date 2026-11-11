@@ -16,7 +16,14 @@ import { DialogBody } from '~/components/dialog-body'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldCounter } from '~/components/textarea-field-counter'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
@@ -374,23 +381,31 @@ export const ProfileDialog = ({
             )}
 
             <TextField
-              label={'Jméno'}
-              {...getInputProps(fields.name, { type: 'text' })}
-              disabled={isSubmitting}
               errors={fields.name.errors}
-              hint={'Zobrazuje se u článků na webu a v panelu administrace.'}
-            />
-            <TextareaField
-              counter={`${bioLength} / ${BIO_MAX_LENGTH}`}
-              field={fields.bio}
-              hint={'Zatím se na webu nezobrazuje.'}
-              label={
-                <>
-                  Bio <span className={styles.optional}>nepovinné</span>
-                </>
-              }
-              textareaProps={{ disabled: isSubmitting, rows: 4 }}
-            />
+              id={fields.name.id}
+              required={fields.name.required}
+            >
+              <TextFieldLabel>Jméno</TextFieldLabel>
+              <TextFieldControl
+                {...getInputProps(fields.name, { type: 'text' })}
+                disabled={isSubmitting}
+              />
+              <TextFieldHint>
+                Zobrazuje se u článků na webu a v panelu administrace.
+              </TextFieldHint>
+            </TextField>
+            <TextareaField field={fields.bio}>
+              <TextareaFieldLabel>
+                Bio <span className={styles.optional}>nepovinné</span>
+              </TextareaFieldLabel>
+              <TextareaFieldControl disabled={isSubmitting} rows={4} />
+              <TextareaFieldHint>
+                Zatím se na webu nezobrazuje.
+              </TextareaFieldHint>
+              <TextareaFieldCounter>
+                {`${bioLength} / ${BIO_MAX_LENGTH}`}
+              </TextareaFieldCounter>
+            </TextareaField>
 
             <AdminModalActions>
               <Button

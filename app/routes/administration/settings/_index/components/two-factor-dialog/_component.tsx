@@ -13,6 +13,8 @@ import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { action as twoFactorAction } from '~/routes/administration/settings/two-factor/_action'
 import { schema } from '~/routes/administration/settings/two-factor/_schema'
@@ -175,15 +177,21 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
               )}
 
               <TextField
-                isRequiredMarkHidden
-                label={'Kód z aplikace'}
-                {...getInputProps(fields.code, { type: 'text' })}
-                autoComplete={'one-time-code'}
-                disabled={isSubmitting || enrollment === null}
                 errors={fields.code.errors}
-                inputMode={'numeric'}
-                placeholder={'123 456'}
-              />
+                id={fields.code.id}
+                required={fields.code.required}
+              >
+                <TextFieldLabel isRequiredMarkHidden>
+                  Kód z aplikace
+                </TextFieldLabel>
+                <TextFieldControl
+                  {...getInputProps(fields.code, { type: 'text' })}
+                  autoComplete={'one-time-code'}
+                  disabled={isSubmitting || enrollment === null}
+                  inputMode={'numeric'}
+                  placeholder={'123 456'}
+                />
+              </TextField>
 
               <AdminModalActions>
                 <Button

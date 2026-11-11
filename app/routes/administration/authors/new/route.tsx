@@ -9,9 +9,14 @@ import { Button } from '~/components/button'
 import { PageTitle } from '~/components/page-title'
 import { Radio } from '~/components/radio'
 import { RadioGroup } from '~/components/radio-group'
+import { RadioGroupLegend } from '~/components/radio-group-legend'
+import { RadioHint } from '~/components/radio-hint'
 import { RecordForm } from '~/components/record-form'
 import { RecordFormActions } from '~/components/record-form-actions'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useToast } from '~/components/toast-provider'
 import { getAuthorRoleDescription } from '~/utils/get-author-role-description'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
@@ -93,24 +98,28 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <RecordForm fetcher={fetcher} form={form}>
         <TextField
-          label={'Jméno'}
-          {...getInputProps(fields.name, { type: 'text' })}
           errors={fields.name.errors}
-          hint={AUTHOR_RECORD_COPY.nameHint}
-        />
+          id={fields.name.id}
+          required={fields.name.required}
+        >
+          <TextFieldLabel>Jméno</TextFieldLabel>
+          <TextFieldControl {...getInputProps(fields.name, { type: 'text' })} />
+          <TextFieldHint>{AUTHOR_RECORD_COPY.nameHint}</TextFieldHint>
+        </TextField>
 
-        <RadioGroup legend={AUTHOR_RECORD_COPY.roleLegend}>
+        <RadioGroup>
+          <RadioGroupLegend>{AUTHOR_RECORD_COPY.roleLegend}</RadioGroupLegend>
           {roles.map((role) => (
             <Radio
               {...getInputProps(fields.roleId, {
                 type: 'radio',
                 value: role.id,
               })}
-              hint={getAuthorRoleDescription(role.name)}
               id={`${fields.roleId.id}-${role.name}`}
               key={role.id}
             >
               {getAuthorRoleLabel(role.name)}
+              <RadioHint>{getAuthorRoleDescription(role.name)}</RadioHint>
             </Radio>
           ))}
         </RadioGroup>

@@ -1,0 +1,24 @@
+/* At the end of the hint's row, 16 px from it. */
+.counter {
+  @layer component {
+    grid-column: 2;
+    align-self: start;
+    margin-inline-start: 16px;
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-tertiary);
+  }
+}
+
+/* Over a limit that only advises: amber, never the error look (24a). */
+.counter.isAttention {
+  @layer variant {
+    color: var(--state-attention-text);
+  }
+}
+
+.counter.isInvalid {
+  @layer variant {
+    color: var(--error-text);
+  }
+}

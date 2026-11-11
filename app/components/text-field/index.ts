@@ -1,1 +1,1 @@
-export { TextField } from './_component'
+export { TextField, useTextField } from './_component'

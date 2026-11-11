@@ -1,1 +1,1 @@
-export { TextareaField } from './_component'
+export { TextareaField, useTextareaField } from './_component'

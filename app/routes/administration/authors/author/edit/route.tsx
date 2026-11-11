@@ -10,9 +10,12 @@ import { Callout } from '~/components/callout'
 import { PageTitle } from '~/components/page-title'
 import { Radio } from '~/components/radio'
 import { RadioGroup } from '~/components/radio-group'
+import { RadioGroupLegend } from '~/components/radio-group-legend'
 import { RecordForm } from '~/components/record-form'
 import { RecordFormActions } from '~/components/record-form-actions'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useToast } from '~/components/toast-provider'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { useReturnToOpener } from '~/utils/use-return-to-opener'
@@ -128,12 +131,16 @@ export default function RouteComponent({
 
       <RecordForm fetcher={fetcher} form={form}>
         <TextField
-          label={'Jméno'}
-          {...getInputProps(fields.name, { type: 'text' })}
           errors={fields.name.errors}
-        />
+          id={fields.name.id}
+          required={fields.name.required}
+        >
+          <TextFieldLabel>Jméno</TextFieldLabel>
+          <TextFieldControl {...getInputProps(fields.name, { type: 'text' })} />
+        </TextField>
 
-        <RadioGroup legend={AUTHOR_RECORD_COPY.roleLegend}>
+        <RadioGroup>
+          <RadioGroupLegend>{AUTHOR_RECORD_COPY.roleLegend}</RadioGroupLegend>
           {roles.map((role) => (
             <Radio
               {...getInputProps(fields.roleId, {
