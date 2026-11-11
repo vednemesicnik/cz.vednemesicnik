@@ -1,0 +1,6 @@
+.platform {
+  @layer route {
+    flex-shrink: 0;
+    font-weight: var(--font-weight-medium);
+  }
+}

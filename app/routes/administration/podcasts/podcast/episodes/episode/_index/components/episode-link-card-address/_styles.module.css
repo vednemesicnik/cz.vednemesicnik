@@ -1,0 +1,19 @@
+/* The link shrinks with its address; the new-tab icon stays after it. */
+.link {
+  @layer route {
+    display: flex;
+    align-items: baseline;
+    min-width: 0;
+  }
+}
+
+/* The rest of a long address gives way to an ellipsis, never to the name. */
+.address {
+  @layer route {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

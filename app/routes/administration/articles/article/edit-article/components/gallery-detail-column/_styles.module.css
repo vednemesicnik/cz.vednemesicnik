@@ -1,0 +1,32 @@
+.column {
+  @layer route {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
+/* The heading and Upravit on one line; the button keeps to the heading's. */
+.columnHeading {
+  @layer route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-block-size: 30px;
+  }
+}
+
+.name {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+}

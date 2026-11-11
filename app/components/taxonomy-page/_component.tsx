@@ -1,4 +1,6 @@
+import { createContext, type ReactNode, useContext } from 'react'
 import { href } from 'react-router'
+
 import { Badge } from '~/components/badge'
 import { ContentLinkAuthor } from '~/components/content-link-author'
 import { ContentLinkCategories } from '~/components/content-link-categories'
@@ -11,16 +13,10 @@ import { ContentListItem } from '~/components/content-list-item'
 import { EmptyState } from '~/components/empty-state'
 import { EmptyStateLink } from '~/components/empty-state-link'
 import { EmptyStateText } from '~/components/empty-state-text'
-import { Headline } from '~/components/headline'
-import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
-import { ParentLink } from '~/components/parent-link'
 import { PostContentLink } from '~/components/post-content-link'
-import { StatusTag, type StatusTagState } from '~/components/status-tag'
-import { Subheadline } from '~/components/subheadline'
-import type { Breadcrumb } from '~/types/breadcrumb'
-import { formatArticleCount } from '~/utils/format-article-count'
+import type { StatusTagState } from '~/components/status-tag'
 import type { FormattedDate } from '~/utils/format-date'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
@@ -39,63 +35,44 @@ type TaxonomyArticle = {
   title: string
 }
 
+const Context = createContext<number | undefined>(undefined)
+
 type Props = {
   articles: TaxonomyArticle[]
   currentPage: number
-  kindLabel: string
-  name: string
   pageSize: number
-  parent: Breadcrumb | undefined
-  previewState: StatusTagState | null
   totalCount: number
   totalPages: number
+  children: ReactNode
 }
 
 /**
- * The page of one category or tag (design 11b): the name as the headline, the
- * kind and article count under it, the article rows and pagination. Both routes
- * render it; they differ only in `kindLabel` and the parent link.
+ * The page of one category or tag (design 11b): the head, the article rows and
+ * pagination. Both routes render it, each with its own head.
  *
  * The empty state shows only above a list the page really displays empty, so a
  * draft in the editorial preview suppresses it (10d).
  *
- * @param kindLabel - The word under the headline: "Rubrika" or "Štítek"
- * @param parent - The index one level up ("‹ Rubriky", "‹ Štítky")
- * @param previewState - The category's or tag's own state when the reader
- *   doesn't see it: a grey tag after the kind line (11e)
- * @param totalCount - The articles the visitor can see, which the count states
+ * @param props.children - The head: the `ParentLink` one level up
+ *   („‹ Rubriky“), then a `HeadlineGroup` with the name as the `Headline` and
+ *   `TaxonomyPageKind` under it
+ * @param props.totalCount - The articles the visitor can see, which the kind
+ *   line counts
  * @returns The taxonomy page
  */
 export const TaxonomyPage = ({
   articles,
   currentPage,
-  kindLabel,
-  name,
   pageSize,
-  parent,
-  previewState,
   totalCount,
   totalPages,
+  children,
 }: Props) => {
   const isEmpty = totalCount === 0
 
   return (
     <Page>
-      {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
-      <HeadlineGroup>
-        <Headline>{name}</Headline>
-        <Subheadline>
-          {isEmpty
-            ? kindLabel
-            : `${kindLabel} · ${formatArticleCount(totalCount)}`}
-          {previewState !== null && (
-            <>
-              {' '}
-              <StatusTag muted state={previewState} />
-            </>
-          )}
-        </Subheadline>
-      </HeadlineGroup>
+      <Context.Provider value={totalCount}>{children}</Context.Provider>
 
       {isEmpty ? (
         <EmptyState>
@@ -153,4 +130,19 @@ export const TaxonomyPage = ({
       />
     </Page>
   )
+}
+
+/**
+ * The articles a `TaxonomyPage` counts, for its kind line.
+ *
+ * @returns The page's article count
+ */
+export const useTaxonomyPage = () => {
+  const totalCount = useContext(Context)
+
+  if (totalCount === undefined) {
+    throw new Error('useTaxonomyPage must be used within a TaxonomyPage')
+  }
+
+  return totalCount
 }

@@ -1,1 +1,1 @@
-export { GalleryDetail } from './_component'
+export { GalleryDetail, useGalleryDetail } from './_component'

@@ -1,0 +1,11 @@
+.content {
+  @layer route {
+    display: grid;
+    position: relative;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content;
+    justify-items: center;
+    background-color: var(--color-white);
+    padding: 16px;
+  }
+}

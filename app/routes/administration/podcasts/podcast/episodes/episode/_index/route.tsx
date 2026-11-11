@@ -69,6 +69,8 @@ import type { action as episodeAction } from './_action'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { EpisodeLinkCard } from './components/episode-link-card'
+import { EpisodeLinkCardAddress } from './components/episode-link-card-address'
+import { EpisodeLinkCardPlatform } from './components/episode-link-card-platform'
 import { EpisodeLinkList } from './components/episode-link-list'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -321,12 +323,17 @@ export default function RouteComponent({
                 // In the order the web lists them (27c).
                 <EpisodeLinkList>
                   {episode.links.map((link) => (
-                    <EpisodeLinkCard
-                      isValid={link.isValid}
-                      key={link.id}
-                      platform={link.label}
-                      url={link.url}
-                    />
+                    <EpisodeLinkCard key={link.id}>
+                      {link.label !== '' && (
+                        <EpisodeLinkCardPlatform>
+                          {link.label}
+                        </EpisodeLinkCardPlatform>
+                      )}
+                      <EpisodeLinkCardAddress
+                        isValid={link.isValid}
+                        url={link.url}
+                      />
+                    </EpisodeLinkCard>
                   ))}
                 </EpisodeLinkList>
               )}

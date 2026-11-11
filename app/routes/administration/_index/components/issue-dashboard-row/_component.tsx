@@ -1,14 +1,18 @@
+import { TableNameNote, TableStateCell } from '~/components/admin/admin-table'
+import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import { IssueActionDialogs } from '~/routes/administration/archive/components/issue-action-dialogs'
 import { ISSUE_ACTION_LABELS } from '~/routes/administration/archive/utils/issue-actions'
 import { useIssueActions } from '~/routes/administration/archive/utils/use-issue-actions'
 import { getRowTint } from '~/utils/live-change/get-row-tint'
 import { SECTION_ROW_ACTION } from '../../dashboard-section-kind'
-import { DASHBOARD_TYPE_COPY } from '../../dashboard-types'
 import { getDashboardRowActions } from '../../utils/get-dashboard-row-actions'
 import { getDashboardRowLines } from '../../utils/get-dashboard-row-lines'
 import { DashboardRow } from '../dashboard-row'
 import type { DashboardRowProps } from '../dashboard-row/dashboard-row-props'
 import { DashboardRowActions } from '../dashboard-row-actions'
+import { DashboardRowName } from '../dashboard-row-name'
+import { DashboardRowTitle } from '../dashboard-row-title'
 
 /**
  * An issue's dashboard row (design 21a, 21b): the archive list's row data and
@@ -43,15 +47,19 @@ export const IssueDashboardRow = ({
 
   return (
     <DashboardRow
-      detail={detail}
-      detailHref={item.detailHref}
       muted={row.state === 'archived'}
-      note={note}
-      state={row.submission ?? row.state}
       tint={getRowTint(liveChange)}
-      title={item.title}
-      typeLabel={DASHBOARD_TYPE_COPY.issue.label}
+      type={'issue'}
     >
+      <DashboardRowName>
+        <DashboardRowTitle to={item.detailHref}>{item.title}</DashboardRowTitle>
+        {note !== null && <TableNameNote>{note}</TableNameNote>}
+      </DashboardRowName>
+      <TableStateCell>
+        <StatusTag state={row.submission ?? row.state}>
+          {detail !== undefined && <StatusTagDetail>{detail}</StatusTagDetail>}
+        </StatusTag>
+      </TableStateCell>
       <DashboardRowActions
         editHref={actions.editHref}
         getLabel={(action) => ISSUE_ACTION_LABELS[action]}

@@ -1,1 +1,1 @@
-export { TaxonomyPage } from './_component'
+export { TaxonomyPage, useTaxonomyPage } from './_component'

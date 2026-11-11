@@ -3,6 +3,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
+import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
+import { ParentLink } from '~/components/parent-link'
+import type { StatusTagState } from '~/components/status-tag'
+import { TaxonomyPageKind } from '~/components/taxonomy-page-kind'
+
 import { TaxonomyPage } from './_component'
 
 const meta: Meta<typeof TaxonomyPage> = {
@@ -38,15 +44,33 @@ const article = (index: number) => ({
   title: `Jak vzniká školní divadlo, díl ${index}`,
 })
 
+/** The head as a route composes it: the parent link, the name and the kind line. */
+const head = ({
+  kind = 'Rubrika',
+  name,
+  parent = { label: 'Rubriky', path: '/articles/categories' },
+  previewState = null,
+}: {
+  kind?: string
+  name: string
+  parent?: { label: string; path: string }
+  previewState?: StatusTagState | null
+}) => (
+  <>
+    <ParentLink to={parent.path}>{parent.label}</ParentLink>
+    <HeadlineGroup>
+      <Headline>{name}</Headline>
+      <TaxonomyPageKind previewState={previewState}>{kind}</TaxonomyPageKind>
+    </HeadlineGroup>
+  </>
+)
+
 export const Playground: Story = {
   args: {
     articles: Array.from({ length: 9 }, (_, index) => article(index + 1)),
+    children: head({ name: 'Kultura' }),
     currentPage: 1,
-    kindLabel: 'Rubrika',
-    name: 'Kultura',
     pageSize: 9,
-    parent: { label: 'Rubriky', path: '/articles/categories' },
-    previewState: null,
     totalCount: 18,
     totalPages: 2,
   },
@@ -70,9 +94,11 @@ export const Tag: Story = {
   args: {
     ...Playground.args,
     articles: [article(1)],
-    kindLabel: 'Štítek',
-    name: 'maturita',
-    parent: { label: 'Štítky', path: '/articles/tags' },
+    children: head({
+      kind: 'Štítek',
+      name: 'maturita',
+      parent: { label: 'Štítky', path: '/articles/tags' },
+    }),
     totalCount: 1,
     totalPages: 1,
   },
@@ -95,8 +121,7 @@ export const UnpublishedCategory: Story = {
         ],
       },
     ],
-    name: 'Glosy',
-    previewState: 'draft',
+    children: head({ name: 'Glosy', previewState: 'draft' }),
     totalCount: 2,
     totalPages: 1,
   },
@@ -107,7 +132,7 @@ export const Empty: Story = {
   args: {
     ...Playground.args,
     articles: [],
-    name: 'Sport',
+    children: head({ name: 'Sport' }),
     totalCount: 0,
     totalPages: 0,
   },
