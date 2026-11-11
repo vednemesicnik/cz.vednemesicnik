@@ -5,10 +5,13 @@ import { popStateGuard } from '~/utils/history/popstate-guard'
 // Marks the history entry the open viewer pushed.
 const ENTRY_MARKER = 'imageViewer'
 
+const readState = (state: unknown) =>
+  typeof state === 'object' && state !== null
+    ? (state as Record<string, unknown>)
+    : {}
+
 const isViewerEntry = (state: unknown) =>
-  typeof state === 'object' &&
-  state !== null &&
-  (state as Record<string, unknown>)[ENTRY_MARKER] === true
+  readState(state)[ENTRY_MARKER] === true
 
 /**
  * Lets Back close a modal `<dialog>` that is an overlay, not a page (the image
@@ -30,6 +33,9 @@ export const useViewerHistory = (ref: RefObject<HTMLDialogElement | null>) => {
   // Set while a pop that this hook started, or that closes the dialog, is due.
   const isOwnPopDueRef = useRef(false)
   const isClosingByBackRef = useRef(false)
+  // The router's key of the page entry the viewer opened on; its own entry
+  // carries the same key.
+  const pageKeyRef = useRef<unknown>(undefined)
 
   useEffect(() => {
     const dialog = ref.current
@@ -53,8 +59,13 @@ export const useViewerHistory = (ref: RefObject<HTMLDialogElement | null>) => {
         return true
       }
 
-      // Forward onto the entry of a viewer closed earlier: step over it.
-      if (isViewerEntry(event.state)) {
+      // Forward onto the entry of a viewer closed earlier on this page: step
+      // over it. Another page's entry is the router's to navigate to.
+      if (
+        isViewerEntry(event.state) &&
+        pageKeyRef.current !== undefined &&
+        readState(event.state).key === pageKeyRef.current
+      ) {
         stepBack()
         return true
       }
@@ -86,6 +97,7 @@ export const useViewerHistory = (ref: RefObject<HTMLDialogElement | null>) => {
     if (dialog === null || dialog.open) return
 
     dialog.showModal()
+    pageKeyRef.current = readState(window.history.state).key
     window.history.pushState(
       { ...window.history.state, [ENTRY_MARKER]: true },
       '',

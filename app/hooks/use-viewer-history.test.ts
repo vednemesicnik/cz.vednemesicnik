@@ -131,12 +131,28 @@ describe('useViewerHistory', () => {
   })
 
   test('Forward onto a closed viewer’s entry steps back over it', () => {
-    const back = vi.spyOn(window.history, 'back')
-    renderViewerHistory()
+    const { dialog, open } = renderViewerHistory()
 
+    open()
+    pressBack({ idx: 3, key: 'article' })
+    expect(dialog.open).toBe(false)
+
+    const back = vi.spyOn(window.history, 'back')
     pressBack({ idx: 3, imageViewer: true, key: 'article' })
 
     expect(back).toHaveBeenCalledTimes(1)
     expect(routerListener).not.toHaveBeenCalled()
+  })
+
+  test('another page’s viewer entry goes to the router', () => {
+    const back = vi.spyOn(window.history, 'back')
+    const { open } = renderViewerHistory()
+
+    open()
+    pressBack({ idx: 3, key: 'article' })
+    pressBack({ idx: 5, imageViewer: true, key: 'other-article' })
+
+    expect(back).not.toHaveBeenCalled()
+    expect(routerListener).toHaveBeenCalledTimes(1)
   })
 })

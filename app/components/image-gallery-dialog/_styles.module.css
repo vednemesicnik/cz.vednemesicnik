@@ -108,6 +108,7 @@
 .figure {
   @layer component {
     display: grid;
+    position: relative;
     grid-template-rows: minmax(0, 1fr) auto;
     min-height: 0;
     margin: 0;
@@ -182,12 +183,14 @@
   }
 }
 
-/* At the window edge, vertically centred on the stage; they never move. */
+/* At the window edge, vertically centred on the area below the band, so they
+   never move while paging; a drag down fades them with the band. */
 .arrowAnchor {
   @layer variant {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
+    opacity: calc(1 - var(--drag-progress));
   }
 }
 

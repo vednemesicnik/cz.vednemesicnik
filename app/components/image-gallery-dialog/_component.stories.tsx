@@ -63,6 +63,7 @@ const OpenDialog = ({ images, initialIndex = 0 }: DemoProps) => {
       <ImageGalleryDialog
         images={images}
         index={index}
+        isOpen={true}
         onIndexChange={setIndex}
         ref={dialogRef}
       />

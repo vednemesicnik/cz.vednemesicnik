@@ -28,6 +28,7 @@ export type GalleryImage = {
 type Props = {
   images: Array<GalleryImage>
   index: number
+  isOpen: boolean
   onIndexChange: (index: number) => void
   ref: RefObject<HTMLDialogElement | null>
   className?: string
@@ -53,11 +54,14 @@ const KEEPS_OPEN = 'button, a, figcaption, [data-keeps-open]'
  *
  * @param index - The image shown; the parent owns it, so a tile can open the
  *   viewer at its own image.
+ * @param isOpen - Whether the viewer is open. Only then do the photo and its
+ *   neighbours load, so a page with a gallery loads none of them up front.
  * @param onIndexChange - Called with the next index when the reader pages.
  */
 export const ImageGalleryDialog = ({
   images,
   index,
+  isOpen,
   onIndexChange,
   ref,
   className,
@@ -135,11 +139,12 @@ export const ImageGalleryDialog = ({
 
   const dragProgress = Math.min(1, dragDistance / DRAG_FADE_DISTANCE)
   const isZoomed = scale > 1
-  const neighbours = hasPaging
-    ? [...new Set([previousIndex, nextIndex])].filter(
-        (neighbourIndex) => neighbourIndex !== currentIndex,
-      )
-    : []
+  const neighbours =
+    isOpen && hasPaging
+      ? [...new Set([previousIndex, nextIndex])].filter(
+          (neighbourIndex) => neighbourIndex !== currentIndex,
+        )
+      : []
 
   return (
     <dialog
@@ -171,11 +176,14 @@ export const ImageGalleryDialog = ({
 
           <figure className={styles.figure}>
             <div className={styles.stage} ref={stageRef}>
+              {/* Keyed, so the next image mounts whole, with nothing to
+                  transition from the last one's zoom. */}
               <div
                 {...handlers}
                 className={styles.frame}
                 data-active={isActive || undefined}
                 data-keeps-open={true}
+                key={image.id}
                 ref={frameRef}
                 style={
                   {
@@ -189,43 +197,44 @@ export const ImageGalleryDialog = ({
                   {...image.sources}
                   alt={image.alt}
                   className={styles.image}
-                  key={image.id}
-                  loading={'eager'}
+                  loading={isOpen ? 'eager' : 'lazy'}
                   sizes={isZoomed ? '200vw' : '100vw'}
                 />
               </div>
-
-              {hasPaging && (
-                <>
-                  <Tooltip
-                    className={clsx(styles.arrowAnchor, styles.previous)}
-                    label={'Předchozí obrázek'}
-                  >
-                    <button
-                      aria-label={'Předchozí obrázek'}
-                      className={styles.iconButton}
-                      onClick={showPrevious}
-                      type={'button'}
-                    >
-                      <KeyboardArrowLeftIcon />
-                    </button>
-                  </Tooltip>
-                  <Tooltip
-                    className={clsx(styles.arrowAnchor, styles.next)}
-                    label={'Další obrázek'}
-                  >
-                    <button
-                      aria-label={'Další obrázek'}
-                      className={styles.iconButton}
-                      onClick={showNext}
-                      type={'button'}
-                    >
-                      <KeyboardArrowRightIcon />
-                    </button>
-                  </Tooltip>
-                </>
-              )}
             </div>
+
+            {/* On the whole area below the band, not on the stage, whose height
+                follows the caption: the arrows never move while paging. */}
+            {hasPaging && (
+              <>
+                <Tooltip
+                  className={clsx(styles.arrowAnchor, styles.previous)}
+                  label={'Předchozí obrázek'}
+                >
+                  <button
+                    aria-label={'Předchozí obrázek'}
+                    className={styles.iconButton}
+                    onClick={showPrevious}
+                    type={'button'}
+                  >
+                    <KeyboardArrowLeftIcon />
+                  </button>
+                </Tooltip>
+                <Tooltip
+                  className={clsx(styles.arrowAnchor, styles.next)}
+                  label={'Další obrázek'}
+                >
+                  <button
+                    aria-label={'Další obrázek'}
+                    className={styles.iconButton}
+                    onClick={showNext}
+                    type={'button'}
+                  >
+                    <KeyboardArrowRightIcon />
+                  </button>
+                </Tooltip>
+              </>
+            )}
 
             {image.description && (
               <figcaption className={styles.caption}>
@@ -234,7 +243,7 @@ export const ImageGalleryDialog = ({
             )}
           </figure>
 
-          {/* The neighbours load ahead, so paging doesn't wait. */}
+          {/* While open, the neighbours load ahead, so paging doesn't wait. */}
           <div hidden>
             {neighbours.map((neighbourIndex) => {
               const neighbour = images[neighbourIndex]

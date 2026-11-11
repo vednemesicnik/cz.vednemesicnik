@@ -26,11 +26,13 @@ export const ImageGallery = ({ images, className }: Props) => {
   const tileRefs = useRef<Array<HTMLButtonElement | null>>([])
   const openerIndexRef = useRef(0)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isOpen, setIsOpen] = useState(false)
   const openViewer = useViewerHistory(dialogRef)
 
   const handleOpen = (index: number) => {
     openerIndexRef.current = index
     setCurrentIndex(index)
+    setIsOpen(true)
     openViewer()
   }
 
@@ -42,6 +44,7 @@ export const ImageGallery = ({ images, className }: Props) => {
     if (dialog === null) return
 
     const handleClose = () => {
+      setIsOpen(false)
       tileRefs.current[openerIndexRef.current]?.focus()
     }
 
@@ -69,6 +72,7 @@ export const ImageGallery = ({ images, className }: Props) => {
       <ImageGalleryDialog
         images={images}
         index={currentIndex}
+        isOpen={isOpen}
         onIndexChange={setCurrentIndex}
         ref={dialogRef}
       />
