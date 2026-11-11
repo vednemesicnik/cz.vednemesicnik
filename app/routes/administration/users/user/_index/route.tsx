@@ -43,6 +43,8 @@ import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { EmergencyLinkDialog } from './components/emergency-link-dialog'
 import { SignInMethod } from './components/sign-in-method'
+import { SignInMethodNote } from './components/sign-in-method-note'
+import { SignInMethodStatus } from './components/sign-in-method-status'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -165,25 +167,61 @@ export default function RouteComponent({
               <AdminDetailItem>
                 <AdminDetailItemLabel>Heslo</AdminDetailItemLabel>
                 <AdminDetailItemValue>
-                  <SignInMethod description={signInMethods.password} />
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.password.status}
+                    </SignInMethodStatus>
+                    {signInMethods.password.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.password.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
                 </AdminDetailItemValue>
               </AdminDetailItem>
               <AdminDetailItem>
                 <AdminDetailItemLabel>Dvoufázové ověření</AdminDetailItemLabel>
                 <AdminDetailItemValue>
-                  <SignInMethod description={signInMethods.twoFactor} />
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.twoFactor.status}
+                    </SignInMethodStatus>
+                    {signInMethods.twoFactor.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.twoFactor.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
                 </AdminDetailItemValue>
               </AdminDetailItem>
               <AdminDetailItem>
                 <AdminDetailItemLabel>Passkey</AdminDetailItemLabel>
                 <AdminDetailItemValue>
-                  <SignInMethod description={signInMethods.passkey} />
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.passkey.status}
+                    </SignInMethodStatus>
+                    {signInMethods.passkey.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.passkey.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
                 </AdminDetailItemValue>
               </AdminDetailItem>
               <AdminDetailItem>
                 <AdminDetailItemLabel>Google</AdminDetailItemLabel>
                 <AdminDetailItemValue>
-                  <SignInMethod description={signInMethods.google} />
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.google.status}
+                    </SignInMethodStatus>
+                    {signInMethods.google.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.google.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
                 </AdminDetailItemValue>
               </AdminDetailItem>
               {/* Only while the link works, as of this load (28e). */}
@@ -191,15 +229,16 @@ export default function RouteComponent({
                 <AdminDetailItem>
                   <AdminDetailItemLabel>Nouzový odkaz</AdminDetailItemLabel>
                   <AdminDetailItemValue>
-                    <SignInMethod
-                      description={{
-                        note:
-                          emergencyLink.issuerName === null
-                            ? `vydaný ve ${emergencyLink.issuedAt}`
-                            : `vydaný ve ${emergencyLink.issuedAt} · ${emergencyLink.issuerName}`,
-                        status: `platí do ${emergencyLink.expiresAt}`,
-                      }}
-                    />
+                    <SignInMethod>
+                      <SignInMethodStatus>
+                        platí do {emergencyLink.expiresAt}
+                      </SignInMethodStatus>
+                      <SignInMethodNote>
+                        {emergencyLink.issuerName === null
+                          ? `vydaný ve ${emergencyLink.issuedAt}`
+                          : `vydaný ve ${emergencyLink.issuedAt} · ${emergencyLink.issuerName}`}
+                      </SignInMethodNote>
+                    </SignInMethod>
                   </AdminDetailItemValue>
                 </AdminDetailItem>
               )}
