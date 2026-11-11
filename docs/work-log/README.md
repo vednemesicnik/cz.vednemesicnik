@@ -108,3 +108,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0074](0074-feeds-are-public-and-a-podcast-feed-is-found-by-its-id.md) | Feeds are public, and a podcast's feed is found by its id | 2026-11-08 |  |
 | [0075](0075-webmcp-waits-for-an-agent-that-calls-it.md) | WebMCP waits for an agent that calls it, on the website and in the administration | 2026-11-09 |  |
 | [0076](0076-pageseo-is-gone-and-the-main-image-always-has-its-share-crop.md) | PageSEO is gone, and the main image always has its share crop | 2026-11-09 |  |
+| [0077](0077-an-issue-pdf-opens-in-the-browsers-own-viewer-and-its-cover-is-uploaded.md) | An issue PDF opens in the browser's own viewer, and its cover is uploaded | 2026-11-11 |  |
