@@ -1,17 +1,21 @@
 import { href } from 'react-router'
 
+import { TableNameNote, TableStateCell } from '~/components/admin/admin-table'
+import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import { CATEGORY_RECORD_COPY } from '~/routes/administration/articles/categories/category-record-copy'
 import { TaxonomyActionDialogs } from '~/routes/administration/articles/components/taxonomy-action-dialogs'
 import { TAG_RECORD_COPY } from '~/routes/administration/articles/tags/tag-record-copy'
 import { useTaxonomyActions } from '~/routes/administration/articles/utils/use-taxonomy-actions'
 import { getRowTint } from '~/utils/live-change/get-row-tint'
 import { SECTION_ROW_ACTION } from '../../dashboard-section-kind'
-import { DASHBOARD_TYPE_COPY } from '../../dashboard-types'
 import { getDashboardRowActions } from '../../utils/get-dashboard-row-actions'
 import { getDashboardRowLines } from '../../utils/get-dashboard-row-lines'
 import { DashboardRow } from '../dashboard-row'
 import type { DashboardRowProps } from '../dashboard-row/dashboard-row-props'
 import { DashboardRowActions } from '../dashboard-row-actions'
+import { DashboardRowName } from '../dashboard-row-name'
+import { DashboardRowTitle } from '../dashboard-row-title'
 
 /**
  * A category's or tag's dashboard row (design 21a, 21b): the list's row data
@@ -55,15 +59,19 @@ export const TaxonomyDashboardRow = ({
 
   return (
     <DashboardRow
-      detail={detail}
-      detailHref={item.detailHref}
       muted={row.state === 'archived'}
-      note={note}
-      state={row.state}
       tint={getRowTint(liveChange)}
-      title={item.title}
-      typeLabel={DASHBOARD_TYPE_COPY[item.type].label}
+      type={item.type}
     >
+      <DashboardRowName>
+        <DashboardRowTitle to={item.detailHref}>{item.title}</DashboardRowTitle>
+        {note !== null && <TableNameNote>{note}</TableNameNote>}
+      </DashboardRowName>
+      <TableStateCell>
+        <StatusTag state={row.state}>
+          {detail !== undefined && <StatusTagDetail>{detail}</StatusTagDetail>}
+        </StatusTag>
+      </TableStateCell>
       <DashboardRowActions
         getLabel={actions.getLabel}
         isSubmitting={actions.isSubmitting}

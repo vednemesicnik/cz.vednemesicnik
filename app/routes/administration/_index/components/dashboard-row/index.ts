@@ -1,1 +1,1 @@
-export { DashboardRow } from './_component'
+export { DashboardRow, useDashboardRow } from './_component'
