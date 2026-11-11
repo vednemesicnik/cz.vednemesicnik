@@ -107,10 +107,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalPages={totalPages}
       />
 
-      <Callout>
-        Starší články si můžete přečíst na platformě{' '}
-        <Hyperlink href={'https://medium.com/vednemesicnik'}>Medium</Hyperlink>.
-      </Callout>
+      {currentPage === Math.max(totalPages, 1) && (
+        <Callout>
+          Starší články si můžete přečíst na platformě{' '}
+          <Hyperlink href={'https://medium.com/vednemesicnik'}>
+            Medium
+          </Hyperlink>
+          .
+        </Callout>
+      )}
     </Page>
   )
 }
