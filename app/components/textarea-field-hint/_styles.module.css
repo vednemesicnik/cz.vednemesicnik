@@ -1,0 +1,8 @@
+.hint {
+  @layer component {
+    grid-column: 1;
+    justify-self: stretch;
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+  }
+}

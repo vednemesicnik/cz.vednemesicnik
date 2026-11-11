@@ -15,7 +15,11 @@ import { FormLegend } from '~/components/form-legend'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { MailHyperlink } from '~/components/mail-hyperlink'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { ORGANIZATION_REGISTRATION_NUMBER } from '~/config/site-config'
 import { useHydrated } from '~/utils/use-hydrated'
 
@@ -67,42 +71,50 @@ export const EnrolmentForm = ({ submissionResult }: Props) => {
         <FormLegend />
 
         <TextField
-          autoComplete={'given-name'}
           errors={fields.firstName.errors}
-          label={'Jméno'}
+          id={fields.firstName.id}
           required
-          {...getInputProps(fields.firstName, { type: 'text' })}
-        />
+        >
+          <TextFieldLabel>Jméno</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'given-name'}
+            {...getInputProps(fields.firstName, { type: 'text' })}
+          />
+        </TextField>
         <TextField
-          autoComplete={'family-name'}
           errors={fields.lastName.errors}
-          label={'Příjmení'}
+          id={fields.lastName.id}
           required
-          {...getInputProps(fields.lastName, { type: 'text' })}
-        />
-        <TextField
-          autoComplete={'email'}
-          errors={fields.email.errors}
-          label={'E-mail'}
-          required
-          {...getInputProps(fields.email, { type: 'email' })}
-        />
-        <TextField
-          autoComplete={'tel'}
-          errors={fields.phone.errors}
-          label={'Telefon'}
-          required
-          {...getInputProps(fields.phone, { type: 'tel' })}
-        />
-        <TextareaField
-          field={fields.interest}
-          label={'Čemu byste se chtěli věnovat?'}
-          optional
-          textareaProps={{
-            placeholder: 'psaní, focení, korektury…',
-            rows: 3,
-          }}
-        />
+        >
+          <TextFieldLabel>Příjmení</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'family-name'}
+            {...getInputProps(fields.lastName, { type: 'text' })}
+          />
+        </TextField>
+        <TextField errors={fields.email.errors} id={fields.email.id} required>
+          <TextFieldLabel>E-mail</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'email'}
+            {...getInputProps(fields.email, { type: 'email' })}
+          />
+        </TextField>
+        <TextField errors={fields.phone.errors} id={fields.phone.id} required>
+          <TextFieldLabel>Telefon</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'tel'}
+            {...getInputProps(fields.phone, { type: 'tel' })}
+          />
+        </TextField>
+        <TextareaField field={fields.interest}>
+          <TextareaFieldLabel optional>
+            Čemu byste se chtěli věnovat?
+          </TextareaFieldLabel>
+          <TextareaFieldControl
+            placeholder={'psaní, focení, korektury…'}
+            rows={3}
+          />
+        </TextareaField>
 
         <p className={styles.notice}>
           Odesláním přihlášky potvrzujete, že vám je alespoň 15&nbsp;let. Vaše

@@ -61,34 +61,3 @@
     border-color: var(--border-accent);
   }
 }
-
-/* The whole field picks: the label's box covers it (as 24b). */
-.label {
-  @layer component {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--link-strong);
-    cursor: pointer;
-
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-    }
-  }
-}
-
-/* Outside the edit hold nothing uploads. */
-.disabled {
-  @layer variant {
-    color: var(--text-secondary);
-    cursor: not-allowed;
-  }
-}
-
-.hint {
-  @layer component {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-  }
-}

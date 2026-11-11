@@ -1,0 +1,9 @@
+/* A line under the checkbox's sentence, 2 px below it. */
+.hint {
+  @layer component {
+    display: block;
+    margin-block-start: 2px;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}

@@ -76,6 +76,20 @@ A component with no parts is configured, not composed:
 Use a prop also when the caller must not get something wrong, such as a value that has to
 be the same on every part. Pass it once on the root and let the parts read it from context.
 
+A form field is the common case. The root takes the control's `id` and `required`, and its
+label, control and hint read them, so the label's `for` and asterisk can't drift from the
+input. The control is a part as well, because the label renders before it and the hint after
+it. The control always points `aria-describedby` at the hint's id. When no hint is rendered,
+the reference is ignored, so the hint never has to register itself.
+
+```tsx
+<PriceField errors={errors} id={'price'} required>
+  <PriceFieldLabel>Cena</PriceFieldLabel>
+  <PriceFieldControl inputMode={'decimal'} name={'price'} />
+  <PriceFieldHint>Včetně DPH.</PriceFieldHint>
+</PriceField>
+```
+
 ## Render props: hand values out, don't hide them
 
 When the caller's markup depends on the root's state, a render prop shows the dependency at

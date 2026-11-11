@@ -10,6 +10,8 @@ import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useHydrated } from '~/utils/use-hydrated'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -63,21 +65,29 @@ export default function RouteComponent({
         {isBackupCodeMethod ? (
           <TextField
             errors={fields.backupCode.errors}
-            isRequiredMarkHidden
-            label={'Záložní kód'}
-            {...getInputProps(fields.backupCode, { type: 'text' })}
-            autoComplete={'one-time-code'}
-            placeholder={'k7m2-9xqp'}
-          />
+            id={fields.backupCode.id}
+            required={fields.backupCode.required}
+          >
+            <TextFieldLabel isRequiredMarkHidden>Záložní kód</TextFieldLabel>
+            <TextFieldControl
+              {...getInputProps(fields.backupCode, { type: 'text' })}
+              autoComplete={'one-time-code'}
+              placeholder={'k7m2-9xqp'}
+            />
+          </TextField>
         ) : (
           <TextField
             errors={fields.code.errors}
-            isRequiredMarkHidden
-            label={'Kód'}
-            {...getInputProps(fields.code, { type: 'text' })}
-            autoComplete={'one-time-code'}
-            inputMode={'numeric'}
-          />
+            id={fields.code.id}
+            required={fields.code.required}
+          >
+            <TextFieldLabel isRequiredMarkHidden>Kód</TextFieldLabel>
+            <TextFieldControl
+              {...getInputProps(fields.code, { type: 'text' })}
+              autoComplete={'one-time-code'}
+              inputMode={'numeric'}
+            />
+          </TextField>
         )}
 
         <Button type="submit">Ověřit</Button>

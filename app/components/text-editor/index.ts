@@ -1,1 +1,1 @@
-export { TextEditor } from './_component'
+export { TextEditor, useTextEditorField } from './_component'

@@ -3,10 +3,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { ErrorMessage } from '~/components/error-message'
+import { FileDropFieldHint } from '~/components/file-drop-field-hint'
+import { FileDropFieldLabel } from '~/components/file-drop-field-label'
 
 import { FileDropField } from './_component'
 
 const meta: Meta<typeof FileDropField> = {
+  argTypes: {
+    children: { control: false },
+  },
   component: FileDropField,
   parameters: {
     layout: 'padded',
@@ -22,14 +27,17 @@ type Story = StoryObj<typeof meta>
 export const Playground: Story = {
   args: {
     accept: 'image/*',
-    hint: 'nebo ji sem přetáhněte · obrázek do 5 MB',
-    label: 'Vybrat obálku',
     onPick: () => {},
     shape: 'square',
   },
   render: (args) => (
     <div style={{ width: '220px' }}>
-      <FileDropField {...args} />
+      <FileDropField {...args}>
+        <FileDropFieldLabel>Vybrat obálku</FileDropFieldLabel>
+        <FileDropFieldHint>
+          nebo ji sem přetáhněte · obrázek do 5 MB
+        </FileDropFieldHint>
+      </FileDropField>
     </div>
   ),
 }
@@ -60,7 +68,12 @@ export const Refused: Story = {
   },
   render: (args) => (
     <div style={{ display: 'grid', gap: '8px', width: '220px' }}>
-      <FileDropField {...args} />
+      <FileDropField {...args}>
+        <FileDropFieldLabel>Vybrat obálku</FileDropFieldLabel>
+        <FileDropFieldHint>
+          nebo ji sem přetáhněte · obrázek do 5 MB
+        </FileDropFieldHint>
+      </FileDropField>
       <div id={'cover-refused'}>
         <ErrorMessage>Vyberte obrázek — obalka.pdf není obrázek.</ErrorMessage>
       </div>

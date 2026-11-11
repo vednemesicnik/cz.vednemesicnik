@@ -4,6 +4,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Callout } from '~/components/callout'
 import { Radio } from '~/components/radio'
+import { RadioGroupLegend } from '~/components/radio-group-legend'
+import { RadioHint } from '~/components/radio-hint'
 
 import { RadioGroup } from './_component'
 
@@ -30,33 +32,26 @@ export const Playground: Story = {
   args: {
     children: (
       <>
-        <Radio
-          defaultChecked={true}
-          hint={'Píše vlastní koncepty a odesílá je ke schválení.'}
-          name={'role'}
-          value={'contributor'}
-        >
+        <RadioGroupLegend>Autorská role</RadioGroupLegend>
+        <Radio defaultChecked={true} name={'role'} value={'contributor'}>
           Přispěvatel
+          <RadioHint>
+            Píše vlastní koncepty a odesílá je ke schválení.
+          </RadioHint>
         </Radio>
-        <Radio
-          hint={
-            'Píše vlastní koncepty, odesílá je ke schválení a vidí i cizí koncepty.'
-          }
-          name={'role'}
-          value={'creator'}
-        >
+        <Radio name={'role'} value={'creator'}>
           Tvůrce
+          <RadioHint>
+            Píše vlastní koncepty, odesílá je ke schválení a vidí i cizí
+            koncepty.
+          </RadioHint>
         </Radio>
-        <Radio
-          hint={'Schvaluje a publikuje obsah celé redakce.'}
-          name={'role'}
-          value={'coordinator'}
-        >
+        <Radio name={'role'} value={'coordinator'}>
           Koordinátor
+          <RadioHint>Schvaluje a publikuje obsah celé redakce.</RadioHint>
         </Radio>
       </>
     ),
-    legend: 'Autorská role',
   },
 }
 
@@ -68,6 +63,7 @@ export const WithNote: Story = {
   args: {
     children: (
       <>
+        <RadioGroupLegend>Autorská role</RadioGroupLegend>
         <Radio name={'role-note'} value={'contributor'}>
           Přispěvatel
         </Radio>
@@ -82,7 +78,6 @@ export const WithNote: Story = {
         </Callout>
       </>
     ),
-    legend: 'Autorská role',
   },
   decorators: [
     (Story) => (

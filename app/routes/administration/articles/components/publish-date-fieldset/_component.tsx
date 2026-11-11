@@ -1,6 +1,8 @@
 import { Fragment, useId } from 'react'
 
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { toLocalDayValue } from '~/utils/to-local-day-value'
 
@@ -83,16 +85,15 @@ export const PublishDateFieldset = ({
 
       {/* Today or earlier: the calendar offers no future day (23f). */}
       {choice === 'other' && (
-        <TextField
-          className={styles.otherDay}
-          id={otherDayId}
-          label={'Jiný den'}
-          max={today}
-          onChange={(event) => onOtherDayChange(event.currentTarget.value)}
-          required
-          type={'date'}
-          value={otherDay}
-        />
+        <TextField className={styles.otherDay} id={otherDayId} required>
+          <TextFieldLabel>Jiný den</TextFieldLabel>
+          <TextFieldControl
+            max={today}
+            onChange={(event) => onOtherDayChange(event.currentTarget.value)}
+            type={'date'}
+            value={otherDay}
+          />
+        </TextField>
       )}
     </fieldset>
   )

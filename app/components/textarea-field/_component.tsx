@@ -1,108 +1,87 @@
-import { type FieldMetadata, getTextareaProps } from '@conform-to/react'
+import type { FieldMetadata } from '@conform-to/react'
 import { clsx } from 'clsx'
-import type { ComponentProps, ReactNode } from 'react'
+import { createContext, type ReactNode, useContext } from 'react'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
-import { Label } from '~/components/label'
 import styles from './_styles.module.css'
 
-type CounterTone = 'neutral' | 'attention'
+type TextareaFieldContextValue = {
+  field: FieldMetadata<string | undefined>
+  hintId: string
+  counterId: string
+  hasErrors: boolean
+}
+
+const Context = createContext<TextareaFieldContextValue | undefined>(undefined)
 
 type Props<FieldType extends string | undefined = string> = {
-  label: ReactNode
-  className?: string
-  textareaProps: ComponentProps<'textarea'>
+  children: ReactNode
   field: FieldMetadata<FieldType>
-  hint?: ReactNode
-  counter?: ReactNode
-  counterTone?: CounterTone
-  /** Something around the field already names it; the label stays for readers. */
-  isLabelHidden?: boolean
-  /** „(nepovinné)“ after the label. */
-  optional?: boolean
+  className?: string
 }
 
 /**
  * A field's label, a multi-line input, then one row: the hint and the errors
- * at its start, an optional counter at its end (design 28c, 29b).
+ * at its start, an optional counter at its end (design 28c, 29b). The field
+ * owns the Conform field, so its parts share its id; the textarea is
+ * described by its `TextareaFieldHint` and `TextareaFieldCounter` whenever
+ * they are rendered.
  *
- * @param props.hint - Helper text under the input, added to its description.
- * @param props.counter - The length against its limit, e.g. „512 / 500“; it
- *   turns to the error colour with the field's errors.
- * @param props.counterTone - `attention` turns the counter amber for a limit
- *   that only advises, as the perex's 160 (24a); the field's errors still win.
+ * @example
+ * ```tsx
+ * <TextareaField field={fields.perex}>
+ *   <TextareaFieldLabel>Perex</TextareaFieldLabel>
+ *   <TextareaFieldControl rows={3} />
+ *   <TextareaFieldHint>Krátké shrnutí pod názvem.</TextareaFieldHint>
+ *   <TextareaFieldCounter>{`${length} / 160`}</TextareaFieldCounter>
+ * </TextareaField>
+ * ```
+ *
+ * @param props.children - The label, the control, then an optional hint and
+ * counter
+ * @param props.field - The Conform field; its errors show under the hint.
+ * @returns The field's `<section>`
  */
-
 export const TextareaField = <FieldType extends string | undefined = string>({
-  label,
-  className,
-  textareaProps: { className: textareaClassName, ...restTextareaProps },
+  children,
   field,
-  hint,
-  counter,
-  counterTone = 'neutral',
-  isLabelHidden = false,
-  optional = false,
+  className,
 }: Props<FieldType>) => {
   const hasErrors = field.errors !== undefined && field.errors.length > 0
-  const hintId = hint !== undefined ? `${field.id}-hint` : undefined
-  const counterId = counter !== undefined ? `${field.id}-counter` : undefined
-  const textareaProps = getTextareaProps(field)
-  // Keep the error description Conform sets and add the hint and counter.
-  const describedBy =
-    [textareaProps['aria-describedby'], hintId, counterId]
-      .filter(Boolean)
-      .join(' ') || undefined
 
   return (
-    <section className={clsx(styles.container, className)}>
-      <Label
-        className={isLabelHidden ? 'screen-reader-only' : undefined}
-        htmlFor={field.id}
-        optional={optional}
-        required={field.required}
-      >
-        {label}
-      </Label>
-      <textarea
-        {...textareaProps}
-        aria-describedby={describedBy}
-        className={clsx(
-          styles.textarea,
-          hasErrors && styles.textareaError,
-          textareaClassName,
-        )}
-        {...restTextareaProps}
-      />
-      {(hint !== undefined || hasErrors || counter !== undefined) && (
-        <div className={styles.footer}>
-          <div className={styles.messages}>
-            {hint !== undefined && (
-              <div className={styles.hint} id={hintId}>
-                {hint}
-              </div>
-            )}
-            <ErrorMessageGroup>
-              {field.errors?.map((error, index) => (
-                <ErrorMessage key={index}>{error}</ErrorMessage>
-              ))}
-            </ErrorMessageGroup>
-          </div>
-          {counter !== undefined && (
-            <span
-              className={clsx(
-                styles.counter,
-                hasErrors
-                  ? styles.counterError
-                  : counterTone === 'attention' && styles.counterAttention,
-              )}
-              id={counterId}
-            >
-              {counter}
-            </span>
-          )}
-        </div>
-      )}
-    </section>
+    <Context.Provider
+      value={{
+        counterId: `${field.id}-counter`,
+        field: field as FieldMetadata<string | undefined>,
+        hasErrors,
+        hintId: `${field.id}-hint`,
+      }}
+    >
+      <section className={clsx(styles.container, className)}>
+        {children}
+        <ErrorMessageGroup className={styles.errors}>
+          {field.errors?.map((error, index) => (
+            <ErrorMessage key={index}>{error}</ErrorMessage>
+          ))}
+        </ErrorMessageGroup>
+      </section>
+    </Context.Provider>
   )
+}
+
+/**
+ * What the field shares with its parts: the Conform field, the hint's and the
+ * counter's ids, and whether it has errors.
+ *
+ * @returns The textarea field's context
+ */
+export const useTextareaField = () => {
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error('useTextareaField must be used within a TextareaField')
+  }
+
+  return context
 }

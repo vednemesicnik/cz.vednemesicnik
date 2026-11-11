@@ -1,0 +1,6 @@
+.hint {
+  @layer component {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}

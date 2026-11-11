@@ -1,13 +1,29 @@
 import { clsx } from 'clsx'
-import { type ChangeEvent, type DragEvent, useId, useState } from 'react'
+import {
+  type ChangeEvent,
+  createContext,
+  type DragEvent,
+  type ReactNode,
+  useContext,
+  useId,
+  useState,
+} from 'react'
 
 import styles from './_styles.module.css'
 
+type FileDropFieldContextValue = {
+  inputId: string
+  hintId: string
+  isDisabled: boolean
+  onDragOver: (event: DragEvent) => void
+  onDragLeave: () => void
+  onDrop: (event: DragEvent) => void
+}
+
+const Context = createContext<FileDropFieldContextValue | undefined>(undefined)
+
 type Props = {
-  /** „Vybrat obálku“, „Vybrat PDF“. */
-  label: string
-  /** „nebo ji sem přetáhněte · obrázek do 5 MB“. */
-  hint: string
+  children: ReactNode
   accept: string
   /** A picked or dropped file; it uploads at once (26c). */
   onPick: (file: File) => void
@@ -31,11 +47,21 @@ type Props = {
  * the gallery's tile in 24b). A pick uploads at once; it is no part of the
  * form's save. Without the edit hold it is `aria-disabled`, not `disabled`,
  * so it keeps its place in the focus order and a screen reader says it is
- * unavailable.
+ * unavailable. Its `FileDropFieldLabel` is what is clicked and dropped on.
+ *
+ * @example
+ * ```tsx
+ * <FileDropField accept={'image/*'} onPick={upload} shape={'page'}>
+ *   <FileDropFieldLabel>Vybrat obálku</FileDropFieldLabel>
+ *   <FileDropFieldHint>nebo ji sem přetáhněte · obrázek do 5 MB</FileDropFieldHint>
+ * </FileDropField>
+ * ```
+ *
+ * @param props.children - The label, then the hint
+ * @returns The field's `<div>`
  */
 export const FileDropField = ({
-  label,
-  hint,
+  children,
   accept,
   onPick,
   isDisabled = false,
@@ -70,43 +96,58 @@ export const FileDropField = ({
   }
 
   return (
-    <div
-      className={clsx(
-        styles.field,
-        shape === 'page' && styles.page,
-        shape === 'square' && styles.square,
-        errorId !== undefined && styles.invalid,
-        isDragOver && styles.dragOver,
-      )}
+    <Context.Provider
+      value={{
+        hintId,
+        inputId,
+        isDisabled,
+        onDragLeave: () => setIsDragOver(false),
+        onDragOver: handleDragOver,
+        onDrop: handleDrop,
+      }}
     >
-      <input
-        accept={accept}
-        aria-describedby={clsx(hintId, errorId)}
-        aria-disabled={isDisabled || undefined}
-        aria-invalid={errorId !== undefined || undefined}
-        className={styles.input}
-        // A pick saves on its own, never with the form's save.
-        form={''}
-        id={inputId}
-        onChange={handleChange}
-        onClick={(event) => {
-          if (isDisabled) event.preventDefault()
-        }}
-        type={'file'}
-      />
-      {/* Its box covers the field, so a drop anywhere lands here. */}
-      <label
-        className={clsx(styles.label, isDisabled && styles.disabled)}
-        htmlFor={inputId}
-        onDragLeave={() => setIsDragOver(false)}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+      <div
+        className={clsx(
+          styles.field,
+          shape === 'page' && styles.page,
+          shape === 'square' && styles.square,
+          errorId !== undefined && styles.invalid,
+          isDragOver && styles.dragOver,
+        )}
       >
-        {label}
-      </label>
-      <span className={styles.hint} id={hintId}>
-        {hint}
-      </span>
-    </div>
+        <input
+          accept={accept}
+          aria-describedby={clsx(hintId, errorId)}
+          aria-disabled={isDisabled || undefined}
+          aria-invalid={errorId !== undefined || undefined}
+          className={styles.input}
+          // A pick saves on its own, never with the form's save.
+          form={''}
+          id={inputId}
+          onChange={handleChange}
+          onClick={(event) => {
+            if (isDisabled) event.preventDefault()
+          }}
+          type={'file'}
+        />
+        {children}
+      </div>
+    </Context.Provider>
   )
+}
+
+/**
+ * What the field shares with its parts: the input's and the hint's ids,
+ * whether it is disabled, and the drag handlers its label takes.
+ *
+ * @returns The file drop field's context
+ */
+export const useFileDropField = () => {
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error('useFileDropField must be used within a FileDropField')
+  }
+
+  return context
 }

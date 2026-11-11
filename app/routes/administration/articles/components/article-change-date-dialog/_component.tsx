@@ -16,6 +16,8 @@ import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { FormLegend } from '~/components/form-legend'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { FORM_CONFIG } from '~/config/form-config'
 import { toLocalDayValue } from '~/utils/to-local-day-value'
 import { useModalDialog } from '~/utils/use-modal-dialog'
@@ -122,31 +124,31 @@ export const ArticleChangeDateDialog = ({
           <FormLegend />
 
           <div className={styles.fields}>
-            <TextField
-              id={dateId}
-              label={'Datum publikace'}
-              max={toLocalDayValue(now)}
-              onChange={(event) => {
-                setDay(event.currentTarget.value)
-                setIsFuture(false)
-              }}
-              required
-              type={'date'}
-              value={day}
-            />
-            <TextField
-              aria-describedby={isFuture ? errorId : undefined}
-              aria-invalid={isFuture || undefined}
-              id={timeId}
-              label={'Čas publikace'}
-              onChange={(event) => {
-                setTime(event.currentTarget.value)
-                setIsFuture(false)
-              }}
-              required
-              type={'time'}
-              value={time}
-            />
+            <TextField id={dateId} required>
+              <TextFieldLabel>Datum publikace</TextFieldLabel>
+              <TextFieldControl
+                max={toLocalDayValue(now)}
+                onChange={(event) => {
+                  setDay(event.currentTarget.value)
+                  setIsFuture(false)
+                }}
+                type={'date'}
+                value={day}
+              />
+            </TextField>
+            <TextField id={timeId} required>
+              <TextFieldLabel>Čas publikace</TextFieldLabel>
+              <TextFieldControl
+                aria-describedby={isFuture ? errorId : undefined}
+                aria-invalid={isFuture || undefined}
+                onChange={(event) => {
+                  setTime(event.currentTarget.value)
+                  setIsFuture(false)
+                }}
+                type={'time'}
+                value={time}
+              />
+            </TextField>
           </div>
 
           {isFuture && (

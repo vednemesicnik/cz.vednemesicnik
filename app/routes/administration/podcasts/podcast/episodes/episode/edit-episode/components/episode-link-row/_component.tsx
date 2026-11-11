@@ -5,6 +5,9 @@ import { ActionMenu } from '~/components/action-menu'
 import { ActionMenuItem } from '~/components/action-menu-item'
 import { ReorderableListHandle } from '~/components/reorderable-list-handle'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { getOrderMenuItems } from '~/utils/get-order-menu-items'
 import { useFocusWithin } from '~/utils/use-focus-within'
 
@@ -114,25 +117,29 @@ export const EpisodeLinkRow = ({
             : `Přesunout odkaz: ${name}. Pozice ${index + 1}, celkem ${count}.`
         }
       />
+      <TextField errors={label.errors} id={label.id} required={label.required}>
+        <TextFieldLabel isVisuallyHidden>Název platformy</TextFieldLabel>
+        <TextFieldControl
+          {...getInputProps(label, { type: 'text' })}
+          ref={labelRef}
+        />
+        {hint !== undefined && <TextFieldHint>{hint}</TextFieldHint>}
+      </TextField>
       <TextField
-        {...getInputProps(label, { type: 'text' })}
-        errors={label.errors}
-        hint={hint}
-        isLabelHidden
-        label={'Název platformy'}
-        ref={labelRef}
-      />
-      <TextField
-        {...getInputProps(url, { type: 'text' })}
         className={styles.urlField}
-        data-link-url={true}
         errors={url.errors}
-        inputMode={'url'}
-        isLabelHidden
-        // Not the episode's own Adresa beside it (copy 0s5hhaqz).
-        label={'Adresa odkazu'}
-        onInput={handleUrlInput}
-      />
+        id={url.id}
+        required={url.required}
+      >
+        {/* Not the episode's own Adresa beside it (copy 0s5hhaqz). */}
+        <TextFieldLabel isVisuallyHidden>Adresa odkazu</TextFieldLabel>
+        <TextFieldControl
+          {...getInputProps(url, { type: 'text' })}
+          data-link-url={true}
+          inputMode={'url'}
+          onInput={handleUrlInput}
+        />
+      </TextField>
       {/* The moves of 22c, then Odebrat; read-only, no „⋯“ (copy 25ayrk1j). */}
       <ActionMenu
         className={styles.menu}

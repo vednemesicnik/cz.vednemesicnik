@@ -16,6 +16,8 @@ import { ImageTileMessage } from '~/components/image-tile-message'
 import { ImageTileOrder } from '~/components/image-tile-order'
 import { ImageTilePill } from '~/components/image-tile-pill'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { UploadStatus } from '~/components/upload-status'
 
 import { ImageTile } from './_component'
@@ -62,13 +64,13 @@ export const Playground: Story = {
             </ActionMenu>
           </ImageTileMenu>
         </ImageTileMedia>
-        <TextField
-          defaultValue={'Studovna městské knihovny s regály až ke stropu'}
-          id={'image-tile-alt'}
-          label={'Alt text'}
-          placeholder={'Co je na obrázku'}
-          size={'sm'}
-        />
+        <TextField id={'image-tile-alt'} size={'sm'}>
+          <TextFieldLabel>Alt text</TextFieldLabel>
+          <TextFieldControl
+            defaultValue={'Studovna městské knihovny s regály až ke stropu'}
+            placeholder={'Co je na obrázku'}
+          />
+        </TextField>
         <ImageTileFile>studovna.jpg</ImageTileFile>
       </ImageTile>
     </div>
@@ -88,12 +90,10 @@ export const Uploading: Story = {
           cancelLabel={'Zrušit nahrávání ctenari.jpg'}
           onCancel={() => {}}
         />
-        <TextField
-          id={'image-tile-uploading-alt'}
-          label={'Alt text'}
-          placeholder={'Co je na obrázku'}
-          size={'sm'}
-        />
+        <TextField id={'image-tile-uploading-alt'} size={'sm'}>
+          <TextFieldLabel>Alt text</TextFieldLabel>
+          <TextFieldControl placeholder={'Co je na obrázku'} />
+        </TextField>
         <ImageTileFile>ctenari.jpg</ImageTileFile>
       </ImageTile>
     </div>
@@ -119,12 +119,10 @@ export const Draggable: Story = {
                 </ActionMenu>
               </ImageTileMenu>
             </ImageTileMedia>
-            <TextField
-              defaultValue={'Čtenáři u okna'}
-              id={`image-tile-draggable-alt-${isLifted}`}
-              label={'Alt text'}
-              size={'sm'}
-            />
+            <TextField id={`image-tile-draggable-alt-${isLifted}`} size={'sm'}>
+              <TextFieldLabel>Alt text</TextFieldLabel>
+              <TextFieldControl defaultValue={'Čtenáři u okna'} />
+            </TextField>
             <ImageTileFile>ctenari.jpg</ImageTileFile>
           </ImageTile>
         </div>
@@ -171,12 +169,10 @@ export const ReplaceFailed: Story = {
         <ImageTileActions>
           <ButtonLink>Vybrat jiný soubor</ButtonLink>
         </ImageTileActions>
-        <TextField
-          defaultValue={'Regál s podzimními novinkami'}
-          id={'image-tile-replace-alt'}
-          label={'Alt text'}
-          size={'sm'}
-        />
+        <TextField id={'image-tile-replace-alt'} size={'sm'}>
+          <TextFieldLabel>Alt text</TextFieldLabel>
+          <TextFieldControl defaultValue={'Regál s podzimními novinkami'} />
+        </TextField>
         <ImageTileFile>regal.jpg</ImageTileFile>
       </ImageTile>
     </div>

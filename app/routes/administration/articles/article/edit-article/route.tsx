@@ -42,6 +42,7 @@ import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { CaptionEditor } from '~/components/caption-editor'
+import { CaptionEditorLabel } from '~/components/caption-editor-label'
 import { Checkbox } from '~/components/checkbox'
 import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
@@ -70,8 +71,16 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { TextEditor } from '~/components/text-editor'
+import { TextEditorLabel } from '~/components/text-editor-label'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldCounter } from '~/components/textarea-field-counter'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -1413,38 +1422,41 @@ export default function RouteComponent({
                 inert={isDetailOpen}
               >
                 {/* The title as the detail's heading will set it (kh6gf6k6). */}
-                <TextareaField
-                  field={fields.title}
-                  label={'Název'}
-                  textareaProps={{
-                    className: styles.titleInput,
-                    onInput: handleTitleInput,
-                    onKeyDown: handleTitleKeyDown,
-                    rows: 1,
-                  }}
-                />
+                <TextareaField field={fields.title}>
+                  <TextareaFieldLabel>Název</TextareaFieldLabel>
+                  <TextareaFieldControl
+                    className={styles.titleInput}
+                    onInput={handleTitleInput}
+                    onKeyDown={handleTitleKeyDown}
+                    rows={1}
+                  />
+                </TextareaField>
                 {/* For search engines and sharing, not shown on the web; the
                     count only advises (24a, mto4s7s7). */}
-                <TextareaField
-                  counter={`${perexLength} / ${PEREX_RECOMMENDED_LENGTH}`}
-                  counterTone={
-                    perexLength > PEREX_RECOMMENDED_LENGTH
-                      ? 'attention'
-                      : 'neutral'
-                  }
-                  field={fields.perex}
-                  hint={
-                    'Shrnutí pro vyhledávače a náhled při sdílení. Na webu se nezobrazuje. Doporučeno do 160 znaků.'
-                  }
-                  label={'Perex'}
-                  textareaProps={{ className: styles.perexInput }}
-                />
+                <TextareaField field={fields.perex}>
+                  <TextareaFieldLabel>Perex</TextareaFieldLabel>
+                  <TextareaFieldControl className={styles.perexInput} />
+                  <TextareaFieldHint>
+                    Shrnutí pro vyhledávače a náhled při sdílení. Na webu se
+                    nezobrazuje. Doporučeno do 160 znaků.
+                  </TextareaFieldHint>
+                  <TextareaFieldCounter
+                    tone={
+                      perexLength > PEREX_RECOMMENDED_LENGTH
+                        ? 'attention'
+                        : 'neutral'
+                    }
+                  >
+                    {`${perexLength} / ${PEREX_RECOMMENDED_LENGTH}`}
+                  </TextareaFieldCounter>
+                </TextareaField>
                 <TextEditor
                   field={fields.content}
                   key={form.key}
-                  label={'Text'}
                   readOnly={isReadOnly}
-                />
+                >
+                  <TextEditorLabel>Text</TextEditorLabel>
+                </TextEditor>
               </fieldset>
             </AdminDetailMain>
 
@@ -1459,10 +1471,19 @@ export default function RouteComponent({
                   </EditorDetailBar>
                   <fieldset className={styles.lock} disabled={isLocked}>
                     <TextField
-                      {...getInputProps(fields.slug, { type: 'text' })}
                       errors={fields.slug.errors}
-                      hint={
-                        isSlugFollowing ? (
+                      id={fields.slug.id}
+                      required={fields.slug.required}
+                    >
+                      <TextFieldLabel>Adresa</TextFieldLabel>
+                      <TextFieldControl
+                        {...getInputProps(fields.slug, { type: 'text' })}
+                        onBlur={handleBlur}
+                        onFocus={handleFocus}
+                        onInput={handleInput}
+                      />
+                      <TextFieldHint>
+                        {isSlugFollowing ? (
                           'Podle názvu, dokud ji nezměníte.'
                         ) : (
                           <>
@@ -1473,13 +1494,9 @@ export default function RouteComponent({
                               </ButtonLink>
                             )}
                           </>
-                        )
-                      }
-                      label={'Adresa'}
-                      onBlur={handleBlur}
-                      onFocus={handleFocus}
-                      onInput={handleInput}
-                    />
+                        )}
+                      </TextFieldHint>
+                    </TextField>
                     {/* A taken address: a free one, filled in and saved (24d). */}
                     {fields.slug.errors !== undefined &&
                       slugSuggestion !== null &&
@@ -2085,25 +2102,33 @@ export default function RouteComponent({
                                   </>
                                 )}
                                 <TextField
-                                  {...getInputProps(imageFields.altText, {
-                                    type: 'text',
-                                  })}
-                                  hint={
-                                    'Popis obrázku pro čtečky obrazovky a vyhledávače.'
-                                  }
-                                  isHintOnFocus
-                                  label={'Alt text'}
-                                  placeholder={'Co je na obrázku'}
+                                  id={imageFields.altText.id}
+                                  required={imageFields.altText.required}
                                   size={'sm'}
-                                />
+                                >
+                                  <TextFieldLabel>Alt text</TextFieldLabel>
+                                  <TextFieldControl
+                                    {...getInputProps(imageFields.altText, {
+                                      type: 'text',
+                                    })}
+                                    placeholder={'Co je na obrázku'}
+                                  />
+                                  <TextFieldHint isShownOnFocus>
+                                    Popis obrázku pro čtečky obrazovky a
+                                    vyhledávače.
+                                  </TextFieldHint>
+                                </TextField>
                                 <CaptionEditor
                                   field={imageFields.description}
                                   inputProps={{
                                     placeholder: 'Pod obrázkem na webu',
                                   }}
-                                  label={'Popisek'}
                                   readOnly={isReadOnly}
-                                />
+                                >
+                                  <CaptionEditorLabel>
+                                    Popisek
+                                  </CaptionEditorLabel>
+                                </CaptionEditor>
                                 {tile?.fileName != null && (
                                   <ImageTileFile>{tile.fileName}</ImageTileFile>
                                 )}

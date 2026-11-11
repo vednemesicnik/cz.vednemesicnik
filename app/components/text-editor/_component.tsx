@@ -2,7 +2,12 @@ import type { FieldMetadata } from '@conform-to/react'
 import { useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { clsx } from 'clsx'
-import type { ComponentProps } from 'react'
+import {
+  type ComponentProps,
+  createContext,
+  type ReactNode,
+  useContext,
+} from 'react'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { ListIcon } from '~/components/icons/list-icon'
@@ -10,7 +15,6 @@ import { ListOrderedIcon } from '~/components/icons/list-ordered-icon'
 import { QuoteIcon } from '~/components/icons/quote-icon'
 import { RedoIcon } from '~/components/icons/redo-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
-import { Label } from '~/components/label'
 import { TextEditorContent } from '~/components/text-editor-content'
 import { TextEditorHiddenInput } from '~/components/text-editor-hidden-input'
 import { TextEditorLinkButton } from '~/components/text-editor-link-button'
@@ -43,8 +47,16 @@ type ToolOption =
   | 'undo'
   | 'redo'
 
+type TextEditorContextValue = {
+  inputId: string
+  labelId: string
+  required: boolean
+}
+
+const Context = createContext<TextEditorContextValue | undefined>(undefined)
+
 type Props = {
-  label: string
+  children: ReactNode
   className?: string
   inputProps?: ComponentProps<'input'>
   field: FieldMetadata<string | undefined>
@@ -60,11 +72,19 @@ type Props = {
  * line. The field grows with the text, and the toolbar stays at its top while
  * it scrolls. An image's caption is `CaptionEditor`.
  *
+ * @example
+ * ```tsx
+ * <TextEditor field={fields.content}>
+ *   <TextEditorLabel>Text</TextEditorLabel>
+ * </TextEditor>
+ * ```
+ *
+ * @param props.children - Its `TextEditorLabel`, above the editor
  * @param props.field - The Conform field; the editor writes its JSON into it.
  * @param props.toolbar - The tools shown, all by default.
  */
 export const TextEditor = ({
-  label,
+  children,
   field,
   inputProps: {
     className: inputClassName,
@@ -130,184 +150,202 @@ export const TextEditor = ({
   const hasHistoryGroup = toolbar.includes('undo') || toolbar.includes('redo')
 
   return (
-    <section className={clsx(styles.container, className)}>
-      <Label htmlFor={field.id} id={labelId} required={field.required}>
-        {label}
-      </Label>
+    <Context.Provider
+      value={{ inputId: field.id, labelId, required: field.required ?? false }}
+    >
+      <section className={clsx(styles.container, className)}>
+        {children}
 
-      <div
-        className={clsx(
-          styles.editorWrapper,
-          hasErrors && styles.editorError,
-          readOnly && styles.editorReadOnly,
-        )}
-      >
-        {editor && (
-          <>
-            {/* A read-only editor has no toolbar (design 24h). */}
-            {!readOnly && (
-              <TextEditorToolbar>
-                {hasFormatGroup && (
-                  <TextEditorToolbarGroup>
-                    {toolbar.includes('bold') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveBold}
-                        disabled={!editorState?.canToggleBold}
-                        label={'Tučné'}
-                        onClick={() =>
-                          editor?.chain().focus().toggleBold().run()
-                        }
-                        shortcut={'Control+B Meta+B'}
-                      >
-                        <strong>B</strong>
-                      </TextEditorToolbarButton>
-                    )}
+        <div
+          className={clsx(
+            styles.editorWrapper,
+            hasErrors && styles.editorError,
+            readOnly && styles.editorReadOnly,
+          )}
+        >
+          {editor && (
+            <>
+              {/* A read-only editor has no toolbar (design 24h). */}
+              {!readOnly && (
+                <TextEditorToolbar>
+                  {hasFormatGroup && (
+                    <TextEditorToolbarGroup>
+                      {toolbar.includes('bold') && (
+                        <TextEditorToolbarButton
+                          active={editorState?.isActiveBold}
+                          disabled={!editorState?.canToggleBold}
+                          label={'Tučné'}
+                          onClick={() =>
+                            editor?.chain().focus().toggleBold().run()
+                          }
+                          shortcut={'Control+B Meta+B'}
+                        >
+                          <strong>B</strong>
+                        </TextEditorToolbarButton>
+                      )}
 
-                    {toolbar.includes('italic') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveItalic}
-                        disabled={!editorState?.canToggleItalic}
-                        label={'Kurzíva'}
-                        onClick={() =>
-                          editor?.chain().focus().toggleItalic().run()
-                        }
-                        shortcut={'Control+I Meta+I'}
-                      >
-                        <em>I</em>
-                      </TextEditorToolbarButton>
-                    )}
+                      {toolbar.includes('italic') && (
+                        <TextEditorToolbarButton
+                          active={editorState?.isActiveItalic}
+                          disabled={!editorState?.canToggleItalic}
+                          label={'Kurzíva'}
+                          onClick={() =>
+                            editor?.chain().focus().toggleItalic().run()
+                          }
+                          shortcut={'Control+I Meta+I'}
+                        >
+                          <em>I</em>
+                        </TextEditorToolbarButton>
+                      )}
 
-                    {toolbar.includes('link') && (
-                      <TextEditorLinkButton editor={editor} />
-                    )}
-                  </TextEditorToolbarGroup>
-                )}
+                      {toolbar.includes('link') && (
+                        <TextEditorLinkButton editor={editor} />
+                      )}
+                    </TextEditorToolbarGroup>
+                  )}
 
-                {/* In words: two heading icons would not tell apart. */}
-                {hasHeadingGroup && (
-                  <TextEditorToolbarGroup>
-                    {toolbar.includes('h2') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveH2}
-                        disabled={!editorState?.canToggleH2}
-                        onClick={() =>
-                          editor
-                            ?.chain()
-                            .focus()
-                            .toggleHeading({ level: 2 })
-                            .run()
-                        }
-                      >
-                        Nadpis
-                      </TextEditorToolbarButton>
-                    )}
+                  {/* In words: two heading icons would not tell apart. */}
+                  {hasHeadingGroup && (
+                    <TextEditorToolbarGroup>
+                      {toolbar.includes('h2') && (
+                        <TextEditorToolbarButton
+                          active={editorState?.isActiveH2}
+                          disabled={!editorState?.canToggleH2}
+                          onClick={() =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 2 })
+                              .run()
+                          }
+                        >
+                          Nadpis
+                        </TextEditorToolbarButton>
+                      )}
 
-                    {toolbar.includes('h3') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveH3}
-                        disabled={!editorState?.canToggleH3}
-                        onClick={() =>
-                          editor
-                            ?.chain()
-                            .focus()
-                            .toggleHeading({ level: 3 })
-                            .run()
-                        }
-                      >
-                        Podnadpis
-                      </TextEditorToolbarButton>
-                    )}
-                  </TextEditorToolbarGroup>
-                )}
+                      {toolbar.includes('h3') && (
+                        <TextEditorToolbarButton
+                          active={editorState?.isActiveH3}
+                          disabled={!editorState?.canToggleH3}
+                          onClick={() =>
+                            editor
+                              ?.chain()
+                              .focus()
+                              .toggleHeading({ level: 3 })
+                              .run()
+                          }
+                        >
+                          Podnadpis
+                        </TextEditorToolbarButton>
+                      )}
+                    </TextEditorToolbarGroup>
+                  )}
 
-                {hasBlockGroup && (
-                  <TextEditorToolbarGroup>
-                    {toolbar.includes('bulletList') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveBulletList}
-                        disabled={!editorState?.canToggleBulletList}
-                        label={'Seznam'}
-                        onClick={() =>
-                          editor?.chain().focus().toggleBulletList().run()
-                        }
-                      >
-                        <ListIcon />
-                      </TextEditorToolbarButton>
-                    )}
+                  {hasBlockGroup && (
+                    <TextEditorToolbarGroup>
+                      {toolbar.includes('bulletList') && (
+                        <TextEditorToolbarButton
+                          active={editorState?.isActiveBulletList}
+                          disabled={!editorState?.canToggleBulletList}
+                          label={'Seznam'}
+                          onClick={() =>
+                            editor?.chain().focus().toggleBulletList().run()
+                          }
+                        >
+                          <ListIcon />
+                        </TextEditorToolbarButton>
+                      )}
 
-                    {toolbar.includes('orderedList') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveOrderedList}
-                        disabled={!editorState?.canToggleOrderedList}
-                        label={'Číslovaný seznam'}
-                        onClick={() =>
-                          editor?.chain().focus().toggleOrderedList().run()
-                        }
-                      >
-                        <ListOrderedIcon />
-                      </TextEditorToolbarButton>
-                    )}
+                      {toolbar.includes('orderedList') && (
+                        <TextEditorToolbarButton
+                          active={editorState?.isActiveOrderedList}
+                          disabled={!editorState?.canToggleOrderedList}
+                          label={'Číslovaný seznam'}
+                          onClick={() =>
+                            editor?.chain().focus().toggleOrderedList().run()
+                          }
+                        >
+                          <ListOrderedIcon />
+                        </TextEditorToolbarButton>
+                      )}
 
-                    {toolbar.includes('blockquote') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveBlockquote}
-                        disabled={!editorState?.canToggleBlockquote}
-                        label={'Citace'}
-                        onClick={() =>
-                          editor?.chain().focus().toggleBlockquote().run()
-                        }
-                      >
-                        <QuoteIcon />
-                      </TextEditorToolbarButton>
-                    )}
-                  </TextEditorToolbarGroup>
-                )}
+                      {toolbar.includes('blockquote') && (
+                        <TextEditorToolbarButton
+                          active={editorState?.isActiveBlockquote}
+                          disabled={!editorState?.canToggleBlockquote}
+                          label={'Citace'}
+                          onClick={() =>
+                            editor?.chain().focus().toggleBlockquote().run()
+                          }
+                        >
+                          <QuoteIcon />
+                        </TextEditorToolbarButton>
+                      )}
+                    </TextEditorToolbarGroup>
+                  )}
 
-                {hasHistoryGroup && (
-                  <TextEditorToolbarGroup isAtEnd>
-                    {toolbar.includes('undo') && (
-                      <TextEditorToolbarButton
-                        disabled={!editorState?.canUndo}
-                        label={'Zpět'}
-                        onClick={() => editor?.chain().focus().undo().run()}
-                        shortcut={'Control+Z Meta+Z'}
-                      >
-                        <UndoIcon />
-                      </TextEditorToolbarButton>
-                    )}
+                  {hasHistoryGroup && (
+                    <TextEditorToolbarGroup isAtEnd>
+                      {toolbar.includes('undo') && (
+                        <TextEditorToolbarButton
+                          disabled={!editorState?.canUndo}
+                          label={'Zpět'}
+                          onClick={() => editor?.chain().focus().undo().run()}
+                          shortcut={'Control+Z Meta+Z'}
+                        >
+                          <UndoIcon />
+                        </TextEditorToolbarButton>
+                      )}
 
-                    {toolbar.includes('redo') && (
-                      <TextEditorToolbarButton
-                        disabled={!editorState?.canRedo}
-                        label={'Znovu'}
-                        onClick={() => editor?.chain().focus().redo().run()}
-                        shortcut={'Control+Y Meta+Y'}
-                      >
-                        <RedoIcon />
-                      </TextEditorToolbarButton>
-                    )}
-                  </TextEditorToolbarGroup>
-                )}
-              </TextEditorToolbar>
-            )}
+                      {toolbar.includes('redo') && (
+                        <TextEditorToolbarButton
+                          disabled={!editorState?.canRedo}
+                          label={'Znovu'}
+                          onClick={() => editor?.chain().focus().redo().run()}
+                          shortcut={'Control+Y Meta+Y'}
+                        >
+                          <RedoIcon />
+                        </TextEditorToolbarButton>
+                      )}
+                    </TextEditorToolbarGroup>
+                  )}
+                </TextEditorToolbar>
+              )}
 
-            <TextEditorContent editor={editor} />
-          </>
-        )}
+              <TextEditorContent editor={editor} />
+            </>
+          )}
 
-        <TextEditorHiddenInput
-          {...restInputProps}
-          className={inputClassName}
-          editor={editor}
-          field={field}
-        />
-      </div>
+          <TextEditorHiddenInput
+            {...restInputProps}
+            className={inputClassName}
+            editor={editor}
+            field={field}
+          />
+        </div>
 
-      <ErrorMessageGroup>
-        {field.errors?.map((error, index) => (
-          <ErrorMessage key={index}>{error}</ErrorMessage>
-        ))}
-      </ErrorMessageGroup>
-    </section>
+        <ErrorMessageGroup>
+          {field.errors?.map((error, index) => (
+            <ErrorMessage key={index}>{error}</ErrorMessage>
+          ))}
+        </ErrorMessageGroup>
+      </section>
+    </Context.Provider>
   )
+}
+
+/**
+ * What the editor shares with its label: the hidden input's id, the label's
+ * id (the editor's `aria-labelledby`) and whether the field is required.
+ *
+ * @returns The text editor's context
+ */
+export const useTextEditorField = () => {
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error('useTextEditorField must be used within a TextEditor')
+  }
+
+  return context
 }

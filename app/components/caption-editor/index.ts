@@ -1,1 +1,1 @@
-export { CaptionEditor } from './_component'
+export { CaptionEditor, useCaptionEditor } from './_component'
