@@ -8,10 +8,13 @@ import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { Callout } from '~/components/callout'
 import { HistoryList } from '~/components/history-list'
@@ -156,39 +159,58 @@ export default function RouteComponent({
       {/* Left how the person signs in, right the account's data and history (28e). */}
       <AdminDetailLayout>
         <AdminDetailMain>
-          <AdminDetailSection title={'Přihlášení'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Přihlášení</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Heslo'}>
-                <SignInMethod description={signInMethods.password} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Heslo</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod description={signInMethods.password} />
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Dvoufázové ověření'}>
-                <SignInMethod description={signInMethods.twoFactor} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Dvoufázové ověření</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod description={signInMethods.twoFactor} />
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Passkey'}>
-                <SignInMethod description={signInMethods.passkey} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Passkey</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod description={signInMethods.passkey} />
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Google'}>
-                <SignInMethod description={signInMethods.google} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Google</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod description={signInMethods.google} />
+                </AdminDetailItemValue>
               </AdminDetailItem>
               {/* Only while the link works, as of this load (28e). */}
               {emergencyLink !== null && (
-                <AdminDetailItem label={'Nouzový odkaz'}>
-                  <SignInMethod
-                    description={{
-                      note:
-                        emergencyLink.issuerName === null
-                          ? `vydaný ve ${emergencyLink.issuedAt}`
-                          : `vydaný ve ${emergencyLink.issuedAt} · ${emergencyLink.issuerName}`,
-                      status: `platí do ${emergencyLink.expiresAt}`,
-                    }}
-                  />
+                <AdminDetailItem>
+                  <AdminDetailItemLabel>Nouzový odkaz</AdminDetailItemLabel>
+                  <AdminDetailItemValue>
+                    <SignInMethod
+                      description={{
+                        note:
+                          emergencyLink.issuerName === null
+                            ? `vydaný ve ${emergencyLink.issuedAt}`
+                            : `vydaný ve ${emergencyLink.issuedAt} · ${emergencyLink.issuerName}`,
+                        status: `platí do ${emergencyLink.expiresAt}`,
+                      }}
+                    />
+                  </AdminDetailItemValue>
                 </AdminDetailItem>
               )}
             </AdminDetailList>
           </AdminDetailSection>
 
           {signInAttempts.length > 0 && (
-            <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>
+                Poslední pokusy o přihlášení
+              </AdminDetailSectionTitle>
               <SignInAttempts>
                 {signInAttempts.map((attempt) => (
                   <SignInAttemptsItem
@@ -214,30 +236,39 @@ export default function RouteComponent({
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Uživatelská role'}>
-                {getUserRoleLabel(user.role.name)}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Uživatelská role</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {getUserRoleLabel(user.role.name)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autor'}>
-                <Link
-                  to={href('/administration/authors/:authorId', {
-                    authorId: user.author.id,
-                  })}
-                >
-                  {user.author.name}
-                </Link>{' '}
-                · {getAuthorRoleLabel(user.author.role.name)}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autor</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <Link
+                    to={href('/administration/authors/:authorId', {
+                      authorId: user.author.id,
+                    })}
+                  >
+                    {user.author.name}
+                  </Link>{' '}
+                  · {getAuthorRoleLabel(user.author.role.name)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Účet od'}>
-                {user.createdAt}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Účet od</AdminDetailItemLabel>
+                <AdminDetailItemValue>{user.createdAt}</AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
           {/* An account older than the audit log has no Historie (by062t6n). */}
           {history.length > 0 && (
-            <AdminDetailSection title={'Historie'}>
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
               <HistoryList entries={history}>
                 {(entry) => (
                   <HistoryListEntry>

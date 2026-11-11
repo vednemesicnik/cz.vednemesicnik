@@ -23,6 +23,7 @@ import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -37,6 +38,7 @@ import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
 import { FailedFile } from '~/components/failed-file'
+import { FailedFileName } from '~/components/failed-file-name'
 import { FileDropField } from '~/components/file-drop-field'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
@@ -972,7 +974,8 @@ export default function RouteComponent({
     }
     const { failure } = fileUpload
     return (
-      <FailedFile fileName={failedFileName}>
+      <FailedFile>
+        <FailedFileName>{failedFileName}</FailedFileName>
         <ErrorMessage>{failure.sentence}</ErrorMessage>
         {failure.replaces && (
           <p className={styles.uploaded}>{ORIGINAL_STAYED_SENTENCE[kind]}</p>
@@ -1170,7 +1173,8 @@ export default function RouteComponent({
           {/* The files left, the details right, as on the detail (26b, 26c). */}
           <AdminDetailLayout>
             <AdminDetailMain>
-              <AdminDetailSection title={'Soubory'}>
+              <AdminDetailSection>
+                <AdminDetailSectionTitle>Soubory</AdminDetailSectionTitle>
                 <div className={styles.files}>
                   {/* *Nahradit* and *Vybrat jiný soubor* open these. */}
                   <input
@@ -1352,7 +1356,8 @@ export default function RouteComponent({
             </AdminDetailMain>
 
             <AdminDetailAside>
-              <AdminDetailSection title={'Údaje'}>
+              <AdminDetailSection>
+                <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <div className={styles.numberGroup}>
                     <div className={styles.number}>

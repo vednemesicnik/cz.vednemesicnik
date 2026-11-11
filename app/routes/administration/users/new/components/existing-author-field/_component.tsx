@@ -3,7 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 
 import { AuthorRemoveButton } from '~/components/author-remove-button'
 import { AuthorRow } from '~/components/author-row'
+import { AuthorRowAvatar } from '~/components/author-row-avatar'
 import { AuthorRowButton } from '~/components/author-row-button'
+import { AuthorRowName } from '~/components/author-row-name'
+import { AuthorRowNote } from '~/components/author-row-note'
+import { AuthorRowText } from '~/components/author-row-text'
 import { ChipInput } from '~/components/chip-input'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
@@ -144,11 +148,12 @@ export const ExistingAuthorField = ({
           className={clsx(styles.frame, isChanging && styles.changing)}
           {...frameProps}
         >
-          <AuthorRow
-            image={NO_IMAGE}
-            name={author.name}
-            note={author.roleLabel}
-          >
+          <AuthorRow>
+            <AuthorRowAvatar image={NO_IMAGE} name={author.name} />
+            <AuthorRowText>
+              <AuthorRowName>{author.name}</AuthorRowName>
+              <AuthorRowNote>{author.roleLabel}</AuthorRowNote>
+            </AuthorRowText>
             {isChanging ? (
               <AuthorRowButton
                 aria-label={'Zrušit změnu autora'}

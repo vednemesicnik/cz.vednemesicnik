@@ -19,6 +19,7 @@ import { Button } from '~/components/button'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
 import { getRowTint } from '~/utils/live-change/get-row-tint'
@@ -84,6 +85,13 @@ export const ItemRow = ({
     issue.orderLabel,
     issue.pdfFileName === null ? 'PDF zatím chybí' : null,
   ].filter((part) => part !== null)
+  // Who edits it comes first: it changes what the row allows (26i).
+  const stateDetail = getLiveStateDetail({
+    factLine: issue.factLine,
+    holdLine: issue.holdLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow muted={issue.state === 'archived'} tint={getRowTint(liveChange)}>
@@ -126,16 +134,11 @@ export const ItemRow = ({
         </span>
       </TableCell>
       <TableStateCell>
-        <StatusTag
-          // Who edits it comes first: it changes what the row allows (26i).
-          detail={getLiveStateDetail({
-            factLine: issue.factLine,
-            holdLine: issue.holdLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={issue.submission ?? issue.state}
-        />
+        <StatusTag state={issue.submission ?? issue.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       {phoneDetails.length > 0 && (
         <TableDetailsCell>

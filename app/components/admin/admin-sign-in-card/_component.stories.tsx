@@ -3,6 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { Link } from '~/components/link'
@@ -40,6 +41,7 @@ export const Playground: Story = {
   args: {
     children: (
       <>
+        <AdminSignInCardHeading>Potvrďte přihlášení</AdminSignInCardHeading>
         <AdminSignInText>Účet: jakub.novak@vednemesicnik.cz</AdminSignInText>
         <Button>Přihlásit se</Button>
         <AdminSignInText variant={'note'}>
@@ -47,7 +49,6 @@ export const Playground: Story = {
         </AdminSignInText>
       </>
     ),
-    title: 'Potvrďte přihlášení',
   },
 }
 
@@ -58,6 +59,7 @@ export const TextAndLink: Story = {
   args: {
     children: (
       <>
+        <AdminSignInCardHeading>Odkaz už neplatí</AdminSignInCardHeading>
         <AdminSignInText>
           Přihlaste se jinak nebo se obraťte na Administrátora či Vlastníka —
           tento nouzový odkaz už neplatí.
@@ -65,7 +67,6 @@ export const TextAndLink: Story = {
         <Link to={'/administration/sign-in'}>Přihlásit se jinak</Link>
       </>
     ),
-    title: 'Odkaz už neplatí',
   },
 }
 
@@ -76,6 +77,9 @@ export const WithWordmark: Story = {
   args: {
     children: (
       <>
+        <AdminSignInCardHeading wordmark>
+          Přihlášení do administrace
+        </AdminSignInCardHeading>
         <Button>Přihlásit se přes Google</Button>
         <Button variant={'outline'}>Přihlásit se pomocí passkey</Button>
         <Link to={'/administration/sign-in/password'}>
@@ -83,8 +87,6 @@ export const WithWordmark: Story = {
         </Link>
       </>
     ),
-    title: 'Přihlášení do administrace',
-    wordmark: true,
   },
 }
 

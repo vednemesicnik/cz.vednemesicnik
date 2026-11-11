@@ -3,6 +3,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { AdminDetailItem } from '../admin-detail-item'
+import { AdminDetailItemLabel } from '../admin-detail-item-label'
+import { AdminDetailItemValue } from '../admin-detail-item-value'
 import { AdminDetailSection } from '../admin-detail-section'
 import { AdminDetailList } from './_component'
 
@@ -33,9 +35,18 @@ type Story = StoryObj<typeof meta>
 
 const items = (
   <>
-    <AdminDetailItem label="Autorská role">Koordinátor</AdminDetailItem>
-    <AdminDetailItem label="Uživatelská role">Administrátor</AdminDetailItem>
-    <AdminDetailItem label="Účet od">12. 3. 2024</AdminDetailItem>
+    <AdminDetailItem>
+      <AdminDetailItemLabel>Autorská role</AdminDetailItemLabel>
+      <AdminDetailItemValue>Koordinátor</AdminDetailItemValue>
+    </AdminDetailItem>
+    <AdminDetailItem>
+      <AdminDetailItemLabel>Uživatelská role</AdminDetailItemLabel>
+      <AdminDetailItemValue>Administrátor</AdminDetailItemValue>
+    </AdminDetailItem>
+    <AdminDetailItem>
+      <AdminDetailItemLabel>Účet od</AdminDetailItemLabel>
+      <AdminDetailItemValue>12. 3. 2024</AdminDetailItemValue>
+    </AdminDetailItem>
   </>
 )
 

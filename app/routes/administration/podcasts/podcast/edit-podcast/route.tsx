@@ -33,6 +33,7 @@ import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
 import { FailedFile } from '~/components/failed-file'
+import { FailedFileName } from '~/components/failed-file-name'
 import { FileDropField } from '~/components/file-drop-field'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
@@ -807,7 +808,8 @@ export default function RouteComponent({
 
     if (podcast.cover === null && coverFailure?.change === 'upload') {
       return (
-        <FailedFile fileName={coverFailure.fileName ?? ''}>
+        <FailedFile>
+          <FailedFileName>{coverFailure.fileName ?? ''}</FailedFileName>
           <ErrorMessage>{coverFailure.sentence}</ErrorMessage>
           {renderCoverFailureActions()}
         </FailedFile>

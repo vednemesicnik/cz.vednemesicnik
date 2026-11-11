@@ -1,0 +1,5 @@
+.note {
+  @layer component {
+    color: var(--text-secondary);
+  }
+}

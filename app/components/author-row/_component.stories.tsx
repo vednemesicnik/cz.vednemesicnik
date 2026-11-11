@@ -3,7 +3,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { AuthorRemoveButton } from '~/components/author-remove-button'
+import { AuthorRowAvatar } from '~/components/author-row-avatar'
 import { AuthorRowButton } from '~/components/author-row-button'
+import { AuthorRowName } from '~/components/author-row-name'
+import { AuthorRowNote } from '~/components/author-row-note'
+import { AuthorRowText } from '~/components/author-row-text'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 
 import { AuthorRow } from './_component'
@@ -12,6 +16,9 @@ import { AuthorRow } from './_component'
 const NO_IMAGE = createImageSources('user-image', undefined)
 
 const meta: Meta<typeof AuthorRow> = {
+  argTypes: {
+    children: { control: false },
+  },
   component: AuthorRow,
   parameters: {
     layout: 'centered',
@@ -28,8 +35,14 @@ type Story = StoryObj<typeof meta>
  */
 export const Playground: Story = {
   args: {
-    image: NO_IMAGE,
-    name: 'Pavel Říha',
+    children: (
+      <>
+        <AuthorRowAvatar image={NO_IMAGE} name={'Pavel Říha'} />
+        <AuthorRowText>
+          <AuthorRowName>Pavel Říha</AuthorRowName>
+        </AuthorRowText>
+      </>
+    ),
   },
 }
 
@@ -38,8 +51,15 @@ export const Playground: Story = {
  */
 export const Own: Story = {
   args: {
-    ...Playground.args,
-    isOwn: true,
+    children: (
+      <>
+        <AuthorRowAvatar image={NO_IMAGE} name={'Pavel Říha'} />
+        <AuthorRowText>
+          <AuthorRowName>Pavel Říha</AuthorRowName>
+          <AuthorRowNote>vy</AuthorRowNote>
+        </AuthorRowText>
+      </>
+    ),
   },
 }
 
@@ -49,14 +69,17 @@ export const Own: Story = {
  */
 export const WithNoteAndActions: Story = {
   args: {
-    ...Playground.args,
     children: (
       <>
+        <AuthorRowAvatar image={NO_IMAGE} name={'Pavel Říha'} />
+        <AuthorRowText>
+          <AuthorRowName>Pavel Říha</AuthorRowName>
+          <AuthorRowNote>Přispěvatel</AuthorRowNote>
+        </AuthorRowText>
         <AuthorRowButton>Změnit</AuthorRowButton>
         <AuthorRemoveButton name={'Pavel Říha'} onClick={() => {}} />
       </>
     ),
-    note: 'Přispěvatel',
   },
   decorators: [
     (Story) => (

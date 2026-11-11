@@ -3,6 +3,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useSearchParams } from 'react-router'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { Form } from '~/components/form'
@@ -44,7 +45,8 @@ export default function RouteComponent({
   })
 
   return (
-    <AdminSignInCard title={'Dvoufázové ověření'}>
+    <AdminSignInCard>
+      <AdminSignInCardHeading>Dvoufázové ověření</AdminSignInCardHeading>
       <AdminSignInText>
         {isBackupCodeMethod
           ? 'Zadejte jeden ze záložních kódů. Každý platí jen jednou.'

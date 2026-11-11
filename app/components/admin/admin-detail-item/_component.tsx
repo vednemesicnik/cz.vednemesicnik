@@ -4,16 +4,16 @@ import type { ReactNode } from 'react'
 import styles from './_styles.module.css'
 
 type Props = {
-  label: string
   children: ReactNode
   className?: string
 }
 
-export const AdminDetailItem = ({ label, children, className }: Props) => {
-  return (
-    <div className={clsx(styles.item, className)}>
-      <dt className={styles.label}>{label}</dt>
-      <dd className={styles.value}>{children}</dd>
-    </div>
-  )
+/**
+ * A name and its value in an `AdminDetailList` (design bbih22nt).
+ *
+ * @param props.children - An `AdminDetailItemLabel` and an
+ *   `AdminDetailItemValue`.
+ */
+export const AdminDetailItem = ({ children, className }: Props) => {
+  return <div className={clsx(styles.item, className)}>{children}</div>
 }

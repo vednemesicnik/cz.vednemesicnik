@@ -12,6 +12,7 @@ import {
   TableStateCell,
 } from '~/components/admin/admin-table'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 
 import styles from './_styles.module.css'
 
@@ -63,7 +64,9 @@ export const DashboardRow = ({
       {note !== null && <TableNameNote>{note}</TableNameNote>}
     </TableNameCell>
     <TableStateCell>
-      <StatusTag detail={detail} state={state} />
+      <StatusTag state={state}>
+        {detail !== undefined && <StatusTagDetail>{detail}</StatusTagDetail>}
+      </StatusTag>
     </TableStateCell>
     {children}
   </TableRow>

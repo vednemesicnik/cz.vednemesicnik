@@ -70,67 +70,10 @@
   }
 }
 
-.title {
-  @layer component {
-    color: var(--text-primary);
-    transition: color var(--transition-base);
-
-    .container:hover & {
-      color: var(--primary-hover);
-    }
-    font-size: var(--font-size-4xl);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-4xl);
-    letter-spacing: var(--letter-spacing-tight);
-    margin: 0;
-  }
-}
-
-.meta {
-  @layer component {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    @media (width >= 640px) {
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px 16px;
-    }
-  }
-}
-
-.authors {
-  @layer component {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 0;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-
-    & li + li::before {
-      content: ", ";
-      white-space: pre;
-    }
-  }
-}
-
-.author {
-  @layer component {
-    display: flex;
-    align-items: center;
-  }
-}
-
-.authorName {
-  @layer component {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    margin: 0;
+/* The ArticleHeroTitle takes the link colour while the card is hovered. */
+.container:hover [data-article-hero-title] {
+  @layer variant {
+    color: var(--primary-hover);
   }
 }
 

@@ -3,6 +3,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useLocation, useNavigation } from 'react-router'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
@@ -55,7 +56,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   })
 
   return (
-    <AdminSignInCard title={'Přihlášení do administrace'} wordmark>
+    <AdminSignInCard>
+      <AdminSignInCardHeading wordmark>
+        Přihlášení do administrace
+      </AdminSignInCardHeading>
       {loaderData.error !== null ? (
         <Callout role={'alert'} tone={'error'}>
           {loaderData.error}

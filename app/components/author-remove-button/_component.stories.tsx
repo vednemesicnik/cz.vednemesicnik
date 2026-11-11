@@ -3,6 +3,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { AuthorRow } from '~/components/author-row'
+import { AuthorRowAvatar } from '~/components/author-row-avatar'
+import { AuthorRowName } from '~/components/author-row-name'
+import { AuthorRowText } from '~/components/author-row-text'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 
 import { AuthorRemoveButton } from './_component'
@@ -37,10 +40,14 @@ export const InRow: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
     <div style={{ width: '360px' }}>
-      <AuthorRow
-        image={createImageSources('user-image', undefined)}
-        name={'Pavel Říha'}
-      >
+      <AuthorRow>
+        <AuthorRowAvatar
+          image={createImageSources('user-image', undefined)}
+          name={'Pavel Říha'}
+        />
+        <AuthorRowText>
+          <AuthorRowName>Pavel Říha</AuthorRowName>
+        </AuthorRowText>
         <AuthorRemoveButton name={'Pavel Říha'} onClick={() => {}} />
       </AuthorRow>
     </div>

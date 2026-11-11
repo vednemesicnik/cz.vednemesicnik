@@ -17,29 +17,3 @@
     }
   }
 }
-
-/* The name and its note wrap as one: on a narrow row the note goes under the
-   name, and the name breaks inside a word only when it fits nowhere (28f). */
-.text {
-  @layer component {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 10px;
-    min-inline-size: 0;
-  }
-}
-
-.name {
-  @layer component {
-    min-inline-size: 0;
-    color: var(--text-primary);
-    overflow-wrap: anywhere;
-  }
-}
-
-/* *vy* or the role beside the name (24j, 28f). */
-.note {
-  @layer component {
-    color: var(--text-secondary);
-  }
-}

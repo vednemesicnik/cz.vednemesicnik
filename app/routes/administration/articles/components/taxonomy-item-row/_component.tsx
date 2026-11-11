@@ -19,6 +19,7 @@ import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
 
@@ -112,6 +113,11 @@ export const TaxonomyItemRow = ({
   // On a phone „⋯“ stands alone, the row action first in it (32a).
   const phoneMenu =
     rowAction === null ? record.menu : [rowAction, ...record.menu]
+  const stateDetail = getLiveStateDetail({
+    factLine: record.factLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow
@@ -139,14 +145,11 @@ export const TaxonomyItemRow = ({
         )}
       </TableCell>
       <TableStateCell>
-        <StatusTag
-          detail={getLiveStateDetail({
-            factLine: record.factLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={record.state}
-        />
+        <StatusTag state={record.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       <TableDetailsCell>
         <TableDetailsLine>

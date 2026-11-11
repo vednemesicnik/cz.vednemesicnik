@@ -2,9 +2,13 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { AdministrationTopBarTitle } from '../administration-top-bar-title'
 import { AdministrationTopBar } from './_component'
 
 const meta: Meta<typeof AdministrationTopBar> = {
+  argTypes: {
+    children: { control: false },
+  },
   component: AdministrationTopBar,
   globals: { viewport: { isRotated: false, value: 'mobile1' } },
   parameters: {
@@ -21,9 +25,8 @@ type Story = StoryObj<typeof meta>
 // sidebar item (22g, tbi5qpq9).
 export const Playground: Story = {
   args: {
+    children: <AdministrationTopBarTitle>Články</AdministrationTopBarTitle>,
     expanded: false,
-    menuLabel: 'Menu',
-    title: 'Články',
   },
 }
 

@@ -20,6 +20,7 @@ import {
 } from '~/components/admin/admin-table'
 import { Image } from '~/components/image'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
 import { getRowTint } from '~/utils/live-change/get-row-tint'
@@ -75,6 +76,13 @@ export const ItemRow = ({
       )}
     </Fragment>
   ))
+  // Who edits it comes first: it changes what the row allows (27a).
+  const stateDetail = getLiveStateDetail({
+    factLine: podcast.factLine,
+    holdLine: podcast.holdLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow
@@ -129,16 +137,11 @@ export const ItemRow = ({
         </span>
       </TableCell>
       <TableStateCell>
-        <StatusTag
-          // Who edits it comes first: it changes what the row allows (27a).
-          detail={getLiveStateDetail({
-            factLine: podcast.factLine,
-            holdLine: podcast.holdLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={podcast.submission ?? podcast.state}
-        />
+        <StatusTag state={podcast.submission ?? podcast.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       {/* The episodes on a phone, which has no Epizody column; the address
           goes, a missing cover is said last (32c, k7d1vqm1). */}

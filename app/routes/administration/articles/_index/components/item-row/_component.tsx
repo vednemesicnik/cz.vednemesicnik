@@ -18,6 +18,7 @@ import {
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
 import { getRowTint } from '~/utils/live-change/get-row-tint'
@@ -87,6 +88,13 @@ export const ItemRow = ({
   // On a phone „⋯“ stands alone, the row action first in it (22g).
   const phoneMenu =
     rowAction === null ? article.menu : [rowAction, ...article.menu]
+  // Who edits it comes first: it changes what the row allows (22f).
+  const stateDetail = getLiveStateDetail({
+    factLine: article.factLine,
+    holdLine: article.holdLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow
@@ -132,16 +140,11 @@ export const ItemRow = ({
       {showAuthor && <TableCell>{article.authorNames.join(', ')}</TableCell>}
       <TableCell>{article.updatedAt}</TableCell>
       <TableStateCell>
-        <StatusTag
-          // Who edits it comes first: it changes what the row allows (22f).
-          detail={getLiveStateDetail({
-            factLine: article.factLine,
-            holdLine: article.holdLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={article.state}
-        />
+        <StatusTag state={article.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       {meta !== null && (
         <TableDetailsCell>

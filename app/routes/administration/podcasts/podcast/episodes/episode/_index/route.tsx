@@ -13,10 +13,13 @@ import {
 import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
@@ -332,68 +335,85 @@ export default function RouteComponent({
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Podcast'}>
-                <Link to={podcastHref}>{episode.podcast.title}</Link>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Podcast</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <Link to={podcastHref}>{episode.podcast.title}</Link>
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Číslo'}>
-                {episode.number ?? '—'}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Číslo</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {episode.number ?? '—'}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Obálka'}>
-                {/* Without its own cover, the podcast's, muted (5hl7vx3a). */}
-                <div className={styles.cover}>
-                  {episode.cover === null ? (
-                    <div
-                      className={clsx(
-                        styles.coverImage,
-                        styles.coverMissing,
-                        styles.muted,
-                      )}
-                    />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Obálka</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {/* Without its own cover, the podcast's, muted (5hl7vx3a). */}
+                  <div className={styles.cover}>
+                    {episode.cover === null ? (
+                      <div
+                        className={clsx(
+                          styles.coverImage,
+                          styles.coverMissing,
+                          styles.muted,
+                        )}
+                      />
+                    ) : (
+                      <Image
+                        {...episode.cover.sources}
+                        alt={episode.cover.altText}
+                        className={clsx(
+                          styles.coverImage,
+                          !episode.cover.isOwn && styles.muted,
+                        )}
+                        sizes={'28px'}
+                      />
+                    )}
+                    {episode.cover?.isOwn !== true && (
+                      <span className={styles.tertiary}>z podcastu</span>
+                    )}
+                  </div>
+                </AdminDetailItemValue>
+              </AdminDetailItem>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Adresa</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {webPath === null ? (
+                    '—'
+                  ) : episode.state !== 'published' &&
+                    isOnWeb &&
+                    previewPath !== null ? (
+                    <span className={styles.stack}>
+                      <Hyperlink
+                        href={previewPath}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Náhled na webu
+                      </Hyperlink>
+                      <span className={styles.tertiary}>{webPath}</span>
+                    </span>
                   ) : (
-                    <Image
-                      {...episode.cover.sources}
-                      alt={episode.cover.altText}
-                      className={clsx(
-                        styles.coverImage,
-                        !episode.cover.isOwn && styles.muted,
-                      )}
-                      sizes={'28px'}
-                    />
-                  )}
-                  {episode.cover?.isOwn !== true && (
-                    <span className={styles.tertiary}>z podcastu</span>
-                  )}
-                </div>
-              </AdminDetailItem>
-              <AdminDetailItem label={'Adresa'}>
-                {webPath === null ? (
-                  '—'
-                ) : episode.state !== 'published' &&
-                  isOnWeb &&
-                  previewPath !== null ? (
-                  <span className={styles.stack}>
-                    <Hyperlink
-                      href={previewPath}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Náhled na webu
-                    </Hyperlink>
                     <span className={styles.tertiary}>{webPath}</span>
-                  </span>
-                ) : (
-                  <span className={styles.tertiary}>{webPath}</span>
-                )}
+                  )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autor'}>
-                {episode.authorName}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autor</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {episode.authorName}
+                </AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Historie'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
             <HistoryList
               entries={episode.history.entries}
               isIncomplete={episode.history.isIncomplete}

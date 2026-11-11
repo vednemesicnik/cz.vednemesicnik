@@ -1,5 +1,6 @@
 import type { ContentState } from '@generated/prisma/enums'
 import { clsx } from 'clsx'
+import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
@@ -8,7 +9,7 @@ export type StatusTagState = ContentState | 'pending' | 'approved'
 
 type Props = {
   state: StatusTagState
-  detail?: string
+  children?: ReactNode
   muted?: boolean
   className?: string
 }
@@ -26,12 +27,11 @@ export const STATUS_TAG_LABELS: Record<StatusTagState, string> = {
  * The design system's state tag: grey draft, yellow waiting, green-outlined
  * approved, green published, grey archived (design 07a, 22a).
  *
- * @param props.detail - One fact under the tag, never an instruction (22b),
- *   e.g. „od 25. 9. 2026“.
+ * @param props.children - One fact under the tag, a `StatusTagDetail`.
  * @param props.muted - Grey in every state, for the public web's preview,
  *   where the tag only says the reader doesn't see it (10d).
  */
-export const StatusTag = ({ state, detail, muted, className }: Props) => (
+export const StatusTag = ({ state, children, muted, className }: Props) => (
   <span
     className={clsx(
       styles.status,
@@ -41,6 +41,6 @@ export const StatusTag = ({ state, detail, muted, className }: Props) => (
     )}
   >
     <span className={styles.tag}>{STATUS_TAG_LABELS[state]}</span>
-    {detail !== undefined && <span className={styles.detail}>{detail}</span>}
+    {children}
   </span>
 )

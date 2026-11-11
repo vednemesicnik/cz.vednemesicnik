@@ -8,15 +8,9 @@ import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 import styles from './_styles.module.css'
 
-type Author = {
-  name: string
-}
-
 type Props = {
   children: ReactNode
-  title: string
   to: string
-  authors: Author[]
   image?: ImageSources
   imageAlt?: string
   isPreview?: boolean
@@ -25,15 +19,13 @@ type Props = {
 /**
  * The home page's main article (design 10a).
  *
- * @param props.children - The date line after the authors, a
- *   `ContentLinkPublishDate`.
+ * @param props.children - The `ArticleHeroTitle`, then the `ArticleHeroMeta`
+ *   with the `ArticleHeroAuthors` and the date, a `ContentLinkPublishDate`.
  * @param props.isPreview - Outlined, for an article the reader doesn't see (10d).
  */
 export const ArticleHero = ({
   children,
-  title,
   to,
-  authors,
   image,
   imageAlt,
   isPreview,
@@ -55,17 +47,7 @@ export const ArticleHero = ({
           </figure>
         )}
         <div className={styles.heading}>
-          <h2 className={styles.title}>{title}</h2>
-          <div className={styles.meta}>
-            <ul className={styles.authors}>
-              {authors.map((author) => (
-                <li className={styles.author} key={author.name}>
-                  <p className={styles.authorName}>{author.name}</p>
-                </li>
-              ))}
-            </ul>
-            {children}
-          </div>
+          {children}
           <span className={styles.cta}>
             Přečíst článek
             <LinkArrow />

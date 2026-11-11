@@ -3,6 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { SignInAttemptsDetail } from '~/components/sign-in-attempts-detail'
 import { SignInAttemptsItem } from '~/components/sign-in-attempts-item'
 import { SignInAttemptsMethod } from '~/components/sign-in-attempts-method'
@@ -33,7 +34,10 @@ const meta: Meta<typeof SignInAttempts> = {
   decorators: [
     (Story, { parameters }) => (
       <div style={{ width: parameters.width }}>
-        <AdminDetailSection title="Poslední pokusy o přihlášení">
+        <AdminDetailSection>
+          <AdminDetailSectionTitle>
+            Poslední pokusy o přihlášení
+          </AdminDetailSectionTitle>
           <Story />
         </AdminDetailSection>
       </div>

@@ -27,6 +27,7 @@ import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -1208,7 +1209,8 @@ export default function RouteComponent({
             </AdminDetailMain>
 
             <AdminDetailAside>
-              <AdminDetailSection title={'Údaje'}>
+              <AdminDetailSection>
+                <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
                 <dl className={styles.facts}>
                   <div className={styles.fact}>
                     <dt className={styles.factLabel}>Podcast</dt>

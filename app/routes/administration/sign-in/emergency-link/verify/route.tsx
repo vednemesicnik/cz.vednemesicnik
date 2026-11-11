@@ -2,6 +2,7 @@
 import { Form, href, useNavigation } from 'react-router'
 
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
@@ -40,7 +41,8 @@ export default function RouteComponent({
     const isSignedIn = loaderData.status === 'invalid-signed-in'
 
     return (
-      <AdminSignInCard title={heading}>
+      <AdminSignInCard>
+        <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
         <AdminSignInText>
           {isSignedIn
             ? 'Vraťte se do administrace — tento nouzový odkaz už neplatí.'
@@ -62,7 +64,8 @@ export default function RouteComponent({
   // The same account has nothing to confirm; the link lapses by itself.
   if (loaderData.status === 'same-account') {
     return (
-      <AdminSignInCard title={heading}>
+      <AdminSignInCard>
+        <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
         <AdminSignInText>
           Pokračujte do Nastavení — v tomto prohlížeči už jste přihlášení.
         </AdminSignInText>
@@ -85,7 +88,8 @@ export default function RouteComponent({
   // leads back here, to the confirmation (20f).
   if (loaderData.status === 'other-account') {
     return (
-      <AdminSignInCard title={heading}>
+      <AdminSignInCard>
+        <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
         <AdminSignInText>
           Odhlaste se a pokračujte — v tomto prohlížeči je přihlášený jiný účet.
         </AdminSignInText>
@@ -111,7 +115,8 @@ export default function RouteComponent({
   }
 
   return (
-    <AdminSignInCard title={heading}>
+    <AdminSignInCard>
+      <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
       {/* The account says where, the pair under it by what and from whom. */}
       <div className={styles.details}>
         <p className={styles.line}>

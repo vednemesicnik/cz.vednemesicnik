@@ -2,6 +2,7 @@
 import { Form, href, useNavigation } from 'react-router'
 
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
@@ -37,7 +38,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // A browser already signed in to another account (design 20c, so197jap).
   if (loaderData.status === 'other-account') {
     return (
-      <AdminSignInCard title={heading}>
+      <AdminSignInCard>
+        <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
         <AdminSignInText>
           Odkaz otevřete v prohlížeči, kde se ověřujete — patří účtu{' '}
           <span className={styles.value}>{loaderData.email}</span> a tady je
@@ -51,7 +53,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // A signed-in browser gets a new link from the identity check in Nastavení.
   if (loaderData.status === 'invalid-signed-in') {
     return (
-      <AdminSignInCard title={heading}>
+      <AdminSignInCard>
+        <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
         <AdminSignInText>
           Nový odkaz si pošlete v Nastavení — tento vypršel, byl použitý nebo ho
           nahradil nový.
@@ -65,7 +68,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // this one, and lands on the sent state (20b).
   if (loaderData.status === 'invalid') {
     return (
-      <AdminSignInCard title={heading}>
+      <AdminSignInCard>
+        <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
         <AdminSignInText>
           Odkaz vypršel, byl použitý nebo ho nahradil nový. Můžete si poslat
           nový na <span className={styles.value}>{loaderData.email}</span>.
@@ -107,7 +111,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const isIdentityCheck = loaderData.status === 'verify-identity'
 
   return (
-    <AdminSignInCard title={heading}>
+    <AdminSignInCard>
+      <AdminSignInCardHeading>{heading}</AdminSignInCardHeading>
       <AdminSignInText>
         Účet: <span className={styles.value}>{loaderData.email}</span>
       </AdminSignInText>

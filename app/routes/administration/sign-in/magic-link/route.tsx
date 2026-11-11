@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 import { Form, href, useNavigation } from 'react-router'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { ButtonLink } from '~/components/button-link'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
@@ -22,7 +23,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const isSubmitting = navigation.state !== 'idle'
 
   return (
-    <AdminSignInCard title={'Zkontrolujte e-mail'}>
+    <AdminSignInCard>
+      <AdminSignInCardHeading>Zkontrolujte e-mail</AdminSignInCardHeading>
       <AdminSignInText>
         Pokud k adrese <span className={styles.value}>{loaderData.email}</span>{' '}
         patří účet, odkaz byl odeslán. Platí 15 minut.

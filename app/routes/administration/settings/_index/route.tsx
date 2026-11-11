@@ -8,11 +8,19 @@ import { href, useFetcher, useLocation, useNavigate } from 'react-router'
 import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailRow } from '~/components/admin/admin-detail-row'
+import { AdminDetailRowActions } from '~/components/admin/admin-detail-row-actions'
+import { AdminDetailRowLabel } from '~/components/admin/admin-detail-row-label'
+import { AdminDetailRowValue } from '~/components/admin/admin-detail-row-value'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionActions } from '~/components/admin/admin-detail-section-actions'
+import { AdminDetailSectionHead } from '~/components/admin/admin-detail-section-head'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -21,6 +29,7 @@ import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { ListDetailRow } from '~/components/list-detail-row'
+import { ListDetailRowActions } from '~/components/list-detail-row-actions'
 import { PageTitle } from '~/components/page-title'
 import { SegmentedControl } from '~/components/segmented-control'
 import { SegmentedControlHint } from '~/components/segmented-control-hint'
@@ -335,19 +344,20 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <AdminDetailLayout>
         <AdminDetailMain>
-          <AdminDetailSection
-            actions={
-              <Button
-                onClick={() => setOpenDialog({ name: 'profile' })}
-                size={'sm'}
-                type={'button'}
-                variant={'outline'}
-              >
-                Upravit profil
-              </Button>
-            }
-            title={'Profil'}
-          >
+          <AdminDetailSection>
+            <AdminDetailSectionHead>
+              <AdminDetailSectionTitle>Profil</AdminDetailSectionTitle>
+              <AdminDetailSectionActions>
+                <Button
+                  onClick={() => setOpenDialog({ name: 'profile' })}
+                  size={'sm'}
+                  type={'button'}
+                  variant={'outline'}
+                >
+                  Upravit profil
+                </Button>
+              </AdminDetailSectionActions>
+            </AdminDetailSectionHead>
             <div className={styles.profileHeader}>
               <AdminAvatar
                 alt={user.image.altText}
@@ -363,19 +373,26 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
             <AdminDetailList>
               {/* The role, and under it the sentence from 28c (29a, rdqylvw7). */}
-              <AdminDetailItem label={'Autorská role'}>
-                <div className={styles.authorRole}>
-                  <span>{getAuthorRoleLabel(user.authorRoleName)}</span>
-                  <span className={styles.note}>
-                    {getAuthorRoleDescription(user.authorRoleName)}
-                  </span>
-                </div>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autorská role</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <div className={styles.authorRole}>
+                    <span>{getAuthorRoleLabel(user.authorRoleName)}</span>
+                    <span className={styles.note}>
+                      {getAuthorRoleDescription(user.authorRoleName)}
+                    </span>
+                  </div>
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Uživatelská role'}>
-                {getUserRoleLabel(user.userRoleName)}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Uživatelská role</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {getUserRoleLabel(user.userRoleName)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Účet od'}>
-                {user.createdAt}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Účet od</AdminDetailItemLabel>
+                <AdminDetailItemValue>{user.createdAt}</AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
 
@@ -384,27 +401,91 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             </AdminParagraph>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Přihlášení'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Přihlášení</AdminDetailSectionTitle>
             <div className={styles.rows}>
-              <AdminDetailRow label={'Google'}>
-                <span>{signInMethods.google.status}</span>
-                {signInMethods.google.note !== null && (
+              <AdminDetailRow>
+                <AdminDetailRowLabel>Google</AdminDetailRowLabel>
+                <AdminDetailRowValue>
+                  <span>{signInMethods.google.status}</span>
+                  {signInMethods.google.note !== null && (
+                    <span className={styles.note}>
+                      {signInMethods.google.note}
+                    </span>
+                  )}
+                </AdminDetailRowValue>
+              </AdminDetailRow>
+
+              <AdminDetailRow>
+                <AdminDetailRowLabel>Odkaz v e-mailu</AdminDetailRowLabel>
+                <AdminDetailRowValue>
+                  <span>k dispozici</span>
                   <span className={styles.note}>
-                    {signInMethods.google.note}
+                    Na {user.email}. Nic se nenastavuje.
                   </span>
-                )}
+                </AdminDetailRowValue>
               </AdminDetailRow>
 
-              <AdminDetailRow label={'Odkaz v e-mailu'}>
-                <span>k dispozici</span>
-                <span className={styles.note}>
-                  Na {user.email}. Nic se nenastavuje.
-                </span>
-              </AdminDetailRow>
+              <ListDetailRow>
+                <AdminDetailRowLabel>Passkey</AdminDetailRowLabel>
+                <AdminDetailRowValue>
+                  {passkeys.length === 0 ? (
+                    <span>Zatím žádný.</span>
+                  ) : (
+                    <ul className={styles.passkeys}>
+                      {passkeys.map((passkey) => {
+                        const label = getPasskeyLabel(passkey)
 
-              <ListDetailRow
-                actions={
-                  <>
+                        return (
+                          <li className={styles.passkey} key={passkey.id}>
+                            <span className={styles.passkeyText}>
+                              <span className={styles.passkeyTitle}>
+                                {label.title}
+                              </span>
+                              <span className={styles.note}>
+                                {getPasskeyDetails({
+                                  createdAt: passkey.createdAt,
+                                  lastUsedAt: passkey.lastUsedAt,
+                                  type: label.type,
+                                }).map((detail, index) => (
+                                  <Fragment key={detail}>
+                                    {/* The line breaks after a dot, never inside a date. */}
+                                    {index > 0 && '\u00a0· '}
+                                    <span className={styles.passkeyDetail}>
+                                      {detail}
+                                    </span>
+                                  </Fragment>
+                                ))}
+                              </span>
+                            </span>
+                            <TextButton
+                              onClick={() =>
+                                setOpenDialog({
+                                  name: 'remove-passkey',
+                                  passkeyId: passkey.id,
+                                })
+                              }
+                            >
+                              Odebrat…
+                            </TextButton>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                  <span
+                    className={clsx(styles.note, styles.passkeyDescription)}
+                  >
+                    Přihlášení bez hesla pomocí passkey v zařízení nebo na
+                    bezpečnostním klíči.
+                  </span>
+                  {/* Always shown: the app can't tell a shared computer (29a, f3mu0o7u). */}
+                  <span className={styles.note}>
+                    Na sdíleném počítači ukládejte passkey do svého telefonu
+                    nebo na svůj bezpečnostní klíč. Možnost vyberte v okně
+                    prohlížeče.
+                  </span>
+                  <ListDetailRowActions>
                     <RegisterPasskey
                       isRecentlyAuthenticated={isRecentlyAuthenticated}
                       onRequireIdentityCheck={requireIdentityCheckForPasskey}
@@ -417,77 +498,29 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                         problem={passkeyProblem}
                       />
                     )}
-                  </>
-                }
-                label={'Passkey'}
-              >
-                {passkeys.length === 0 ? (
-                  <span>Zatím žádný.</span>
-                ) : (
-                  <ul className={styles.passkeys}>
-                    {passkeys.map((passkey) => {
-                      const label = getPasskeyLabel(passkey)
-
-                      return (
-                        <li className={styles.passkey} key={passkey.id}>
-                          <span className={styles.passkeyText}>
-                            <span className={styles.passkeyTitle}>
-                              {label.title}
-                            </span>
-                            <span className={styles.note}>
-                              {getPasskeyDetails({
-                                createdAt: passkey.createdAt,
-                                lastUsedAt: passkey.lastUsedAt,
-                                type: label.type,
-                              }).map((detail, index) => (
-                                <Fragment key={detail}>
-                                  {/* The line breaks after a dot, never inside a date. */}
-                                  {index > 0 && '\u00a0· '}
-                                  <span className={styles.passkeyDetail}>
-                                    {detail}
-                                  </span>
-                                </Fragment>
-                              ))}
-                            </span>
-                          </span>
-                          <TextButton
-                            onClick={() =>
-                              setOpenDialog({
-                                name: 'remove-passkey',
-                                passkeyId: passkey.id,
-                              })
-                            }
-                          >
-                            Odebrat…
-                          </TextButton>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
-                <span className={clsx(styles.note, styles.passkeyDescription)}>
-                  Přihlášení bez hesla pomocí passkey v zařízení nebo na
-                  bezpečnostním klíči.
-                </span>
-                {/* Always shown: the app can't tell a shared computer (29a, f3mu0o7u). */}
-                <span className={styles.note}>
-                  Na sdíleném počítači ukládejte passkey do svého telefonu nebo
-                  na svůj bezpečnostní klíč. Možnost vyberte v okně prohlížeče.
-                </span>
+                  </ListDetailRowActions>
+                </AdminDetailRowValue>
               </ListDetailRow>
             </div>
           </AdminDetailSection>
 
           {emergencyPassword !== null && (
-            <AdminDetailSection title={'Nouzové přihlášení heslem'}>
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>
+                Nouzové přihlášení heslem
+              </AdminDetailSectionTitle>
               <AdminParagraph className={styles.muted}>
                 Heslo slouží pro nouzové přihlášení, které je běžně vypnuté.
                 Dvoufázové ověření platí jen při přihlášení heslem.
               </AdminParagraph>
 
               <div className={styles.rows}>
-                <AdminDetailRow
-                  actions={
+                <AdminDetailRow>
+                  <AdminDetailRowLabel>Heslo</AdminDetailRowLabel>
+                  <AdminDetailRowValue>
+                    {signInMethods.password.status}
+                  </AdminDetailRowValue>
+                  <AdminDetailRowActions>
                     <Button
                       onClick={() =>
                         openWithIdentityCheck(
@@ -501,52 +534,56 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     >
                       {emergencyPassword.hasPassword ? 'Změnit…' : 'Nastavit…'}
                     </Button>
-                  }
-                  label={'Heslo'}
-                >
-                  {signInMethods.password.status}
+                  </AdminDetailRowActions>
                 </AdminDetailRow>
 
                 {emergencyPassword.isTwoFactorEnabled ? (
-                  <AdminDetailRow
-                    actions={
-                      <>
-                        <Button
-                          // Not reopened after the identity check: opening it
-                          // replaces the codes, which an address must not do
-                          // without a click.
-                          onClick={() =>
-                            openWithIdentityCheck(
-                              { name: 'new-backup-codes' },
-                              null,
-                            )
-                          }
-                          size={'sm'}
-                          type={'button'}
-                          variant={'outline'}
-                        >
-                          Nové záložní kódy
-                        </Button>
-                        <TextButton
-                          onClick={() =>
-                            setOpenDialog({ name: 'disable-two-factor' })
-                          }
-                        >
-                          Vypnout…
-                        </TextButton>
-                      </>
-                    }
-                    label={'Dvoufázové ověření'}
-                  >
-                    <span>{signInMethods.twoFactor.status}</span>
-                    <span className={styles.note}>
-                      {signInMethods.twoFactor.note}
-                    </span>
+                  <AdminDetailRow>
+                    <AdminDetailRowLabel>
+                      Dvoufázové ověření
+                    </AdminDetailRowLabel>
+                    <AdminDetailRowValue>
+                      <span>{signInMethods.twoFactor.status}</span>
+                      <span className={styles.note}>
+                        {signInMethods.twoFactor.note}
+                      </span>
+                    </AdminDetailRowValue>
+                    <AdminDetailRowActions>
+                      <Button
+                        // Not reopened after the identity check: opening it
+                        // replaces the codes, which an address must not do
+                        // without a click.
+                        onClick={() =>
+                          openWithIdentityCheck(
+                            { name: 'new-backup-codes' },
+                            null,
+                          )
+                        }
+                        size={'sm'}
+                        type={'button'}
+                        variant={'outline'}
+                      >
+                        Nové záložní kódy
+                      </Button>
+                      <TextButton
+                        onClick={() =>
+                          setOpenDialog({ name: 'disable-two-factor' })
+                        }
+                      >
+                        Vypnout…
+                      </TextButton>
+                    </AdminDetailRowActions>
                   </AdminDetailRow>
                 ) : (
-                  <AdminDetailRow
-                    actions={
-                      emergencyPassword.hasPassword ? (
+                  <AdminDetailRow>
+                    <AdminDetailRowLabel>
+                      Dvoufázové ověření
+                    </AdminDetailRowLabel>
+                    <AdminDetailRowValue>
+                      {signInMethods.twoFactor.status}
+                    </AdminDetailRowValue>
+                    <AdminDetailRowActions>
+                      {emergencyPassword.hasPassword ? (
                         <Button
                           onClick={() =>
                             openWithIdentityCheck(
@@ -564,11 +601,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                         <span className={styles.note}>
                           Nejdřív nastavte heslo.
                         </span>
-                      )
-                    }
-                    label={'Dvoufázové ověření'}
-                  >
-                    {signInMethods.twoFactor.status}
+                      )}
+                    </AdminDetailRowActions>
                   </AdminDetailRow>
                 )}
               </div>
@@ -590,7 +624,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
         <AdminDetailAside>
           {/* „Vzhled a jazyk“ once #295 adds Jazyk (design 29a, 0d0khewy). */}
-          <AdminDetailSection title={'Vzhled'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Vzhled</AdminDetailSectionTitle>
             <colorSchemeFetcher.Form method={'post'}>
               <AuthenticityTokenInput />
               <input
@@ -639,7 +674,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             </colorSchemeFetcher.Form>
           </AdminDetailSection>
           {otherSessionsCount > 0 && (
-            <AdminDetailSection title={'Přehled přihlášení'}>
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>
+                Přehled přihlášení
+              </AdminDetailSectionTitle>
               <AdminParagraph>
                 {formatOtherSignIns(otherSessionsCount)}
               </AdminParagraph>
@@ -660,7 +698,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             </AdminDetailSection>
           )}
           {signInAttempts.length > 0 && (
-            <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>
+                Poslední pokusy o přihlášení
+              </AdminDetailSectionTitle>
               <SignInAttempts>
                 {signInAttempts.map((attempt) => (
                   <SignInAttemptsItem
