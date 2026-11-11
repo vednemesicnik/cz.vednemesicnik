@@ -8,6 +8,7 @@ import { StrictMode, startTransition } from 'react'
 import { hydrateRoot } from 'react-dom/client'
 import { HydratedRouter } from 'react-router/dom'
 
+import { popStateGuard } from '~/utils/history/popstate-guard'
 import { initEnvClient } from '~/utils/init-env.client'
 import {
   initSentryClient,
@@ -16,6 +17,8 @@ import {
 
 initEnvClient()
 initSentryClient()
+// Before the router, so its `popstate` listener comes second.
+popStateGuard.install()
 
 startTransition(() => {
   hydrateRoot(

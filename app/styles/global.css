@@ -52,6 +52,12 @@
   --radius-full: 9999px;
 }
 
+/* A subtree that stays dark on the light site; semantic-tokens.css declares
+   the roles on it again. Written in CSS so the build lowers it. */
+[data-color-scheme="dark"] {
+  color-scheme: dark;
+}
+
 @layer base {
   /* Lets the header query the page's scroll direction (app-header). */
   html {

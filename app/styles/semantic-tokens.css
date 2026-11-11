@@ -8,11 +8,17 @@
  * the pre-redesign aliases aside); the active value follows color-scheme
  * (global.css). An alpha value is color-mix() of a primitive.
  *
+ * The roles are declared again on [data-color-scheme="dark"], a subtree that
+ * stays dark on the light site (the image viewer, 12b): the build lowers
+ * light-dark() and resolves each role where it is declared, so a role
+ * inherited from :root would keep the page's scheme.
+ *
  * Requires primitive-tokens.css to be loaded first.
  * Imported globally in app/root.tsx.
  */
 
-:root {
+:root,
+[data-color-scheme="dark"] {
   @layer base {
     /* ========================================
        Backgrounds
@@ -313,6 +319,12 @@
     --overlay: light-dark(
       color-mix(in srgb, var(--color-charcoal-950) 40%, transparent),
       color-mix(in srgb, var(--color-black) 60%, transparent)
+    );
+    /* Behind the image viewer, the same in both schemes (zn43av9y) */
+    --viewer-backdrop: color-mix(
+      in srgb,
+      var(--color-charcoal-950) 92%,
+      transparent
     );
     /* Stand-in for a missing cover or photo */
     --placeholder-bg: light-dark(
