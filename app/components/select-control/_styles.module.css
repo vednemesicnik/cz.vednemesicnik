@@ -47,15 +47,3 @@
     }
   }
 }
-
-/* Error State */
-.control.isInvalid {
-  @layer component {
-    border-color: var(--error);
-
-    &:focus-visible {
-      border-color: var(--error);
-      box-shadow: var(--focus-shadow-error);
-    }
-  }
-}

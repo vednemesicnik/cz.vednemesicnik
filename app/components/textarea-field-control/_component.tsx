@@ -9,9 +9,10 @@ import styles from './_styles.module.css'
 type Props = ComponentProps<'textarea'>
 
 /**
- * A `TextareaField`'s multi-line input, wired to its Conform field. The hint
- * and the counter are added to its description, and the field's errors switch
- * it to the error look.
+ * A `TextareaField`'s multi-line input, wired to its Conform field. The
+ * field's id wins over one passed in, so the label always points at it; the
+ * hint and the counter are added to its description, and the field's errors
+ * switch it to the error look.
  *
  * @returns The `<textarea>`
  */
@@ -20,16 +21,22 @@ export const TextareaFieldControl = ({ className, ...rest }: Props) => {
   const textareaProps = getTextareaProps(field)
   // Keep the error description Conform sets and add the hint and counter.
   // An id with nothing rendered is ignored by the accessible description.
-  const describedBy = [textareaProps['aria-describedby'], hintId, counterId]
+  const describedBy = [
+    textareaProps['aria-describedby'],
+    rest['aria-describedby'],
+    hintId,
+    counterId,
+  ]
     .filter(Boolean)
     .join(' ')
 
   return (
     <textarea
       {...textareaProps}
+      {...rest}
       aria-describedby={describedBy}
       className={clsx(styles.control, hasErrors && styles.isInvalid, className)}
-      {...rest}
+      id={field.id}
     />
   )
 }

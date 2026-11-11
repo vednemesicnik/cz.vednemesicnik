@@ -57,7 +57,7 @@
 
 /* Error State */
 .control.isInvalid {
-  @layer component {
+  @layer variant {
     border-color: var(--error);
 
     &:focus-visible {
