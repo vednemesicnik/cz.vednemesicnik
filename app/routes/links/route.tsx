@@ -7,6 +7,8 @@ import { Content } from './components/content'
 import { Footer } from './components/footer'
 import { GraphicLink } from './components/graphic-link'
 import { Header } from './components/header'
+import { HeaderContent } from './components/header-content'
+import { HeaderLogo } from './components/header-logo'
 import { Heading } from './components/heading'
 import { LinkGroup } from './components/link-group'
 import { LinkGroupItem } from './components/link-group-item'
@@ -35,9 +37,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Header logo={<VdmLogoClip />}>
-        <Heading>Vedneměsíčník</Heading>
-        <Subheading>Jsme studentské nekritické noviny!</Subheading>
+      <Header>
+        <HeaderLogo>
+          <VdmLogoClip />
+        </HeaderLogo>
+        <HeaderContent>
+          <Heading>Vedneměsíčník</Heading>
+          <Subheading>Jsme studentské nekritické noviny!</Subheading>
+        </HeaderContent>
       </Header>
       <Content>
         <LinkGroup>
