@@ -9,9 +9,12 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
+import { CheckboxHint } from '~/components/checkbox-hint'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useFilterDialog } from '~/hooks/use-filter-dialog'
 import { createFilterSchema } from '~/routes/administration/filters/_schema'
@@ -24,28 +27,24 @@ type Props = {
   currentQuery: string
   onClose: () => void
   tableKey: AdminListTableKey
-  title?: string
-  summary?: ReactNode
   defaultHint?: string
-  sharedHint?: string
+  children?: ReactNode
 }
 
 /**
  * Saves the list's current state as a named filter.
  *
- * @param props.title - The dialog's title.
- * @param props.summary - What is saved, a sentence or a list (design 22d).
- * @param props.defaultHint - The hint under Nastavit jako výchozí.
- * @param props.sharedHint - The hint under Sdílet s ostatními.
+ * @param props.defaultHint - The hint under Nastavit jako výchozí, in the
+ *   list's words; a prop, since the checkbox belongs to the dialog's form.
+ * @param props.children - What is saved, a sentence or a list (design 22d),
+ *   between the name and the checkboxes.
  */
 export const SaveFilterDialog = ({
   currentQuery,
   onClose,
   tableKey,
-  title = 'Uložit aktuální filtr',
-  summary,
   defaultHint,
-  sharedHint,
+  children,
 }: Props) => {
   const fetcher = useFetcher<FilterActionData>()
   const dialogRef = useFilterDialog(fetcher, onClose)
@@ -68,7 +67,7 @@ export const SaveFilterDialog = ({
   return (
     <AdminDialog ref={dialogRef}>
       <AdminModalContent>
-        <AdminModalTitle>{title}</AdminModalTitle>
+        <AdminModalTitle>Uložit filtry</AdminModalTitle>
 
         <fetcher.Form
           action={href('/administration/filters')}
@@ -93,31 +92,39 @@ export const SaveFilterDialog = ({
 
           <TextField
             errors={fields.name.errors}
-            isRequiredMarkHidden
-            label={'Název'}
-            {...getInputProps(fields.name, { type: 'text' })}
-          />
+            id={fields.name.id}
+            required={fields.name.required}
+          >
+            <TextFieldLabel isRequiredMarkHidden>Název</TextFieldLabel>
+            <TextFieldControl
+              {...getInputProps(fields.name, { type: 'text' })}
+            />
+          </TextField>
 
-          {summary !== undefined && (
-            <div className={styles.summary}>{summary}</div>
+          {children !== undefined && (
+            <div className={styles.summary}>{children}</div>
           )}
 
           <div className={styles.checkboxes}>
             <Checkbox
-              hint={defaultHint}
               {...getInputProps(fields.isDefault, {
                 type: 'checkbox',
               })}
             >
               Nastavit jako výchozí
+              {defaultHint !== undefined && (
+                <CheckboxHint>{defaultHint}</CheckboxHint>
+              )}
             </Checkbox>
             <Checkbox
-              hint={sharedHint}
               {...getInputProps(fields.isShared, {
                 type: 'checkbox',
               })}
             >
               Sdílet s ostatními
+              <CheckboxHint>
+                Ostatní ho mohou použít, měnit ho můžete jen vy.
+              </CheckboxHint>
             </Checkbox>
           </div>
 

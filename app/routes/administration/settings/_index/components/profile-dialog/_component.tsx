@@ -12,10 +12,18 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { DialogBody } from '~/components/dialog-body'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldCounter } from '~/components/textarea-field-counter'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
@@ -25,6 +33,8 @@ import { BIO_MAX_LENGTH, profileSchema } from '../../_schema'
 import { useProfilePhoto } from '../../utils/use-profile-photo'
 import { TextButton } from '../text-button'
 import { UploadConfirmDialog } from '../upload-confirm-dialog'
+import { UploadConfirmDialogConfirm } from '../upload-confirm-dialog-confirm'
+import { UploadConfirmDialogStay } from '../upload-confirm-dialog-stay'
 import styles from './_styles.module.css'
 
 // The picked file in the avatar while it uploads (29b).
@@ -371,23 +381,31 @@ export const ProfileDialog = ({
             )}
 
             <TextField
-              label={'Jméno'}
-              {...getInputProps(fields.name, { type: 'text' })}
-              disabled={isSubmitting}
               errors={fields.name.errors}
-              hint={'Zobrazuje se u článků na webu a v panelu administrace.'}
-            />
-            <TextareaField
-              counter={`${bioLength} / ${BIO_MAX_LENGTH}`}
-              field={fields.bio}
-              hint={'Zatím se na webu nezobrazuje.'}
-              label={
-                <>
-                  Bio <span className={styles.optional}>nepovinné</span>
-                </>
-              }
-              textareaProps={{ disabled: isSubmitting, rows: 4 }}
-            />
+              id={fields.name.id}
+              required={fields.name.required}
+            >
+              <TextFieldLabel>Jméno</TextFieldLabel>
+              <TextFieldControl
+                {...getInputProps(fields.name, { type: 'text' })}
+                disabled={isSubmitting}
+              />
+              <TextFieldHint>
+                Zobrazuje se u článků na webu a v panelu administrace.
+              </TextFieldHint>
+            </TextField>
+            <TextareaField field={fields.bio}>
+              <TextareaFieldLabel>
+                Bio <span className={styles.optional}>nepovinné</span>
+              </TextareaFieldLabel>
+              <TextareaFieldControl disabled={isSubmitting} rows={4} />
+              <TextareaFieldHint>
+                Zatím se na webu nezobrazuje.
+              </TextareaFieldHint>
+              <TextareaFieldCounter>
+                {`${bioLength} / ${BIO_MAX_LENGTH}`}
+              </TextareaFieldCounter>
+            </TextareaField>
 
             <AdminModalActions>
               <Button
@@ -415,104 +433,119 @@ export const ProfileDialog = ({
 
       {confirm === 'close' && (
         <UploadConfirmDialog
-          confirmLabel={
-            photo.isUploading ? 'Zrušit nahrávání a zavřít' : 'Zavřít'
-          }
-          isDanger={photo.isUploading}
           key={closeConfirmKey}
           onConfirm={handleConfirm}
           onStay={() => {
             setConfirm(null)
             stay(cancelButtonRef.current)
           }}
-          stayLabel={'Zůstat'}
-          title={
-            photo.isUploading
-              ? 'Zrušit nahrávání a zavřít profil?'
-              : 'Zavřít profil?'
-          }
         >
-          {photo.isUploading ? (
-            <>
+          <AdminModalTitle>
+            {photo.isUploading
+              ? 'Zrušit nahrávání a zavřít profil?'
+              : 'Zavřít profil?'}
+          </AdminModalTitle>
+          <DialogBody>
+            {photo.isUploading ? (
+              <>
+                <AdminModalDescription>
+                  Obrázek se ještě nahrává. Po zavření se nahrávání zruší.
+                </AdminModalDescription>
+                {isProfileChanged && (
+                  <AdminModalDescription>
+                    {discardSentence}
+                  </AdminModalDescription>
+                )}
+              </>
+            ) : (
               <AdminModalDescription>
-                Obrázek se ještě nahrává. Po zavření se nahrávání zruší.
+                {isProfileChanged
+                  ? `${outcomeSentence} ${discardSentence}`
+                  : outcomeSentence}
               </AdminModalDescription>
-              {isProfileChanged && (
-                <AdminModalDescription>{discardSentence}</AdminModalDescription>
-              )}
-            </>
-          ) : (
-            <AdminModalDescription>
-              {isProfileChanged
-                ? `${outcomeSentence} ${discardSentence}`
-                : outcomeSentence}
-            </AdminModalDescription>
-          )}
+            )}
+          </DialogBody>
+          <AdminModalActions>
+            <UploadConfirmDialogStay>Zůstat</UploadConfirmDialogStay>
+            <UploadConfirmDialogConfirm isDanger={photo.isUploading}>
+              {photo.isUploading ? 'Zrušit nahrávání a zavřít' : 'Zavřít'}
+            </UploadConfirmDialogConfirm>
+          </AdminModalActions>
         </UploadConfirmDialog>
       )}
 
       {confirm === 'save' && (
         <UploadConfirmDialog
-          confirmLabel={
-            photo.isUploading
-              ? 'Zrušit nahrávání a uložit profil'
-              : 'Uložit profil'
-          }
-          isDanger={photo.isUploading}
           onConfirm={handleConfirm}
           onStay={() => {
             setConfirm(null)
             stay(saveButtonRef.current)
           }}
-          stayLabel={'Zůstat'}
-          title={
-            photo.isUploading
-              ? 'Zrušit nahrávání a uložit profil?'
-              : 'Uložit profil?'
-          }
         >
-          <AdminModalDescription>
+          <AdminModalTitle>
             {photo.isUploading
-              ? 'Obrázek se ještě nahrává. Po potvrzení se nahrávání zruší, jméno a bio se uloží a profil se zavře.'
-              : `${outcomeSentence} Po potvrzení se jméno a bio uloží a profil se zavře.`}
-          </AdminModalDescription>
+              ? 'Zrušit nahrávání a uložit profil?'
+              : 'Uložit profil?'}
+          </AdminModalTitle>
+          <DialogBody>
+            <AdminModalDescription>
+              {photo.isUploading
+                ? 'Obrázek se ještě nahrává. Po potvrzení se nahrávání zruší, jméno a bio se uloží a profil se zavře.'
+                : `${outcomeSentence} Po potvrzení se jméno a bio uloží a profil se zavře.`}
+            </AdminModalDescription>
+          </DialogBody>
+          <AdminModalActions>
+            <UploadConfirmDialogStay>Zůstat</UploadConfirmDialogStay>
+            <UploadConfirmDialogConfirm isDanger={photo.isUploading}>
+              {photo.isUploading
+                ? 'Zrušit nahrávání a uložit profil'
+                : 'Uložit profil'}
+            </UploadConfirmDialogConfirm>
+          </AdminModalActions>
         </UploadConfirmDialog>
       )}
 
       {blocker.state === 'blocked' && (
         <UploadConfirmDialog
-          confirmLabel={
-            photo.isUploading ? 'Zrušit nahrávání a odejít' : 'Odejít'
-          }
-          isDanger={photo.isUploading}
           onConfirm={handleLeave}
           onStay={() => {
             blocker.reset?.()
             stay(leaveFocusRef.current)
           }}
-          stayLabel={'Zůstat v Nastavení'}
-          title={
-            photo.isUploading
-              ? 'Zrušit nahrávání a odejít?'
-              : 'Odejít z Nastavení?'
-          }
         >
-          {photo.isUploading ? (
-            <>
+          <AdminModalTitle>
+            {photo.isUploading
+              ? 'Zrušit nahrávání a odejít?'
+              : 'Odejít z Nastavení?'}
+          </AdminModalTitle>
+          <DialogBody>
+            {photo.isUploading ? (
+              <>
+                <AdminModalDescription>
+                  Obrázek se ještě nahrává. Po odchodu se nahrávání zruší.
+                </AdminModalDescription>
+                {isProfileChanged && (
+                  <AdminModalDescription>
+                    {discardSentence}
+                  </AdminModalDescription>
+                )}
+              </>
+            ) : (
               <AdminModalDescription>
-                Obrázek se ještě nahrává. Po odchodu se nahrávání zruší.
+                {isProfileChanged
+                  ? `${outcomeSentence} ${discardSentence}`
+                  : outcomeSentence}
               </AdminModalDescription>
-              {isProfileChanged && (
-                <AdminModalDescription>{discardSentence}</AdminModalDescription>
-              )}
-            </>
-          ) : (
-            <AdminModalDescription>
-              {isProfileChanged
-                ? `${outcomeSentence} ${discardSentence}`
-                : outcomeSentence}
-            </AdminModalDescription>
-          )}
+            )}
+          </DialogBody>
+          <AdminModalActions>
+            <UploadConfirmDialogStay>
+              Zůstat v Nastavení
+            </UploadConfirmDialogStay>
+            <UploadConfirmDialogConfirm isDanger={photo.isUploading}>
+              {photo.isUploading ? 'Zrušit nahrávání a odejít' : 'Odejít'}
+            </UploadConfirmDialogConfirm>
+          </AdminModalActions>
         </UploadConfirmDialog>
       )}
     </>

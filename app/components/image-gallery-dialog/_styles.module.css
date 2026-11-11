@@ -1,54 +1,86 @@
-/* The panel keeps its width, up to 840 px for the image, the whole window on a phone
-   (design 12b, m8ei8fno). */
+/* The viewer fills the window, dark on the light site too: the dialog carries
+   data-color-scheme="dark" (design 12b, zn43av9y). */
 .dialog {
   @layer component {
+    --drag-progress: 0;
+
+    position: fixed;
+    inset: 0;
     box-sizing: border-box;
-    width: min(55.5rem, 100%);
-    max-width: 100%;
-    max-height: 100dvh;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
     padding: 0;
     border: none;
+    /* The dialog takes the focus on open; a ring round the window says nothing. */
+    outline: none;
+    overflow: hidden;
+    overscroll-behavior: contain;
     background: transparent;
     color: var(--text-primary);
+    opacity: 0;
+    transition-property: opacity, display, overlay;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+    transition-behavior: allow-discrete;
+
+    &[open] {
+      display: grid;
+      grid-template-rows: calc(64px + env(safe-area-inset-top)) minmax(0, 1fr);
+      opacity: 1;
+      transition-duration: 200ms;
+
+      @starting-style {
+        opacity: 0;
+      }
+    }
+
+    /* Its own layer, so a drag down fades it without the photo. */
+    &::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: var(--viewer-backdrop);
+      opacity: calc(1 - var(--drag-progress) * 0.7);
+    }
 
     &::backdrop {
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
+      background: transparent;
     }
   }
 }
 
-.panel {
+/* The page under the open viewer does not scroll, as under the menu. */
+:global(html):has(.dialog[open]) {
   @layer component {
-    display: grid;
-    gap: 1rem;
-    padding: 1.5rem;
-    border-radius: var(--radius-xl);
-    background: var(--bg-primary);
-
-    @media (width < 768px) {
-      padding: 1rem;
-      border-radius: var(--radius-lg);
-    }
+    overflow: hidden;
   }
 }
 
-.header {
+.band {
   @layer component {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-block-start: env(safe-area-inset-top);
+    padding-inline: calc(16px + env(safe-area-inset-left))
+      calc(10px + env(safe-area-inset-right));
+    opacity: calc(1 - var(--drag-progress));
   }
 }
 
 .counter {
   @layer component {
     font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
     color: var(--text-secondary);
   }
 }
 
-.closeButton {
+.iconButton {
   @layer component {
     all: unset;
     cursor: pointer;
@@ -58,20 +90,13 @@
     width: 44px;
     height: 44px;
     border-radius: var(--radius-full);
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    font-size: 1.375rem;
-    transition:
-      background-color var(--transition-base),
-      color var(--transition-base);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    transition: background-color var(--transition-base);
 
     &:hover {
       background: var(--bg-hover);
-      color: var(--text-primary);
-    }
-
-    &:active {
-      background: var(--bg-tertiary);
     }
 
     &:focus-visible {
@@ -80,94 +105,139 @@
   }
 }
 
+/* The stage takes the room the caption leaves; without a caption, all of it
+   down to the safe area. */
 .figure {
   @layer component {
     display: grid;
-    gap: 1rem;
+    position: relative;
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-height: 0;
     margin: 0;
+
+    &:not(:has(> figcaption)) {
+      padding-block-end: env(safe-area-inset-bottom);
+    }
   }
 }
 
-/* Swipes page here; vertical panning still scrolls a long caption. */
 .stage {
   @layer component {
-    display: flex;
+    display: grid;
     position: relative;
-    touch-action: pan-y;
+    place-items: center;
+    min-height: 0;
+    overflow: hidden;
+    container-type: size;
   }
 }
 
-/* The image whole, at most 70 % of the window high, centred on the panel with no
-   strip around it. The Image's own layers don't set max-height, so it applies to
-   the placeholder and the full image alike. The placeholder only sizes the frame:
-   its ratio differs slightly from the photo's, and contained it would show as
-   blurred strips beside the photo. */
+/* The photo whole, as large as the stage allows and never wider than it is.
+   Its ratio and width arrive as --image-ratio and --image-width; the gestures
+   move it by `transform`, the open and close by `scale`. */
+.frame {
+  @layer component {
+    width: min(
+      100cqw,
+      calc(var(--image-width) * 1px),
+      calc(100cqh * var(--image-ratio))
+    );
+    aspect-ratio: var(--image-ratio);
+    touch-action: none;
+    transition:
+      transform 150ms ease-in-out,
+      scale 200ms ease-in-out;
+
+    &[data-active] {
+      transition: scale 200ms ease-in-out;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .dialog[open] & {
+        scale: 1;
+
+        @starting-style {
+          scale: 0.96;
+        }
+      }
+
+      .dialog:not([open]) & {
+        scale: 0.96;
+        transition-duration: 150ms;
+      }
+    }
+  }
+}
+
+/* The Image fills the frame. The blurred placeholder holds the photo's place
+   until it loads, cropped to the frame, whose ratio is the photo's own. The
+   Image's own height is unlayered, so min and max pin it. */
 .image {
   @layer variant {
+    height: 100%;
     background: transparent;
 
-    & img {
-      max-height: 70dvh;
-      object-fit: contain;
-    }
-
     & img[aria-hidden] {
-      visibility: hidden;
+      min-height: 100%;
+      max-height: 100%;
+      object-fit: cover;
     }
   }
 }
 
-/* At the panel edge, vertically centred on the image: over a landscape photo, beside
-   a portrait one, and in the same place on every page (m8ei8fno). */
-.arrowButton {
-  @layer component {
-    all: unset;
-    cursor: pointer;
-    display: flex;
+/* At the window edge, vertically centred on the area below the band, so they
+   never move while paging; a drag down fades them with the band. */
+.arrowAnchor {
+  @layer variant {
     position: absolute;
     top: 50%;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-full);
-    background: var(--bg-primary);
-    box-shadow: var(--shadow-md);
-    color: var(--text-primary);
-    font-size: 1.5rem;
     transform: translateY(-50%);
-    transition: background-color var(--transition-base);
-
-    &:hover {
-      background: var(--bg-hover);
-    }
-
-    &:focus-visible {
-      box-shadow: var(--shadow-md), var(--focus-shadow);
-    }
+    opacity: calc(1 - var(--drag-progress));
   }
 }
 
 .previous {
   @layer variant {
-    left: 12px;
+    left: calc(12px + env(safe-area-inset-left));
   }
 }
 
 .next {
   @layer variant {
-    right: 12px;
+    right: calc(12px + env(safe-area-inset-right));
   }
 }
 
 .caption {
-  @layer variant {
+  @layer component {
+    max-height: 30dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-block: 12px calc(24px + env(safe-area-inset-bottom));
+    padding-inline: calc(16px + env(safe-area-inset-left))
+      calc(16px + env(safe-area-inset-right));
+    opacity: calc(1 - var(--drag-progress));
+  }
+}
+
+/* Left in the article's measure (12a). */
+.captionColumn {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 680px;
+    margin-inline: auto;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+
     & p {
-      color: var(--text-primary);
-      font-size: var(--font-size-md);
-      font-weight: var(--font-weight-regular);
-      line-height: var(--line-height-md);
-      text-align: center;
+      margin: 0;
+    }
+
+    & a {
+      color: var(--link);
     }
   }
 }

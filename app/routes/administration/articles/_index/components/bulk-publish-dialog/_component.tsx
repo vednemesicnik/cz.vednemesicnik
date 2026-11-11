@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -40,8 +41,7 @@ type Props = {
   fetcherKey: string
   orderedArticles: Article[]
   keptArticles: KeptArticle[]
-  notes: string | null
-  skipped: string | null
+  children?: ReactNode
   onClose: () => void
 }
 
@@ -50,21 +50,20 @@ type Props = {
  * published stand in the order they will have on the website, check order by
  * default, dragged into another; the ones published before return to their
  * date and stand apart (fge4es3p). Incomplete articles are left out and said
- * in `skipped` (23h, copy bhmem1jc). *Dnes* is the server's now; *Jiný den*
+ * in the children (23h, copy bhmem1jc). *Dnes* is the server's now; *Jiný den*
  * carries the moment of confirmation to that day.
  *
  * @param props.orderedArticles - Never published, in check order.
  * @param props.keptArticles - Published before, with their stored date (ISO).
- * @param props.notes - The waiting and not-submitted sentences, or `null`.
- * @param props.skipped - The incomplete sentence, or `null`.
+ * @param props.children - In full ink (`AdminModalNote`): the waiting and
+ *   not-submitted sentences, then the skipped ones.
  */
 export const BulkPublishDialog = ({
   action,
   fetcherKey,
   orderedArticles,
   keptArticles,
-  notes,
-  skipped,
+  children,
   onClose,
 }: Props) => {
   const fetcher = useFetcher({ key: fetcherKey })
@@ -159,10 +158,18 @@ export const BulkPublishDialog = ({
                     </span>
                     <span className={styles.orderMenu}>
                       <ActionMenu
-                        items={getOrderMenuItems(index, count, moveTo)}
                         label={`Změnit pořadí článku: ${article.title}`}
                         size={'sm'}
-                      />
+                      >
+                        {getOrderMenuItems(index, count, moveTo).map((item) => (
+                          <ActionMenuItem
+                            key={item.label}
+                            onSelect={item.onSelect}
+                          >
+                            {item.label}
+                          </ActionMenuItem>
+                        ))}
+                      </ActionMenu>
                     </span>
                   </>
                 )}
@@ -191,8 +198,7 @@ export const BulkPublishDialog = ({
             </div>
           )}
 
-          {notes !== null && <p className={styles.note}>{notes}</p>}
-          {skipped !== null && <p className={styles.note}>{skipped}</p>}
+          {children}
 
           {/* The date applies only to the ordered ones (fge4es3p). */}
           {ordered.length > 0 && (

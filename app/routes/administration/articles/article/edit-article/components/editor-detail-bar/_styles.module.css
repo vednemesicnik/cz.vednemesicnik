@@ -1,0 +1,72 @@
+.bar {
+  @layer route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    @media (width < 768px) {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      padding-block: 10px;
+      padding-inline: 16px;
+      background-color: var(--bg-primary);
+      border-block-end: 1px solid var(--border);
+    }
+  }
+}
+
+/* The bar spans the open panel's screen; the fields keep the gutter (24f). */
+.bar.isOpen {
+  @layer route {
+    @media (width < 768px) {
+      margin-inline: -16px;
+    }
+  }
+}
+
+/* The field's label names it beside the text; the panel still has a title. */
+.bar.isNameHidden {
+  @layer route {
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}
+
+.barTitle {
+  @layer route {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+}
+
+.name {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
+    color: var(--text-primary);
+
+    &:focus {
+      outline: none;
+    }
+
+    @media (width < 768px) {
+      font-size: var(--font-size-md);
+    }
+  }
+}
+
+/* The save line and Hotovo belong to the open panel only. */
+.saveLine,
+.done {
+  @layer route {
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}

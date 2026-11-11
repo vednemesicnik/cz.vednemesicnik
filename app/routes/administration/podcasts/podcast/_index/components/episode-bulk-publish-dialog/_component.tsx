@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -38,7 +38,7 @@ type Props = {
   fetcherKey: string
   orderedEpisodes: Episode[]
   keptEpisodes: KeptEpisode[]
-  notes: string | null
+  children?: ReactNode
   onClose: () => void
 }
 
@@ -51,15 +51,15 @@ type Props = {
  *
  * @param props.orderedEpisodes - Never published, highest number first.
  * @param props.keptEpisodes - Published before, with their stored date (ISO).
- * @param props.notes - The waiting, not-submitted, incomplete and held
- *   sentences in one paragraph, or `null`.
+ * @param props.children - The waiting, not-submitted, incomplete and held
+ *   sentences in one `AdminModalNote`.
  */
 export const EpisodeBulkPublishDialog = ({
   action,
   fetcherKey,
   orderedEpisodes,
   keptEpisodes,
-  notes,
+  children,
   onClose,
 }: Props) => {
   const fetcher = useFetcher({ key: fetcherKey })
@@ -154,7 +154,7 @@ export const EpisodeBulkPublishDialog = ({
             </div>
           )}
 
-          {notes !== null && <p className={styles.note}>{notes}</p>}
+          {children}
 
           {/* The date applies only to the ones never published (fge4es3p). */}
           {orderedEpisodes.length > 0 && (

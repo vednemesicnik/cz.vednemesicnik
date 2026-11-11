@@ -4,21 +4,35 @@ import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Hyperlink } from '~/components/hyperlink'
 import { Image } from '~/components/image'
 import { Link } from '~/components/link'
@@ -209,13 +223,17 @@ export default function RouteComponent({
               {ISSUE_HEADER_SENTENCES[headerActions.sentence]}
             </p>
           )}
-          <ActionMenu
-            items={headerActions.menu.map((headerAction) => ({
-              danger: headerAction === 'delete',
-              label: ISSUE_ACTION_LABELS[headerAction],
-              onSelect: () => runAction(headerAction),
-            }))}
-          />
+          <ActionMenu>
+            {headerActions.menu.map((headerAction) => (
+              <ActionMenuItem
+                danger={headerAction === 'delete'}
+                key={headerAction}
+                onSelect={() => runAction(headerAction)}
+              >
+                {ISSUE_ACTION_LABELS[headerAction]}
+              </ActionMenuItem>
+            ))}
+          </ActionMenu>
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
           {headerActions.primary !== null &&
@@ -230,7 +248,8 @@ export default function RouteComponent({
       {/* The files are the issue's content, so they stand where an article has its text (26b). */}
       <AdminDetailLayout>
         <AdminDetailMain>
-          <AdminDetailSection title={'Soubory'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Soubory</AdminDetailSectionTitle>
             <div className={styles.files}>
               <figure className={styles.cover}>
                 {issue.cover === null ? (
@@ -290,94 +309,131 @@ export default function RouteComponent({
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Pořadí'}>
-                {issue.orderLabel ?? '—'}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Pořadí</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {issue.orderLabel ?? '—'}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Název'}>
-                {issue.name ?? '—'}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Název</AdminDetailItemLabel>
+                <AdminDetailItemValue>{issue.name ?? '—'}</AdminDetailItemValue>
               </AdminDetailItem>
               {supplementLinks.kind === 'supplements' ? (
                 supplementLinks.supplements.length > 0 && (
-                  <AdminDetailItem label={'Doplňky'}>
-                    <span className={styles.stack}>
-                      {supplementLinks.supplements.map(({ id, label }) => (
-                        <Link
-                          key={id}
-                          to={href('/administration/archive/:issueId', {
-                            issueId: id,
-                          })}
-                        >
-                          {label}
-                        </Link>
-                      ))}
-                    </span>
+                  <AdminDetailItem>
+                    <AdminDetailItemLabel>Doplňky</AdminDetailItemLabel>
+                    <AdminDetailItemValue>
+                      <span className={styles.stack}>
+                        {supplementLinks.supplements.map(({ id, label }) => (
+                          <Link
+                            key={id}
+                            to={href('/administration/archive/:issueId', {
+                              issueId: id,
+                            })}
+                          >
+                            {label}
+                          </Link>
+                        ))}
+                      </span>
+                    </AdminDetailItemValue>
                   </AdminDetailItem>
                 )
               ) : (
-                <AdminDetailItem label={'Doplněk k'}>
-                  {/* Without its issue, or one the viewer can't see, only the order (26b, wo02u3xq). */}
-                  {supplementLinks.mainIssue === null ? (
-                    (supplementLinks.orderLabel ?? '—')
-                  ) : (
-                    <Link
-                      to={href('/administration/archive/:issueId', {
-                        issueId: supplementLinks.mainIssue.id,
-                      })}
-                    >
-                      {supplementLinks.mainIssue.title}
-                    </Link>
-                  )}
+                <AdminDetailItem>
+                  <AdminDetailItemLabel>Doplněk k</AdminDetailItemLabel>
+                  <AdminDetailItemValue>
+                    {/* Without its issue, or one the viewer can't see, only the order (26b, wo02u3xq). */}
+                    {supplementLinks.mainIssue === null ? (
+                      (supplementLinks.orderLabel ?? '—')
+                    ) : (
+                      <Link
+                        to={href('/administration/archive/:issueId', {
+                          issueId: supplementLinks.mainIssue.id,
+                        })}
+                      >
+                        {supplementLinks.mainIssue.title}
+                      </Link>
+                    )}
+                  </AdminDetailItemValue>
                 </AdminDetailItem>
               )}
-              <AdminDetailItem label={'Adresa'}>
-                {issue.pdf?.path == null ? (
-                  '—'
-                ) : issue.isPreviewable ? (
-                  // Signed in, the web shows the draft in the archive (26b).
-                  <span className={styles.stack}>
-                    <Hyperlink
-                      href={archivePath}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Náhled archivu na webu
-                    </Hyperlink>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Adresa</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {issue.pdf?.path == null ? (
+                    '—'
+                  ) : issue.isPreviewable ? (
+                    // Signed in, the web shows the draft in the archive (26b).
+                    <span className={styles.stack}>
+                      <Hyperlink
+                        href={archivePath}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Náhled archivu na webu
+                      </Hyperlink>
+                      <span className={styles.tertiary}>{issue.pdf.path}</span>
+                    </span>
+                  ) : (
                     <span className={styles.tertiary}>{issue.pdf.path}</span>
-                  </span>
-                ) : (
-                  <span className={styles.tertiary}>{issue.pdf.path}</span>
-                )}
+                  )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autor'}>
-                {issue.authorName}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autor</AdminDetailItemLabel>
+                <AdminDetailItemValue>{issue.authorName}</AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Historie'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
             <HistoryList
               entries={issue.history.entries}
               isIncomplete={issue.history.isIncomplete}
               // A reused route component starts every record collapsed.
               key={issue.id}
               visibleCount={5}
-            />
+            >
+              {(entry) => (
+                <HistoryListEntry>
+                  <HistoryListEvent>
+                    {entry.label}
+                    {entry.actorName !== null && (
+                      <HistoryListActor>{entry.actorName}</HistoryListActor>
+                    )}
+                  </HistoryListEvent>
+                  <HistoryListTime dateTime={entry.dateTime}>
+                    {entry.formattedDateTime}
+                  </HistoryListTime>
+                  {entry.note && (
+                    <HistoryListNote>{entry.note}</HistoryListNote>
+                  )}
+                </HistoryListEntry>
+              )}
+            </HistoryList>
           </AdminDetailSection>
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog
-        description={'Smažou se i jeho nahrané soubory. Vrátit to nejde.'}
-        ref={deleteConfirmationDialogRef}
-        subject={issue.title}
-        title={
-          issue.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef}>
+        <AdminModalTitle>
+          {issue.state === 'archived'
             ? 'Smazat archivované číslo?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{issue.title}</AdminModalSubject>
+        <AdminModalDescription>
+          Smažou se i jeho nahrané soubory. Vrátit to nejde.
+        </AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
 
       {missingList !== null && (
         <IssueMissingDialog
@@ -394,14 +450,16 @@ export default function RouteComponent({
           isApprover={isApprover}
           issueTitle={issue.title}
           kind={stateDialog}
-          // A draft not submitted is published from „⋯“ (26g); the dialog says so.
-          note={
-            stateDialog === 'publish' && headerActions.menu.includes('publish')
-              ? ISSUE_HEADER_SENTENCES['not-submitted']
-              : null
-          }
           onClose={() => setStateDialog(null)}
-        />
+        >
+          {/* A draft not submitted is published from „⋯“ (26g); the dialog says so. */}
+          {stateDialog === 'publish' &&
+            headerActions.menu.includes('publish') && (
+              <AdminModalNote>
+                {ISSUE_HEADER_SENTENCES['not-submitted']}
+              </AdminModalNote>
+            )}
+        </IssueStateDialog>
       )}
     </AdminPage>
   )

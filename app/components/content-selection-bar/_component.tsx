@@ -3,7 +3,11 @@ import { clsx } from 'clsx'
 import { useState } from 'react'
 import { useFetcher } from 'react-router'
 
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
+import { AdminSelectionBarActions } from '~/components/admin/admin-selection-bar-actions'
+import { AdminSelectionBarMessage } from '~/components/admin/admin-selection-bar-message'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { BulkConfirmDialog } from '~/components/bulk-confirm-dialog'
 import { Button } from '~/components/button'
@@ -105,7 +109,6 @@ export const ContentSelectionBar = ({
   ]
     .filter((sentence) => sentence !== null)
     .join(' ')
-  const publishExceptions = publishSentence === '' ? [] : [publishSentence]
 
   const isPublishing = openAction === 'publish'
   const confirmedRecords = isPublishing ? completeRecords : unheldRecords
@@ -128,21 +131,26 @@ export const ContentSelectionBar = ({
       <AdminSelectionBar
         className={clsx(styles.bar, className)}
         count={records.length}
-        message={message}
         onClear={onClear}
       >
-        {actions.map((bulkAction) => (
-          <Button
-            disabled={isSubmitting}
-            key={bulkAction}
-            onClick={() => setOpenAction(bulkAction)}
-            size={'sm'}
-            type={'button'}
-            variant={'outline'}
-          >
-            {BULK_ACTION_LABELS[bulkAction]}
-          </Button>
-        ))}
+        {message === null ? (
+          <AdminSelectionBarActions>
+            {actions.map((bulkAction) => (
+              <Button
+                disabled={isSubmitting}
+                key={bulkAction}
+                onClick={() => setOpenAction(bulkAction)}
+                size={'sm'}
+                type={'button'}
+                variant={'outline'}
+              >
+                {BULK_ACTION_LABELS[bulkAction]}
+              </Button>
+            ))}
+          </AdminSelectionBarActions>
+        ) : (
+          <AdminSelectionBarMessage>{message}</AdminSelectionBarMessage>
+        )}
       </AdminSelectionBar>
 
       {dialog !== null && openAction !== null && (
@@ -150,14 +158,19 @@ export const ContentSelectionBar = ({
           action={openAction}
           hasRelated={dialog.hasRelated}
           isCreator={isCreator}
-          notes={isPublishing ? publishExceptions : []}
           noun={noun}
           onClose={() => setOpenAction(null)}
           onConfirm={() => submit(openAction)}
           onlyDrafts={onlyDrafts}
           records={dialog.records}
-          skipped={isPublishing ? null : heldSkipNote}
-        />
+        >
+          {isPublishing && publishSentence !== '' && (
+            <AdminModalNote>{publishSentence}</AdminModalNote>
+          )}
+          {!isPublishing && heldSkipNote !== null && (
+            <AdminModalDescription>{heldSkipNote}</AdminModalDescription>
+          )}
+        </BulkConfirmDialog>
       )}
     </>
   )

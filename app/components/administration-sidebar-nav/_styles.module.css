@@ -1,0 +1,8 @@
+.nav {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--font-size-sm);
+  }
+}

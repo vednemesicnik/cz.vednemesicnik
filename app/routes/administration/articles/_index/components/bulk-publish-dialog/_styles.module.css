@@ -102,17 +102,6 @@
   }
 }
 
-/* What the Coordinator approves, skips or publishes unsubmitted, in full ink (22c). */
-.note {
-  @layer route {
-    margin: 0;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-    color: var(--text-primary);
-  }
-}
-
 /* Over eight rows the order scrolls, the heading and buttons stay (22c). */
 .orderList {
   @layer route {

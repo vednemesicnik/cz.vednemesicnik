@@ -5,21 +5,35 @@ import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Hyperlink } from '~/components/hyperlink'
 import { Image } from '~/components/image'
 import { Link } from '~/components/link'
@@ -55,6 +69,8 @@ import type { action as episodeAction } from './_action'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { EpisodeLinkCard } from './components/episode-link-card'
+import { EpisodeLinkCardAddress } from './components/episode-link-card-address'
+import { EpisodeLinkCardPlatform } from './components/episode-link-card-platform'
 import { EpisodeLinkList } from './components/episode-link-list'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -269,13 +285,17 @@ export default function RouteComponent({
               {EPISODE_HEADER_SENTENCES[headerActions.sentence]}
             </p>
           )}
-          <ActionMenu
-            items={headerActions.menu.map((headerAction) => ({
-              danger: headerAction === 'delete',
-              label: EPISODE_ACTION_LABELS[headerAction],
-              onSelect: () => runAction(headerAction),
-            }))}
-          />
+          <ActionMenu>
+            {headerActions.menu.map((headerAction) => (
+              <ActionMenuItem
+                danger={headerAction === 'delete'}
+                key={headerAction}
+                onSelect={() => runAction(headerAction)}
+              >
+                {EPISODE_ACTION_LABELS[headerAction]}
+              </ActionMenuItem>
+            ))}
+          </ActionMenu>
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
           {headerActions.primary !== null &&
@@ -303,12 +323,17 @@ export default function RouteComponent({
                 // In the order the web lists them (27c).
                 <EpisodeLinkList>
                   {episode.links.map((link) => (
-                    <EpisodeLinkCard
-                      isValid={link.isValid}
-                      key={link.id}
-                      platform={link.label}
-                      url={link.url}
-                    />
+                    <EpisodeLinkCard key={link.id}>
+                      {link.label !== '' && (
+                        <EpisodeLinkCardPlatform>
+                          {link.label}
+                        </EpisodeLinkCardPlatform>
+                      )}
+                      <EpisodeLinkCardAddress
+                        isValid={link.isValid}
+                        url={link.url}
+                      />
+                    </EpisodeLinkCard>
                   ))}
                 </EpisodeLinkList>
               )}
@@ -317,89 +342,125 @@ export default function RouteComponent({
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Podcast'}>
-                <Link to={podcastHref}>{episode.podcast.title}</Link>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Podcast</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <Link to={podcastHref}>{episode.podcast.title}</Link>
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Číslo'}>
-                {episode.number ?? '—'}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Číslo</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {episode.number ?? '—'}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Obálka'}>
-                {/* Without its own cover, the podcast's, muted (5hl7vx3a). */}
-                <div className={styles.cover}>
-                  {episode.cover === null ? (
-                    <div
-                      className={clsx(
-                        styles.coverImage,
-                        styles.coverMissing,
-                        styles.muted,
-                      )}
-                    />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Obálka</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {/* Without its own cover, the podcast's, muted (5hl7vx3a). */}
+                  <div className={styles.cover}>
+                    {episode.cover === null ? (
+                      <div
+                        className={clsx(
+                          styles.coverImage,
+                          styles.coverMissing,
+                          styles.muted,
+                        )}
+                      />
+                    ) : (
+                      <Image
+                        {...episode.cover.sources}
+                        alt={episode.cover.altText}
+                        className={clsx(
+                          styles.coverImage,
+                          !episode.cover.isOwn && styles.muted,
+                        )}
+                        sizes={'28px'}
+                      />
+                    )}
+                    {episode.cover?.isOwn !== true && (
+                      <span className={styles.tertiary}>z podcastu</span>
+                    )}
+                  </div>
+                </AdminDetailItemValue>
+              </AdminDetailItem>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Adresa</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {webPath === null ? (
+                    '—'
+                  ) : episode.state !== 'published' &&
+                    isOnWeb &&
+                    previewPath !== null ? (
+                    <span className={styles.stack}>
+                      <Hyperlink
+                        href={previewPath}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Náhled na webu
+                      </Hyperlink>
+                      <span className={styles.tertiary}>{webPath}</span>
+                    </span>
                   ) : (
-                    <Image
-                      {...episode.cover.sources}
-                      alt={episode.cover.altText}
-                      className={clsx(
-                        styles.coverImage,
-                        !episode.cover.isOwn && styles.muted,
-                      )}
-                      sizes={'28px'}
-                    />
-                  )}
-                  {episode.cover?.isOwn !== true && (
-                    <span className={styles.tertiary}>z podcastu</span>
-                  )}
-                </div>
-              </AdminDetailItem>
-              <AdminDetailItem label={'Adresa'}>
-                {webPath === null ? (
-                  '—'
-                ) : episode.state !== 'published' &&
-                  isOnWeb &&
-                  previewPath !== null ? (
-                  <span className={styles.stack}>
-                    <Hyperlink
-                      href={previewPath}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Náhled na webu
-                    </Hyperlink>
                     <span className={styles.tertiary}>{webPath}</span>
-                  </span>
-                ) : (
-                  <span className={styles.tertiary}>{webPath}</span>
-                )}
+                  )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autor'}>
-                {episode.authorName}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autor</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {episode.authorName}
+                </AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Historie'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
             <HistoryList
               entries={episode.history.entries}
               isIncomplete={episode.history.isIncomplete}
               // A reused route component starts every record collapsed.
               key={episode.id}
               visibleCount={5}
-            />
+            >
+              {(entry) => (
+                <HistoryListEntry>
+                  <HistoryListEvent>
+                    {entry.label}
+                    {entry.actorName !== null && (
+                      <HistoryListActor>{entry.actorName}</HistoryListActor>
+                    )}
+                  </HistoryListEvent>
+                  <HistoryListTime dateTime={entry.dateTime}>
+                    {entry.formattedDateTime}
+                  </HistoryListTime>
+                  {entry.note && (
+                    <HistoryListNote>{entry.note}</HistoryListNote>
+                  )}
+                </HistoryListEntry>
+              )}
+            </HistoryList>
           </AdminDetailSection>
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog
-        description={'Smazání je nevratné.'}
-        ref={deleteConfirmationDialogRef}
-        subject={title}
-        title={
-          episode.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef}>
+        <AdminModalTitle>
+          {episode.state === 'archived'
             ? 'Smazat archivovanou epizodu?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{title}</AdminModalSubject>
+        <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
 
       {missingList !== null && (
         <EpisodeMissingDialog
@@ -427,26 +488,30 @@ export default function RouteComponent({
           episodeTitle={title}
           fetcherKey={fetcherKey}
           isApproval={publishDialog.isApproval}
-          // A draft not submitted is published from „⋯“ (23d); the dialog says so.
-          note={
-            headerActions.menu.includes('publish')
-              ? EPISODE_HEADER_SENTENCES['not-submitted']
-              : null
-          }
           onClose={() => setPublishDialog(null)}
           originalPublishedAt={episode.publishedAt}
-        />
+        >
+          {/* A draft not submitted is published from „⋯“ (23d); the dialog says so. */}
+          {headerActions.menu.includes('publish') && (
+            <AdminModalNote>
+              {EPISODE_HEADER_SENTENCES['not-submitted']}
+            </AdminModalNote>
+          )}
+        </EpisodePublishDialog>
       )}
 
       {isChangeDateOpen && (
         <ArticleChangeDateDialog
           action={detailHref}
-          description={EPISODE_CHANGE_DATE_DESCRIPTION}
           fetcherKey={fetcherKey}
           onClose={() => setIsChangeDateOpen(false)}
           publishedAt={episode.publishedAt}
-          title={title}
-        />
+        >
+          <AdminModalSubject>{title}</AdminModalSubject>
+          <AdminModalDescription>
+            {EPISODE_CHANGE_DATE_DESCRIPTION}
+          </AdminModalDescription>
+        </ArticleChangeDateDialog>
       )}
     </AdminPage>
   )

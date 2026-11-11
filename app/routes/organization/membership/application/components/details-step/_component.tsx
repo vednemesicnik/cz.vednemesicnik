@@ -15,6 +15,9 @@ import { FormLegend } from '~/components/form-legend'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Hyperlink } from '~/components/hyperlink'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useHydrated } from '~/utils/use-hydrated'
 
 import { detailsSchema } from '../../_schema'
@@ -84,49 +87,71 @@ export const DetailsStep = ({
         <FormLegend />
 
         <TextField
-          autoComplete={'given-name'}
           errors={fields.firstName.errors}
-          label={'Jméno'}
+          id={fields.firstName.id}
           required
-          {...getInputProps(fields.firstName, { type: 'text' })}
-        />
+        >
+          <TextFieldLabel>Jméno</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'given-name'}
+            {...getInputProps(fields.firstName, { type: 'text' })}
+          />
+        </TextField>
         <TextField
-          autoComplete={'family-name'}
           errors={fields.lastName.errors}
-          label={'Příjmení'}
+          id={fields.lastName.id}
           required
-          {...getInputProps(fields.lastName, { type: 'text' })}
-        />
+        >
+          <TextFieldLabel>Příjmení</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'family-name'}
+            {...getInputProps(fields.lastName, { type: 'text' })}
+          />
+        </TextField>
         <TextField
           errors={fields.dateOfBirth.errors}
-          hint={'Mladším 18 let podepíše prohlášení i zákonný zástupce.'}
-          label={'Datum narození'}
-          placeholder={'14. 5. 2009'}
+          id={fields.dateOfBirth.id}
           required
-          {...getInputProps(fields.dateOfBirth, { type: 'text' })}
-        />
+        >
+          <TextFieldLabel>Datum narození</TextFieldLabel>
+          <TextFieldControl
+            placeholder={'14. 5. 2009'}
+            {...getInputProps(fields.dateOfBirth, { type: 'text' })}
+          />
+          <TextFieldHint>
+            Mladším 18 let podepíše prohlášení i zákonný zástupce.
+          </TextFieldHint>
+        </TextField>
         <TextField
-          autoComplete={'street-address'}
           errors={fields.address.errors}
-          label={'Adresa trvalého bydliště'}
+          id={fields.address.id}
           required
-          {...getInputProps(fields.address, { type: 'text' })}
-        />
+        >
+          <TextFieldLabel>Adresa trvalého bydliště</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'street-address'}
+            {...getInputProps(fields.address, { type: 'text' })}
+          />
+        </TextField>
+        <TextField errors={fields.email.errors} id={fields.email.id} required>
+          <TextFieldLabel>E-mail</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'email'}
+            {...getInputProps(fields.email, { type: 'email' })}
+          />
+          <TextFieldHint>E-mail ověříte kódem.</TextFieldHint>
+        </TextField>
         <TextField
-          autoComplete={'email'}
-          errors={fields.email.errors}
-          hint={'E-mail ověříte kódem.'}
-          label={'E-mail'}
-          required
-          {...getInputProps(fields.email, { type: 'email' })}
-        />
-        <TextField
-          autoComplete={'tel'}
           errors={fields.phone.errors}
-          label={'Telefon'}
-          optional
-          {...getInputProps(fields.phone, { type: 'tel' })}
-        />
+          id={fields.phone.id}
+          required={fields.phone.required}
+        >
+          <TextFieldLabel optional>Telefon</TextFieldLabel>
+          <TextFieldControl
+            autoComplete={'tel'}
+            {...getInputProps(fields.phone, { type: 'tel' })}
+          />
+        </TextField>
 
         <div className={styles.notes}>
           <p className={styles.note}>

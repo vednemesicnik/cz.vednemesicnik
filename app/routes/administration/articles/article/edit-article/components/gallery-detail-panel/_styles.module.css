@@ -1,0 +1,40 @@
+/* Over the editor, at most 976 px wide, from 24 px under the window's top to
+   its bottom, scrolling inside (24b). */
+.panel {
+  @layer route {
+    box-sizing: border-box;
+    inset-block: 24px 0;
+    width: min(976px, 100% - 48px);
+    max-width: none;
+    height: auto;
+    max-height: none;
+    margin-block: 0;
+    margin-inline: auto;
+    padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-block-end: 0;
+    border-start-start-radius: 12px;
+    border-start-end-radius: 12px;
+    box-shadow: var(--shadow-xl);
+
+    &::backdrop {
+      background-color: var(--overlay);
+    }
+
+    &[open] {
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (width < 768px) {
+      inset: 0;
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+    }
+  }
+}

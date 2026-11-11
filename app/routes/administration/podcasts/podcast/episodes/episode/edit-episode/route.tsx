@@ -27,7 +27,9 @@ import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -35,6 +37,7 @@ import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentChangedDialogActions } from '~/components/content-changed-dialog-actions'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
@@ -44,9 +47,17 @@ import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -58,7 +69,6 @@ import { useTakenValues } from '~/hooks/use-taken-values'
 import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
-import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import {
   CANCEL_COVER_UPLOAD_LABEL,
@@ -1034,17 +1044,18 @@ export default function RouteComponent({
 
       {deletion?.isDialogOpen && (
         <ContentDeletedDialog
-          description={
-            'Epizodu už nelze upravovat. Zobrazený obsah zůstane jen do obnovení stránky, odchodu nebo zavření editoru.'
-          }
           onOpenList={() => navigate(listHref)}
           onStay={() =>
             setDeletion((current) =>
               current === null ? null : { ...current, isDialogOpen: false },
             )
           }
-          title={'Epizoda byla smazána'}
         >
+          <AdminModalTitle>Epizoda byla smazána</AdminModalTitle>
+          <AdminModalDescription>
+            Epizodu už nelze upravovat. Zobrazený obsah zůstane jen do obnovení
+            stránky, odchodu nebo zavření editoru.
+          </AdminModalDescription>
           {deletion.hadSavedLinks && (
             <AdminModalDescription>
               Odkazy na epizodu byly smazány.
@@ -1069,11 +1080,11 @@ export default function RouteComponent({
 
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
-          description={holdTakenLead}
           holderName={holdLoss.holderName}
           onOpenDetail={() => navigate(closeHref)}
           onStay={closeHoldLossDialog}
         >
+          <AdminModalDescription>{holdTakenLead}</AdminModalDescription>
           {[
             ...holdTakenRest,
             ...formatUnsavedEpisodeAdvice(
@@ -1091,16 +1102,18 @@ export default function RouteComponent({
         editHold.state.status === 'changed' && (
           <ContentChangedDialog
             canReload={canReloadChanged}
-            description={formatEpisodeChangedDescription({
-              awayMilliseconds: editHold.state.awayMilliseconds,
-              now: new Date(),
-              savedAt: hasSaved ? savedAt : null,
-            })}
             onClose={closeHoldLossDialog}
             onOpenDetail={() => navigate(closeHref)}
             onReload={reload}
-            title={'Epizoda se mezitím změnila'}
           >
+            <AdminModalTitle>Epizoda se mezitím změnila</AdminModalTitle>
+            <AdminModalDescription>
+              {formatEpisodeChangedDescription({
+                awayMilliseconds: editHold.state.awayMilliseconds,
+                now: new Date(),
+                savedAt: hasSaved ? savedAt : null,
+              })}
+            </AdminModalDescription>
             {[
               `Neuložené změny: ${holdLoss.unsentLabels.join(', ')}.`,
               ...formatUnsavedEpisodeAdvice(
@@ -1114,6 +1127,7 @@ export default function RouteComponent({
                 {paragraph}
               </AdminModalDescription>
             ))}
+            <ContentChangedDialogActions />
           </ContentChangedDialog>
         )}
 
@@ -1121,11 +1135,7 @@ export default function RouteComponent({
       {editHold.state.status === 'held-by-other' && isApprover && (
         <EditHoldDialog
           content={'episode'}
-          description={formatTakeOverDescription(
-            editHold.state.holder,
-            new Date(),
-            'episode',
-          )}
+          holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
           onCancel={() => navigate(closeHref)}
@@ -1167,33 +1177,30 @@ export default function RouteComponent({
               <fieldset className={styles.lock} disabled={isLocked}>
                 {/* The field as the article's, the grey number after its
                     label; the field Číslo names it (27d, 1iqapiz2). */}
-                <TextareaField
-                  field={fields.title}
-                  label={
-                    <>
-                      Název
-                      {number !== null && (
-                        <span aria-hidden={true} className={styles.number}>
-                          #{number}
-                        </span>
-                      )}
-                    </>
-                  }
-                  textareaProps={{
-                    className: styles.titleInput,
-                    onInput: handleTitleInput,
-                    onKeyDown: handleTitleKeyDown,
-                    rows: 1,
-                  }}
-                />
-                <TextareaField
-                  field={fields.description}
-                  hint={
-                    'Stručně popište epizodu. Na webu se popis zobrazí pod názvem.'
-                  }
-                  label={'Popis'}
-                  textareaProps={{ className: styles.descriptionInput }}
-                />
+                <TextareaField field={fields.title}>
+                  <TextareaFieldLabel>
+                    Název
+                    {number !== null && (
+                      <span aria-hidden={true} className={styles.number}>
+                        #{number}
+                      </span>
+                    )}
+                  </TextareaFieldLabel>
+                  <TextareaFieldControl
+                    className={styles.titleInput}
+                    onInput={handleTitleInput}
+                    onKeyDown={handleTitleKeyDown}
+                    rows={1}
+                  />
+                </TextareaField>
+                <TextareaField field={fields.description}>
+                  <TextareaFieldLabel>Popis</TextareaFieldLabel>
+                  <TextareaFieldControl className={styles.descriptionInput} />
+                  <TextareaFieldHint>
+                    Stručně popište epizodu. Na webu se popis zobrazí pod
+                    názvem.
+                  </TextareaFieldHint>
+                </TextareaField>
                 <fieldset className={styles.links}>
                   <legend className={styles.linksLegend}>
                     Odkazy na epizodu
@@ -1207,7 +1214,8 @@ export default function RouteComponent({
             </AdminDetailMain>
 
             <AdminDetailAside>
-              <AdminDetailSection title={'Údaje'}>
+              <AdminDetailSection>
+                <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
                 <dl className={styles.facts}>
                   <div className={styles.fact}>
                     <dt className={styles.factLabel}>Podcast</dt>
@@ -1351,11 +1359,16 @@ export default function RouteComponent({
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <div className={styles.fieldGroup}>
                     <TextField
-                      {...getInputProps(fields.number, { type: 'text' })}
                       errors={numberErrors}
-                      inputMode={'numeric'}
-                      label={'Číslo'}
-                    />
+                      id={fields.number.id}
+                      required={fields.number.required}
+                    >
+                      <TextFieldLabel>Číslo</TextFieldLabel>
+                      <TextFieldControl
+                        {...getInputProps(fields.number, { type: 'text' })}
+                        inputMode={'numeric'}
+                      />
+                    </TextField>
                     {/* A taken number: a free one, filled in and saved (27f). */}
                     {isNumberTaken && freeNumber !== null && !isReadOnly && (
                       <ButtonLink
@@ -1369,26 +1382,29 @@ export default function RouteComponent({
                   </div>
                   <div className={styles.fieldGroup}>
                     <TextField
-                      {...getInputProps(fields.slug, { type: 'text' })}
                       errors={fields.slug.errors}
-                      // No hint while it follows the title (27d, tly4a163).
-                      hint={
-                        isSlugFollowing ? undefined : (
-                          <>
-                            Změněno ručně.{' '}
-                            {!isReadOnly && (
-                              <ButtonLink onClick={resumeSlug} type={'button'}>
-                                Obnovit podle názvu
-                              </ButtonLink>
-                            )}
-                          </>
-                        )
-                      }
-                      label={'Adresa'}
-                      onBlur={handleSlugFieldBlur}
-                      onFocus={handleSlugFocus}
-                      onInput={handleSlugInput}
-                    />
+                      id={fields.slug.id}
+                      required={fields.slug.required}
+                    >
+                      <TextFieldLabel>Adresa</TextFieldLabel>
+                      <TextFieldControl
+                        {...getInputProps(fields.slug, { type: 'text' })}
+                        onBlur={handleSlugFieldBlur}
+                        onFocus={handleSlugFocus}
+                        onInput={handleSlugInput}
+                      />
+                      {/* No hint while it follows the title (27d, tly4a163). */}
+                      {!isSlugFollowing && (
+                        <TextFieldHint>
+                          Změněno ručně.{' '}
+                          {!isReadOnly && (
+                            <ButtonLink onClick={resumeSlug} type={'button'}>
+                              Obnovit podle názvu
+                            </ButtonLink>
+                          )}
+                        </TextFieldHint>
+                      )}
+                    </TextField>
                     {/* A taken address: a free one, filled in and saved (27f). */}
                     {fields.slug.errors !== undefined &&
                       slugSuggestion !== null &&
@@ -1405,15 +1421,18 @@ export default function RouteComponent({
                   {/* Only the Coordinator chooses the author (27d, as 25c). */}
                   {authors !== null && (
                     <Select
-                      {...getSelectProps(fields.authorId)}
                       errors={fields.authorId.errors}
-                      label={'Autor'}
+                      id={fields.authorId.id}
+                      required={fields.authorId.required}
                     >
-                      {authors.map((author) => (
-                        <option key={author.id} value={author.id}>
-                          {author.name}
-                        </option>
-                      ))}
+                      <SelectLabel>Autor</SelectLabel>
+                      <SelectControl {...getSelectProps(fields.authorId)}>
+                        {authors.map((author) => (
+                          <option key={author.id} value={author.id}>
+                            {author.name}
+                          </option>
+                        ))}
+                      </SelectControl>
                     </Select>
                   )}
                 </fieldset>

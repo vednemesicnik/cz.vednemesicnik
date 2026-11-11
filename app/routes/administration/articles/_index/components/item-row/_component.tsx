@@ -1,6 +1,7 @@
 import { clsx } from 'clsx'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -17,6 +18,7 @@ import {
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
 import { getRowTint } from '~/utils/live-change/get-row-tint'
@@ -74,14 +76,25 @@ export const ItemRow = ({
     showAuthor,
   })
 
-  const toMenuItem = (menuAction: ArticleAction) => ({
-    danger: menuAction === 'delete',
-    label: ARTICLE_ACTION_LABELS[menuAction],
-    onSelect: () => runAction(menuAction),
-  })
+  const renderMenuItem = (menuAction: ArticleAction) => (
+    <ActionMenuItem
+      danger={menuAction === 'delete'}
+      key={menuAction}
+      onSelect={() => runAction(menuAction)}
+    >
+      {ARTICLE_ACTION_LABELS[menuAction]}
+    </ActionMenuItem>
+  )
   // On a phone „⋯“ stands alone, the row action first in it (22g).
   const phoneMenu =
     rowAction === null ? article.menu : [rowAction, ...article.menu]
+  // Who edits it comes first: it changes what the row allows (22f).
+  const stateDetail = getLiveStateDetail({
+    factLine: article.factLine,
+    holdLine: article.holdLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow
@@ -127,16 +140,11 @@ export const ItemRow = ({
       {showAuthor && <TableCell>{article.authorNames.join(', ')}</TableCell>}
       <TableCell>{article.updatedAt}</TableCell>
       <TableStateCell>
-        <StatusTag
-          // Who edits it comes first: it changes what the row allows (22f).
-          detail={getLiveStateDetail({
-            factLine: article.factLine,
-            holdLine: article.holdLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={article.state}
-        />
+        <StatusTag state={article.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       {meta !== null && (
         <TableDetailsCell>
@@ -146,10 +154,11 @@ export const ItemRow = ({
       <TableActionsCell>
         <TableRowMenu phoneOnly={true}>
           <ActionMenu
-            items={phoneMenu.map(toMenuItem)}
             label={`Další akce s článkem ${article.title}`}
             size={'sm'}
-          />
+          >
+            {phoneMenu.map(renderMenuItem)}
+          </ActionMenu>
         </TableRowMenu>
         <TableRowActions>
           {rowAction === 'edit' && (
@@ -174,10 +183,11 @@ export const ItemRow = ({
             </Button>
           )}
           <ActionMenu
-            items={article.menu.map(toMenuItem)}
             label={`Další akce s článkem ${article.title}`}
             size={'sm'}
-          />
+          >
+            {article.menu.map(renderMenuItem)}
+          </ActionMenu>
         </TableRowActions>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}

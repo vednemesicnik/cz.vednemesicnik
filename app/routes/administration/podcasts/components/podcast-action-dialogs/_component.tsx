@@ -1,6 +1,10 @@
 import { href } from 'react-router'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
 import type { usePodcastActions } from '../../utils/use-podcast-actions'
 import { PodcastArchiveDialog } from '../podcast-archive-dialog'
@@ -37,16 +41,18 @@ export const PodcastActionDialogs = ({
   return (
     <>
       {canDelete && (
-        <AdminDeleteConfirmationDialog
-          description={'Smazání je nevratné.'}
-          ref={actions.deleteDialogRef}
-          subject={podcast.title}
-          title={
-            podcast.state === 'archived'
+        <AdminDeleteConfirmationDialog ref={actions.deleteDialogRef}>
+          <AdminModalTitle>
+            {podcast.state === 'archived'
               ? 'Smazat archivovaný podcast?'
-              : 'Smazat koncept?'
-          }
-        />
+              : 'Smazat koncept?'}
+          </AdminModalTitle>
+          <AdminModalSubject>{podcast.title}</AdminModalSubject>
+          <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+          <AdminDeleteConfirmationDialogActions>
+            Smazat
+          </AdminDeleteConfirmationDialogActions>
+        </AdminDeleteConfirmationDialog>
       )}
       {actions.isArchiveOpen && (
         <PodcastArchiveDialog

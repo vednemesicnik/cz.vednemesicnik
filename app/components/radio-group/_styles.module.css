@@ -10,16 +10,3 @@
     border: 0;
   }
 }
-
-/* Floated, the legend is laid out as the group's first item, so the gap
-   spaces it from the radios as a label from its control. */
-.legend {
-  @layer component {
-    float: inline-start;
-    padding: 0;
-    color: var(--text-primary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-sm);
-  }
-}

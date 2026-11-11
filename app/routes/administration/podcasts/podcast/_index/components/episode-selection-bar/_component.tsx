@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { useFetcher } from 'react-router'
 
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
+import { AdminSelectionBarActions } from '~/components/admin/admin-selection-bar-actions'
+import { AdminSelectionBarMessage } from '~/components/admin/admin-selection-bar-message'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { BulkConfirmDialog } from '~/components/bulk-confirm-dialog'
 import { Button } from '~/components/button'
@@ -123,21 +127,26 @@ export const EpisodeSelectionBar = ({
       <AdminSelectionBar
         className={styles.bar}
         count={episodes.length}
-        message={message}
         onClear={onClear}
       >
-        {actions.map((bulkAction) => (
-          <Button
-            disabled={isSubmitting}
-            key={bulkAction}
-            onClick={() => setOpenAction(bulkAction)}
-            size={'sm'}
-            type={'button'}
-            variant={'outline'}
-          >
-            {BULK_ACTION_LABELS[bulkAction]}
-          </Button>
-        ))}
+        {message === null ? (
+          <AdminSelectionBarActions>
+            {actions.map((bulkAction) => (
+              <Button
+                disabled={isSubmitting}
+                key={bulkAction}
+                onClick={() => setOpenAction(bulkAction)}
+                size={'sm'}
+                type={'button'}
+                variant={'outline'}
+              >
+                {BULK_ACTION_LABELS[bulkAction]}
+              </Button>
+            ))}
+          </AdminSelectionBarActions>
+        ) : (
+          <AdminSelectionBarMessage>{message}</AdminSelectionBarMessage>
+        )}
       </AdminSelectionBar>
 
       {openAction === 'publish' && (
@@ -149,12 +158,15 @@ export const EpisodeSelectionBar = ({
               ? []
               : [{ ...episode, publishedAt: episode.publishedAt }],
           )}
-          notes={publishSentence === '' ? null : publishSentence}
           onClose={close}
           orderedEpisodes={completeEpisodes.filter(
             (episode) => episode.publishedAt === null,
           )}
-        />
+        >
+          {publishSentence !== '' && (
+            <AdminModalNote>{publishSentence}</AdminModalNote>
+          )}
+        </EpisodeBulkPublishDialog>
       )}
       {openAction !== null && openAction !== 'publish' && (
         <BulkConfirmDialog
@@ -170,8 +182,11 @@ export const EpisodeSelectionBar = ({
           }
           onlyDrafts={onlyDrafts}
           records={unheldEpisodes}
-          skipped={heldSkipNote}
-        />
+        >
+          {heldSkipNote !== null && (
+            <AdminModalDescription>{heldSkipNote}</AdminModalDescription>
+          )}
+        </BulkConfirmDialog>
       )}
     </>
   )

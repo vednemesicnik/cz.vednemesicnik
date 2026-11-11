@@ -1,0 +1,22 @@
+/* Below 768 px: over the whole screen from Menu, like the site menu (tbi5qpq9).
+   The whole panel scrolls when the items don't fit. */
+.sidebar {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    min-block-size: 100dvh;
+    padding: 0 12px 20px;
+    background-color: var(--bg-secondary);
+    z-index: var(--z-sidebar);
+  }
+}
+
+/* Zavřít stands where Menu was in the top bar. */
+.closeButton {
+  @layer variant {
+    margin-inline-start: auto;
+  }
+}

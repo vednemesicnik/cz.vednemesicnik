@@ -9,7 +9,12 @@ import type { z } from 'zod'
 
 import { Button } from '~/components/button'
 import { Select } from '~/components/select'
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import type { TaxonomyRecordCopy } from '../../utils/taxonomy-record-copy'
@@ -74,22 +79,32 @@ export const TaxonomyRecordFields = ({
   return (
     <>
       <TextField
-        label={'Název'}
-        onChange={(event) => setName(event.target.value)}
-        {...getInputProps(fields.name, { type: 'text' })}
         errors={fields.name.errors}
-      />
+        id={fields.name.id}
+        required={fields.name.required}
+      >
+        <TextFieldLabel>Název</TextFieldLabel>
+        <TextFieldControl
+          onChange={(event) => setName(event.target.value)}
+          {...getInputProps(fields.name, { type: 'text' })}
+        />
+      </TextField>
 
       <div className={styles.slugField}>
         <TextField
-          label={'Adresa'}
-          onBlur={autoSlug.handleBlur}
-          onFocus={autoSlug.handleFocus}
-          onInput={autoSlug.handleInput}
-          {...getInputProps(fields.slug, { type: 'text' })}
           errors={fields.slug.errors}
-          hint={
-            isSlugChanged ? (
+          id={fields.slug.id}
+          required={fields.slug.required}
+        >
+          <TextFieldLabel>Adresa</TextFieldLabel>
+          <TextFieldControl
+            onBlur={autoSlug.handleBlur}
+            onFocus={autoSlug.handleFocus}
+            onInput={autoSlug.handleInput}
+            {...getInputProps(fields.slug, { type: 'text' })}
+          />
+          <TextFieldHint>
+            {isSlugChanged ? (
               <>
                 {copy.republishHint}
                 <span className={styles.originalAddress}>
@@ -98,9 +113,9 @@ export const TaxonomyRecordFields = ({
               </>
             ) : (
               `${copy.publicPath}/${slug}`
-            )
-          }
-        />
+            )}
+          </TextFieldHint>
+        </TextField>
         {canUseSuggestion && (
           <Button
             onClick={() => {
@@ -119,15 +134,18 @@ export const TaxonomyRecordFields = ({
 
       {authors !== null && (
         <Select
-          label={'Autor'}
-          {...getSelectProps(fields.authorId)}
           errors={fields.authorId.errors}
+          id={fields.authorId.id}
+          required={fields.authorId.required}
         >
-          {authors.map((author) => (
-            <option key={author.id} value={author.id}>
-              {author.name}
-            </option>
-          ))}
+          <SelectLabel>Autor</SelectLabel>
+          <SelectControl {...getSelectProps(fields.authorId)}>
+            {authors.map((author) => (
+              <option key={author.id} value={author.id}>
+                {author.name}
+              </option>
+            ))}
+          </SelectControl>
         </Select>
       )}
     </>

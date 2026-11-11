@@ -6,14 +6,3 @@
     color: var(--text-tertiary);
   }
 }
-
-/* A draft without a title goes by its name, quieter than a title (22f). */
-.untitled {
-  @layer route {
-    color: var(--text-tertiary);
-
-    &:hover {
-      color: var(--link-strong);
-    }
-  }
-}

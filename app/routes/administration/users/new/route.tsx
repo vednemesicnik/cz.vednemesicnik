@@ -7,13 +7,19 @@ import { href, useFetcher, useNavigation } from 'react-router'
 import { AdminPage } from '~/components/admin/admin-page'
 import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
+import { CheckboxHint } from '~/components/checkbox-hint'
 import { FormLegend } from '~/components/form-legend'
 import { PageTitle } from '~/components/page-title'
 import { Radio } from '~/components/radio'
 import { RadioGroup } from '~/components/radio-group'
+import { RadioGroupLegend } from '~/components/radio-group-legend'
+import { RadioHint } from '~/components/radio-hint'
 import { RecordForm } from '~/components/record-form'
 import { RecordFormActions } from '~/components/record-form-actions'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { getAuthorRoleDescription } from '~/utils/get-author-role-description'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { useReturnToOpener } from '~/utils/use-return-to-opener'
@@ -87,7 +93,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <RecordForm fetcher={fetcher} form={form}>
         <FormLegend />
 
-        <RadioGroup legend={USER_RECORD_COPY.author.legend}>
+        <RadioGroup>
+          <RadioGroupLegend>{USER_RECORD_COPY.author.legend}</RadioGroupLegend>
           <Radio {...authorModeProps('new')}>
             {USER_RECORD_COPY.author.new}
           </Radio>
@@ -109,27 +116,34 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         {authorMode === 'new' && (
           <>
             <TextField
-              label={'Jméno'}
-              {...getInputProps(fields.name, { type: 'text' })}
               errors={fields.name.errors}
-              hint={AUTHOR_RECORD_COPY.nameHint}
+              id={fields.name.id}
               // Required for a new author only, which the union's constraint
               // can't say.
               required
-            />
+            >
+              <TextFieldLabel>Jméno</TextFieldLabel>
+              <TextFieldControl
+                {...getInputProps(fields.name, { type: 'text' })}
+              />
+              <TextFieldHint>{AUTHOR_RECORD_COPY.nameHint}</TextFieldHint>
+            </TextField>
 
-            <RadioGroup legend={AUTHOR_RECORD_COPY.roleLegend}>
+            <RadioGroup>
+              <RadioGroupLegend>
+                {AUTHOR_RECORD_COPY.roleLegend}
+              </RadioGroupLegend>
               {authorRoles.map((role) => (
                 <Radio
                   {...getInputProps(fields.authorRoleId, {
                     type: 'radio',
                     value: role.id,
                   })}
-                  hint={getAuthorRoleDescription(role.name)}
                   id={`${fields.authorRoleId.id}-${role.name}`}
                   key={role.id}
                 >
                   {getAuthorRoleLabel(role.name)}
+                  <RadioHint>{getAuthorRoleDescription(role.name)}</RadioHint>
                 </Radio>
               ))}
             </RadioGroup>
@@ -137,17 +151,22 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         )}
 
         <TextField
-          label={'E-mail'}
-          {...getInputProps(fields.email, { type: 'email' })}
           errors={fields.email.errors}
-          hint={USER_RECORD_COPY.emailHint}
-        />
+          id={fields.email.id}
+          required={fields.email.required}
+        >
+          <TextFieldLabel>E-mail</TextFieldLabel>
+          <TextFieldControl
+            {...getInputProps(fields.email, { type: 'email' })}
+          />
+          <TextFieldHint>{USER_RECORD_COPY.emailHint}</TextFieldHint>
+        </TextField>
 
         <Checkbox
           {...getInputProps(fields.isAdministrator, { type: 'checkbox' })}
-          hint={USER_RECORD_COPY.administrator.hint}
         >
           {USER_RECORD_COPY.administrator.label}
+          <CheckboxHint>{USER_RECORD_COPY.administrator.hint}</CheckboxHint>
         </Checkbox>
 
         <RecordFormActions

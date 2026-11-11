@@ -2,6 +2,8 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { CheckboxHint } from '~/components/checkbox-hint'
+
 import { Checkbox } from './_component'
 
 const meta: Meta<typeof Checkbox> = {
@@ -34,8 +36,12 @@ export const Playground: Story = {
  */
 export const WithHint: Story = {
   args: {
-    children: 'Sdílet s ostatními',
-    hint: 'Nápověda pod větou',
+    children: (
+      <>
+        Sdílet s ostatními
+        <CheckboxHint>Nápověda pod větou</CheckboxHint>
+      </>
+    ),
   },
 }
 

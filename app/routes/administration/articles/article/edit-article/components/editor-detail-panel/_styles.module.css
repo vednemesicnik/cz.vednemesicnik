@@ -1,0 +1,39 @@
+.panel {
+  @layer route {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
+/* Over the whole screen, scrolling on its own (24f). */
+.panel.isOpen {
+  @layer route {
+    @media (width < 768px) {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-modal);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-block-end: 16px;
+      padding-inline: 16px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background-color: var(--bg-primary);
+    }
+  }
+}
+
+/* The page under an open panel does not scroll, as under the menu. */
+:global(html):has(.panel.isOpen) {
+  @layer route {
+    @media (width < 768px) {
+      overflow: hidden;
+    }
+  }
+}

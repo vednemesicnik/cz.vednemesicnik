@@ -1,1 +1,1 @@
-export { ActionMenu } from './_component'
+export { ActionMenu, useActionMenu } from './_component'

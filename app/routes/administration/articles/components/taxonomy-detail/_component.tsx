@@ -1,16 +1,25 @@
 import { href } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { type HistoryEntry, HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Hyperlink } from '~/components/hyperlink'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
@@ -158,13 +167,17 @@ export const TaxonomyDetail = ({
               {copy.headerSentences[headerActions.sentence]}
             </p>
           )}
-          <ActionMenu
-            items={headerActions.menu.map((action) => ({
-              danger: action === 'delete',
-              label: getLabel(action),
-              onSelect: () => runAction(action),
-            }))}
-          />
+          <ActionMenu>
+            {headerActions.menu.map((action) => (
+              <ActionMenuItem
+                danger={action === 'delete'}
+                key={action}
+                onSelect={() => runAction(action)}
+              >
+                {getLabel(action)}
+              </ActionMenuItem>
+            ))}
+          </ActionMenu>
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
           {headerActions.primary !== null &&
@@ -175,7 +188,10 @@ export const TaxonomyDetail = ({
       {/* The record's articles where an article has its text (25b). */}
       <AdminDetailLayout>
         <AdminDetailMain>
-          <AdminDetailSection title={copy.articlesTitle}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>
+              {copy.articlesTitle}
+            </AdminDetailSectionTitle>
             {articles.recentArticles.length === 0 ? (
               <p className={styles.empty}>Zatím tu žádný článek není.</p>
             ) : (
@@ -204,54 +220,80 @@ export const TaxonomyDetail = ({
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Adresa'}>
-                {/* The preview is a link here, as on the article (a3zejbc1). */}
-                {PREVIEWABLE_STATES.includes(record.state) ? (
-                  <span className={styles.stack}>
-                    <Hyperlink
-                      href={publicPath}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Náhled na webu
-                    </Hyperlink>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Adresa</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {/* The preview is a link here, as on the article (a3zejbc1). */}
+                  {PREVIEWABLE_STATES.includes(record.state) ? (
+                    <span className={styles.stack}>
+                      <Hyperlink
+                        href={publicPath}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Náhled na webu
+                      </Hyperlink>
+                      <span className={styles.tertiary}>{publicPath}</span>
+                    </span>
+                  ) : (
                     <span className={styles.tertiary}>{publicPath}</span>
-                  </span>
-                ) : (
-                  <span className={styles.tertiary}>{publicPath}</span>
-                )}
+                  )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
               {/* One line per state, zeros left out; no row without articles (25b). */}
               {stateCounts.length > 0 && (
-                <AdminDetailItem label={'Články'}>
-                  <dl className={styles.counts}>
-                    {stateCounts.map(({ queue, count }) => (
-                      <div className={styles.count} key={queue}>
-                        <dt>{STATUS_TAG_LABELS[queue]}</dt>
-                        <dd className={styles.number}>
-                          {count.toLocaleString('cs-CZ')}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
+                <AdminDetailItem>
+                  <AdminDetailItemLabel>Články</AdminDetailItemLabel>
+                  <AdminDetailItemValue>
+                    <dl className={styles.counts}>
+                      {stateCounts.map(({ queue, count }) => (
+                        <div className={styles.count} key={queue}>
+                          <dt>{STATUS_TAG_LABELS[queue]}</dt>
+                          <dd className={styles.number}>
+                            {count.toLocaleString('cs-CZ')}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </AdminDetailItemValue>
                 </AdminDetailItem>
               )}
-              <AdminDetailItem label={'Autor'}>
-                {record.authorName}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autor</AdminDetailItemLabel>
+                <AdminDetailItemValue>{record.authorName}</AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Historie'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
             <HistoryList
               entries={record.history.entries}
               isIncomplete={record.history.isIncomplete}
               // A reused route component starts every record collapsed.
               key={record.id}
               visibleCount={5}
-            />
+            >
+              {(entry) => (
+                <HistoryListEntry>
+                  <HistoryListEvent>
+                    {entry.label}
+                    {entry.actorName !== null && (
+                      <HistoryListActor>{entry.actorName}</HistoryListActor>
+                    )}
+                  </HistoryListEvent>
+                  <HistoryListTime dateTime={entry.dateTime}>
+                    {entry.formattedDateTime}
+                  </HistoryListTime>
+                  {entry.note && (
+                    <HistoryListNote>{entry.note}</HistoryListNote>
+                  )}
+                </HistoryListEntry>
+              )}
+            </HistoryList>
           </AdminDetailSection>
         </AdminDetailAside>
       </AdminDetailLayout>

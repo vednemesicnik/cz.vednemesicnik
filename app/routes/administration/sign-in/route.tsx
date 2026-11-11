@@ -3,12 +3,15 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useLocation, useNavigation } from 'react-router'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useHydrated } from '~/utils/use-hydrated'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
@@ -55,7 +58,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   })
 
   return (
-    <AdminSignInCard title={'Přihlášení do administrace'} wordmark>
+    <AdminSignInCard>
+      <AdminSignInCardHeading wordmark>
+        Přihlášení do administrace
+      </AdminSignInCardHeading>
       {loaderData.error !== null ? (
         <Callout role={'alert'} tone={'error'}>
           {loaderData.error}
@@ -90,12 +96,16 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
         <TextField
           errors={fields.email.errors}
-          isRequiredMarkHidden
-          label={'E-mail'}
-          {...getInputProps(fields.email, { type: 'email' })}
-          autoComplete={'email'}
-          placeholder={'jmeno@vednemesicnik.cz'}
-        />
+          id={fields.email.id}
+          required={fields.email.required}
+        >
+          <TextFieldLabel isRequiredMarkHidden>E-mail</TextFieldLabel>
+          <TextFieldControl
+            {...getInputProps(fields.email, { type: 'email' })}
+            autoComplete={'email'}
+            placeholder={'jmeno@vednemesicnik.cz'}
+          />
+        </TextField>
 
         <Button disabled={isSendingLink} type={'submit'} variant={'outline'}>
           {isSendingLink ? 'Odesílám…' : 'Poslat odkaz'}

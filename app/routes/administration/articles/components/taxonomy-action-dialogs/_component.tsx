@@ -1,7 +1,9 @@
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { StateChangeDialog } from '~/components/state-change-dialog'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 
 import {
   TAXONOMY_ACTION_LABELS,
@@ -39,16 +41,19 @@ export const TaxonomyActionDialogs = ({ actions, canDelete }: Props) => {
   return (
     <>
       {canDelete && (
-        <AdminDeleteConfirmationDialog
-          description={copy.deleteDescription(record.articleCount)}
-          ref={actions.deleteDialogRef}
-          title={copy.deleteTitle(record.name)}
-        />
+        <AdminDeleteConfirmationDialog ref={actions.deleteDialogRef}>
+          <AdminModalTitle>{copy.deleteTitle(record.name)}</AdminModalTitle>
+          <AdminModalDescription>
+            {copy.deleteDescription(record.articleCount)}
+          </AdminModalDescription>
+          <AdminDeleteConfirmationDialogActions>
+            Smazat
+          </AdminDeleteConfirmationDialogActions>
+        </AdminDeleteConfirmationDialog>
       )}
       {confirmAction !== null && (
         <StateChangeDialog
           action={actions.detailHref}
-          confirmLabel={TAXONOMY_ACTION_LABELS[confirmAction]}
           fetcherKey={actions.fetcherKey}
           intent={TAXONOMY_DIRECT_INTENTS[confirmAction]}
           onClose={closeConfirm}
@@ -58,6 +63,9 @@ export const TaxonomyActionDialogs = ({ actions, canDelete }: Props) => {
           <AdminModalDescription>
             {confirmCopy[confirmAction].description}
           </AdminModalDescription>
+          <StateChangeDialogActions>
+            {TAXONOMY_ACTION_LABELS[confirmAction]}
+          </StateChangeDialogActions>
         </StateChangeDialog>
       )}
     </>

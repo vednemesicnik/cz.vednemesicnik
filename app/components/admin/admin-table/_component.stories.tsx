@@ -4,7 +4,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 
 import { AdminTable } from './_component'
 import { TableActionsCell } from './components/actions-cell'
@@ -315,21 +317,20 @@ export const FoldsOnPhone: Story = {
           </TableNameCell>
           <TableCell>3/2026</TableCell>
           <TableStateCell>
-            <StatusTag
-              detail={'Odesláno · Jakub Novák · 26. 9. 2026'}
-              state={'pending'}
-            />
+            <StatusTag state={'pending'}>
+              <StatusTagDetail>
+                Odesláno · Jakub Novák · 26. 9. 2026
+              </StatusTagDetail>
+            </StatusTag>
           </TableStateCell>
           <TableDetailsCell>
             <TableDetailsLine>3/2026</TableDetailsLine>
           </TableDetailsCell>
           <TableActionsCell>
             <TableRowMenu>
-              <ActionMenu
-                items={[{ label: 'Schválit', onSelect: () => {} }]}
-                label={'Další akce s číslem září 2026'}
-                size={'sm'}
-              />
+              <ActionMenu label={'Další akce s číslem září 2026'} size={'sm'}>
+                <ActionMenuItem onSelect={() => {}}>Schválit</ActionMenuItem>
+              </ActionMenu>
             </TableRowMenu>
           </TableActionsCell>
         </TableRow>
@@ -354,10 +355,11 @@ export const FoldsOnPhone: Story = {
           <TableActionsCell>
             <TableRowMenu>
               <ActionMenu
-                items={[{ label: 'Upravit', onSelect: () => {} }]}
                 label={'Další akce s autorem Jakub Novák'}
                 size={'sm'}
-              />
+              >
+                <ActionMenuItem onSelect={() => {}}>Upravit</ActionMenuItem>
+              </ActionMenu>
             </TableRowMenu>
           </TableActionsCell>
         </TableRow>

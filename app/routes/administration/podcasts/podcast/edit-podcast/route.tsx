@@ -20,6 +20,7 @@ import {
 } from 'react'
 import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -27,20 +28,32 @@ import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentChangedDialogActions } from '~/components/content-changed-dialog-actions'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
 import { FailedFile } from '~/components/failed-file'
+import { FailedFileName } from '~/components/failed-file-name'
 import { FileDropField } from '~/components/file-drop-field'
+import { FileDropFieldHint } from '~/components/file-drop-field-hint'
+import { FileDropFieldLabel } from '~/components/file-drop-field-label'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { TextareaField } from '~/components/textarea-field'
+import { TextareaFieldControl } from '~/components/textarea-field-control'
+import { TextareaFieldHint } from '~/components/textarea-field-hint'
+import { TextareaFieldLabel } from '~/components/textarea-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -53,7 +66,6 @@ import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { getPodcastFixTarget } from '~/routes/administration/podcasts/utils/get-podcast-fix-target'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
-import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import { getFirstFileControl } from '~/utils/get-first-file-control'
 import {
@@ -806,7 +818,8 @@ export default function RouteComponent({
 
     if (podcast.cover === null && coverFailure?.change === 'upload') {
       return (
-        <FailedFile fileName={coverFailure.fileName ?? ''}>
+        <FailedFile>
+          <FailedFileName>{coverFailure.fileName ?? ''}</FailedFileName>
           <ErrorMessage>{coverFailure.sentence}</ErrorMessage>
           {renderCoverFailureActions()}
         </FailedFile>
@@ -821,14 +834,17 @@ export default function RouteComponent({
             errorId={
               coverUpload.rejection === null ? undefined : coverProblemId
             }
-            hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
             isDisabled={
               isLocked || coverUpload.isBusy || coverUpload.isCancelling
             }
-            label={'Vybrat obálku'}
             onPick={coverUpload.pick}
             shape={'square'}
-          />
+          >
+            <FileDropFieldLabel>Vybrat obálku</FileDropFieldLabel>
+            <FileDropFieldHint>
+              nebo ji sem přetáhněte · obrázek do 5 MB
+            </FileDropFieldHint>
+          </FileDropField>
           {coverUpload.rejection !== null && (
             <div id={coverProblemId}>
               <ErrorMessage>{coverUpload.rejection}</ErrorMessage>
@@ -983,17 +999,18 @@ export default function RouteComponent({
 
       {deletion?.isDialogOpen && (
         <ContentDeletedDialog
-          description={
-            'Podcast už nelze upravovat. Zobrazené údaje zůstanou jen do obnovení stránky, odchodu nebo zavření editoru.'
-          }
           onOpenList={() => navigate(listHref)}
           onStay={() =>
             setDeletion((current) =>
               current === null ? null : { ...current, isDialogOpen: false },
             )
           }
-          title={'Podcast byl smazán'}
         >
+          <AdminModalTitle>Podcast byl smazán</AdminModalTitle>
+          <AdminModalDescription>
+            Podcast už nelze upravovat. Zobrazené údaje zůstanou jen do obnovení
+            stránky, odchodu nebo zavření editoru.
+          </AdminModalDescription>
           {deletion.hadCover && (
             <AdminModalDescription>
               Obálka podcastu byla smazána.
@@ -1013,11 +1030,11 @@ export default function RouteComponent({
 
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
-          description={holdTakenLead}
           holderName={holdLoss.holderName}
           onOpenDetail={() => navigate(closeHref)}
           onStay={closeHoldLossDialog}
         >
+          <AdminModalDescription>{holdTakenLead}</AdminModalDescription>
           {[
             ...holdTakenRest,
             ...formatUnsavedPodcastAdvice(
@@ -1035,16 +1052,18 @@ export default function RouteComponent({
         editHold.state.status === 'changed' && (
           <ContentChangedDialog
             canReload={canReloadChanged}
-            description={formatPodcastChangedDescription({
-              awayMilliseconds: editHold.state.awayMilliseconds,
-              now: new Date(),
-              savedAt: hasSaved ? savedAt : null,
-            })}
             onClose={closeHoldLossDialog}
             onOpenDetail={() => navigate(closeHref)}
             onReload={reload}
-            title={'Podcast se mezitím změnil'}
           >
+            <AdminModalTitle>Podcast se mezitím změnil</AdminModalTitle>
+            <AdminModalDescription>
+              {formatPodcastChangedDescription({
+                awayMilliseconds: editHold.state.awayMilliseconds,
+                now: new Date(),
+                savedAt: hasSaved ? savedAt : null,
+              })}
+            </AdminModalDescription>
             {[
               `Neuložené změny: ${holdLoss.unsentLabels.join(', ')}.`,
               ...formatUnsavedPodcastAdvice(
@@ -1058,6 +1077,7 @@ export default function RouteComponent({
                 {paragraph}
               </AdminModalDescription>
             ))}
+            <ContentChangedDialogActions />
           </ContentChangedDialog>
         )}
 
@@ -1065,11 +1085,7 @@ export default function RouteComponent({
       {editHold.state.status === 'held-by-other' && isApprover && (
         <EditHoldDialog
           content={'podcast'}
-          description={formatTakeOverDescription(
-            editHold.state.holder,
-            new Date(),
-            'podcast',
-          )}
+          holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
           onCancel={() => navigate(closeHref)}
@@ -1154,32 +1170,40 @@ export default function RouteComponent({
               <div className={styles.details}>
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <TextField
-                    {...getInputProps(fields.title, { type: 'text' })}
                     errors={fields.title.errors}
-                    label={'Název'}
-                  />
+                    id={fields.title.id}
+                    required={fields.title.required}
+                  >
+                    <TextFieldLabel>Název</TextFieldLabel>
+                    <TextFieldControl
+                      {...getInputProps(fields.title, { type: 'text' })}
+                    />
+                  </TextField>
                   <div className={styles.fieldGroup}>
                     <TextField
-                      {...getInputProps(fields.slug, { type: 'text' })}
                       errors={fields.slug.errors}
-                      // No hint while it follows the title (24a, 27e).
-                      hint={
-                        isSlugFollowing ? undefined : (
-                          <>
-                            Změněno ručně.{' '}
-                            {!isReadOnly && (
-                              <ButtonLink onClick={resumeSlug} type={'button'}>
-                                Obnovit podle názvu
-                              </ButtonLink>
-                            )}
-                          </>
-                        )
-                      }
-                      label={'Adresa'}
-                      onBlur={handleSlugBlur}
-                      onFocus={handleSlugFocus}
-                      onInput={handleSlugInput}
-                    />
+                      id={fields.slug.id}
+                      required={fields.slug.required}
+                    >
+                      <TextFieldLabel>Adresa</TextFieldLabel>
+                      <TextFieldControl
+                        {...getInputProps(fields.slug, { type: 'text' })}
+                        onBlur={handleSlugBlur}
+                        onFocus={handleSlugFocus}
+                        onInput={handleSlugInput}
+                      />
+                      {/* No hint while it follows the title (24a, 27e). */}
+                      {!isSlugFollowing && (
+                        <TextFieldHint>
+                          Změněno ručně.{' '}
+                          {!isReadOnly && (
+                            <ButtonLink onClick={resumeSlug} type={'button'}>
+                              Obnovit podle názvu
+                            </ButtonLink>
+                          )}
+                        </TextFieldHint>
+                      )}
+                    </TextField>
                     {/* A taken address: a free one, filled in and saved (27e). */}
                     {fields.slug.errors !== undefined &&
                       slugSuggestion !== null &&
@@ -1193,24 +1217,28 @@ export default function RouteComponent({
                         </ButtonLink>
                       )}
                   </div>
-                  <TextareaField
-                    field={fields.description}
-                    hint={'Stručně popište, o čem podcast je.'}
-                    label={'Popis'}
-                    textareaProps={{ className: styles.descriptionInput }}
-                  />
+                  <TextareaField field={fields.description}>
+                    <TextareaFieldLabel>Popis</TextareaFieldLabel>
+                    <TextareaFieldControl className={styles.descriptionInput} />
+                    <TextareaFieldHint>
+                      Stručně popište, o čem podcast je.
+                    </TextareaFieldHint>
+                  </TextareaField>
                   {/* Only the Coordinator chooses the author (27e, as 25c). */}
                   {authors !== null && (
                     <Select
-                      {...getSelectProps(fields.authorId)}
                       errors={fields.authorId.errors}
-                      label={'Autor'}
+                      id={fields.authorId.id}
+                      required={fields.authorId.required}
                     >
-                      {authors.map((author) => (
-                        <option key={author.id} value={author.id}>
-                          {author.name}
-                        </option>
-                      ))}
+                      <SelectLabel>Autor</SelectLabel>
+                      <SelectControl {...getSelectProps(fields.authorId)}>
+                        {authors.map((author) => (
+                          <option key={author.id} value={author.id}>
+                            {author.name}
+                          </option>
+                        ))}
+                      </SelectControl>
                     </Select>
                   )}
                 </fieldset>

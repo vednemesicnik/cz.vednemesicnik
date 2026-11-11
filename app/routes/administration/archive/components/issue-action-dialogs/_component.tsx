@@ -1,6 +1,11 @@
 import type { ContentState } from '@generated/prisma/enums'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
 import { ISSUE_HEADER_SENTENCES } from '../../utils/issue-actions'
 import type { useIssueActions } from '../../utils/use-issue-actions'
@@ -36,16 +41,20 @@ export const IssueActionDialogs = ({
 }: Props) => (
   <>
     {canDelete && (
-      <AdminDeleteConfirmationDialog
-        description={'Smažou se i jeho nahrané soubory. Vrátit to nejde.'}
-        ref={actions.deleteDialogRef}
-        subject={issue.title}
-        title={
-          issue.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={actions.deleteDialogRef}>
+        <AdminModalTitle>
+          {issue.state === 'archived'
             ? 'Smazat archivované číslo?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{issue.title}</AdminModalSubject>
+        <AdminModalDescription>
+          Smažou se i jeho nahrané soubory. Vrátit to nejde.
+        </AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
     )}
     {actions.stateDialog !== null && (
       <IssueStateDialog
@@ -54,14 +63,15 @@ export const IssueActionDialogs = ({
         isApprover={isApprover}
         issueTitle={issue.title}
         kind={actions.stateDialog}
-        // Publishing a draft not submitted, the dialog says so (26h).
-        note={
-          actions.stateDialog === 'publish' && issue.isNotSubmitted
-            ? ISSUE_HEADER_SENTENCES['not-submitted']
-            : null
-        }
         onClose={actions.closeStateDialog}
-      />
+      >
+        {/* Publishing a draft not submitted, the dialog says so (26h). */}
+        {actions.stateDialog === 'publish' && issue.isNotSubmitted && (
+          <AdminModalNote>
+            {ISSUE_HEADER_SENTENCES['not-submitted']}
+          </AdminModalNote>
+        )}
+      </IssueStateDialog>
     )}
     {actions.missingList !== null && (
       <IssueMissingDialog

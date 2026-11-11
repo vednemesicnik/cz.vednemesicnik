@@ -11,7 +11,7 @@ const payloadSchema = z.object({
   formSubmittedAt: z.string(),
   interest: z.string().optional(),
   name: z.string(),
-  phone: z.string().optional(),
+  phone: z.string(),
 }) satisfies z.ZodType<EnrolmentPayload>
 
 // Text that is not JSON counts as unreadable, like JSON of the wrong shape.

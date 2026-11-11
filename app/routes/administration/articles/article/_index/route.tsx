@@ -4,23 +4,38 @@ import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { ContentRenderer } from '~/components/content-renderer'
 import { FeaturedImage } from '~/components/featured-image'
+import { FeaturedImageCaption } from '~/components/featured-image-caption'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Hyperlink } from '~/components/hyperlink'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
@@ -41,6 +56,7 @@ import {
 } from '../../components/article-state-dialog'
 import {
   ARTICLE_ACTION_LABELS,
+  ARTICLE_CHANGE_DATE_DESCRIPTION,
   ARTICLE_DIRECT_INTENTS,
   ARTICLE_HEADER_SENTENCES,
   type ArticleAction,
@@ -253,13 +269,17 @@ export default function RouteComponent({
               {ARTICLE_HEADER_SENTENCES[headerActions.sentence]}
             </p>
           )}
-          <ActionMenu
-            items={headerActions.menu.map((headerAction) => ({
-              danger: headerAction === 'delete',
-              label: ARTICLE_ACTION_LABELS[headerAction],
-              onSelect: () => runAction(headerAction),
-            }))}
-          />
+          <ActionMenu>
+            {headerActions.menu.map((headerAction) => (
+              <ActionMenuItem
+                danger={headerAction === 'delete'}
+                key={headerAction}
+                onSelect={() => runAction(headerAction)}
+              >
+                {ARTICLE_ACTION_LABELS[headerAction]}
+              </ActionMenuItem>
+            ))}
+          </ActionMenu>
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
           {headerActions.primary !== null &&
@@ -282,85 +302,127 @@ export default function RouteComponent({
             {article.featuredImage && (
               <FeaturedImage
                 alt={article.featuredImage.altText}
-                description={
+                image={article.featuredImage.sources}
+                imageClassName={styles.featuredImage}
+              >
+                <FeaturedImageCaption>
                   <ContentRenderer
                     content={article.featuredImage.description}
                   />
-                }
-                image={article.featuredImage.sources}
-                imageClassName={styles.featuredImage}
-              />
+                </FeaturedImageCaption>
+              </FeaturedImage>
             )}
             <ContentRenderer content={article.content} />
           </article>
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Adresa'}>
-                {articlePath === null ? (
-                  '—'
-                ) : article.state === 'published' ? (
-                  articlePath
-                ) : (
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Adresa</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {articlePath === null ? (
+                    '—'
+                  ) : article.state === 'published' ? (
+                    articlePath
+                  ) : (
+                    <span className={styles.stack}>
+                      <Hyperlink
+                        // Only a published address is unique: the id says which
+                        // draft to show (log 0039).
+                        href={`${articlePath}?id=${articleId}`}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Náhled na webu
+                      </Hyperlink>
+                      <span className={styles.tertiary}>{articlePath}</span>
+                    </span>
+                  )}
+                </AdminDetailItemValue>
+              </AdminDetailItem>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Perex</AdminDetailItemLabel>
+                <AdminDetailItemValue>
                   <span className={styles.stack}>
-                    <Hyperlink
-                      // Only a published address is unique: the id says which
-                      // draft to show (log 0039).
-                      href={`${articlePath}?id=${articleId}`}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Náhled na webu
-                    </Hyperlink>
-                    <span className={styles.tertiary}>{articlePath}</span>
+                    <span>{article.perex ?? '—'}</span>
+                    <span className={styles.note}>
+                      pro vyhledávače a sdílení
+                    </span>
                   </span>
-                )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Perex'}>
-                <span className={styles.stack}>
-                  <span>{article.perex ?? '—'}</span>
-                  <span className={styles.note}>pro vyhledávače a sdílení</span>
-                </span>
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autoři</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {authorNames.join(', ')}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autoři'}>
-                {authorNames.join(', ')}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Rubriky</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {joinNames(article.categories)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Rubriky'}>
-                {joinNames(article.categories)}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Štítky</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {joinNames(article.tags)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Štítky'}>
-                {joinNames(article.tags)}
-              </AdminDetailItem>
-              <AdminDetailItem label={'Obrázky'}>
-                {article.imageCount}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Obrázky</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {article.imageCount}
+                </AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
-          <AdminDetailSection title={'Historie'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
             <HistoryList
               entries={article.history.entries}
               isIncomplete={article.history.isIncomplete}
               // A reused route component starts every record collapsed.
               key={article.id}
               visibleCount={5}
-            />
+            >
+              {(entry) => (
+                <HistoryListEntry>
+                  <HistoryListEvent>
+                    {entry.label}
+                    {entry.actorName !== null && (
+                      <HistoryListActor>{entry.actorName}</HistoryListActor>
+                    )}
+                  </HistoryListEvent>
+                  <HistoryListTime dateTime={entry.dateTime}>
+                    {entry.formattedDateTime}
+                  </HistoryListTime>
+                  {entry.note && (
+                    <HistoryListNote>{entry.note}</HistoryListNote>
+                  )}
+                </HistoryListEntry>
+              )}
+            </HistoryList>
           </AdminDetailSection>
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog
-        description={'Smazání je nevratné.'}
-        ref={deleteConfirmationDialogRef}
-        subject={article.title}
-        title={
-          article.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef}>
+        <AdminModalTitle>
+          {article.state === 'archived'
             ? 'Smazat archivovaný článek?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{article.title}</AdminModalSubject>
+        <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
 
       {stateDialog !== null && (
         <ArticleStateDialog
@@ -388,13 +450,14 @@ export default function RouteComponent({
           authorNames={authorNames}
           fetcherKey={fetcherKey}
           isApproval={publishDialog.isApproval}
-          // A draft not submitted is published from „⋯“ (23d); the dialog says so.
-          note={
-            headerActions.menu.includes('publish') ? NOT_SUBMITTED_NOTE : null
-          }
           onClose={() => setPublishDialog(null)}
           originalPublishedAt={article.publishedAt.iso}
-        />
+        >
+          {/* A draft not submitted is published from „⋯“ (23d); the dialog says so. */}
+          {headerActions.menu.includes('publish') && (
+            <AdminModalNote>{NOT_SUBMITTED_NOTE}</AdminModalNote>
+          )}
+        </ArticlePublishDialog>
       )}
 
       {isChangeDateOpen && (
@@ -403,8 +466,12 @@ export default function RouteComponent({
           fetcherKey={fetcherKey}
           onClose={() => setIsChangeDateOpen(false)}
           publishedAt={article.publishedAt.iso}
-          title={article.title}
-        />
+        >
+          <AdminModalSubject>{article.title}</AdminModalSubject>
+          <AdminModalDescription>
+            {ARTICLE_CHANGE_DATE_DESCRIPTION}
+          </AdminModalDescription>
+        </ArticleChangeDateDialog>
       )}
     </AdminPage>
   )

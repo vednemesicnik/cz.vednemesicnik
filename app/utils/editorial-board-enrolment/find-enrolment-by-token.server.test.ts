@@ -14,6 +14,7 @@ import { findEnrolmentByToken } from './find-enrolment-by-token.server'
 const PAYLOAD = {
   formSubmittedAt: '2026-11-03T10:00:00.000Z',
   name: 'Tereza Malá',
+  phone: '+420 600 000 000',
 }
 
 describe('findEnrolmentByToken', () => {

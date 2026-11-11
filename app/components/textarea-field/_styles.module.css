@@ -1,123 +1,19 @@
+/* The label and the control over one row: the hint and the errors at its
+   start, the counter at its end (28c). Dense placement keeps the errors on
+   the counter's row when there is no hint. */
 .container {
   @layer component {
     display: grid;
-    grid-auto-flow: row;
-    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-flow: row dense;
+    row-gap: 6px;
     justify-items: start;
     width: 100%;
   }
 }
 
-.footer {
-  @layer component {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    gap: 16px;
-    width: 100%;
-  }
-}
-
-.messages {
-  @layer component {
-    display: grid;
-    gap: 6px;
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.hint,
-.counter {
-  @layer component {
-    font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
-  }
-}
-
-.counter {
-  @layer component {
-    flex: none;
-    margin-inline-start: auto;
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-/* Over a limit that only advises: amber, never the error look (24a). */
-.counter.counterAttention {
+.errors {
   @layer variant {
-    color: var(--state-attention-text);
-  }
-}
-
-.counter.counterError {
-  @layer variant {
-    color: var(--error-text);
-  }
-}
-
-.textarea {
-  @layer component {
-    /* Colors */
-    color: var(--text-primary);
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border);
-
-    /* Typography - use global tokens directly */
-    font-family: var(--font-family), sans-serif;
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-regular);
-
-    /* Layout */
-    padding-block: 10px;
-    padding-inline: 14px;
-    border-radius: var(--radius-md);
-    width: 100%;
-    min-height: 90px;
-    line-height: var(--line-height-md);
-    resize: vertical;
-
-    /* Transitions */
-    transition:
-      border-color 150ms ease-out,
-      box-shadow 150ms ease-out,
-      background-color 150ms ease-out;
-
-    /* Hover State */
-    &:hover:not(:disabled):not(:focus-visible) {
-      border-color: var(--border-hover);
-    }
-
-    /* Focus Visible State (keyboard navigation only) */
-    &:focus-visible {
-      border-color: var(--border-accent);
-      box-shadow: var(--focus-shadow);
-      outline: none;
-    }
-
-    /* Placeholder */
-    &::placeholder {
-      color: var(--text-tertiary);
-    }
-
-    /* Disabled State */
-    &:disabled {
-      background-color: var(--bg-disabled);
-      color: var(--text-tertiary);
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-  }
-}
-
-/* Error State */
-.textarea.textareaError {
-  @layer component {
-    border-color: var(--error);
-
-    &:focus-visible {
-      border-color: var(--error);
-      box-shadow: var(--focus-shadow-error);
-    }
+    grid-column: 1;
   }
 }

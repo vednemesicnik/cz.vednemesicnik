@@ -1,0 +1,7 @@
+/* The image tile's small label (24b), restyling `Label`. */
+.label {
+  @layer variant {
+    font-size: var(--font-size-xs);
+    line-height: normal;
+  }
+}

@@ -87,8 +87,10 @@ every anchor's code, and update the links between documents and `project/CLAUDE.
   someone saved: read again and redo the edit, once.
 - **A component or a token goes in the design-system source and in the app project's `_ds/` copy**
   in the same pass. The two have drifted apart in both directions before, so read both first and
-  splice the change rather than copying files over. Nobody has yet rebuilt the bundle this way. If
-  you cannot rebuild it, say so in the answer and don't improvise.
+  splice the change rather than copying files over. In each `_ds_bundle.js` replace only that
+  component's block and its hash in the `@ds-bundle` header (the first 12 hex characters of the
+  source file's SHA-256), as `docs/_design-project.md` § The designer gives it. A whole rebuild
+  has not been tried: if the change needs more than that, say so in the answer and don't improvise.
 - Commit nothing and change nothing in any git repository.
 
 After publishing, run `design:screen` on your saved copy to confirm the document still parses and

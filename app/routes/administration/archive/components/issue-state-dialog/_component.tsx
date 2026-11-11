@@ -1,12 +1,14 @@
+import type { ReactNode } from 'react'
+
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { DialogBody } from '~/components/dialog-body'
 import { StateChangeDialog } from '~/components/state-change-dialog'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import type { IssueStateAction } from '../../utils/issue-actions'
-import styles from './_styles.module.css'
 
 type Props = {
   kind: IssueStateAction
@@ -14,7 +16,7 @@ type Props = {
   fetcherKey: string
   issueTitle: string
   isApprover: boolean
-  note: string | null
+  children?: ReactNode
   onClose: () => void
 }
 
@@ -58,7 +60,8 @@ const COPY = {
  * @param props.kind - Publish, approve and publish, retract or archive.
  * @param props.isApprover - Whether the person publishes; otherwise a retract
  *   says the Coordinator can publish the issue again.
- * @param props.note - What a publish skips, such as a draft not submitted.
+ * @param props.children - What a publish skips, such as a draft not
+ *   submitted (`AdminModalNote`), after the sentences.
  */
 export const IssueStateDialog = ({
   kind,
@@ -66,7 +69,7 @@ export const IssueStateDialog = ({
   fetcherKey,
   issueTitle,
   isApprover,
-  note,
+  children,
   onClose,
 }: Props) => {
   const copy = COPY[kind]
@@ -74,7 +77,6 @@ export const IssueStateDialog = ({
   return (
     <StateChangeDialog
       action={action}
-      confirmLabel={copy.confirmLabel}
       fetcherKey={fetcherKey}
       intent={copy.intent}
       onClose={onClose}
@@ -88,8 +90,9 @@ export const IssueStateDialog = ({
             Znovu ho publikovat může Koordinátor.
           </AdminModalDescription>
         )}
-        {note !== null && <p className={styles.note}>{note}</p>}
+        {children}
       </DialogBody>
+      <StateChangeDialogActions>{copy.confirmLabel}</StateChangeDialogActions>
     </StateChangeDialog>
   )
 }

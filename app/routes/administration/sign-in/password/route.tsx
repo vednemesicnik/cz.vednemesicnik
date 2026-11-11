@@ -4,6 +4,7 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInCardHeading } from '~/components/admin/admin-sign-in-card-heading'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
@@ -11,6 +12,8 @@ import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { useHydrated } from '~/utils/use-hydrated'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 import { schema } from './_schema'
@@ -57,7 +60,8 @@ export default function RouteComponent({
 
   // The emergency password sign-in (design 20d). Copy approved (gs905c2e).
   return (
-    <AdminSignInCard title={'Nouzové přihlášení'}>
+    <AdminSignInCard>
+      <AdminSignInCardHeading>Nouzové přihlášení</AdminSignInCardHeading>
       <AdminSignInText>
         Pro případ, že nefunguje Google, passkey ani odkaz v e-mailu.
       </AdminSignInText>
@@ -82,18 +86,26 @@ export default function RouteComponent({
 
         <TextField
           errors={fields.email.errors}
-          isRequiredMarkHidden
-          label={'E-mail'}
-          {...getInputProps(fields.email, { type: 'email' })}
-        />
+          id={fields.email.id}
+          required={fields.email.required}
+        >
+          <TextFieldLabel isRequiredMarkHidden>E-mail</TextFieldLabel>
+          <TextFieldControl
+            {...getInputProps(fields.email, { type: 'email' })}
+          />
+        </TextField>
 
         <TextField
           errors={fields.password.errors}
-          isRequiredMarkHidden
-          label={'Heslo'}
-          ref={passwordInputRef}
-          {...getInputProps(fields.password, { type: 'password' })}
-        />
+          id={fields.password.id}
+          required={fields.password.required}
+        >
+          <TextFieldLabel isRequiredMarkHidden>Heslo</TextFieldLabel>
+          <TextFieldControl
+            ref={passwordInputRef}
+            {...getInputProps(fields.password, { type: 'password' })}
+          />
+        </TextField>
 
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}

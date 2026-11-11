@@ -51,6 +51,10 @@ export const ARTICLE_DIRECT_INTENTS: Partial<Record<ArticleAction, string>> = {
 // present tense, as a withdrawal clears the submission (copy s9xbwd3w).
 export const NOT_SUBMITTED_NOTE = 'Článek není odeslaný ke schválení.'
 
+// The article's sentence in Změnit datum publikace? (23f).
+export const ARTICLE_CHANGE_DATE_DESCRIPTION =
+  'Datum a čas publikace určují pořadí článku na webu.'
+
 /**
  * The sentence a detail header shows beside or instead of its buttons (23d):
  * who may do what the role may not, or that a draft isn't submitted.

@@ -1,0 +1,6 @@
+/* Across the field's row, restyling `Label`. */
+.label {
+  @layer variant {
+    grid-column: 1 / -1;
+  }
+}

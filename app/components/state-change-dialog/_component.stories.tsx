@@ -10,6 +10,7 @@ import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
 import { DialogBody } from '~/components/dialog-body'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 
 import { StateChangeDialog } from './_component'
 
@@ -63,9 +64,9 @@ export const Playground: Story = {
             archivovanými.
           </AdminModalDescription>
         </DialogBody>
+        <StateChangeDialogActions>Archivovat článek</StateChangeDialogActions>
       </>
     ),
-    confirmLabel: 'Archivovat článek',
     fetcherKey: 'story-state-change',
     intent: 'archive',
     onClose: fn(),
@@ -86,9 +87,11 @@ export const WithoutSubject: Story = {
           zobrazovat. Vrátí se do konceptu, takže ji půjde upravit a publikovat
           znovu.
         </AdminModalDescription>
+        <StateChangeDialogActions>
+          Stáhnout z publikace
+        </StateChangeDialogActions>
       </>
     ),
-    confirmLabel: 'Stáhnout z publikace',
     intent: 'retract',
   },
 }

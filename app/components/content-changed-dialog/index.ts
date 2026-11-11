@@ -1,1 +1,1 @@
-export { ContentChangedDialog } from './_component'
+export { ContentChangedDialog, useContentChangedDialog } from './_component'

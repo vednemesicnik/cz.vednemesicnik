@@ -10,13 +10,6 @@
   }
 }
 
-.label {
-  @layer variant {
-    font-size: var(--font-size-xs);
-    line-height: normal;
-  }
-}
-
 .field {
   @layer component {
     position: relative;

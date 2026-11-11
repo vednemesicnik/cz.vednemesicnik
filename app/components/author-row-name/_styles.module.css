@@ -1,0 +1,7 @@
+.name {
+  @layer component {
+    min-inline-size: 0;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+}

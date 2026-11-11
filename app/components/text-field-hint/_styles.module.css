@@ -1,0 +1,15 @@
+.hint {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+    color: var(--text-tertiary);
+  }
+}
+
+/* The hint only while its field has the focus. */
+:not(:focus-within) > .hint.isShownOnFocus {
+  @layer variant {
+    display: none;
+  }
+}

@@ -13,32 +13,3 @@
     }
   }
 }
-
-.head {
-  @layer component {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px 16px;
-  }
-}
-
-.title {
-  @layer component {
-    margin: 0;
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
-    line-height: 1.4;
-    color: var(--text-primary);
-  }
-}
-
-.actions {
-  @layer component {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 16px;
-  }
-}

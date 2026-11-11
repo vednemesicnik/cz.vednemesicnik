@@ -1,0 +1,7 @@
+/* An image tile's field (`.vdm-imagetile__field`), restyling `Label`. */
+.sm {
+  @layer variant {
+    font-size: var(--font-size-xs);
+    line-height: normal;
+  }
+}

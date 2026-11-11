@@ -1,0 +1,8 @@
+.fileName {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+}

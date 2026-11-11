@@ -6,7 +6,7 @@
  * @param index - The row's place.
  * @param count - How many rows the order has.
  * @param moveTo - Moves the row to a place.
- * @returns The `ActionMenu` items, none for a single row.
+ * @returns The moves, in order, for `ActionMenuItem`s; none for a single row.
  */
 export const getOrderMenuItems = (
   index: number,

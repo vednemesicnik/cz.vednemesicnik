@@ -1,6 +1,9 @@
 import type { RefObject } from 'react'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
 type Props = {
   ref: RefObject<HTMLDialogElement | null>
@@ -14,12 +17,14 @@ type Props = {
  * The name follows a colon: in the 1st case, „účet Jana“ reads as Jan's.
  */
 export const UserDeleteConfirmationDialog = ({ ref, name }: Props) => (
-  <AdminDeleteConfirmationDialog
-    confirmLabel={'Smazat účet'}
-    description={
-      'Tímto účtem se už nepůjde přihlásit. Autor i jméno u obsahu zůstanou zachovány. Vrátit to nejde.'
-    }
-    ref={ref}
-    title={`Smazat účet: ${name}?`}
-  />
+  <AdminDeleteConfirmationDialog ref={ref}>
+    <AdminModalTitle>{`Smazat účet: ${name}?`}</AdminModalTitle>
+    <AdminModalDescription>
+      Tímto účtem se už nepůjde přihlásit. Autor i jméno u obsahu zůstanou
+      zachovány. Vrátit to nejde.
+    </AdminModalDescription>
+    <AdminDeleteConfirmationDialogActions>
+      Smazat účet
+    </AdminDeleteConfirmationDialogActions>
+  </AdminDeleteConfirmationDialog>
 )

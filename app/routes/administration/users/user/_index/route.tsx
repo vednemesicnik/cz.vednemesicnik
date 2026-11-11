@@ -4,20 +4,33 @@ import { useEffect, useRef, useState } from 'react'
 import { href, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { Callout } from '~/components/callout'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
+import { SignInAttempts } from '~/components/sign-in-attempts'
+import { SignInAttemptsDetail } from '~/components/sign-in-attempts-detail'
+import { SignInAttemptsItem } from '~/components/sign-in-attempts-item'
+import { SignInAttemptsMethod } from '~/components/sign-in-attempts-method'
+import { SignInAttemptsTime } from '~/components/sign-in-attempts-time'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { useAccountEvents } from '~/hooks/use-account-events'
@@ -30,6 +43,8 @@ import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { EmergencyLinkDialog } from './components/emergency-link-dialog'
 import { SignInMethod } from './components/sign-in-method'
+import { SignInMethodNote } from './components/sign-in-method-note'
+import { SignInMethodStatus } from './components/sign-in-method-status'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -107,22 +122,20 @@ export default function RouteComponent({
 
         {/* No primary action; „⋯“ holds Smazat…, never on your own account or the Owner's (28e, 28g), and during a Google outage Vydat nouzový odkaz… above it. */}
         <div className={styles.actions}>
-          <ActionMenu
-            items={[
-              ...(canIssueEmergencyLink
-                ? [
-                    {
-                      label: 'Vydat nouzový odkaz…',
-                      onSelect: () => setIsEmergencyLinkDialogOpen(true),
-                    },
-                  ]
-                : []),
-              ...(canDelete
-                ? [{ danger: true, label: 'Smazat…', onSelect: openDialog }]
-                : []),
-            ]}
-            label={'Další akce s účtem'}
-          />
+          <ActionMenu label={'Další akce s účtem'}>
+            {canIssueEmergencyLink && (
+              <ActionMenuItem
+                onSelect={() => setIsEmergencyLinkDialogOpen(true)}
+              >
+                Vydat nouzový odkaz…
+              </ActionMenuItem>
+            )}
+            {canDelete && (
+              <ActionMenuItem danger={true} onSelect={openDialog}>
+                Smazat…
+              </ActionMenuItem>
+            )}
+          </ActionMenu>
           {canUpdate && (
             <LinkButton
               state={RETURN_TO_OPENER_STATE}
@@ -148,70 +161,171 @@ export default function RouteComponent({
       {/* Left how the person signs in, right the account's data and history (28e). */}
       <AdminDetailLayout>
         <AdminDetailMain>
-          <AdminDetailSection title={'Přihlášení'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Přihlášení</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Heslo'}>
-                <SignInMethod description={signInMethods.password} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Heslo</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.password.status}
+                    </SignInMethodStatus>
+                    {signInMethods.password.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.password.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Dvoufázové ověření'}>
-                <SignInMethod description={signInMethods.twoFactor} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Dvoufázové ověření</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.twoFactor.status}
+                    </SignInMethodStatus>
+                    {signInMethods.twoFactor.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.twoFactor.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Passkey'}>
-                <SignInMethod description={signInMethods.passkey} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Passkey</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.passkey.status}
+                    </SignInMethodStatus>
+                    {signInMethods.passkey.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.passkey.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Google'}>
-                <SignInMethod description={signInMethods.google} />
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Google</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <SignInMethod>
+                    <SignInMethodStatus>
+                      {signInMethods.google.status}
+                    </SignInMethodStatus>
+                    {signInMethods.google.note !== null && (
+                      <SignInMethodNote>
+                        {signInMethods.google.note}
+                      </SignInMethodNote>
+                    )}
+                  </SignInMethod>
+                </AdminDetailItemValue>
               </AdminDetailItem>
               {/* Only while the link works, as of this load (28e). */}
               {emergencyLink !== null && (
-                <AdminDetailItem label={'Nouzový odkaz'}>
-                  <SignInMethod
-                    description={{
-                      note:
-                        emergencyLink.issuerName === null
+                <AdminDetailItem>
+                  <AdminDetailItemLabel>Nouzový odkaz</AdminDetailItemLabel>
+                  <AdminDetailItemValue>
+                    <SignInMethod>
+                      <SignInMethodStatus>
+                        platí do {emergencyLink.expiresAt}
+                      </SignInMethodStatus>
+                      <SignInMethodNote>
+                        {emergencyLink.issuerName === null
                           ? `vydaný ve ${emergencyLink.issuedAt}`
-                          : `vydaný ve ${emergencyLink.issuedAt} · ${emergencyLink.issuerName}`,
-                      status: `platí do ${emergencyLink.expiresAt}`,
-                    }}
-                  />
+                          : `vydaný ve ${emergencyLink.issuedAt} · ${emergencyLink.issuerName}`}
+                      </SignInMethodNote>
+                    </SignInMethod>
+                  </AdminDetailItemValue>
                 </AdminDetailItem>
               )}
             </AdminDetailList>
           </AdminDetailSection>
 
           {signInAttempts.length > 0 && (
-            <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
-              <AdminSignInAttempts attempts={signInAttempts} />
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>
+                Poslední pokusy o přihlášení
+              </AdminDetailSectionTitle>
+              <SignInAttempts>
+                {signInAttempts.map((attempt) => (
+                  <SignInAttemptsItem
+                    isFailure={attempt.isFailure}
+                    key={attempt.id}
+                  >
+                    <SignInAttemptsTime dateTime={attempt.dateTime}>
+                      {attempt.formattedDateTime}
+                    </SignInAttemptsTime>
+                    <SignInAttemptsMethod>
+                      {attempt.label}
+                      {attempt.detail !== null && (
+                        <SignInAttemptsDetail>
+                          {attempt.detail}
+                        </SignInAttemptsDetail>
+                      )}
+                    </SignInAttemptsMethod>
+                  </SignInAttemptsItem>
+                ))}
+              </SignInAttempts>
             </AdminDetailSection>
           )}
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Uživatelská role'}>
-                {getUserRoleLabel(user.role.name)}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Uživatelská role</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {getUserRoleLabel(user.role.name)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Autor'}>
-                <Link
-                  to={href('/administration/authors/:authorId', {
-                    authorId: user.author.id,
-                  })}
-                >
-                  {user.author.name}
-                </Link>{' '}
-                · {getAuthorRoleLabel(user.author.role.name)}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autor</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  <Link
+                    to={href('/administration/authors/:authorId', {
+                      authorId: user.author.id,
+                    })}
+                  >
+                    {user.author.name}
+                  </Link>{' '}
+                  · {getAuthorRoleLabel(user.author.role.name)}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Účet od'}>
-                {user.createdAt}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Účet od</AdminDetailItemLabel>
+                <AdminDetailItemValue>{user.createdAt}</AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
           {/* An account older than the audit log has no Historie (by062t6n). */}
           {history.length > 0 && (
-            <AdminDetailSection title={'Historie'}>
-              <HistoryList entries={history} />
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
+              <HistoryList entries={history}>
+                {(entry) => (
+                  <HistoryListEntry>
+                    <HistoryListEvent>
+                      {entry.label}
+                      {entry.actorName !== null && (
+                        <HistoryListActor>{entry.actorName}</HistoryListActor>
+                      )}
+                    </HistoryListEvent>
+                    <HistoryListTime dateTime={entry.dateTime}>
+                      {entry.formattedDateTime}
+                    </HistoryListTime>
+                    {entry.note && (
+                      <HistoryListNote>{entry.note}</HistoryListNote>
+                    )}
+                  </HistoryListEntry>
+                )}
+              </HistoryList>
             </AdminDetailSection>
           )}
         </AdminDetailAside>

@@ -1,20 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
+
 import { Select } from './_component'
 
 const meta: Meta<typeof Select> = {
   argTypes: {
-    disabled: {
-      control: 'boolean',
-      description: 'Whether the select is disabled',
-    },
+    children: { control: false },
     errors: {
       control: 'object',
       description: 'Array of error messages to display',
-    },
-    label: {
-      control: 'text',
-      description: 'Label text for the select field',
     },
     required: {
       control: 'boolean',
@@ -30,21 +26,23 @@ export default meta
 type Story = StoryObj<typeof Select>
 
 /**
- * Default select dropdown with multiple options.
+ * A select with several options.
  * The most common select variant for choosing from a list.
  */
-export const Default: Story = {
+export const Playground: Story = {
   args: {
     id: 'country',
-    label: 'Country',
   },
   render: (args) => (
     <Select {...args}>
-      <option value="">Select a country</option>
-      <option value="us">United States</option>
-      <option value="uk">United Kingdom</option>
-      <option value="ca">Canada</option>
-      <option value="au">Australia</option>
+      <SelectLabel>Country</SelectLabel>
+      <SelectControl>
+        <option value="">Select a country</option>
+        <option value="us">United States</option>
+        <option value="uk">United Kingdom</option>
+        <option value="ca">Canada</option>
+        <option value="au">Australia</option>
+      </SelectControl>
     </Select>
   ),
 }
@@ -56,15 +54,17 @@ export const Default: Story = {
 export const Required: Story = {
   args: {
     id: 'role',
-    label: 'Role',
     required: true,
   },
   render: (args) => (
     <Select {...args}>
-      <option value="">Choose your role</option>
-      <option value="contributor">Contributor</option>
-      <option value="creator">Creator</option>
-      <option value="coordinator">Coordinator</option>
+      <SelectLabel>Role</SelectLabel>
+      <SelectControl>
+        <option value="">Choose your role</option>
+        <option value="contributor">Contributor</option>
+        <option value="creator">Creator</option>
+        <option value="coordinator">Coordinator</option>
+      </SelectControl>
     </Select>
   ),
 }
@@ -77,14 +77,16 @@ export const WithErrors: Story = {
   args: {
     errors: ['Please select a category'],
     id: 'category',
-    label: 'Category',
   },
   render: (args) => (
     <Select {...args}>
-      <option value="">Select a category</option>
-      <option value="tech">Technology</option>
-      <option value="science">Science</option>
-      <option value="arts">Arts</option>
+      <SelectLabel>Category</SelectLabel>
+      <SelectControl>
+        <option value="">Select a category</option>
+        <option value="tech">Technology</option>
+        <option value="science">Science</option>
+        <option value="arts">Arts</option>
+      </SelectControl>
     </Select>
   ),
 }
@@ -95,17 +97,18 @@ export const WithErrors: Story = {
  */
 export const Disabled: Story = {
   args: {
-    disabled: true,
     id: 'status',
-    label: 'Status',
   },
   render: (args) => (
     <Select {...args}>
-      <option value="draft">Draft</option>
-      <option selected value="published">
-        Published
-      </option>
-      <option value="archived">Archived</option>
+      <SelectLabel>Status</SelectLabel>
+      <SelectControl disabled>
+        <option value="draft">Draft</option>
+        <option selected value="published">
+          Published
+        </option>
+        <option value="archived">Archived</option>
+      </SelectControl>
     </Select>
   ),
 }
@@ -116,16 +119,17 @@ export const Disabled: Story = {
  */
 export const WithDefaultValue: Story = {
   args: {
-    defaultValue: 'en',
     id: 'language',
-    label: 'Language',
   },
   render: (args) => (
     <Select {...args}>
-      <option value="en">English</option>
-      <option value="es">Spanish</option>
-      <option value="fr">French</option>
-      <option value="de">German</option>
+      <SelectLabel>Language</SelectLabel>
+      <SelectControl defaultValue={'en'}>
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+      </SelectControl>
     </Select>
   ),
 }
@@ -137,21 +141,23 @@ export const WithDefaultValue: Story = {
 export const WithGroups: Story = {
   args: {
     id: 'food',
-    label: 'Favorite Food',
   },
   render: (args) => (
     <Select {...args}>
-      <option value="">Select your favorite</option>
-      <optgroup label="Fruits">
-        <option value="apple">Apple</option>
-        <option value="banana">Banana</option>
-        <option value="orange">Orange</option>
-      </optgroup>
-      <optgroup label="Vegetables">
-        <option value="carrot">Carrot</option>
-        <option value="broccoli">Broccoli</option>
-        <option value="spinach">Spinach</option>
-      </optgroup>
+      <SelectLabel>Favorite Food</SelectLabel>
+      <SelectControl>
+        <option value="">Select your favorite</option>
+        <optgroup label="Fruits">
+          <option value="apple">Apple</option>
+          <option value="banana">Banana</option>
+          <option value="orange">Orange</option>
+        </optgroup>
+        <optgroup label="Vegetables">
+          <option value="carrot">Carrot</option>
+          <option value="broccoli">Broccoli</option>
+          <option value="spinach">Spinach</option>
+        </optgroup>
+      </SelectControl>
     </Select>
   ),
 }
@@ -163,14 +169,16 @@ export const WithGroups: Story = {
 export const ArticleState: Story = {
   args: {
     id: 'article-state',
-    label: 'Article State',
     required: true,
   },
   render: (args) => (
     <Select {...args}>
-      <option value="draft">Draft</option>
-      <option value="published">Published</option>
-      <option value="archived">Archived</option>
+      <SelectLabel>Article State</SelectLabel>
+      <SelectControl>
+        <option value="draft">Draft</option>
+        <option value="published">Published</option>
+        <option value="archived">Archived</option>
+      </SelectControl>
     </Select>
   ),
 }

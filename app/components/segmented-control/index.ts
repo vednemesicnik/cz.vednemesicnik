@@ -1,1 +1,1 @@
-export { SegmentedControl } from './_component'
+export { SegmentedControl, useSegmentedControl } from './_component'

@@ -1,39 +1,42 @@
 import { clsx } from 'clsx'
+import type { ReactNode } from 'react'
 
 import { CloseIcon } from '~/components/icons/close-icon'
 
 import styles from './_styles.module.css'
 
 type Props = {
-  children: string
-  /** A word after the label, e.g. *archivovaný*. */
-  note?: string
-  /** Still attached but out of play (archived): dashed, grey (24a). */
+  children: ReactNode
   muted?: boolean
-  /** Makes the chip removable with a × button. */
-  onRemove?: () => void
-  /** The × button's name; *Odebrat {label}* by default. */
-  removeLabel?: string
   className?: string
-}
+} & (
+  | { onRemove?: () => void; removeLabel: string }
+  | { onRemove?: never; removeLabel?: never }
+)
 
 /**
  * The design system's `Chip` (components/core/Chip, yv8gi9i0): a picked value
  * in a multi-select, removable with a ×.
  *
- * @param props.children - The value's name.
+ * @param props.children - The `ChipLabel`, then a `ChipNote` where the value
+ *   has one.
+ * @param props.muted - Still attached but out of play (archived): dashed,
+ *   grey (24a).
+ * @param props.onRemove - Makes the chip removable with a × button.
+ * @param props.removeLabel - The × button's name, e.g. *Odebrat {label}*.
+ *   Required wherever `onRemove` may be passed, so a × always has a name; a
+ *   caller whose handler is `undefined` while read-only passes it anyway, and
+ *   without `onRemove` it is unused.
  */
 export const Chip = ({
   children,
-  note,
   muted = false,
   onRemove,
-  removeLabel = `Odebrat ${children}`,
+  removeLabel,
   className,
 }: Props) => (
   <span className={clsx(styles.chip, muted && styles.muted, className)}>
-    <span>{children}</span>
-    {note !== undefined && <span className={styles.note}>{note}</span>}
+    {children}
     {onRemove !== undefined && (
       <button
         aria-label={removeLabel}

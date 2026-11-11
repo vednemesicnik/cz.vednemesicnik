@@ -2,6 +2,8 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { RadioHint } from '~/components/radio-hint'
+
 import { Radio } from './_component'
 
 const meta: Meta<typeof Radio> = {
@@ -35,8 +37,12 @@ export const Playground: Story = {
  */
 export const WithHint: Story = {
   args: {
-    children: 'Přispěvatel',
-    hint: 'Píše vlastní koncepty a odesílá je ke schválení.',
+    children: (
+      <>
+        Přispěvatel
+        <RadioHint>Píše vlastní koncepty a odesílá je ke schválení.</RadioHint>
+      </>
+    ),
     name: 'role',
   },
 }
@@ -46,8 +52,14 @@ export const WithHint: Story = {
  */
 export const Wrapping: Story = {
   args: {
-    children: 'Tvůrce',
-    hint: 'Píše vlastní koncepty, odesílá je ke schválení a vidí i cizí koncepty.',
+    children: (
+      <>
+        Tvůrce
+        <RadioHint>
+          Píše vlastní koncepty, odesílá je ke schválení a vidí i cizí koncepty.
+        </RadioHint>
+      </>
+    ),
     name: 'role',
   },
   decorators: [

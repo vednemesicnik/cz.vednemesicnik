@@ -22,14 +22,6 @@
   }
 }
 
-.detail {
-  @layer component {
-    font-size: var(--font-size-xs);
-    line-height: 1.4;
-    color: var(--text-secondary);
-  }
-}
-
 .draft > .tag {
   @layer variant {
     background-color: var(--state-draft-bg);
@@ -70,7 +62,7 @@
   }
 }
 
-.archived > .detail {
+.archived > [data-status-tag-detail] {
   @layer variant {
     color: var(--text-tertiary);
   }

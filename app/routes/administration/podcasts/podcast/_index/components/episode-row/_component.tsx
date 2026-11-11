@@ -1,4 +1,5 @@
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -16,6 +17,7 @@ import {
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
@@ -73,11 +75,15 @@ export const EpisodeRow = ({
   const { detailHref, editHref, isSubmitting, runAction } = actions
 
   const rowAction = episode.row
-  const toMenuItem = (menuAction: EpisodeAction) => ({
-    danger: menuAction === 'delete',
-    label: EPISODE_ACTION_LABELS[menuAction],
-    onSelect: () => runAction(menuAction),
-  })
+  const renderMenuItem = (menuAction: EpisodeAction) => (
+    <ActionMenuItem
+      danger={menuAction === 'delete'}
+      key={menuAction}
+      onSelect={() => runAction(menuAction)}
+    >
+      {EPISODE_ACTION_LABELS[menuAction]}
+    </ActionMenuItem>
+  )
   // On a phone „⋯“ stands alone, the row action first in it (32d).
   const phoneMenu =
     rowAction === null ? episode.menu : [rowAction, ...episode.menu]
@@ -86,6 +92,13 @@ export const EpisodeRow = ({
     episode.linkLabels.length === 0
       ? 'odkazy zatím chybí'
       : episode.linkLabels.join(' · ')
+  // Who edits it comes first: it changes what the row allows (27b).
+  const stateDetail = getLiveStateDetail({
+    factLine: episode.factLine,
+    holdLine: episode.holdLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow
@@ -122,16 +135,11 @@ export const EpisodeRow = ({
           : formatNumericDate(new Date(episode.publishedAt))}
       </TableCell>
       <TableStateCell>
-        <StatusTag
-          // Who edits it comes first: it changes what the row allows (27b).
-          detail={getLiveStateDetail({
-            factLine: episode.factLine,
-            holdLine: episode.holdLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={episode.submission ?? episode.state}
-        />
+        <StatusTag state={episode.submission ?? episode.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       <TableDetailsCell>
         <TableDetailsLine>{platforms}</TableDetailsLine>
@@ -139,11 +147,9 @@ export const EpisodeRow = ({
       <TableActionsCell>
         {phoneMenu.length > 0 && (
           <TableRowMenu phoneOnly={true}>
-            <ActionMenu
-              items={phoneMenu.map(toMenuItem)}
-              label={`Další akce s epizodou ${title}`}
-              size={'sm'}
-            />
+            <ActionMenu label={`Další akce s epizodou ${title}`} size={'sm'}>
+              {phoneMenu.map(renderMenuItem)}
+            </ActionMenu>
           </TableRowMenu>
         )}
         <TableRowActions>
@@ -169,11 +175,9 @@ export const EpisodeRow = ({
             </Button>
           )}
           {episode.menu.length > 0 && (
-            <ActionMenu
-              items={episode.menu.map(toMenuItem)}
-              label={`Další akce s epizodou ${title}`}
-              size={'sm'}
-            />
+            <ActionMenu label={`Další akce s epizodou ${title}`} size={'sm'}>
+              {episode.menu.map(renderMenuItem)}
+            </ActionMenu>
           )}
         </TableRowActions>
 

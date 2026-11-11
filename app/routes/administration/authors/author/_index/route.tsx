@@ -4,16 +4,25 @@ import { Fragment, useRef, useState } from 'react'
 import { href, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailItemLabel } from '~/components/admin/admin-detail-item-label'
+import { AdminDetailItemValue } from '~/components/admin/admin-detail-item-value'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { BaseLink } from '~/components/base-link'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
@@ -101,34 +110,32 @@ export default function RouteComponent({
 
         {/* No primary action: an author has no state waiting on a step (28a, 28b). */}
         <div className={styles.actions}>
-          <ActionMenu
-            items={[
-              ...(canCreateUser
-                ? [
-                    {
-                      label: 'Založit účet…',
-                      onSelect: () =>
-                        navigate(
-                          `${href('/administration/users/new')}?${new URLSearchParams({ author: authorId })}`,
-                          { state: RETURN_TO_OPENER_STATE },
-                        ),
-                    },
-                  ]
-                : []),
-              ...(mayDelete
-                ? [
-                    {
-                      danger: true,
-                      label: 'Smazat…',
-                      onSelect: deleteBlock.deletable
-                        ? openDialog
-                        : () => setIsBlockedDialogOpen(true),
-                    },
-                  ]
-                : []),
-            ]}
-            label={'Další akce s autorem'}
-          />
+          <ActionMenu label={'Další akce s autorem'}>
+            {canCreateUser && (
+              <ActionMenuItem
+                onSelect={() =>
+                  navigate(
+                    `${href('/administration/users/new')}?${new URLSearchParams({ author: authorId })}`,
+                    { state: RETURN_TO_OPENER_STATE },
+                  )
+                }
+              >
+                Založit účet…
+              </ActionMenuItem>
+            )}
+            {mayDelete && (
+              <ActionMenuItem
+                danger={true}
+                onSelect={
+                  deleteBlock.deletable
+                    ? openDialog
+                    : () => setIsBlockedDialogOpen(true)
+                }
+              >
+                Smazat…
+              </ActionMenuItem>
+            )}
+          </ActionMenu>
           {canUpdate && (
             <LinkButton
               state={RETURN_TO_OPENER_STATE}
@@ -146,7 +153,8 @@ export default function RouteComponent({
       {/* Left what the author stands on, right its data and history (28b). */}
       <AdminDetailLayout>
         <AdminDetailMain>
-          <AdminDetailSection id={AUTHOR_CONTENT_SECTION_ID} title={'Obsah'}>
+          <AdminDetailSection id={AUTHOR_CONTENT_SECTION_ID}>
+            <AdminDetailSectionTitle>Obsah</AdminDetailSectionTitle>
             {contentCounts.length === 0 ? (
               <p className={styles.empty}>Zatím u ničeho nestojí.</p>
             ) : (
@@ -189,34 +197,58 @@ export default function RouteComponent({
         </AdminDetailMain>
 
         <AdminDetailAside>
-          <AdminDetailSection title={'Údaje'}>
+          <AdminDetailSection>
+            <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
             <AdminDetailList>
-              <AdminDetailItem label={'Autorská role'}>
-                {roleLabel}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Autorská role</AdminDetailItemLabel>
+                <AdminDetailItemValue>{roleLabel}</AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Účet'}>
-                {author.user === null ? (
-                  'Bez účtu'
-                ) : (
-                  <Link
-                    to={href('/administration/users/:userId', {
-                      userId: author.user.id,
-                    })}
-                  >
-                    {author.user.email}
-                  </Link>
-                )}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Účet</AdminDetailItemLabel>
+                <AdminDetailItemValue>
+                  {author.user === null ? (
+                    'Bez účtu'
+                  ) : (
+                    <Link
+                      to={href('/administration/users/:userId', {
+                        userId: author.user.id,
+                      })}
+                    >
+                      {author.user.email}
+                    </Link>
+                  )}
+                </AdminDetailItemValue>
               </AdminDetailItem>
-              <AdminDetailItem label={'Bio'}>
-                {author.bio ?? '—'}
+              <AdminDetailItem>
+                <AdminDetailItemLabel>Bio</AdminDetailItemLabel>
+                <AdminDetailItemValue>{author.bio ?? '—'}</AdminDetailItemValue>
               </AdminDetailItem>
             </AdminDetailList>
           </AdminDetailSection>
 
           {/* An author older than the log, never changed, has none (as 28e). */}
           {history.length > 0 && (
-            <AdminDetailSection title={'Historie'}>
-              <HistoryList entries={history} />
+            <AdminDetailSection>
+              <AdminDetailSectionTitle>Historie</AdminDetailSectionTitle>
+              <HistoryList entries={history}>
+                {(entry) => (
+                  <HistoryListEntry>
+                    <HistoryListEvent>
+                      {entry.label}
+                      {entry.actorName !== null && (
+                        <HistoryListActor>{entry.actorName}</HistoryListActor>
+                      )}
+                    </HistoryListEvent>
+                    <HistoryListTime dateTime={entry.dateTime}>
+                      {entry.formattedDateTime}
+                    </HistoryListTime>
+                    {entry.note && (
+                      <HistoryListNote>{entry.note}</HistoryListNote>
+                    )}
+                  </HistoryListEntry>
+                )}
+              </HistoryList>
             </AdminDetailSection>
           )}
         </AdminDetailAside>

@@ -1,0 +1,14 @@
+.meta {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    @media (width >= 640px) {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+    }
+  }
+}

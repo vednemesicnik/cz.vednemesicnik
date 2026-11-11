@@ -11,6 +11,8 @@ import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
 import type { action as changePasswordAction } from '~/routes/administration/settings/change-password/_action'
 import { schema } from '~/routes/administration/settings/change-password/_schema'
 
@@ -97,21 +99,31 @@ export const ChangePasswordDialog = ({
           )}
 
           <TextField
-            label={'Nové heslo'}
-            {...getInputProps(fields.newPassword, { type: 'password' })}
-            autoComplete={'new-password'}
-            disabled={isSubmitting}
             errors={fields.newPassword.errors}
-          />
+            id={fields.newPassword.id}
+            required={fields.newPassword.required}
+          >
+            <TextFieldLabel>Nové heslo</TextFieldLabel>
+            <TextFieldControl
+              {...getInputProps(fields.newPassword, { type: 'password' })}
+              autoComplete={'new-password'}
+              disabled={isSubmitting}
+            />
+          </TextField>
           <TextField
-            label={'Nové heslo znovu'}
-            {...getInputProps(fields.newPasswordConfirmation, {
-              type: 'password',
-            })}
-            autoComplete={'new-password'}
-            disabled={isSubmitting}
             errors={fields.newPasswordConfirmation.errors}
-          />
+            id={fields.newPasswordConfirmation.id}
+            required={fields.newPasswordConfirmation.required}
+          >
+            <TextFieldLabel>Nové heslo znovu</TextFieldLabel>
+            <TextFieldControl
+              {...getInputProps(fields.newPasswordConfirmation, {
+                type: 'password',
+              })}
+              autoComplete={'new-password'}
+              disabled={isSubmitting}
+            />
+          </TextField>
 
           <AdminModalActions>
             <Button

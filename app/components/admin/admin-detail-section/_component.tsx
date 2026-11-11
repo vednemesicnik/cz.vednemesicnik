@@ -5,8 +5,6 @@ import styles from './_styles.module.css'
 
 type Props = {
   id?: string
-  title?: string
-  actions?: ReactNode
   children: ReactNode
   className?: string
 }
@@ -18,29 +16,12 @@ type Props = {
  *
  * @param props.id - The fragment a link elsewhere lands on, e.g. the author
  *   detail's Obsah (28g).
- * @param props.title - The section heading.
- * @param props.actions - Buttons for the whole section, e.g. `Upravit profil`.
+ * @param props.children - An `AdminDetailSectionTitle`, or an
+ *   `AdminDetailSectionHead` with the title and `AdminDetailSectionActions`,
+ *   then the content.
  */
-export const AdminDetailSection = ({
-  id,
-  title,
-  actions,
-  children,
-  className,
-}: Props) => {
-  const hasHead = title !== undefined || actions !== undefined
-
-  return (
-    <section className={clsx(styles.section, className)} id={id}>
-      {hasHead && (
-        <div className={styles.head}>
-          {title !== undefined && <h2 className={styles.title}>{title}</h2>}
-          {actions !== undefined && (
-            <div className={styles.actions}>{actions}</div>
-          )}
-        </div>
-      )}
-      {children}
-    </section>
-  )
-}
+export const AdminDetailSection = ({ id, children, className }: Props) => (
+  <section className={clsx(styles.section, className)} id={id}>
+    {children}
+  </section>
+)

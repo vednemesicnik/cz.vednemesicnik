@@ -3,6 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
 
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { Button } from '~/components/button'
 
 import { ActionMenu } from './_component'
@@ -35,38 +36,43 @@ type Story = StoryObj<typeof meta>
 export const Playground: Story = {
   args: {
     align: 'end',
-    items: [{ danger: true, label: 'Smazat…', onSelect: fn() }],
+    children: (
+      <ActionMenuItem danger={true} onSelect={fn()}>
+        Smazat…
+      </ActionMenuItem>
+    ),
     label: 'Další akce s účtem',
   },
 }
 
 /**
- * In a detail's header (design 28e): „⋯“ before the one outline action. An
- * empty list renders nothing, so the header keeps only Upravit.
+ * In a detail's header (design 28e): „⋯“ before the one outline action. A
+ * menu without items hides itself, so the header keeps only Upravit.
  */
 export const InHeader: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
     <div style={{ display: 'grid', gap: '16px' }}>
       <div style={{ display: 'flex', gap: '8px' }}>
-        <ActionMenu
-          items={[{ danger: true, label: 'Smazat…', onSelect: fn() }]}
-          label={'Další akce s účtem'}
-        />
+        <ActionMenu label={'Další akce s účtem'}>
+          <ActionMenuItem danger={true} onSelect={fn()}>
+            Smazat…
+          </ActionMenuItem>
+        </ActionMenu>
         <Button variant={'outline'}>Upravit</Button>
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
-        <ActionMenu
-          items={[
-            { label: 'Vydat nouzový odkaz…', onSelect: fn() },
-            { danger: true, label: 'Smazat…', onSelect: fn() },
-          ]}
-          label={'Další akce s účtem'}
-        />
+        <ActionMenu label={'Další akce s účtem'}>
+          <ActionMenuItem onSelect={fn()}>Vydat nouzový odkaz…</ActionMenuItem>
+          <ActionMenuItem danger={true} onSelect={fn()}>
+            Smazat…
+          </ActionMenuItem>
+        </ActionMenu>
         <Button variant={'outline'}>Upravit</Button>
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
-        <ActionMenu items={[]} label={'Další akce s účtem'} />
+        {/* A role that may do nothing: no items. */}
+        <ActionMenu label={'Další akce s účtem'}>{[]}</ActionMenu>
         <Button variant={'outline'}>Upravit</Button>
       </div>
     </div>
@@ -83,14 +89,11 @@ export const InRow: Story = {
       <Button size={'sm'} variant={'outline'}>
         Schválit
       </Button>
-      <ActionMenu
-        items={[
-          { label: 'Schválit a publikovat…', onSelect: fn() },
-          { label: 'Vrátit k úpravám', onSelect: fn() },
-          { label: 'Upravit', onSelect: fn() },
-        ]}
-        size={'sm'}
-      />
+      <ActionMenu size={'sm'}>
+        <ActionMenuItem onSelect={fn()}>Schválit a publikovat…</ActionMenuItem>
+        <ActionMenuItem onSelect={fn()}>Vrátit k úpravám</ActionMenuItem>
+        <ActionMenuItem onSelect={fn()}>Upravit</ActionMenuItem>
+      </ActionMenu>
     </div>
   ),
 }

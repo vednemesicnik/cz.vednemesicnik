@@ -1,0 +1,16 @@
+.authors {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    & li + li::before {
+      content: ", ";
+      white-space: pre;
+    }
+  }
+}

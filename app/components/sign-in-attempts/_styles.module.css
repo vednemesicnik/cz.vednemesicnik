@@ -1,0 +1,10 @@
+.list {
+  @layer component {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    list-style: none;
+  }
+}

@@ -23,7 +23,9 @@ import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminDetailSectionTitle } from '~/components/admin/admin-detail-section-title'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -31,19 +33,28 @@ import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentChangedDialogActions } from '~/components/content-changed-dialog-actions'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
 import { FailedFile } from '~/components/failed-file'
+import { FailedFileName } from '~/components/failed-file-name'
 import { FileDropField } from '~/components/file-drop-field'
+import { FileDropFieldHint } from '~/components/file-drop-field-hint'
+import { FileDropFieldLabel } from '~/components/file-drop-field-label'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { SelectControl } from '~/components/select-control'
+import { SelectLabel } from '~/components/select-label'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldHint } from '~/components/text-field-hint'
+import { TextFieldLabel } from '~/components/text-field-label'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -53,7 +64,6 @@ import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
-import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import { getFirstFileControl } from '~/utils/get-first-file-control'
 import {
@@ -971,7 +981,8 @@ export default function RouteComponent({
     }
     const { failure } = fileUpload
     return (
-      <FailedFile fileName={failedFileName}>
+      <FailedFile>
+        <FailedFileName>{failedFileName}</FailedFileName>
         <ErrorMessage>{failure.sentence}</ErrorMessage>
         {failure.replaces && (
           <p className={styles.uploaded}>{ORIGINAL_STAYED_SENTENCE[kind]}</p>
@@ -1055,17 +1066,19 @@ export default function RouteComponent({
 
       {deletion?.isDialogOpen && (
         <ContentDeletedDialog
-          description={
-            'Číslo už nelze upravovat. Údaje zůstanou vidět jen do obnovení stránky, odchodu nebo zavření editoru. Soubory PDF a obálky byly smazány.'
-          }
           onOpenList={() => navigate(listHref)}
           onStay={() =>
             setDeletion((current) =>
               current === null ? null : { ...current, isDialogOpen: false },
             )
           }
-          title={'Číslo bylo smazáno'}
         >
+          <AdminModalTitle>Číslo bylo smazáno</AdminModalTitle>
+          <AdminModalDescription>
+            Číslo už nelze upravovat. Údaje zůstanou vidět jen do obnovení
+            stránky, odchodu nebo zavření editoru. Soubory PDF a obálky byly
+            smazány.
+          </AdminModalDescription>
           {deletion.unsentLabels.length > 0 && (
             <AdminModalDescription>
               {`Některé změny údajů se nestihly uložit. ${formatUnsavedIssueFields(deletion.unsentLabels)}`}
@@ -1079,11 +1092,11 @@ export default function RouteComponent({
 
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
-          description={holdTakenLead}
           holderName={holdLoss.holderName}
           onOpenDetail={() => navigate(closeHref)}
           onStay={closeHoldLossDialog}
         >
+          <AdminModalDescription>{holdTakenLead}</AdminModalDescription>
           {holdTakenRest.map((paragraph) => (
             <AdminModalDescription key={paragraph}>
               {paragraph}
@@ -1100,16 +1113,18 @@ export default function RouteComponent({
         editHold.state.status === 'changed' && (
           <ContentChangedDialog
             canReload={canReloadChanged}
-            description={formatIssueChangedDescription({
-              awayMilliseconds: editHold.state.awayMilliseconds,
-              now: new Date(),
-              savedAt: hasSaved ? savedAt : null,
-            })}
             onClose={closeHoldLossDialog}
             onOpenDetail={() => navigate(closeHref)}
             onReload={reload}
-            title={'Číslo se mezitím změnilo'}
           >
+            <AdminModalTitle>Číslo se mezitím změnilo</AdminModalTitle>
+            <AdminModalDescription>
+              {formatIssueChangedDescription({
+                awayMilliseconds: editHold.state.awayMilliseconds,
+                now: new Date(),
+                savedAt: hasSaved ? savedAt : null,
+              })}
+            </AdminModalDescription>
             <AdminModalDescription>
               {formatUnsavedIssueFields(holdLoss.unsentLabels)}
             </AdminModalDescription>
@@ -1118,6 +1133,7 @@ export default function RouteComponent({
                 ? 'Před načtením aktuální verze si poznamenejte neuložené údaje.'
                 : 'Před otevřením detailu si poznamenejte neuložené údaje.'}
             </AdminModalDescription>
+            <ContentChangedDialogActions />
           </ContentChangedDialog>
         )}
 
@@ -1125,11 +1141,7 @@ export default function RouteComponent({
       {editHold.state.status === 'held-by-other' && isApprover && (
         <EditHoldDialog
           content={'issue'}
-          description={formatTakeOverDescription(
-            editHold.state.holder,
-            new Date(),
-            'issue',
-          )}
+          holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
           onCancel={() => navigate(closeHref)}
@@ -1168,7 +1180,8 @@ export default function RouteComponent({
           {/* The files left, the details right, as on the detail (26b, 26c). */}
           <AdminDetailLayout>
             <AdminDetailMain>
-              <AdminDetailSection title={'Soubory'}>
+              <AdminDetailSection>
+                <AdminDetailSectionTitle>Soubory</AdminDetailSectionTitle>
                 <div className={styles.files}>
                   {/* *Nahradit* and *Vybrat jiný soubor* open these. */}
                   <input
@@ -1219,12 +1232,15 @@ export default function RouteComponent({
                               ? undefined
                               : rejectionIds.cover
                           }
-                          hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
                           isDisabled={isLocked || coverUpload.isCancelling}
-                          label={'Vybrat obálku'}
                           onPick={coverUpload.pick}
                           shape={'page'}
-                        />
+                        >
+                          <FileDropFieldLabel>Vybrat obálku</FileDropFieldLabel>
+                          <FileDropFieldHint>
+                            nebo ji sem přetáhněte · obrázek do 5 MB
+                          </FileDropFieldHint>
+                        </FileDropField>
                         {renderFileProblem('cover', '')}
                       </>
                     ) : (
@@ -1302,11 +1318,14 @@ export default function RouteComponent({
                               ? undefined
                               : rejectionIds.pdf
                           }
-                          hint={'nebo ho sem přetáhněte · nejvýš 10 MB'}
                           isDisabled={isLocked || pdfUpload.isCancelling}
-                          label={'Vybrat PDF'}
                           onPick={pdfUpload.pick}
-                        />
+                        >
+                          <FileDropFieldLabel>Vybrat PDF</FileDropFieldLabel>
+                          <FileDropFieldHint>
+                            nebo ho sem přetáhněte · nejvýš 10 MB
+                          </FileDropFieldHint>
+                        </FileDropField>
                         {renderFileProblem('pdf', '')}
                       </>
                     ) : (
@@ -1350,57 +1369,84 @@ export default function RouteComponent({
             </AdminDetailMain>
 
             <AdminDetailAside>
-              <AdminDetailSection title={'Údaje'}>
+              <AdminDetailSection>
+                <AdminDetailSectionTitle>Údaje</AdminDetailSectionTitle>
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <div className={styles.numberGroup}>
                     <div className={styles.number}>
                       <TextField
-                        {...getInputProps(fields.year, { type: 'text' })}
                         errors={withUnsavedChange('year')}
-                        inputMode={'numeric'}
-                        label={'Rok'}
-                        onInput={handleYearInput}
-                      />
+                        id={fields.year.id}
+                        required={fields.year.required}
+                      >
+                        <TextFieldLabel>Rok</TextFieldLabel>
+                        <TextFieldControl
+                          {...getInputProps(fields.year, { type: 'text' })}
+                          inputMode={'numeric'}
+                          onInput={handleYearInput}
+                        />
+                      </TextField>
                       <TextField
-                        {...getInputProps(fields.order, { type: 'text' })}
                         errors={withUnsavedChange('order')}
-                        inputMode={'numeric'}
-                        label={'Pořadí v roce'}
-                        onInput={handleOrderInput}
-                      />
+                        id={fields.order.id}
+                        required={fields.order.required}
+                      >
+                        <TextFieldLabel>Pořadí v roce</TextFieldLabel>
+                        <TextFieldControl
+                          {...getInputProps(fields.order, { type: 'text' })}
+                          inputMode={'numeric'}
+                          onInput={handleOrderInput}
+                        />
+                      </TextField>
                     </div>
                     <div className={styles.numberOffer}>
                       {renderNumberOffer()}
                     </div>
                   </div>
                   <TextField
-                    {...getInputProps(fields.name, { type: 'text' })}
                     errors={fields.name.errors}
-                    hint={'Bez roku. Rok se k názvu přidá automaticky.'}
-                    label={'Název'}
-                  />
+                    id={fields.name.id}
+                    required={fields.name.required}
+                  >
+                    <TextFieldLabel>Název</TextFieldLabel>
+                    <TextFieldControl
+                      {...getInputProps(fields.name, { type: 'text' })}
+                    />
+                    <TextFieldHint>
+                      Bez roku. Rok se k názvu přidá automaticky.
+                    </TextFieldHint>
+                  </TextField>
                   <TextField
-                    {...getInputProps(fields.supplement, { type: 'text' })}
                     errors={withUnsavedChange('supplement')}
-                    hint={
-                      'Název samostatně vytištěné části, která se do čísla nevešla. Zadejte rok a pořadí čísla, ke kterému patří.'
-                    }
-                    label={'Doplněk'}
-                    onInput={handleSupplementInput}
-                    placeholder={'Nepovinné'}
-                  />
+                    id={fields.supplement.id}
+                    required={fields.supplement.required}
+                  >
+                    <TextFieldLabel>Doplněk</TextFieldLabel>
+                    <TextFieldControl
+                      {...getInputProps(fields.supplement, { type: 'text' })}
+                      onInput={handleSupplementInput}
+                      placeholder={'Nepovinné'}
+                    />
+                    <TextFieldHint>
+                      Název samostatně vytištěné části, která se do čísla
+                      nevešla. Zadejte rok a pořadí čísla, ke kterému patří.
+                    </TextFieldHint>
+                  </TextField>
                   {/* Only the Coordinator chooses the author (26c, as 25c). */}
                   {authors !== null && (
                     <Select
-                      {...getSelectProps(fields.authorId)}
                       errors={fields.authorId.errors}
-                      label={'Autor'}
+                      id={fields.authorId.id}
+                      required={fields.authorId.required}
                     >
-                      {authors.map((author) => (
-                        <option key={author.id} value={author.id}>
-                          {author.name}
-                        </option>
-                      ))}
+                      <SelectLabel>Autor</SelectLabel>
+                      <SelectControl {...getSelectProps(fields.authorId)}>
+                        {authors.map((author) => (
+                          <option key={author.id} value={author.id}>
+                            {author.name}
+                          </option>
+                        ))}
+                      </SelectControl>
                     </Select>
                   )}
                 </fieldset>

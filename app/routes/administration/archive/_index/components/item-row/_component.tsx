@@ -1,4 +1,5 @@
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -18,6 +19,7 @@ import { Button } from '~/components/button'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import { StatusTagDetail } from '~/components/status-tag-detail'
 import type { LiveChange } from '~/hooks/use-live-changes'
 import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
 import { getRowTint } from '~/utils/live-change/get-row-tint'
@@ -66,11 +68,15 @@ export const ItemRow = ({
   const { detailHref, editHref, isSubmitting, runAction } = actions
 
   const rowAction = issue.row
-  const toMenuItem = (menuAction: IssueAction) => ({
-    danger: menuAction === 'delete',
-    label: ISSUE_ACTION_LABELS[menuAction],
-    onSelect: () => runAction(menuAction),
-  })
+  const renderMenuItem = (menuAction: IssueAction) => (
+    <ActionMenuItem
+      danger={menuAction === 'delete'}
+      key={menuAction}
+      onSelect={() => runAction(menuAction)}
+    >
+      {ISSUE_ACTION_LABELS[menuAction]}
+    </ActionMenuItem>
+  )
   // On a phone „⋯“ stands alone, the row action first in it (32b).
   const phoneMenu = rowAction === null ? issue.menu : [rowAction, ...issue.menu]
   // The file's name is an address, which a phone leaves out; a missing file
@@ -79,6 +85,13 @@ export const ItemRow = ({
     issue.orderLabel,
     issue.pdfFileName === null ? 'PDF zatím chybí' : null,
   ].filter((part) => part !== null)
+  // Who edits it comes first: it changes what the row allows (26i).
+  const stateDetail = getLiveStateDetail({
+    factLine: issue.factLine,
+    holdLine: issue.holdLine,
+    liveChange,
+    now: new Date(),
+  })
 
   return (
     <TableRow muted={issue.state === 'archived'} tint={getRowTint(liveChange)}>
@@ -121,16 +134,11 @@ export const ItemRow = ({
         </span>
       </TableCell>
       <TableStateCell>
-        <StatusTag
-          // Who edits it comes first: it changes what the row allows (26i).
-          detail={getLiveStateDetail({
-            factLine: issue.factLine,
-            holdLine: issue.holdLine,
-            liveChange,
-            now: new Date(),
-          })}
-          state={issue.submission ?? issue.state}
-        />
+        <StatusTag state={issue.submission ?? issue.state}>
+          {stateDetail !== undefined && (
+            <StatusTagDetail>{stateDetail}</StatusTagDetail>
+          )}
+        </StatusTag>
       </TableStateCell>
       {phoneDetails.length > 0 && (
         <TableDetailsCell>
@@ -141,10 +149,11 @@ export const ItemRow = ({
         {phoneMenu.length > 0 && (
           <TableRowMenu phoneOnly={true}>
             <ActionMenu
-              items={phoneMenu.map(toMenuItem)}
               label={`Další akce s číslem ${issue.title}`}
               size={'sm'}
-            />
+            >
+              {phoneMenu.map(renderMenuItem)}
+            </ActionMenu>
           </TableRowMenu>
         )}
         <TableRowActions>
@@ -171,10 +180,11 @@ export const ItemRow = ({
           )}
           {issue.menu.length > 0 && (
             <ActionMenu
-              items={issue.menu.map(toMenuItem)}
               label={`Další akce s číslem ${issue.title}`}
               size={'sm'}
-            />
+            >
+              {issue.menu.map(renderMenuItem)}
+            </ActionMenu>
           )}
         </TableRowActions>
 

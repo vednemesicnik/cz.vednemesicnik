@@ -1,0 +1,6 @@
+.message {
+  @layer component {
+    font-size: var(--font-size-sm);
+    color: var(--link-strong);
+  }
+}

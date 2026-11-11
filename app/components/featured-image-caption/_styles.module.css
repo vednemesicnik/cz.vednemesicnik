@@ -1,0 +1,12 @@
+/* Restyles the paragraphs of the ContentRenderer it holds. */
+.caption {
+  @layer variant {
+    & p {
+      color: var(--text-tertiary);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-regular);
+      line-height: var(--line-height-xs);
+      text-align: end;
+    }
+  }
+}

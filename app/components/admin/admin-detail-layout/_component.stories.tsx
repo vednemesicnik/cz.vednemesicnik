@@ -4,9 +4,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { AdminDetailAside } from '../admin-detail-aside'
 import { AdminDetailItem } from '../admin-detail-item'
+import { AdminDetailItemLabel } from '../admin-detail-item-label'
+import { AdminDetailItemValue } from '../admin-detail-item-value'
 import { AdminDetailList } from '../admin-detail-list'
 import { AdminDetailMain } from '../admin-detail-main'
 import { AdminDetailSection } from '../admin-detail-section'
+import { AdminDetailSectionTitle } from '../admin-detail-section-title'
 import { AdminDetailLayout } from './_component'
 
 const meta: Meta<typeof AdminDetailLayout> = {
@@ -26,15 +29,26 @@ type Story = StoryObj<typeof meta>
 
 const main = (
   <AdminDetailMain>
-    <AdminDetailSection title="Základní informace">
+    <AdminDetailSection>
+      <AdminDetailSectionTitle>Základní informace</AdminDetailSectionTitle>
       <AdminDetailList>
-        <AdminDetailItem label="Název">Jarní číslo</AdminDetailItem>
-        <AdminDetailItem label="Stav">publikováno</AdminDetailItem>
+        <AdminDetailItem>
+          <AdminDetailItemLabel>Název</AdminDetailItemLabel>
+          <AdminDetailItemValue>Jarní číslo</AdminDetailItemValue>
+        </AdminDetailItem>
+        <AdminDetailItem>
+          <AdminDetailItemLabel>Stav</AdminDetailItemLabel>
+          <AdminDetailItemValue>publikováno</AdminDetailItemValue>
+        </AdminDetailItem>
       </AdminDetailList>
     </AdminDetailSection>
-    <AdminDetailSection title="Soubory">
+    <AdminDetailSection>
+      <AdminDetailSectionTitle>Soubory</AdminDetailSectionTitle>
       <AdminDetailList>
-        <AdminDetailItem label="PDF">jarni-cislo.pdf</AdminDetailItem>
+        <AdminDetailItem>
+          <AdminDetailItemLabel>PDF</AdminDetailItemLabel>
+          <AdminDetailItemValue>jarni-cislo.pdf</AdminDetailItemValue>
+        </AdminDetailItem>
       </AdminDetailList>
     </AdminDetailSection>
   </AdminDetailMain>
@@ -42,10 +56,17 @@ const main = (
 
 const aside = (
   <AdminDetailAside>
-    <AdminDetailSection title="Metadata">
+    <AdminDetailSection>
+      <AdminDetailSectionTitle>Metadata</AdminDetailSectionTitle>
       <AdminDetailList>
-        <AdminDetailItem label="Vytvořeno">1. 4. 2026</AdminDetailItem>
-        <AdminDetailItem label="Upraveno">3. 4. 2026</AdminDetailItem>
+        <AdminDetailItem>
+          <AdminDetailItemLabel>Vytvořeno</AdminDetailItemLabel>
+          <AdminDetailItemValue>1. 4. 2026</AdminDetailItemValue>
+        </AdminDetailItem>
+        <AdminDetailItem>
+          <AdminDetailItemLabel>Upraveno</AdminDetailItemLabel>
+          <AdminDetailItemValue>3. 4. 2026</AdminDetailItemValue>
+        </AdminDetailItem>
       </AdminDetailList>
     </AdminDetailSection>
   </AdminDetailAside>

@@ -1,1 +1,1 @@
-export { EditorDetail } from './_component'
+export { EditorDetail, useEditorDetail } from './_component'

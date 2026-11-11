@@ -1,0 +1,7 @@
+.detail {
+  @layer component {
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+}
