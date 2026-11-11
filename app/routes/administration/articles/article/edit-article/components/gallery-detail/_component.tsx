@@ -1,31 +1,32 @@
 import { clsx } from 'clsx'
-import { type ReactNode, useEffect, useId, useRef } from 'react'
-
-import { Button } from '~/components/button'
-import { EditorDetailRow } from '~/components/editor-detail-row'
-import { EditorDetailRowName } from '~/components/editor-detail-row-name'
-import { EditorDetailRowThumbnail } from '~/components/editor-detail-row-thumbnail'
-import { EditorDetailRowThumbnails } from '~/components/editor-detail-row-thumbnails'
-import { EditorDetailRowValue } from '~/components/editor-detail-row-value'
+import {
+  createContext,
+  type ReactNode,
+  type RefObject,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+} from 'react'
 
 import styles from './_styles.module.css'
 
+type GalleryDetailContextValue = {
+  headingId: string
+  headingRef: RefObject<HTMLHeadingElement | null>
+  panelRef: RefObject<HTMLDialogElement | null>
+  onOpen: () => void
+}
+
+const Context = createContext<GalleryDetailContextValue | undefined>(undefined)
+
 type Props = {
-  /** The row's value on a phone (24f): „4 · nahrává se: 1“. */
-  summary: string
-  /** The row's thumbnails before the count: the first three stored images in
-   *  gallery order, the main one first (u94oosdp). */
-  thumbnails: string[]
   isOpen: boolean
   /** Another detail is open over it: out of reach (24f). */
   isInert: boolean
   onOpen: () => void
   onClose: () => void
-  /** The editor's save line, under the panel's name (24b, 940ikr3o). */
-  saveLine: ReactNode
-  /** The column's compact tiles and *Přidat obrázky* (24a). */
-  preview: ReactNode
-  /** The gallery: the full tiles, in the panel only. */
+  className?: string
   children: ReactNode
 }
 
@@ -37,16 +38,16 @@ type Props = {
  * whole screen (24f). The panel stays in the form while closed, so its fields
  * save with it. Focus goes to its name; Esc and *Hotovo* close it and give the
  * focus back to what opened it.
+ *
+ * @param props.children - `GalleryDetailSummary`, `GalleryDetailColumn`, then
+ *   `GalleryDetailPanel`.
  */
 export const GalleryDetail = ({
-  summary,
-  thumbnails,
   isOpen,
   isInert,
   onOpen,
   onClose,
-  saveLine,
-  preview,
+  className,
   children,
 }: Props) => {
   const headingId = useId()
@@ -89,78 +90,26 @@ export const GalleryDetail = ({
   }, [])
 
   return (
-    <section className={styles.galleryDetail} inert={isInert}>
-      <EditorDetailRow
-        aria-haspopup={'dialog'}
-        className={styles.row}
-        onClick={onOpen}
-      >
-        <EditorDetailRowName>Obrázky</EditorDetailRowName>
-        <EditorDetailRowValue>
-          {thumbnails.length > 0 && (
-            <EditorDetailRowThumbnails>
-              {thumbnails.map((source, index) => (
-                <EditorDetailRowThumbnail key={index} source={source} />
-              ))}
-            </EditorDetailRowThumbnails>
-          )}
-          {summary}
-        </EditorDetailRowValue>
-      </EditorDetailRow>
-
-      <div className={styles.column}>
-        <div className={styles.columnHeading}>
-          <h2 className={styles.name}>Obrázky</h2>
-          <Button
-            aria-haspopup={'dialog'}
-            aria-label={'Upravit obrázky'}
-            onClick={onOpen}
-            size={'sm'}
-            type={'button'}
-            variant={'ghost'}
-          >
-            Upravit
-          </Button>
-        </div>
-        {preview}
-      </div>
-
-      {/* A file dropped beside *Přidat obrázky* is ignored rather than
-          opened by the browser in place of the editor. */}
-      <dialog
-        aria-labelledby={headingId}
-        className={styles.panel}
-        onDragOver={(event) => {
-          if (event.dataTransfer.types.includes('Files')) event.preventDefault()
-        }}
-        onDrop={(event) => {
-          if (event.dataTransfer.types.includes('Files')) event.preventDefault()
-        }}
-        ref={panelRef}
-      >
-        <div className={styles.bar}>
-          <div className={styles.barTitle}>
-            <h2
-              className={clsx(styles.name, styles.panelName)}
-              id={headingId}
-              ref={headingRef}
-              tabIndex={-1}
-            >
-              Obrázky
-            </h2>
-            <div className={styles.saveLine}>{saveLine}</div>
-          </div>
-          <Button
-            onClick={() => panelRef.current?.close()}
-            size={'sm'}
-            type={'button'}
-            variant={'outline'}
-          >
-            Hotovo
-          </Button>
-        </div>
-        <div className={styles.body}>{children}</div>
-      </dialog>
+    <section className={clsx(styles.galleryDetail, className)} inert={isInert}>
+      <Context.Provider value={{ headingId, headingRef, onOpen, panelRef }}>
+        {children}
+      </Context.Provider>
     </section>
   )
+}
+
+/**
+ * What a `GalleryDetail` shares with its parts: opening it, the panel and its
+ * heading.
+ *
+ * @returns The gallery detail's context
+ */
+export const useGalleryDetail = () => {
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error('useGalleryDetail must be used within a GalleryDetail')
+  }
+
+  return context
 }

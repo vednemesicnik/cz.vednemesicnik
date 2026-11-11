@@ -53,6 +53,8 @@ import { ContentChangedDialog } from '~/components/content-changed-dialog'
 import { ContentChangedDialogActions } from '~/components/content-changed-dialog-actions'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
+import { EditorDetailRowThumbnail } from '~/components/editor-detail-row-thumbnail'
+import { EditorDetailRowThumbnails } from '~/components/editor-detail-row-thumbnails'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { ImageTile } from '~/components/image-tile'
@@ -97,7 +99,15 @@ import { AuthorListItem } from './components/author-list-item'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditorDetail } from './components/editor-detail'
+import { EditorDetailBar } from './components/editor-detail-bar'
+import { EditorDetailPanel } from './components/editor-detail-panel'
+import { EditorDetailSummary } from './components/editor-detail-summary'
 import { GalleryDetail } from './components/gallery-detail'
+import { GalleryDetailBar } from './components/gallery-detail-bar'
+import { GalleryDetailBody } from './components/gallery-detail-body'
+import { GalleryDetailColumn } from './components/gallery-detail-column'
+import { GalleryDetailPanel } from './components/gallery-detail-panel'
+import { GalleryDetailSummary } from './components/gallery-detail-summary'
 import { GalleryGrid } from './components/gallery-grid'
 import { RemoveImageDialog } from './components/remove-image-dialog'
 import { createEditorSchema } from './utils/create-editor-schema'
@@ -1439,685 +1449,716 @@ export default function RouteComponent({
             </AdminDetailMain>
 
             <AdminDetailAside>
-              <EditorDetail
-                {...detailProps('address')}
-                isNameHidden
-                name={'Adresa'}
-                saveLine={renderSaveLine()}
-                summary={slugValue === '' ? '—' : slugValue}
-              >
-                <fieldset className={styles.lock} disabled={isLocked}>
-                  <TextField
-                    {...getInputProps(fields.slug, { type: 'text' })}
-                    errors={fields.slug.errors}
-                    hint={
-                      isSlugFollowing ? (
-                        'Podle názvu, dokud ji nezměníte.'
-                      ) : (
-                        <>
-                          Změněno ručně.{' '}
-                          {!isReadOnly && (
-                            <ButtonLink onClick={resumeSlug} type={'button'}>
-                              Obnovit podle názvu
-                            </ButtonLink>
-                          )}
-                        </>
-                      )
-                    }
-                    label={'Adresa'}
-                    onBlur={handleBlur}
-                    onFocus={handleFocus}
-                    onInput={handleInput}
-                  />
-                  {/* A taken address: a free one, filled in and saved (24d). */}
-                  {fields.slug.errors !== undefined &&
-                    slugSuggestion !== null &&
-                    !isReadOnly && (
-                      <ButtonLink
-                        onClick={() => {
-                          // A chosen address no longer follows the title.
-                          handleInput()
-                          form.update({
-                            name: fields.slug.name,
-                            value: slugSuggestion,
-                          })
-                          // Saved at once (24d), once the field holds it.
-                          isFlushOnChangeRef.current = true
-                        }}
-                        type={'button'}
-                      >
-                        Použít {slugSuggestion}
-                      </ButtonLink>
+              <EditorDetail {...detailProps('address')} name={'Adresa'}>
+                <EditorDetailSummary>
+                  {slugValue === '' ? '—' : slugValue}
+                </EditorDetailSummary>
+                <EditorDetailPanel>
+                  <EditorDetailBar isNameHidden>
+                    {renderSaveLine()}
+                  </EditorDetailBar>
+                  <fieldset className={styles.lock} disabled={isLocked}>
+                    <TextField
+                      {...getInputProps(fields.slug, { type: 'text' })}
+                      errors={fields.slug.errors}
+                      hint={
+                        isSlugFollowing ? (
+                          'Podle názvu, dokud ji nezměníte.'
+                        ) : (
+                          <>
+                            Změněno ručně.{' '}
+                            {!isReadOnly && (
+                              <ButtonLink onClick={resumeSlug} type={'button'}>
+                                Obnovit podle názvu
+                              </ButtonLink>
+                            )}
+                          </>
+                        )
+                      }
+                      label={'Adresa'}
+                      onBlur={handleBlur}
+                      onFocus={handleFocus}
+                      onInput={handleInput}
+                    />
+                    {/* A taken address: a free one, filled in and saved (24d). */}
+                    {fields.slug.errors !== undefined &&
+                      slugSuggestion !== null &&
+                      !isReadOnly && (
+                        <ButtonLink
+                          onClick={() => {
+                            // A chosen address no longer follows the title.
+                            handleInput()
+                            form.update({
+                              name: fields.slug.name,
+                              value: slugSuggestion,
+                            })
+                            // Saved at once (24d), once the field holds it.
+                            isFlushOnChangeRef.current = true
+                          }}
+                          type={'button'}
+                        >
+                          Použít {slugSuggestion}
+                        </ButtonLink>
+                      )}
+                    {/* The whole address, as the reader will see it (24a). */}
+                    {slugValue !== '' && (
+                      <span className={styles.path}>/articles/{slugValue}</span>
                     )}
-                  {/* The whole address, as the reader will see it (24a). */}
-                  {slugValue !== '' && (
-                    <span className={styles.path}>/articles/{slugValue}</span>
-                  )}
-                </fieldset>
+                  </fieldset>
+                </EditorDetailPanel>
               </EditorDetail>
 
-              <EditorDetail
-                {...detailProps('authors')}
-                name={'Autoři'}
-                saveLine={renderSaveLine()}
-                summary={
-                  selectedAuthorNames.length === 0
+              <EditorDetail {...detailProps('authors')} name={'Autoři'}>
+                <EditorDetailSummary>
+                  {selectedAuthorNames.length === 0
                     ? '—'
-                    : selectedAuthorNames.join(', ')
-                }
-              >
-                <fieldset className={styles.lock} disabled={isLocked}>
-                  <legend className={'screen-reader-only'}>Autoři</legend>
-                  <AuthorList ref={authorListRef}>
-                    {selectedAuthorIds.map((authorId, index) => {
-                      const author = authorById.get(authorId)
-                      const name = author?.name ?? authorId
-                      // Without the hold nothing is replaced (07g).
-                      const isReplacing =
-                        authorReplaceFrame.replacingKey === authorId &&
-                        !isReadOnly
+                    : selectedAuthorNames.join(', ')}
+                </EditorDetailSummary>
+                <EditorDetailPanel>
+                  <EditorDetailBar>{renderSaveLine()}</EditorDetailBar>
+                  <fieldset className={styles.lock} disabled={isLocked}>
+                    <legend className={'screen-reader-only'}>Autoři</legend>
+                    <AuthorList ref={authorListRef}>
+                      {selectedAuthorIds.map((authorId, index) => {
+                        const author = authorById.get(authorId)
+                        const name = author?.name ?? authorId
+                        // Without the hold nothing is replaced (07g).
+                        const isReplacing =
+                          authorReplaceFrame.replacingKey === authorId &&
+                          !isReadOnly
 
-                      return (
-                        <AuthorListItem
-                          isReplacing={isReplacing}
-                          key={authorId}
-                          {...(isReplacing
-                            ? authorReplaceFrame.frameProps
-                            : {})}
-                        >
-                          <AuthorRow>
-                            <AuthorRowAvatar
-                              image={author?.image ?? NO_IMAGE}
-                              name={name}
-                            />
-                            <AuthorRowText>
-                              <AuthorRowName>{name}</AuthorRowName>
-                              {authorId === ownAuthorId && (
-                                <AuthorRowNote>vy</AuthorRowNote>
-                              )}
-                            </AuthorRowText>
-                            {/* At most one action, each its own node, so a
-                                click meant for one never lands on another. */}
-                            {isReplacing ? (
-                              <AuthorRowButton
-                                aria-label={'Zrušit výměnu autora'}
-                                key={'cancel'}
-                                onClick={() =>
-                                  authorReplaceFrame.stop({ refocus: true })
-                                }
-                              >
-                                Zrušit
-                              </AuthorRowButton>
-                            ) : isReadOnly ? null : canRemoveAuthor(
-                                authorId,
-                              ) ? (
-                              <AuthorRemoveButton
-                                key={'remove'}
+                        return (
+                          <AuthorListItem
+                            isReplacing={isReplacing}
+                            key={authorId}
+                            {...(isReplacing
+                              ? authorReplaceFrame.frameProps
+                              : {})}
+                          >
+                            <AuthorRow>
+                              <AuthorRowAvatar
+                                image={author?.image ?? NO_IMAGE}
                                 name={name}
-                                onClick={() => removeAuthor(index)}
                               />
-                            ) : canReplaceAuthor ? (
-                              <AuthorRowButton
-                                aria-label={`Vyměnit autora: ${name}`}
-                                key={'replace'}
-                                onClick={() =>
-                                  authorReplaceFrame.start(authorId)
+                              <AuthorRowText>
+                                <AuthorRowName>{name}</AuthorRowName>
+                                {authorId === ownAuthorId && (
+                                  <AuthorRowNote>vy</AuthorRowNote>
+                                )}
+                              </AuthorRowText>
+                              {/* At most one action, each its own node, so a
+                                click meant for one never lands on another. */}
+                              {isReplacing ? (
+                                <AuthorRowButton
+                                  aria-label={'Zrušit výměnu autora'}
+                                  key={'cancel'}
+                                  onClick={() =>
+                                    authorReplaceFrame.stop({ refocus: true })
+                                  }
+                                >
+                                  Zrušit
+                                </AuthorRowButton>
+                              ) : isReadOnly ? null : canRemoveAuthor(
+                                  authorId,
+                                ) ? (
+                                <AuthorRemoveButton
+                                  key={'remove'}
+                                  name={name}
+                                  onClick={() => removeAuthor(index)}
+                                />
+                              ) : canReplaceAuthor ? (
+                                <AuthorRowButton
+                                  aria-label={`Vyměnit autora: ${name}`}
+                                  key={'replace'}
+                                  onClick={() =>
+                                    authorReplaceFrame.start(authorId)
+                                  }
+                                >
+                                  Vyměnit
+                                </AuthorRowButton>
+                              ) : null}
+                            </AuthorRow>
+                            {isReplacing && (
+                              <ChipInput
+                                createLabel={getCreateAuthorLabel(
+                                  authorReplaceFrame.query,
+                                )}
+                                createNote={
+                                  'Po uložení nahradí současného autora.'
                                 }
-                              >
-                                Vyměnit
-                              </AuthorRowButton>
-                            ) : null}
-                          </AuthorRow>
-                          {isReplacing && (
-                            <ChipInput
-                              createLabel={getCreateAuthorLabel(
-                                authorReplaceFrame.query,
-                              )}
-                              createNote={
-                                'Po uložení nahradí současného autora.'
-                              }
-                              disabled={isLocked}
-                              emptyLabel={noAuthorFound}
-                              id={`${fields.authorIds.id}-replace`}
-                              isLabelHidden
-                              label={`Vybrat jiného autora. Nyní: ${name}`}
-                              onCreate={
-                                createAuthor === undefined
-                                  ? undefined
-                                  : () =>
-                                      createAuthor(
-                                        authorReplaceFrame.query,
-                                        authorId,
-                                      )
-                              }
-                              onQueryChange={authorReplaceFrame.setQuery}
-                              onSelect={(newAuthorId) =>
-                                replaceAuthor(authorId, newAuthorId)
-                              }
-                              options={getAuthorSuggestions(
-                                authorReplaceFrame.query,
-                              )}
-                              placeholder={'Vybrat jiného autora'}
-                              query={authorReplaceFrame.query}
-                              ref={authorReplaceFrame.searchRef}
-                            />
-                          )}
-                        </AuthorListItem>
-                      )
-                    })}
-                  </AuthorList>
-                  {selectedAuthorIds.map((authorId, index) => (
-                    <input
-                      key={authorId}
-                      name={`${fields.authorIds.name}[${index}]`}
-                      type={'hidden'}
-                      value={authorId}
-                    />
-                  ))}
-                  {/* ChipInput without chips: the authors are the rows
+                                disabled={isLocked}
+                                emptyLabel={noAuthorFound}
+                                id={`${fields.authorIds.id}-replace`}
+                                isLabelHidden
+                                label={`Vybrat jiného autora. Nyní: ${name}`}
+                                onCreate={
+                                  createAuthor === undefined
+                                    ? undefined
+                                    : () =>
+                                        createAuthor(
+                                          authorReplaceFrame.query,
+                                          authorId,
+                                        )
+                                }
+                                onQueryChange={authorReplaceFrame.setQuery}
+                                onSelect={(newAuthorId) =>
+                                  replaceAuthor(authorId, newAuthorId)
+                                }
+                                options={getAuthorSuggestions(
+                                  authorReplaceFrame.query,
+                                )}
+                                placeholder={'Vybrat jiného autora'}
+                                query={authorReplaceFrame.query}
+                                ref={authorReplaceFrame.searchRef}
+                              />
+                            )}
+                          </AuthorListItem>
+                        )
+                      })}
+                    </AuthorList>
+                    {selectedAuthorIds.map((authorId, index) => (
+                      <input
+                        key={authorId}
+                        name={`${fields.authorIds.name}[${index}]`}
+                        type={'hidden'}
+                        value={authorId}
+                      />
+                    ))}
+                    {/* ChipInput without chips: the authors are the rows
                       above. One label for every role, as it only adds; it
                       steps aside while a row is replaced (ivyin4kr). */}
-                  {!isReadOnly && authorReplaceFrame.replacingKey === null && (
-                    <ChipInput
-                      createLabel={getCreateAuthorLabel(authorQuery)}
-                      disabled={isLocked}
-                      emptyLabel={noAuthorFound}
-                      id={`${fields.authorIds.id}-search`}
-                      isLabelHidden
-                      label={'Přidat autora'}
-                      onCreate={
-                        createAuthor === undefined
-                          ? undefined
-                          : () => createAuthor(authorQuery)
-                      }
-                      onQueryChange={setAuthorQuery}
-                      onSelect={(authorId) =>
-                        setSelectedAuthorIds([...selectedAuthorIds, authorId])
-                      }
-                      options={getAuthorSuggestions(authorQuery)}
-                      placeholder={'Přidat autora'}
-                      query={authorQuery}
-                      ref={authorSearchRef}
-                    />
-                  )}
-                </fieldset>
+                    {!isReadOnly &&
+                      authorReplaceFrame.replacingKey === null && (
+                        <ChipInput
+                          createLabel={getCreateAuthorLabel(authorQuery)}
+                          disabled={isLocked}
+                          emptyLabel={noAuthorFound}
+                          id={`${fields.authorIds.id}-search`}
+                          isLabelHidden
+                          label={'Přidat autora'}
+                          onCreate={
+                            createAuthor === undefined
+                              ? undefined
+                              : () => createAuthor(authorQuery)
+                          }
+                          onQueryChange={setAuthorQuery}
+                          onSelect={(authorId) =>
+                            setSelectedAuthorIds([
+                              ...selectedAuthorIds,
+                              authorId,
+                            ])
+                          }
+                          options={getAuthorSuggestions(authorQuery)}
+                          placeholder={'Přidat autora'}
+                          query={authorQuery}
+                          ref={authorSearchRef}
+                        />
+                      )}
+                  </fieldset>
+                </EditorDetailPanel>
               </EditorDetail>
 
-              <EditorDetail
-                {...detailProps('categories')}
-                name={'Rubriky'}
-                saveLine={renderSaveLine()}
-                summary={formatFirstNameAndCount(
-                  categoryOptions
-                    .filter((category) =>
-                      selectedCategoryIds.includes(category.id),
-                    )
-                    .map((category) => category.name),
-                )}
-              >
-                {/* Ticked, all at once: there are few (24a). One the article
+              <EditorDetail {...detailProps('categories')} name={'Rubriky'}>
+                <EditorDetailSummary>
+                  {formatFirstNameAndCount(
+                    categoryOptions
+                      .filter((category) =>
+                        selectedCategoryIds.includes(category.id),
+                      )
+                      .map((category) => category.name),
+                  )}
+                </EditorDetailSummary>
+                <EditorDetailPanel>
+                  <EditorDetailBar>{renderSaveLine()}</EditorDetailBar>
+                  {/* Ticked, all at once: there are few (24a). One the article
                     has in another state stays under them, greyed, until the
                     editor closes, so unticking it can be undone (iq3nur0e). */}
-                <fieldset
-                  className={clsx(styles.lock, styles.categories)}
-                  disabled={isLocked}
-                >
-                  <legend className={'screen-reader-only'}>Rubriky</legend>
-                  {getCollectionProps(fields.categoryIds, {
-                    options: [...publishedCategories, ...otherCategories].map(
-                      (category) => category.id,
-                    ),
-                    type: 'checkbox',
-                  }).map(({ key, ...checkboxProps }) => {
-                    const category = categoryOptions.find(
-                      (option) => option.id === checkboxProps.value,
-                    )
-                    const isPublished = category?.state === 'published'
+                  <fieldset
+                    className={clsx(styles.lock, styles.categories)}
+                    disabled={isLocked}
+                  >
+                    <legend className={'screen-reader-only'}>Rubriky</legend>
+                    {getCollectionProps(fields.categoryIds, {
+                      options: [...publishedCategories, ...otherCategories].map(
+                        (category) => category.id,
+                      ),
+                      type: 'checkbox',
+                    }).map(({ key, ...checkboxProps }) => {
+                      const category = categoryOptions.find(
+                        (option) => option.id === checkboxProps.value,
+                      )
+                      const isPublished = category?.state === 'published'
 
-                    return (
-                      <Checkbox
-                        {...checkboxProps}
-                        className={clsx(
-                          styles.category,
-                          !isPublished && styles.categoryOutOfPlay,
-                        )}
-                        key={key}
-                      >
-                        {category?.name ?? ''}
-                        {category !== undefined &&
-                          CATEGORY_STATE_NOTE[category.state] !== undefined && (
-                            <span className={styles.categoryNote}>
-                              {' '}
-                              {CATEGORY_STATE_NOTE[category.state]}
-                            </span>
+                      return (
+                        <Checkbox
+                          {...checkboxProps}
+                          className={clsx(
+                            styles.category,
+                            !isPublished && styles.categoryOutOfPlay,
                           )}
-                      </Checkbox>
-                    )
-                  })}
-                  {removedCategoryIds.map((id) => (
-                    <input
-                      key={id}
-                      name={fields.removedCategoryIds.name}
-                      type={'hidden'}
-                      value={id}
-                    />
-                  ))}
-                </fieldset>
+                          key={key}
+                        >
+                          {category?.name ?? ''}
+                          {category !== undefined &&
+                            CATEGORY_STATE_NOTE[category.state] !==
+                              undefined && (
+                              <span className={styles.categoryNote}>
+                                {' '}
+                                {CATEGORY_STATE_NOTE[category.state]}
+                              </span>
+                            )}
+                        </Checkbox>
+                      )
+                    })}
+                    {removedCategoryIds.map((id) => (
+                      <input
+                        key={id}
+                        name={fields.removedCategoryIds.name}
+                        type={'hidden'}
+                        value={id}
+                      />
+                    ))}
+                  </fieldset>
+                </EditorDetailPanel>
               </EditorDetail>
 
-              <EditorDetail
-                {...detailProps('tags')}
-                name={'Štítky'}
-                saveLine={renderSaveLine()}
-                summary={
-                  selectedTagIds.length === 0
+              <EditorDetail {...detailProps('tags')} name={'Štítky'}>
+                <EditorDetailSummary>
+                  {selectedTagIds.length === 0
                     ? '—'
                     : tagOptions
                         .filter((tag) => selectedTagIds.includes(tag.id))
                         .map((tag) => tag.name)
-                        .join(', ')
-                }
-              >
-                {/* Searched, as there are many; one the article has in
+                        .join(', ')}
+                </EditorDetailSummary>
+                <EditorDetailPanel>
+                  <EditorDetailBar>{renderSaveLine()}</EditorDetailBar>
+                  {/* Searched, as there are many; one the article has in
                     another state is a dashed chip with its word (24a). */}
-                <fieldset className={styles.lock} disabled={isLocked}>
-                  <ChipInput
-                    disabled={isLocked}
-                    id={`${fields.tagIds.id}-search`}
-                    isLabelHidden
-                    label={'Štítky'}
-                    onQueryChange={setTagQuery}
-                    onRemoveLast={() => setTagIds(selectedTagIds.slice(0, -1))}
-                    onSelect={(tagId) => setTagIds([...selectedTagIds, tagId])}
-                    options={tagSuggestions}
-                    placeholder={'Přidat štítek'}
-                    query={tagQuery}
-                  >
-                    {selectedTagIds.map((tagId) => {
-                      const tag = tagOptions.find(
-                        (option) => option.id === tagId,
-                      )
-                      const tagName = tag?.name ?? tagId
-                      const tagNote =
-                        tag === undefined
-                          ? undefined
-                          : TAG_STATE_NOTE[tag.state]
-
-                      return (
-                        <Chip
-                          key={tagId}
-                          muted={tag?.state !== 'published'}
-                          onRemove={
-                            isReadOnly
-                              ? undefined
-                              : () =>
-                                  setTagIds(
-                                    selectedTagIds.filter(
-                                      (selectedId) => selectedId !== tagId,
-                                    ),
-                                  )
-                          }
-                          removeLabel={`Odebrat ${tagName}`}
-                        >
-                          <ChipLabel>{tagName}</ChipLabel>
-                          {tagNote !== undefined && (
-                            <ChipNote>{tagNote}</ChipNote>
-                          )}
-                        </Chip>
-                      )
-                    })}
-                  </ChipInput>
-                  {selectedTagIds.map((tagId) => (
-                    <input
-                      key={tagId}
-                      name={fields.tagIds.name}
-                      type={'hidden'}
-                      value={tagId}
-                    />
-                  ))}
-                  {removedTagIds.map((id) => (
-                    <input
-                      key={id}
-                      name={fields.removedTagIds.name}
-                      type={'hidden'}
-                      value={id}
-                    />
-                  ))}
-                </fieldset>
-              </EditorDetail>
-
-              <GalleryDetail
-                {...detailProps('images')}
-                preview={
-                  <>
-                    <GalleryGrid columns={2}>
-                      {imageFieldList.map((image) => {
-                        const imageFields = image.getFieldset()
-                        const id = imageFields.id.value ?? ''
-                        const tile = gallery.tiles.get(id)
-                        const altText = imageFields.altText.value ?? ''
-                        const isFailed = tile?.status === 'failed'
-                        const isUploading =
-                          tile !== undefined && isTileUploading(tile)
+                  <fieldset className={styles.lock} disabled={isLocked}>
+                    <ChipInput
+                      disabled={isLocked}
+                      id={`${fields.tagIds.id}-search`}
+                      isLabelHidden
+                      label={'Štítky'}
+                      onQueryChange={setTagQuery}
+                      onRemoveLast={() =>
+                        setTagIds(selectedTagIds.slice(0, -1))
+                      }
+                      onSelect={(tagId) =>
+                        setTagIds([...selectedTagIds, tagId])
+                      }
+                      options={tagSuggestions}
+                      placeholder={'Přidat štítek'}
+                      query={tagQuery}
+                    >
+                      {selectedTagIds.map((tagId) => {
+                        const tag = tagOptions.find(
+                          (option) => option.id === tagId,
+                        )
+                        const tagName = tag?.name ?? tagId
+                        const tagNote =
+                          tag === undefined
+                            ? undefined
+                            : TAG_STATE_NOTE[tag.state]
 
                         return (
-                          <li key={image.key}>
-                            <CompactImageTile>
-                              <ImageTileMedia
-                                isFailed={isFailed}
-                                isUploading={isUploading}
-                                source={tile?.previewUrl}
-                              >
-                                {/* While it uploads, no number and no pill
-                                    (bxy8xxqs). */}
-                                {tile?.status === 'stored' && !isUploading && (
-                                  <ImageTileOrder>
-                                    {getImageNumber(id)}
-                                  </ImageTileOrder>
-                                )}
-                                {gallery.featuredImageId === id &&
-                                  !isUploading && (
-                                    <ImageTilePill>Hlavní</ImageTilePill>
-                                  )}
-                              </ImageTileMedia>
-                              {isFailed ? (
-                                <ImageTileAltLine isFailed>
-                                  Zpracování selhalo
-                                </ImageTileAltLine>
-                              ) : isUploading ? (
-                                <CompactUploadStatus />
-                              ) : altText === '' ? (
-                                <ImageTileAltLine isMissing>
-                                  Bez alt textu
-                                </ImageTileAltLine>
-                              ) : (
-                                <ImageTileAltLine>{altText}</ImageTileAltLine>
-                              )}
-                            </CompactImageTile>
-                          </li>
+                          <Chip
+                            key={tagId}
+                            muted={tag?.state !== 'published'}
+                            onRemove={
+                              isReadOnly
+                                ? undefined
+                                : () =>
+                                    setTagIds(
+                                      selectedTagIds.filter(
+                                        (selectedId) => selectedId !== tagId,
+                                      ),
+                                    )
+                            }
+                            removeLabel={`Odebrat ${tagName}`}
+                          >
+                            <ChipLabel>{tagName}</ChipLabel>
+                            {tagNote !== undefined && (
+                              <ChipNote>{tagNote}</ChipNote>
+                            )}
+                          </Chip>
                         )
                       })}
-                      {!isReadOnly && (
-                        <AddImagesTile
-                          disabled={isLocked}
-                          isCompact
-                          onFiles={addImages}
-                        />
-                      )}
-                    </GalleryGrid>
-                    {/* A pick that made no tile opens nothing (sa1x34z3). */}
-                    {gallery.rejectedSentences.map((sentence, index) => (
-                      <p className={styles.galleryError} key={index}>
-                        {sentence}
-                      </p>
+                    </ChipInput>
+                    {selectedTagIds.map((tagId) => (
+                      <input
+                        key={tagId}
+                        name={fields.tagIds.name}
+                        type={'hidden'}
+                        value={tagId}
+                      />
                     ))}
-                  </>
-                }
-                // A change that did not save says so where saving is said, in
-                // sight wherever the author is in the gallery (in5bl1cq).
-                saveLine={
-                  gallery.hasFailedChange && lostHold === null ? (
-                    <p className={styles.saveLine} role={'alert'}>
-                      <span className={styles.saveFailure}>
-                        Proveďte změnu znovu — nepodařilo se ji uložit.
-                      </span>
-                    </p>
-                  ) : (
-                    renderSaveLine()
-                  )
-                }
-                summary={gallerySummary}
-                thumbnails={galleryThumbnails}
-              >
-                <fieldset
-                  className={clsx(styles.lock, styles.gallery)}
-                  disabled={isLocked}
-                >
-                  <legend className={'screen-reader-only'}>Obrázky</legend>
-                  {imageFieldList.length > 0 && (
-                    <p className={styles.gallerySummary}>{gallerySummary}</p>
+                    {removedTagIds.map((id) => (
+                      <input
+                        key={id}
+                        name={fields.removedTagIds.name}
+                        type={'hidden'}
+                        value={id}
+                      />
+                    ))}
+                  </fieldset>
+                </EditorDetailPanel>
+              </EditorDetail>
+
+              <GalleryDetail {...detailProps('images')}>
+                <GalleryDetailSummary>
+                  {galleryThumbnails.length > 0 && (
+                    <EditorDetailRowThumbnails>
+                      {galleryThumbnails.map((source, index) => (
+                        <EditorDetailRowThumbnail key={index} source={source} />
+                      ))}
+                    </EditorDetailRowThumbnails>
                   )}
-                  <GalleryGrid columns={3}>
+                  {gallerySummary}
+                </GalleryDetailSummary>
+                <GalleryDetailColumn>
+                  <GalleryGrid columns={2}>
                     {imageFieldList.map((image) => {
                       const imageFields = image.getFieldset()
                       const id = imageFields.id.value ?? ''
                       const tile = gallery.tiles.get(id)
-                      const isStored = tile?.status === 'stored'
+                      const altText = imageFields.altText.value ?? ''
+                      const isFailed = tile?.status === 'failed'
                       const isUploading =
                         tile !== undefined && isTileUploading(tile)
-                      const idInput = (
-                        <input
-                          {...getInputProps(imageFields.id, {
-                            type: 'hidden',
-                          })}
-                          key={imageFields.id.key}
-                        />
-                      )
-
-                      // Only in the open editor; removed without a dialog,
-                      // there is nothing to lose (24b).
-                      if (tile?.status === 'failed') {
-                        return (
-                          <li
-                            data-image-id={id}
-                            key={image.key}
-                            {...galleryDrag.getTileProps(id)}
-                            style={{ order: galleryDrag.getOrder(id) }}
-                          >
-                            {idInput}
-                            <ImageTile>
-                              <ImageTileMedia isFailed />
-                              <ImageTileMessage>
-                                {tile.isOverPixelBudget
-                                  ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
-                                  : 'Vyberte jiný soubor nebo obrázek odeberte — zpracování se nepodařilo.'}
-                              </ImageTileMessage>
-                              {!isReadOnly && (
-                                <ImageTileActions>
-                                  <ButtonLink
-                                    onClick={() => pickReplacement(id)}
-                                  >
-                                    Vybrat jiný soubor
-                                  </ButtonLink>
-                                  <ButtonLink
-                                    onClick={() => void removeImage(id)}
-                                  >
-                                    Odebrat
-                                  </ButtonLink>
-                                </ImageTileActions>
-                              )}
-                              {tile.fileName !== null && (
-                                <ImageTileFile>{tile.fileName}</ImageTileFile>
-                              )}
-                            </ImageTile>
-                          </li>
-                        )
-                      }
-
-                      const isFeatured = gallery.featuredImageId === id
-                      const isLifted = galleryDrag.draggedId === id
 
                       return (
-                        <li
-                          className={clsx(
-                            tile?.isRemoving && styles.removingImage,
-                            isLifted && styles.imageLanding,
-                          )}
-                          data-image-id={id}
-                          key={image.key}
-                          {...galleryDrag.getTileProps(id)}
-                          style={{ order: galleryDrag.getOrder(id) }}
-                        >
-                          {idInput}
-                          <ImageTile
-                            className={clsx(isLifted && styles.liftedImage)}
-                            isLifted={isLifted}
-                          >
+                        <li key={image.key}>
+                          <CompactImageTile>
                             <ImageTileMedia
-                              className={clsx(
-                                canDragImage(id) &&
-                                  !isLifted &&
-                                  styles.imageHandle,
-                              )}
+                              isFailed={isFailed}
                               isUploading={isUploading}
                               source={tile?.previewUrl}
                             >
-                              {/* While it uploads, a replacement too, the tile
-                                  has no number, pill or „⋯“ (bxy8xxqs). */}
-                              {isStored && !isUploading && (
-                                <ImageTileOrder hasGrip={canDragImage(id)}>
+                              {/* While it uploads, no number and no pill
+                                    (bxy8xxqs). */}
+                              {tile?.status === 'stored' && !isUploading && (
+                                <ImageTileOrder>
                                   {getImageNumber(id)}
                                 </ImageTileOrder>
                               )}
-                              {isFeatured && !isUploading && (
-                                <ImageTilePill>Hlavní</ImageTilePill>
-                              )}
-                              {isStored &&
-                                !isUploading &&
-                                !tile?.isRemoving &&
-                                !isReadOnly && (
-                                  <ImageTileMenu>
-                                    <ActionMenu
-                                      // The tile has no name of its own: its
-                                      // number tells it apart (copy hu5a658a,
-                                      // yj2t50dd).
-                                      label={`Další akce obrázku ${getImageNumber(id)}`}
-                                      variant={'chip'}
-                                    >
-                                      {getImageMenuItems({
-                                        count: storedImageIds.length,
-                                        hasFeatured:
-                                          gallery.featuredImageId !== null,
-                                        index: storedImageIds.indexOf(id),
-                                        isFeatured,
-                                        onFeature: () =>
-                                          void featureImage(
-                                            id,
-                                            storedImageIds.length,
-                                          ),
-                                        onMove: (to) => {
-                                          setMovedImageId(id)
-                                          void moveImage(
-                                            id,
-                                            to,
-                                            storedImageIds.length,
-                                          )
-                                        },
-                                        onRemove: () => setRemovingImageId(id),
-                                        onReplace: () => pickReplacement(id),
-                                        onUnfeature: () =>
-                                          void gallery.setFeatured(null),
-                                      }).map((item) => (
-                                        <ActionMenuItem
-                                          danger={item.danger}
-                                          key={item.label}
-                                          onSelect={item.onSelect}
-                                        >
-                                          {item.label}
-                                        </ActionMenuItem>
-                                      ))}
-                                    </ActionMenu>
-                                  </ImageTileMenu>
+                              {gallery.featuredImageId === id &&
+                                !isUploading && (
+                                  <ImageTilePill>Hlavní</ImageTilePill>
                                 )}
                             </ImageTileMedia>
-                            {/* Zrušit takes the place of Odebrat while the
-                                file is on its way (bxy8xxqs). */}
-                            {isUploading && (
-                              <UploadStatus
-                                cancelLabel={
-                                  tile.fileName === null
-                                    ? 'Zrušit nahrávání'
-                                    : `Zrušit nahrávání ${tile.fileName}`
-                                }
-                                onCancel={() => cancelImageUpload(id)}
-                              />
+                            {isFailed ? (
+                              <ImageTileAltLine isFailed>
+                                Zpracování selhalo
+                              </ImageTileAltLine>
+                            ) : isUploading ? (
+                              <CompactUploadStatus />
+                            ) : altText === '' ? (
+                              <ImageTileAltLine isMissing>
+                                Bez alt textu
+                              </ImageTileAltLine>
+                            ) : (
+                              <ImageTileAltLine>{altText}</ImageTileAltLine>
                             )}
-                            {tile?.hasReplaceFailed && (
-                              <>
-                                <ImageTileMessage>
-                                  {tile.isOverPixelBudget
-                                    ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
-                                    : 'Nový soubor se nepodařilo zpracovat.'}{' '}
-                                  Původní obrázek zůstává.
-                                </ImageTileMessage>
-                                {!isReadOnly && (
-                                  <ImageTileActions>
-                                    <ButtonLink
-                                      onClick={() => pickReplacement(id)}
-                                    >
-                                      Vybrat jiný soubor
-                                    </ButtonLink>
-                                  </ImageTileActions>
-                                )}
-                              </>
-                            )}
-                            <TextField
-                              {...getInputProps(imageFields.altText, {
-                                type: 'text',
-                              })}
-                              hint={
-                                'Popis obrázku pro čtečky obrazovky a vyhledávače.'
-                              }
-                              isHintOnFocus
-                              label={'Alt text'}
-                              placeholder={'Co je na obrázku'}
-                              size={'sm'}
-                            />
-                            <CaptionEditor
-                              field={imageFields.description}
-                              inputProps={{
-                                placeholder: 'Pod obrázkem na webu',
-                              }}
-                              label={'Popisek'}
-                              readOnly={isReadOnly}
-                            />
-                            {tile?.fileName != null && (
-                              <ImageTileFile>{tile.fileName}</ImageTileFile>
-                            )}
-                          </ImageTile>
+                          </CompactImageTile>
                         </li>
                       )
                     })}
                     {!isReadOnly && (
-                      <AddImagesTile disabled={isLocked} onFiles={addImages} />
+                      <AddImagesTile
+                        disabled={isLocked}
+                        isCompact
+                        onFiles={addImages}
+                      />
                     )}
                   </GalleryGrid>
+                  {/* A pick that made no tile opens nothing (sa1x34z3). */}
                   {gallery.rejectedSentences.map((sentence, index) => (
                     <p className={styles.galleryError} key={index}>
                       {sentence}
                     </p>
                   ))}
+                </GalleryDetailColumn>
+                <GalleryDetailPanel>
+                  <GalleryDetailBar>
+                    {/* A change that did not save says so where saving is said,
+                      in sight wherever the author is in the gallery
+                      (in5bl1cq). */}
+                    {gallery.hasFailedChange && lostHold === null ? (
+                      <p className={styles.saveLine} role={'alert'}>
+                        <span className={styles.saveFailure}>
+                          Proveďte změnu znovu — nepodařilo se ji uložit.
+                        </span>
+                      </p>
+                    ) : (
+                      renderSaveLine()
+                    )}
+                  </GalleryDetailBar>
+                  <GalleryDetailBody>
+                    <fieldset
+                      className={clsx(styles.lock, styles.gallery)}
+                      disabled={isLocked}
+                    >
+                      <legend className={'screen-reader-only'}>Obrázky</legend>
+                      {imageFieldList.length > 0 && (
+                        <p className={styles.gallerySummary}>
+                          {gallerySummary}
+                        </p>
+                      )}
+                      <GalleryGrid columns={3}>
+                        {imageFieldList.map((image) => {
+                          const imageFields = image.getFieldset()
+                          const id = imageFields.id.value ?? ''
+                          const tile = gallery.tiles.get(id)
+                          const isStored = tile?.status === 'stored'
+                          const isUploading =
+                            tile !== undefined && isTileUploading(tile)
+                          const idInput = (
+                            <input
+                              {...getInputProps(imageFields.id, {
+                                type: 'hidden',
+                              })}
+                              key={imageFields.id.key}
+                            />
+                          )
 
-                  <input
-                    accept={'image/*'}
-                    className={styles.replaceInput}
-                    form={''}
-                    onChange={(event) => {
-                      const [file] = event.currentTarget.files ?? []
-                      const id = replacingImageIdRef.current
-                      event.currentTarget.value = ''
-                      if (file !== undefined && id !== null) {
-                        gallery.replaceFile(id, file)
-                      }
-                    }}
-                    ref={replaceInputRef}
-                    tabIndex={-1}
-                    type={'file'}
-                  />
-                  <span aria-live={'polite'} className={'screen-reader-only'}>
-                    {galleryAnnouncement}
-                  </span>
-                </fieldset>
-                {removingImageId !== null && (
-                  <RemoveImageDialog
-                    isFeatured={gallery.featuredImageId === removingImageId}
-                    onCancel={() => setRemovingImageId(null)}
-                    onConfirm={() => {
-                      void removeImage(removingImageId)
-                      setRemovingImageId(null)
-                    }}
-                  />
-                )}
+                          // Only in the open editor; removed without a dialog,
+                          // there is nothing to lose (24b).
+                          if (tile?.status === 'failed') {
+                            return (
+                              <li
+                                data-image-id={id}
+                                key={image.key}
+                                {...galleryDrag.getTileProps(id)}
+                                style={{ order: galleryDrag.getOrder(id) }}
+                              >
+                                {idInput}
+                                <ImageTile>
+                                  <ImageTileMedia isFailed />
+                                  <ImageTileMessage>
+                                    {tile.isOverPixelBudget
+                                      ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
+                                      : 'Vyberte jiný soubor nebo obrázek odeberte — zpracování se nepodařilo.'}
+                                  </ImageTileMessage>
+                                  {!isReadOnly && (
+                                    <ImageTileActions>
+                                      <ButtonLink
+                                        onClick={() => pickReplacement(id)}
+                                      >
+                                        Vybrat jiný soubor
+                                      </ButtonLink>
+                                      <ButtonLink
+                                        onClick={() => void removeImage(id)}
+                                      >
+                                        Odebrat
+                                      </ButtonLink>
+                                    </ImageTileActions>
+                                  )}
+                                  {tile.fileName !== null && (
+                                    <ImageTileFile>
+                                      {tile.fileName}
+                                    </ImageTileFile>
+                                  )}
+                                </ImageTile>
+                              </li>
+                            )
+                          }
+
+                          const isFeatured = gallery.featuredImageId === id
+                          const isLifted = galleryDrag.draggedId === id
+
+                          return (
+                            <li
+                              className={clsx(
+                                tile?.isRemoving && styles.removingImage,
+                                isLifted && styles.imageLanding,
+                              )}
+                              data-image-id={id}
+                              key={image.key}
+                              {...galleryDrag.getTileProps(id)}
+                              style={{ order: galleryDrag.getOrder(id) }}
+                            >
+                              {idInput}
+                              <ImageTile
+                                className={clsx(isLifted && styles.liftedImage)}
+                                isLifted={isLifted}
+                              >
+                                <ImageTileMedia
+                                  className={clsx(
+                                    canDragImage(id) &&
+                                      !isLifted &&
+                                      styles.imageHandle,
+                                  )}
+                                  isUploading={isUploading}
+                                  source={tile?.previewUrl}
+                                >
+                                  {/* While it uploads, a replacement too, the tile
+                                  has no number, pill or „⋯“ (bxy8xxqs). */}
+                                  {isStored && !isUploading && (
+                                    <ImageTileOrder hasGrip={canDragImage(id)}>
+                                      {getImageNumber(id)}
+                                    </ImageTileOrder>
+                                  )}
+                                  {isFeatured && !isUploading && (
+                                    <ImageTilePill>Hlavní</ImageTilePill>
+                                  )}
+                                  {isStored &&
+                                    !isUploading &&
+                                    !tile?.isRemoving &&
+                                    !isReadOnly && (
+                                      <ImageTileMenu>
+                                        <ActionMenu
+                                          // The tile has no name of its own: its
+                                          // number tells it apart (copy hu5a658a,
+                                          // yj2t50dd).
+                                          label={`Další akce obrázku ${getImageNumber(id)}`}
+                                          variant={'chip'}
+                                        >
+                                          {getImageMenuItems({
+                                            count: storedImageIds.length,
+                                            hasFeatured:
+                                              gallery.featuredImageId !== null,
+                                            index: storedImageIds.indexOf(id),
+                                            isFeatured,
+                                            onFeature: () =>
+                                              void featureImage(
+                                                id,
+                                                storedImageIds.length,
+                                              ),
+                                            onMove: (to) => {
+                                              setMovedImageId(id)
+                                              void moveImage(
+                                                id,
+                                                to,
+                                                storedImageIds.length,
+                                              )
+                                            },
+                                            onRemove: () =>
+                                              setRemovingImageId(id),
+                                            onReplace: () =>
+                                              pickReplacement(id),
+                                            onUnfeature: () =>
+                                              void gallery.setFeatured(null),
+                                          }).map((item) => (
+                                            <ActionMenuItem
+                                              danger={item.danger}
+                                              key={item.label}
+                                              onSelect={item.onSelect}
+                                            >
+                                              {item.label}
+                                            </ActionMenuItem>
+                                          ))}
+                                        </ActionMenu>
+                                      </ImageTileMenu>
+                                    )}
+                                </ImageTileMedia>
+                                {/* Zrušit takes the place of Odebrat while the
+                                file is on its way (bxy8xxqs). */}
+                                {isUploading && (
+                                  <UploadStatus
+                                    cancelLabel={
+                                      tile.fileName === null
+                                        ? 'Zrušit nahrávání'
+                                        : `Zrušit nahrávání ${tile.fileName}`
+                                    }
+                                    onCancel={() => cancelImageUpload(id)}
+                                  />
+                                )}
+                                {tile?.hasReplaceFailed && (
+                                  <>
+                                    <ImageTileMessage>
+                                      {tile.isOverPixelBudget
+                                        ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
+                                        : 'Nový soubor se nepodařilo zpracovat.'}{' '}
+                                      Původní obrázek zůstává.
+                                    </ImageTileMessage>
+                                    {!isReadOnly && (
+                                      <ImageTileActions>
+                                        <ButtonLink
+                                          onClick={() => pickReplacement(id)}
+                                        >
+                                          Vybrat jiný soubor
+                                        </ButtonLink>
+                                      </ImageTileActions>
+                                    )}
+                                  </>
+                                )}
+                                <TextField
+                                  {...getInputProps(imageFields.altText, {
+                                    type: 'text',
+                                  })}
+                                  hint={
+                                    'Popis obrázku pro čtečky obrazovky a vyhledávače.'
+                                  }
+                                  isHintOnFocus
+                                  label={'Alt text'}
+                                  placeholder={'Co je na obrázku'}
+                                  size={'sm'}
+                                />
+                                <CaptionEditor
+                                  field={imageFields.description}
+                                  inputProps={{
+                                    placeholder: 'Pod obrázkem na webu',
+                                  }}
+                                  label={'Popisek'}
+                                  readOnly={isReadOnly}
+                                />
+                                {tile?.fileName != null && (
+                                  <ImageTileFile>{tile.fileName}</ImageTileFile>
+                                )}
+                              </ImageTile>
+                            </li>
+                          )
+                        })}
+                        {!isReadOnly && (
+                          <AddImagesTile
+                            disabled={isLocked}
+                            onFiles={addImages}
+                          />
+                        )}
+                      </GalleryGrid>
+                      {gallery.rejectedSentences.map((sentence, index) => (
+                        <p className={styles.galleryError} key={index}>
+                          {sentence}
+                        </p>
+                      ))}
+
+                      <input
+                        accept={'image/*'}
+                        className={styles.replaceInput}
+                        form={''}
+                        onChange={(event) => {
+                          const [file] = event.currentTarget.files ?? []
+                          const id = replacingImageIdRef.current
+                          event.currentTarget.value = ''
+                          if (file !== undefined && id !== null) {
+                            gallery.replaceFile(id, file)
+                          }
+                        }}
+                        ref={replaceInputRef}
+                        tabIndex={-1}
+                        type={'file'}
+                      />
+                      <span
+                        aria-live={'polite'}
+                        className={'screen-reader-only'}
+                      >
+                        {galleryAnnouncement}
+                      </span>
+                    </fieldset>
+                    {removingImageId !== null && (
+                      <RemoveImageDialog
+                        isFeatured={gallery.featuredImageId === removingImageId}
+                        onCancel={() => setRemovingImageId(null)}
+                        onConfirm={() => {
+                          void removeImage(removingImageId)
+                          setRemovingImageId(null)
+                        }}
+                      />
+                    )}
+                  </GalleryDetailBody>
+                </GalleryDetailPanel>
               </GalleryDetail>
               {/* Refused files are said too, outside the panel: a pick from
                   the column that made no tile opens nothing (sa1x34z3). */}

@@ -1,0 +1,50 @@
+.bar {
+  @layer route {
+    position: sticky;
+    inset-block-start: 0;
+    /* Above a lifted tile and its landing place (z-index 1). */
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 14px;
+    padding-inline: 32px;
+    background-color: var(--bg-primary);
+    border-block-end: 1px solid var(--border);
+
+    @media (width < 768px) {
+      padding-block: 10px;
+      padding-inline: 16px;
+    }
+  }
+}
+
+.barTitle {
+  @layer route {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+}
+
+.name {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
+    color: var(--text-primary);
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.saveLine {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}

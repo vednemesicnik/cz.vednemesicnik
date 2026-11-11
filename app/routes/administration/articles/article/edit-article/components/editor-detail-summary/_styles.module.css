@@ -1,0 +1,8 @@
+/* The row (EditorDetailRow) belongs to the phone only. */
+.row {
+  @layer route {
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}
