@@ -48,8 +48,10 @@ const KEEPS_OPEN = 'button, a, figcaption, [data-keeps-open]'
 /**
  * The image viewer for the whole gallery (design 12b, zn43av9y): the window
  * on a near-black backdrop, dark on the light site too, with the counter
- * *n z N* and the close button in a band at the top, the arrows at the window
- * edges and the caption at the bottom. It pages round from the last image to
+ * *n z N* and the close button in a band at the top, the caption at the
+ * bottom. The arrows never lie on the photo (l18gjrxu): in the band beside the
+ * counter, and on a window from 10 : 7 at its edges, with the photo kept clear
+ * of them. It pages round from the last image to
  * the first and back by the arrows, ← → and a swipe; with a single image it
  * has no arrows (m8ei8fno). On touch a drag down closes it, and pinch or a
  * double tap zooms the photo.
@@ -216,6 +218,7 @@ export const ImageGalleryDialog = ({
       aria-label={'Galerie'}
       className={clsx(styles.dialog, className)}
       data-color-scheme={'dark'}
+      data-paging={hasPaging || undefined}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       ref={ref}
@@ -225,9 +228,47 @@ export const ImageGalleryDialog = ({
       {image && (
         <>
           <div className={styles.band}>
-            <span aria-live={'polite'} className={styles.counter}>
-              {currentIndex + 1} z {count}
-            </span>
+            {/* The arrows never lie on the photo (12b, l18gjrxu): in the band
+                beside the counter, and on a window from 10 : 7 at its edges
+                beside the photo. In the DOM always here, so the Tab order is
+                previous, next, × either way. */}
+            <div className={styles.paging}>
+              {hasPaging && (
+                <Tooltip
+                  className={clsx(styles.arrowAnchor, styles.previous)}
+                  label={'Předchozí obrázek'}
+                  placement={'bottom'}
+                >
+                  <button
+                    aria-label={'Předchozí obrázek'}
+                    className={styles.iconButton}
+                    onClick={showPrevious}
+                    type={'button'}
+                  >
+                    <KeyboardArrowLeftIcon />
+                  </button>
+                </Tooltip>
+              )}
+              <span aria-live={'polite'} className={styles.counter}>
+                {currentIndex + 1} z {count}
+              </span>
+              {hasPaging && (
+                <Tooltip
+                  className={clsx(styles.arrowAnchor, styles.next)}
+                  label={'Další obrázek'}
+                  placement={'bottom'}
+                >
+                  <button
+                    aria-label={'Další obrázek'}
+                    className={styles.iconButton}
+                    onClick={showNext}
+                    type={'button'}
+                  >
+                    <KeyboardArrowRightIcon />
+                  </button>
+                </Tooltip>
+              )}
+            </div>
             <Tooltip label={'Zavřít galerii'} placement={'bottom'}>
               <button
                 aria-label={'Zavřít galerii'}
@@ -285,39 +326,6 @@ export const ImageGalleryDialog = ({
                 )}
               </div>
             </div>
-
-            {/* On the whole area below the band, not on the stage, whose height
-                follows the caption: the arrows never move while paging. */}
-            {hasPaging && (
-              <>
-                <Tooltip
-                  className={clsx(styles.arrowAnchor, styles.previous)}
-                  label={'Předchozí obrázek'}
-                >
-                  <button
-                    aria-label={'Předchozí obrázek'}
-                    className={styles.iconButton}
-                    onClick={showPrevious}
-                    type={'button'}
-                  >
-                    <KeyboardArrowLeftIcon />
-                  </button>
-                </Tooltip>
-                <Tooltip
-                  className={clsx(styles.arrowAnchor, styles.next)}
-                  label={'Další obrázek'}
-                >
-                  <button
-                    aria-label={'Další obrázek'}
-                    className={styles.iconButton}
-                    onClick={showNext}
-                    type={'button'}
-                  >
-                    <KeyboardArrowRightIcon />
-                  </button>
-                </Tooltip>
-              </>
-            )}
 
             {image.description && (
               <figcaption className={styles.caption}>

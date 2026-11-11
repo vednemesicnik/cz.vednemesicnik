@@ -137,6 +137,23 @@
     padding-inline: calc(16px + env(safe-area-inset-left))
       calc(10px + env(safe-area-inset-right));
     opacity: calc(1 - var(--drag-progress));
+
+    /* The arrows in the band: 10 px on both sides, as the × has. */
+    @media (aspect-ratio < 10 / 7) {
+      .dialog[data-paging] & {
+        padding-inline-start: calc(10px + env(safe-area-inset-left));
+      }
+    }
+  }
+}
+
+/* Previous, counter, next; below 10 : 7 one row, from it the counter alone,
+   the arrows at the window's edges. */
+.paging {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 }
 
@@ -197,6 +214,14 @@
     min-height: 0;
     overflow: hidden;
     container-type: size;
+
+    /* From 10 : 7 the arrows stand beside the photo, 12 + 44 + 12 px. */
+    @media (aspect-ratio >= 10 / 7) {
+      .dialog[data-paging] & {
+        padding-inline: calc(68px + env(safe-area-inset-left))
+          calc(68px + env(safe-area-inset-right));
+      }
+    }
   }
 }
 
@@ -285,24 +310,31 @@
 
 /* At the window edge, vertically centred on the area below the band, so they
    never move while paging; a drag down fades them with the band. */
+/* From 10 : 7, at the window's edges, vertically centred on the area below
+   the band, so they never move while paging; they fade with the band. */
 .arrowAnchor {
   @layer variant {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: calc(1 - var(--drag-progress));
+    @media (aspect-ratio >= 10 / 7) {
+      position: absolute;
+      top: calc((100% + 64px + env(safe-area-inset-top)) / 2);
+      transform: translateY(-50%);
+    }
   }
 }
 
 .previous {
   @layer variant {
-    left: calc(12px + env(safe-area-inset-left));
+    @media (aspect-ratio >= 10 / 7) {
+      left: calc(12px + env(safe-area-inset-left));
+    }
   }
 }
 
 .next {
   @layer variant {
-    right: calc(12px + env(safe-area-inset-right));
+    @media (aspect-ratio >= 10 / 7) {
+      right: calc(12px + env(safe-area-inset-right));
+    }
   }
 }
 
