@@ -36,10 +36,10 @@ export default meta
 type Story = StoryObj<typeof Form>
 
 /**
- * Simple login form with email and password fields.
+ * A simple login form with e-mail and password fields.
  * Demonstrates basic form layout with Input and Button components.
  */
-export const LoginForm: Story = {
+export const Playground: Story = {
   render: () => (
     <Form method="post">
       <TextField id="email" required>

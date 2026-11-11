@@ -26,10 +26,10 @@ export default meta
 type Story = StoryObj<typeof Select>
 
 /**
- * Default select dropdown with multiple options.
+ * A select with several options.
  * The most common select variant for choosing from a list.
  */
-export const Default: Story = {
+export const Playground: Story = {
   args: {
     id: 'country',
   },

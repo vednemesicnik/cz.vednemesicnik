@@ -36,7 +36,7 @@ type Story = StoryObj<typeof TextareaField>
  * Default textarea for multi-line text entry.
  * Provides 10 rows by default for comfortable input.
  */
-export const Default: Story = {
+export const Playground: Story = {
   args: {
     field: createMockField({ id: 'description', name: 'description' }),
   },
