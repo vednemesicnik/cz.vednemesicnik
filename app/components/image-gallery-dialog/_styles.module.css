@@ -350,12 +350,15 @@
   }
 }
 
-/* Left in the article's measure (12a). */
+/* As wide as its text, at most the article's measure (12a), and centred: a
+   short caption sits under the photo's middle, a longer one keeps its lines
+   left (12b, l18gjrxu). */
 .captionColumn {
   @layer component {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: fit-content;
     max-width: 680px;
     margin-inline: auto;
     color: var(--text-primary);
