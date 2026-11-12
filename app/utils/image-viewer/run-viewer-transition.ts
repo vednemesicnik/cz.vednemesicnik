@@ -1,85 +1,58 @@
-// The one name the photo carries in flight: on the tile's image or on the
-// viewer's frame, never on both.
-const PHOTO_NAME = 'gallery-photo'
-
-type Kind = 'open' | 'close'
+import { handOnPress } from '~/utils/image-viewer/hand-on-press'
 
 type Options = {
-  kind: Kind
-  from: HTMLElement | null
-  getTo: () => HTMLElement | null
+  kind: 'open' | 'close'
   update: () => void | Promise<void>
-}
-
-const namedElements = new Set<HTMLElement>()
-let latestRun = 0
-
-const name = (element: HTMLElement | null) => {
-  if (element === null) return
-
-  element.style.setProperty('view-transition-name', PHOTO_NAME)
-  namedElements.add(element)
-}
-
-const clearNames = () => {
-  for (const element of namedElements) {
-    element.style.removeProperty('view-transition-name')
-  }
-
-  namedElements.clear()
 }
 
 /**
  * Opens or closes the gallery viewer in a same-document view transition, so
  * the photo flies between its tile and the viewer (design 12b, l18gjrxu).
- * `<html>` carries `data-viewer-transition` for the run, which the viewer's
- * styles time by. With reduced motion nothing is named and the page only
- * cross-fades; without the API the update runs as it is.
+ * Only the start is here: the styles name the photo, time the flight and
+ * honour reduced motion by the transition's types, `gallery-viewer` and
+ * `open` or `close`. A browser with transitions but without types (Safari
+ * 18.0–18.1, Firefox 144–146) runs the update as it is, as one without the
+ * API does, and the viewer fades by itself.
  *
- * A newer run skips the one in flight, and only the newest one moves or
- * clears the names.
+ * The flight delays nothing (1vd3dq22): a pointer or key going down while it
+ * runs skips it to its end and then acts. A key goes to the focus as ever; a
+ * press lands on `<html>` in Chrome and is handed on (`handOnPress`). So an
+ * arrow pages, ×, Esc and Space close, a drag or swipe starts and a tile
+ * opens again at once.
  *
- * @param options.from - The photo now: the tile's image, or the frame.
- * @param options.getTo - The photo after the update.
  * @param options.update - Shows or hides the viewer; resolve it once the new
  *   state is on screen.
  */
-export const runViewerTransition = ({ kind, from, getTo, update }: Options) => {
-  if (document.startViewTransition === undefined) {
+export const runViewerTransition = ({ kind, update }: Options) => {
+  if (!('ViewTransition' in window) || !('types' in ViewTransition.prototype)) {
     void update()
     return
   }
 
-  const isMotionReduced = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches
-  const run = ++latestRun
-  const isLatest = () => run === latestRun
-
-  clearNames()
-  if (!isMotionReduced) name(from)
-  document.documentElement.dataset.viewerTransition = kind
-
-  const transition = document.startViewTransition(async () => {
-    if (!isLatest()) {
-      await update()
-      return
-    }
-
-    clearNames()
-    await update()
-
-    if (!isMotionReduced && isLatest()) name(getTo())
+  const transition = document.startViewTransition({
+    types: ['gallery-viewer', kind],
+    update,
   })
 
-  // A skipped run rejects `ready`; nothing waits on it.
+  // A run skipped by a newer one rejects `ready`; nothing waits on it.
   transition.ready.catch(() => {})
+
+  const options = { capture: true, passive: true }
+
+  const skipByPointer = (event: PointerEvent) => {
+    transition.skipTransition()
+    handOnPress(event)
+  }
+
+  const skipByKey = () => transition.skipTransition()
+
+  window.addEventListener('pointerdown', skipByPointer, options)
+  window.addEventListener('keydown', skipByKey, options)
+
   transition.finished
     .catch(() => {})
     .finally(() => {
-      if (!isLatest()) return
-
-      clearNames()
-      delete document.documentElement.dataset.viewerTransition
+      window.removeEventListener('pointerdown', skipByPointer, options)
+      window.removeEventListener('keydown', skipByKey, options)
     })
 }
