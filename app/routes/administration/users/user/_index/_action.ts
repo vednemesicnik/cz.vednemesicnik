@@ -4,6 +4,7 @@ import { href, redirect } from 'react-router'
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
+import { getDeleteRedirectTarget } from '~/utils/navigation-trail/get-delete-redirect-target'
 
 import type { Route } from './+types/route'
 import { deleteUser } from './utils/delete-user'
@@ -44,7 +45,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       })
 
       if (withRedirect) {
-        throw redirect(href('/administration/users'))
+        throw redirect(
+          getDeleteRedirectTarget(formData, href('/administration/users')),
+        )
       }
       break
 
