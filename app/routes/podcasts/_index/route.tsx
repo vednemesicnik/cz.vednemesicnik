@@ -58,7 +58,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     <Tile isPreview={podcast.previewState !== null}>
                       <TileCard>
                         {podcast.cover !== null && (
-                          <PageFlight kind={'tile'} name={flightName}>
+                          <PageFlight name={flightName}>
                             <Image
                               {...podcast.cover.sources}
                               alt={podcast.cover.altText}

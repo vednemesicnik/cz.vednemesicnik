@@ -33,7 +33,7 @@ export function ContentLinkImage({ alt, image, className, flightName }: Props) {
 
   // `data-content-link-image` tells the row it has an image area.
   return (
-    <PageFlight kind={kind} name={flightName}>
+    <PageFlight name={flightName}>
       <div
         className={clsx(styles.frame, className)}
         data-content-link-image

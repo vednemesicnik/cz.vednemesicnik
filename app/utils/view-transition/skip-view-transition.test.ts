@@ -17,9 +17,20 @@ const stubAnimation = (pseudoElement: string | null) => ({
 afterEach(() => {
   vi.unstubAllGlobals()
   Reflect.deleteProperty(document.documentElement, 'getAnimations')
+  Reflect.deleteProperty(document, 'activeViewTransition')
 })
 
 describe('skipViewTransition', () => {
+  test("skips the document's active transition where the browser has it", () => {
+    const skipTransition = vi.fn()
+
+    Object.assign(document, { activeViewTransition: { skipTransition } })
+
+    skipViewTransition()
+
+    expect(skipTransition).toHaveBeenCalledOnce()
+  })
+
   test('finishes the animations of the view transition and nothing else', () => {
     const group = stubAnimation('::view-transition-group(article-image-a1)')
     const old = stubAnimation('::view-transition-old(root)')

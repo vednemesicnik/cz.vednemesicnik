@@ -30,8 +30,15 @@
   opacity: 1;
 }
 
+.image {
+  content-visibility: auto;
+  width: 100%;
+  height: auto;
+}
+
 /* The file a list already showed, over the placeholder until the image's own
-   loads; that one then fades in faster, over a sharp picture (design 18a). */
+   loads; that one then fades in faster, over a sharp picture (design 18a).
+   After `.image`, so its height wins over `auto`. */
 .fallbackImage {
   position: absolute;
   top: 0;
@@ -42,10 +49,4 @@
 
 .fallbackImage ~ .highResPicture {
   transition-duration: 150ms;
-}
-
-.image {
-  content-visibility: auto;
-  width: 100%;
-  height: auto;
 }

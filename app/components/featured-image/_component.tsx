@@ -2,8 +2,8 @@ import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 import { Image } from '~/components/image'
 import { PageFlight } from '~/components/page-flight'
+import { usePageFlight } from '~/hooks/use-page-flight'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
-import { usePageFlight } from '~/utils/page-flight/use-page-flight'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -38,7 +38,7 @@ export const FeaturedImage = ({
 
   return (
     <figure className={clsx(styles.container, className)}>
-      <PageFlight kind={flight?.kind} name={flightName}>
+      <PageFlight name={flightName}>
         <Image
           {...image}
           alt={alt}

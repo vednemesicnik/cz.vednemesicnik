@@ -16,11 +16,18 @@ type Props = Partial<ImageSources> & {
   className?: string
   loading?: 'lazy' | 'eager'
   fetchPriority?: 'auto' | 'high' | 'low'
-  // The address of a file the browser already has of the same photo, smaller:
-  // shown over the placeholder until this image loads (design 18a, u6r1pxsx).
   fallbackSource?: string
 }
 
+/**
+ * A responsive photo over its blurred placeholder, which it fades in over once
+ * it has loaded.
+ *
+ * @param props.fallbackSource - The address of a file of the same photo the
+ *   browser already has, smaller: shown over the placeholder until this image
+ *   loads, which then fades in over 150 ms (design 18a, u6r1pxsx). Read once,
+ *   on the first render.
+ */
 export const Image = ({
   src,
   srcSet,

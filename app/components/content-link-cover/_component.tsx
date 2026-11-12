@@ -30,7 +30,7 @@ export function ContentLinkCover({ alt, image, className, flightName }: Props) {
 
   // `data-content-link-cover` tells the card it has a cover area.
   return (
-    <PageFlight kind={kind} name={flightName}>
+    <PageFlight name={flightName}>
       <div
         className={clsx(styles.frame, className)}
         data-content-link-cover

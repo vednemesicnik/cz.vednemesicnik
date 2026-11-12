@@ -64,6 +64,13 @@ export const startPageFlight = (event: MouseEvent) => {
 
   if (!isHalfVisibleBelow({ bottom: window.innerHeight, rect, top })) return
 
+  // A flight that never took off, its navigation abandoned, leaves no mark.
+  for (const element of document.querySelectorAll<HTMLElement>(
+    '[data-page-flight-flying]',
+  )) {
+    delete element.dataset.pageFlightFlying
+  }
+
   marked.dataset.pageFlightFlying = ''
   pageFlightStore.start({ kind, name, source })
 }

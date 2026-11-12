@@ -47,7 +47,7 @@ export const ArticleHero = ({
             data-page-flight={flightName}
             data-page-flight-kind={kind}
           >
-            <PageFlight kind={kind} name={flightName}>
+            <PageFlight name={flightName}>
               <Image
                 {...image}
                 alt={imageAlt}
