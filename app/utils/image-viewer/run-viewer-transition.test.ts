@@ -60,27 +60,6 @@ describe('runViewerTransition', () => {
     expect(skipTransition).toHaveBeenCalledTimes(2)
   })
 
-  test('the click that skipped the flight goes on to the button under it', () => {
-    stubBrowser({ hasTypes: true })
-    const button = document.createElement('button')
-    const handleClick = vi.fn()
-    button.addEventListener('click', handleClick)
-    document.body.append(button)
-    // jsdom has no layout: the button is what lies under the pointer.
-    Object.assign(document, { elementFromPoint: () => button })
-
-    runViewerTransition({ kind: 'open', update: () => {} })
-    window.dispatchEvent(new Event('pointerdown'))
-    document.documentElement.dispatchEvent(
-      new MouseEvent('click', { bubbles: true }),
-    )
-
-    expect(handleClick).toHaveBeenCalledTimes(1)
-
-    Reflect.deleteProperty(document, 'elementFromPoint')
-    button.remove()
-  })
-
   test('once the flight has finished, input skips nothing', async () => {
     stubBrowser({ hasTypes: true })
 

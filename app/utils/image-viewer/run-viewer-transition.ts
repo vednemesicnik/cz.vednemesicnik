@@ -1,3 +1,5 @@
+import { handOnPress } from '~/utils/image-viewer/hand-on-press'
+
 type Options = {
   kind: 'open' | 'close'
   update: () => void | Promise<void>
@@ -13,9 +15,10 @@ type Options = {
  * API does, and the viewer fades by itself.
  *
  * The flight delays nothing (1vd3dq22): a pointer or key going down while it
- * runs skips it to its end and then goes on to its target, which the flight
- * lets the pointer through to. So an arrow pages, ×, Esc and Space close and
- * a tile opens again at once.
+ * runs skips it to its end and then acts. A key goes to the focus as ever; a
+ * press lands on `<html>` in Chrome and is handed on (`handOnPress`). So an
+ * arrow pages, ×, Esc and Space close, a drag or swipe starts and a tile
+ * opens again at once.
  *
  * @param options.update - Shows or hides the viewer; resolve it once the new
  *   state is on screen.
@@ -36,22 +39,9 @@ export const runViewerTransition = ({ kind, update }: Options) => {
 
   const options = { capture: true, passive: true }
 
-  // During a transition Chrome hit-tests the flight as `<html>`, even with
-  // `pointer-events: none` on it, so the click that skipped the flight lands
-  // there too. It is handed on to the button or link under it, now on top.
-  const handOnClick = (event: MouseEvent) => {
-    if (event.target !== document.documentElement) return
-
-    const target = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest('button, a')
-
-    if (target instanceof HTMLElement) target.click()
-  }
-
-  const skipByPointer = () => {
+  const skipByPointer = (event: PointerEvent) => {
     transition.skipTransition()
-    window.addEventListener('click', handOnClick, { ...options, once: true })
+    handOnPress(event)
   }
 
   const skipByKey = () => transition.skipTransition()

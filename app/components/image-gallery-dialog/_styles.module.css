@@ -100,7 +100,8 @@
       transition-behavior: allow-discrete;
 
       &[open] {
-        transition-duration: 200ms;
+        /* The fade in 200 ms; the brightening after a drag keeps 150 ms. */
+        transition-duration: 200ms, 200ms, 200ms, 150ms;
 
         @starting-style {
           opacity: 0;
@@ -137,8 +138,10 @@
    opening from the tile's 3 : 2 and its corners from 7 px to none; the
    backdrop, band, arrows and caption one 200 ms cross-fade of the page,
    since opacity mustn't overshoot. Timed by the viewer's own transition
-   type, so the site's other transitions keep theirs. The flight takes no
-   pointer: a tap goes to what lies under it, and skips the flight. */
+   type, so the site's other transitions keep theirs. A press during the
+   flight skips it; `pointer-events: none` is what the spec gives for a press
+   to reach the page, and where a browser hit-tests the flight as `<html>`
+   anyway (Chrome), `runViewerTransition` hands the press on. */
 :global(html):active-view-transition-type(gallery-viewer) {
   @layer component {
     &::view-transition {
@@ -323,10 +326,17 @@
     aspect-ratio: var(--image-ratio);
     touch-action: none;
     /* The return after a short drag, the double-tap zoom and the snap back
-       after a pinch ride the flight's spring (1vd3dq22). */
+       after a pinch ride the flight's spring (1vd3dq22); with reduced motion
+       they ease in 150 ms, with no overshoot. */
     transition:
       transform 600ms var(--viewer-spring),
       scale 200ms ease-in-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition:
+        transform 150ms ease-in-out,
+        scale 200ms ease-in-out;
+    }
 
     &[data-active] {
       transition: scale 200ms ease-in-out;

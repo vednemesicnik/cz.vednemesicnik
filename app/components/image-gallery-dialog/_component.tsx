@@ -125,7 +125,10 @@ export const ImageGalleryDialog = ({
     let timeout: ReturnType<typeof setTimeout> | undefined
 
     const handleDialogClose = () => {
-      timeout = setTimeout(reset, CLOSE_DURATION)
+      // Not if a tile has opened the viewer again meanwhile.
+      timeout = setTimeout(() => {
+        if (!dialog.open) reset()
+      }, CLOSE_DURATION)
     }
 
     dialog.addEventListener('close', handleDialogClose)
