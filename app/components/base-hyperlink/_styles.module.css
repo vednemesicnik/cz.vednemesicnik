@@ -19,5 +19,12 @@
       color: var(--primary-hover);
       text-decoration-color: var(--primary-hover);
     }
+
+    /* The system's ring, as on its Link, in place of the browser's outline. */
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
   }
 }

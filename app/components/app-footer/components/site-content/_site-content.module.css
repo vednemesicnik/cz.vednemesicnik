@@ -84,5 +84,13 @@
     &:hover {
       color: var(--primary-hover);
     }
+
+    /* The page links are BaseLink, which draws no ring: the system's Link ring
+       for them too, as BaseHyperlink gives the social links. */
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
   }
 }

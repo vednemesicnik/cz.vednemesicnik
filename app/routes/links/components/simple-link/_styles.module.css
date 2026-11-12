@@ -17,10 +17,12 @@
     border: none;
     min-height: 44px;
 
+    /* The system's ring as on a light surface: this page is white in either
+       scheme, so --focus-shadow's dark values would miss 3 : 1 here. */
     &:focus-visible {
       box-shadow:
-        0 0 0 2px var(--color-white),
-        0 0 0 4px var(--primary);
+        0 0 0 1px var(--color-white),
+        0 0 0 3px var(--color-violet-600);
       outline: none;
     }
   }

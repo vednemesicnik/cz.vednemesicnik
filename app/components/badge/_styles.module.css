@@ -14,8 +14,8 @@
     transition: all var(--transition-fast);
 
     &:focus-visible {
-      outline: 2px solid var(--badge-text);
-      outline-offset: 2px;
+      outline: none;
+      box-shadow: var(--focus-shadow);
     }
   }
 }
@@ -43,13 +43,11 @@
   }
 }
 
-/* What the reader doesn't see: the dashed line takes the badge's own edge, so nothing moves (11e). */
+/* What the reader doesn't see: the dashed line takes the badge's own edge, so nothing moves (11e).
+   It stays under the focus ring, as on a card (pwldhxq3). */
 .preview {
   @layer variant {
-    /* The focus ring keeps its own outline. */
-    &:not(:focus-visible) {
-      outline: 2px dashed var(--preview-outline);
-      outline-offset: -2px;
-    }
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: -2px;
   }
 }
