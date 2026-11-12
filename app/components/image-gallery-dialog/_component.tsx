@@ -2,7 +2,6 @@ import { clsx } from 'clsx'
 import {
   type CSSProperties,
   type KeyboardEvent,
-  type MouseEvent,
   type ReactNode,
   type RefObject,
   useEffect,
@@ -18,6 +17,7 @@ import { Tooltip } from '~/components/tooltip'
 import { DRAG_FADE_DISTANCE } from '~/config/image-viewer-config'
 import { useViewerGestures } from '~/hooks/use-viewer-gestures'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
+import { isSpaceToClose } from '~/utils/image-viewer/is-space-to-close'
 import styles from './_styles.module.css'
 
 export type GalleryImage = {
@@ -42,9 +42,6 @@ type Props = {
 // after it.
 const CLOSE_DURATION = 300
 
-// What a click may land on without closing the viewer.
-const KEEPS_OPEN = 'button, a, figcaption, [data-keeps-open]'
-
 /**
  * The image viewer for the whole gallery (design 12b, zn43av9y): the window
  * on a near-black backdrop, dark on the light site too, with the counter
@@ -58,9 +55,10 @@ const KEEPS_OPEN = 'button, a, figcaption, [data-keeps-open]'
  *
  * The parent opens it, through `useViewerHistory` so that Back closes it, and
  * flies the photo between its tile and the frame (`data-viewer-photo`,
- * l18gjrxu). The ×, Esc, a click on the dark area and a drag down ask the
- * parent to close it; a zoomed photo is whole again in the close's first
- * frame (the `close` transition type).
+ * l18gjrxu). The ×, Esc, Space where it has no job of its own and a drag down
+ * ask the parent to close it, and a click beside the photo does nothing
+ * (nn7jjmoz); a zoomed photo is whole again in the close's first frame (the
+ * `close` transition type).
  *
  * @param index - The image shown; the parent owns it, so a tile can open the
  *   viewer at its own image.
@@ -183,7 +181,17 @@ export const ImageGalleryDialog = ({
     return () => frame.removeEventListener('load', handleLoad, true)
   }, [imageId, isOpen])
 
+  // Space closes on its release, as a button presses on its release: a
+  // release after the close would land on the tile and open it again.
+  const isSpaceArmedRef = useRef(false)
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
+    if (isSpaceToClose(event)) {
+      event.preventDefault()
+      if (!event.repeat) isSpaceArmedRef.current = true
+      return
+    }
+
     if (!hasPaging) return
 
     if (event.key === 'ArrowLeft') {
@@ -195,12 +203,10 @@ export const ImageGalleryDialog = ({
     }
   }
 
-  // The dialog fills the window, so a click on the dark area lands on it.
-  const handleClick = (event: MouseEvent<HTMLDialogElement>) => {
-    if (event.target instanceof Element && event.target.closest(KEEPS_OPEN)) {
-      return
-    }
+  const handleKeyUp = (event: KeyboardEvent<HTMLDialogElement>) => {
+    if (event.key !== ' ' || !isSpaceArmedRef.current) return
 
+    isSpaceArmedRef.current = false
     handleClose()
   }
 
@@ -219,8 +225,8 @@ export const ImageGalleryDialog = ({
       className={clsx(styles.dialog, className)}
       data-color-scheme={'dark'}
       data-paging={hasPaging || undefined}
-      onClick={handleClick}
       onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
       ref={ref}
       style={{ '--drag-progress': dragProgress } as CSSProperties}
       tabIndex={-1}
@@ -289,7 +295,6 @@ export const ImageGalleryDialog = ({
                 {...handlers}
                 className={styles.frame}
                 data-active={isActive || undefined}
-                data-keeps-open={true}
                 data-photo-loaded={loadedImageId === image.id || undefined}
                 data-viewer-photo={true}
                 data-zoomed={isZoomed || undefined}
