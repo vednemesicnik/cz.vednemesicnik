@@ -38,7 +38,7 @@ export const FeaturedImage = ({
 
   return (
     <figure className={clsx(styles.container, className)}>
-      <PageFlight kind={flight?.kind} name={flight?.name}>
+      <PageFlight kind={flight?.kind} name={flightName}>
         <Image
           {...image}
           alt={alt}

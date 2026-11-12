@@ -34,7 +34,7 @@ export const CoverHeaderCover = ({
   // `data-cover-header-cover` places it in the header's grid.
   return (
     <div className={clsx(styles.frame, className)} data-cover-header-cover>
-      <PageFlight kind={flight?.kind} name={flight?.name}>
+      <PageFlight kind={flight?.kind} name={flightName}>
         <Image
           {...image}
           alt={alt}
