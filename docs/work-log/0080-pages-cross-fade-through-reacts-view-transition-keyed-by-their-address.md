@@ -32,19 +32,31 @@ favour of React's `<ViewTransition>` (React 19.3). The React source
   - The old page exits and the new one enters, each in place.
   - A change at the same address (data reloaded after an action) has `update="none"`.
   - A POP navigation is skipped as it starts.
+  - The administration keeps a cross-fade on navigation through the same boundary. Its links
+    lost the legacy prop with `BaseLink`, and one mechanism in the app beats two. The cross-fade
+    is now 200 ms, honours reduced motion, skips Back and Forward, and also runs on a redirect
+    after an action.
 - **`PageFlight` names an image at either end.**
   - Both ends carry permanent unique names (`getPageFlightName`, e.g. `article-image-<id>`).
-  - The page's end has a share class only while `pageFlightStore` holds a flight for it, and
-    declines to pair otherwise. Its name stays, since React tracks a name by the one a boundary
-    mounted with: a name taken away and given back reads as a duplicate.
+    React tracks a name by the one a boundary mounted with, so a name taken away and given back
+    reads as a duplicate.
+  - Both ends have a share class only while `pageFlightStore` holds a flight for that name, and
+    decline to pair otherwise. Two lists showing the same article (the home page and Articles)
+    would otherwise fly their images between them on every navigation.
   - A click listener (`startPageFlight`) starts that flight when the image has loaded, at least
-    half of it is visible below the header and motion isn't reduced.
+    half of it is visible below the header and motion isn't reduced. The click comes before the
+    router commits, so the clicked end re-renders with its class in time.
   - `PageTransition` clears the store when the transition ends, so the page that is left declines
     to fly back.
 - **The header has a name of its own during a page transition**, shown only in its new state,
-  so the old page's top, which was under it, doesn't show through it.
-- **Skipping finishes every `::view-transition` animation** (`skipViewTransition`), the list React
-  itself walks, on a press, a key, the wheel or a touch.
+  so the old page's top, which was under it, doesn't show through it. A header hidden on the
+  list stays hidden on the new page, as before: the header's scroll-state query doesn't count
+  the router's scroll to the top. So the case 18a draws, a hidden header fading in, doesn't come
+  up.
+- **Skipping uses `document.activeViewTransition.skipTransition()`**, and where a browser hasn't
+  got it, finishes every `::view-transition` animation, the list React itself walks. It runs on
+  a press, a key, the wheel or a touch. A press is handed on (`handOnPress`) at the next frame:
+  right after the skip, the point still hits the old page.
 - **The new page's image first shows the list's file** (`Image`'s `fallbackSource`), as the
   gallery does.
 - **The spring is a token**, `--spring-easing` and `--spring-duration` in `global.css`, which the
