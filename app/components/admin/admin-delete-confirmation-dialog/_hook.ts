@@ -5,6 +5,7 @@ import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useParentReturnAddress } from '~/hooks/use-parent-return-address'
+import { navigationTrailStore } from '~/utils/navigation-trail/navigation-trail-store'
 
 type Options = {
   withRedirect?: boolean
@@ -66,7 +67,11 @@ export const useAdminDeleteConfirmationDialog = (
       formData.append(intentName, intentValue)
       formData.append(redirectName, redirectValue)
 
-      if (redirectTo !== undefined) formData.append(redirectToName, redirectTo)
+      if (redirectTo !== undefined) {
+        formData.append(redirectToName, redirectTo)
+        // The list the server redirects to is a return to it (30i).
+        navigationTrailStore.expectRedirect(redirectTo)
+      }
 
       void submit(formData, { action: options.action, method: 'POST' })
     }

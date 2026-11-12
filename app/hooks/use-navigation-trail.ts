@@ -19,12 +19,18 @@ export const useNavigationTrail = () => {
   useEffect(() => {
     const previous = previousRef.current
 
+    const expectedRedirect = navigationTrailStore.readExpectedRedirect()
+
     previousRef.current = location
     navigationTrailStore.setCurrentKey(location.key)
 
     if (previous === null || previous.key === location.key) return
 
+    // The redirect a delete asked for lands with this navigation or not at all.
+    navigationTrailStore.clearExpectedRedirect()
+
     const record = recordNavigation({
+      expectedRedirect,
       navigationType,
       next: location,
       previous: {

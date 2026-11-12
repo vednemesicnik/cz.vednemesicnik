@@ -35,8 +35,9 @@ const followReturns = (key: string, store: NavigationTrailStore) => {
  *
  * - A link up names the list in its navigation state.
  * - An entry already recorded as a return has the key in its record.
- * - A redirect after a delete is matched to the trail of the entry it leaves,
- *   since the server's redirect carries no state.
+ * - The redirect a delete asked for is matched to the trail of the entry it
+ *   leaves, since the server's redirect carries no state. Other redirects, as
+ *   a list's default saved filter, are no return.
  *
  * A list that was itself reached by a return keeps its position under the key
  * it returned to, so each key is followed back to the first one.
@@ -53,11 +54,16 @@ export const getScrollRestorationKey = (
 
   if (returnTo !== null) return followReturns(returnTo, store)
 
-  if (isRedirectState(location.state)) {
+  const address = location.pathname + location.search
+
+  if (
+    isRedirectState(location.state) &&
+    address === store.readExpectedRedirect()
+  ) {
     const currentKey = store.readCurrentKey()
     const trail =
       currentKey === null ? [] : (store.get(currentKey)?.trail ?? [])
-    const index = findEntryByAddress(trail, location.pathname + location.search)
+    const index = findEntryByAddress(trail, address)
 
     if (index !== -1) return followReturns(trail[index].key, store)
   }

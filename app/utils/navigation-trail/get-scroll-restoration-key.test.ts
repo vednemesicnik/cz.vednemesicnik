@@ -61,13 +61,23 @@ describe('getScrollRestorationKey', () => {
     )
   })
 
-  test('keys a redirect onto an address of the trail left by that entry', () => {
+  test('keys the redirect a delete asked for by the trail entry it lands on', () => {
     const store = createStore()
 
     store.set('a1', {
       trail: [{ key: 'l1', pathname: '/articles', search: '?page=3' }],
     })
     store.setCurrentKey('a1')
+
+    // Not asked for, as a list's default saved filter: no return.
+    expect(
+      getScrollRestorationKey(
+        location({ state: { _isRedirect: true } }),
+        store,
+      ),
+    ).toBe('n1')
+
+    store.expectRedirect('/articles?page=3')
 
     expect(
       getScrollRestorationKey(

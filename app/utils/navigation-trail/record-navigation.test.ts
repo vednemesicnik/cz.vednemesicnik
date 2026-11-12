@@ -125,7 +125,19 @@ describe('recordNavigation', () => {
     })
   })
 
-  test('takes a redirect onto an address of the trail as a return, as after a delete', () => {
+  test('takes the redirect a delete asked for onto an address of the trail as a return', () => {
+    expect(
+      recordNavigation({
+        expectedRedirect: '/articles?page=3',
+        navigationType: 'PUSH',
+        next: at('/articles', '?page=3', { _isRedirect: true }),
+        previous: article,
+        previousTrail: [list],
+      }),
+    ).toEqual({ focusPath: '/articles/ples', returnKey: 'l1', trail: [] })
+  })
+
+  test('takes another redirect onto an address of the trail as no return, as a default saved filter', () => {
     expect(
       recordNavigation({
         navigationType: 'PUSH',
@@ -133,7 +145,7 @@ describe('recordNavigation', () => {
         previous: article,
         previousTrail: [list],
       }),
-    ).toEqual({ focusPath: '/articles/ples', returnKey: 'l1', trail: [] })
+    ).toEqual({ trail: [article, list] })
   })
 
   test('takes a redirect elsewhere as any other navigation', () => {

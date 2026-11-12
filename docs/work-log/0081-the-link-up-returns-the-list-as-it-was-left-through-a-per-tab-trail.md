@@ -35,16 +35,21 @@ document from a list both end in a server redirect, and a redirect carries no na
   from another record, or from a category or home, therefore gets the bare parent.
 - **Scroll is React Router's own.** `<ScrollRestoration getKey>` keys a return by the list's
   entry (`get-scroll-restoration-key.ts`), and React Router restores a saved position on any
-  navigation, not only on Back. A redirect after a delete is matched to the trail of the entry it
-  leaves. Returns that follow returns reuse the first list's key.
+  navigation, not only on Back. The redirect a delete announced before it was sent is matched to
+  the trail of the entry it leaves. Other redirects onto a trail address are no return: a list
+  with a default saved filter redirects its bare address too. Returns that follow returns reuse
+  the first list's key.
 - **Focus** goes to the first link to the record the reader came back from, without scrolling.
-  The ring shows only after keyboard use (`:focus-visible`).
+  The ring shows only after keyboard use (`:focus-visible`). Zavřít from an editor is a return to
+  the detail as well, so the detail opens where it was left, with focus on its Upravit link.
+  30i doesn't draw that case; it is the same rule one level down.
 - **A delete from a record's page** sends the list as it was left (`redirectTo`). The server takes
   it only for the same list path and otherwise falls back to the bare list
   (`get-delete-redirect-target.ts`). The editors' Zavřít and empty-draft close go through the same
   `useReturnLink`.
-- The web keeps its 404 for a page past the last (design 11, #512). The administration already
-  redirects such a page to the last one (#541).
+- **The web keeps its 404 for a page past the last** (design 11, #512). That is a departure from
+  30i, which wants the last page with rows. The administration already redirects such a page to
+  the last one (#541).
 
 ## What follows
 
@@ -69,6 +74,7 @@ document from a list both end in a server redirect, and a redirect carries no na
 - **Link state on each link into a record.** It does not survive the server redirects after a
   delete and after creating a new document, and it would need every row link to carry it. The
   trail is recorded in one place.
-- **A redirect to the last page on the web** in place of design 11's 404. A web list shrinks only
-  when an article is unpublished, and 30i leaves today's behaviour in place where it already
-  answers the case.
+- **A redirect to the last page on the web** in place of design 11's 404, for now. A 404 after
+  `‹ Články` is a dead end, so it is not as good as 30i's answer. A remembered web page
+  disappears only when articles are unpublished while the reader is on one of them, and the 404
+  keeps design 11's answer for crawlers and typed addresses. Revisit if readers meet it.

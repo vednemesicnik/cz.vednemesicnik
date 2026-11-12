@@ -26,19 +26,23 @@ const readSessionStorage = () => {
  * in session storage, so a reload and Back and Forward find it again, and it
  * never leaves the tab: nothing goes to the server or to the next visit.
  *
- * It also knows the entry on screen, which the scroll restoration reads while
- * a redirect is still landing.
+ * It also knows the entry on screen, and the address a delete asked the
+ * server to redirect to, which the scroll restoration reads while that
+ * redirect is still landing. Neither is stored: both last one navigation.
  *
  * @param options.readStorage - The tab's storage; returning `null` keeps the
  *   trail in memory only. Session storage by default.
  * @returns `get` and `set` a record by entry key, `subscribe`, and
- *   `readCurrentKey` and `setCurrentKey` for the entry on screen.
+ *   `readCurrentKey` and `setCurrentKey` for the entry on screen, and
+ *   `expectRedirect`, `readExpectedRedirect` and `clearExpectedRedirect` for
+ *   the redirect a delete asked for.
  */
 export const createNavigationTrailStore = ({
   readStorage = readSessionStorage,
 }: Options = {}) => {
   let records: Map<string, TrailRecord> | null = null
   let currentKey: string | null = null
+  let expectedRedirect: string | null = null
   const listeners = new Set<Listener>()
 
   const load = () => {
@@ -69,8 +73,15 @@ export const createNavigationTrailStore = ({
   }
 
   return {
+    clearExpectedRedirect: () => {
+      expectedRedirect = null
+    },
+    expectRedirect: (address: string) => {
+      expectedRedirect = address
+    },
     get: (key: string) => load().get(key),
     readCurrentKey: () => currentKey,
+    readExpectedRedirect: () => expectedRedirect,
     set: (key: string, record: TrailRecord) => {
       const loaded = load()
 

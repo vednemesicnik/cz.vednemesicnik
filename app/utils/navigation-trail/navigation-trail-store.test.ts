@@ -73,6 +73,16 @@ describe('createNavigationTrailStore', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
+  test('holds the redirect a delete asked for until it is cleared', () => {
+    const store = createNavigationTrailStore({ readStorage: () => null })
+
+    expect(store.readExpectedRedirect()).toBeNull()
+    store.expectRedirect('/administration/articles?q=ples')
+    expect(store.readExpectedRedirect()).toBe('/administration/articles?q=ples')
+    store.clearExpectedRedirect()
+    expect(store.readExpectedRedirect()).toBeNull()
+  })
+
   test('knows the entry on screen', () => {
     const store = createNavigationTrailStore({ readStorage: () => null })
 
