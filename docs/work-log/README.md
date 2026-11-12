@@ -110,3 +110,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0076](0076-pageseo-is-gone-and-the-main-image-always-has-its-share-crop.md) | PageSEO is gone, and the main image always has its share crop | 2026-11-09 |  |
 | [0077](0077-an-issue-pdf-opens-in-the-browsers-own-viewer-and-its-cover-is-uploaded.md) | An issue PDF opens in the browser's own viewer, and its cover is uploaded | 2026-11-11 |  |
 | [0078](0078-a-subtree-turns-dark-by-declaring-the-roles-again-and-back-closes-an-overlay-the-router-never-sees.md) | A subtree turns dark by declaring the roles again, and Back closes an overlay the router never sees | 2026-11-11 |  |
+| [0079](0079-a-long-page-has-no-floating-button-to-its-top-or-bottom.md) | A long page has no floating button to its top or bottom | 2026-11-12 |  |
