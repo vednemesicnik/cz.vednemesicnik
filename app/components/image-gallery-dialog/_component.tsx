@@ -104,10 +104,15 @@ export const ImageGalleryDialog = ({
       stageRef,
     })
 
+  // Space closes on its release, as a button presses on its release: a
+  // release after the close would land on the tile and open it again.
+  const isSpaceArmedRef = useRef(false)
+
   // Each image, and each opening, starts whole, with the tile's image over it.
   // biome-ignore lint/correctness/useExhaustiveDependencies: resets on a new image or opening
   useEffect(() => {
     reset()
+    isSpaceArmedRef.current = false
     if (!isOpen) setLoadedImageId(null)
   }, [currentIndex, isOpen, reset])
 
@@ -181,15 +186,18 @@ export const ImageGalleryDialog = ({
     return () => frame.removeEventListener('load', handleLoad, true)
   }, [imageId, isOpen])
 
-  // Space closes on its release, as a button presses on its release: a
-  // release after the close would land on the tile and open it again.
-  const isSpaceArmedRef = useRef(false)
-
   const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
-    if (isSpaceToClose(event)) {
-      event.preventDefault()
-      if (!event.repeat) isSpaceArmedRef.current = true
-      return
+    if (event.key === ' ') {
+      const closes = isSpaceToClose(event)
+
+      // Every press decides anew, so a press the viewer closed under (Esc
+      // while Space is held) never closes it on a later release.
+      if (!event.repeat) isSpaceArmedRef.current = closes
+
+      if (closes) {
+        event.preventDefault()
+        return
+      }
     }
 
     if (!hasPaging) return
