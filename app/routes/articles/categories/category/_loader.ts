@@ -88,8 +88,8 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
-  // A page that no longer exists, a return through ‹ Články included, opens the
-  // last one (design 11a, 30i, fhhx3q8l), as in the administration.
+  // A page that no longer exists opens the last one (design 11a, fhhx3q8l), as
+  // in the administration.
   if (isPagePastLast(currentPage, totalPages)) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }

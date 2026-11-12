@@ -28,7 +28,8 @@ settled the conflict in `fhhx3q8l` (new note 11a, 30i extended).
 - One address has one behaviour on the website and in the administration. A new paginated list
   redirects past its last page the same way.
 - It is 302, not 301, because the last page moves as articles are added. The canonical address of
-  a list has no `?page` and the sitemap lists no list pages, so crawlers lose nothing.
+  a list has no `?page`, and the sitemap lists no `?page` address and no category or tag page, so
+  crawlers lose nothing.
 
 ## Turned down
 
