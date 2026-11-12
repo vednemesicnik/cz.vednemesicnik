@@ -12,7 +12,6 @@ import {
 } from './boundary-copy'
 import { parseForbiddenData, parseNotFoundEpisodeData } from './boundary-data'
 import type { AdminContentKindMatch, ContentKind } from './content-kind'
-import { parseNotFoundPageData } from './parse-not-found-page-data'
 
 export type BoundaryView = BoundaryCopy & {
   unexpected: boolean
@@ -39,12 +38,8 @@ export const resolveWebsiteBoundary = (
 ): BoundaryView => {
   if (isRouteErrorResponse(error) && error.status === 404) {
     const episodeData = parseNotFoundEpisodeData(error.data)
-    const isPagePastLast = parseNotFoundPageData(error.data) !== null
     return {
-      ...getWebsiteNotFoundCopy(
-        isPagePastLast ? null : kind,
-        episodeData?.podcastHref,
-      ),
+      ...getWebsiteNotFoundCopy(kind, episodeData?.podcastHref),
       unexpected: false,
     }
   }
