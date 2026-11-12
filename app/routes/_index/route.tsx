@@ -22,6 +22,7 @@ import { Page } from '~/components/page'
 import { PostContentLink } from '~/components/post-content-link'
 import { Subheadline } from '~/components/subheadline'
 import { VdmWordmark } from '~/components/vdm-wordmark'
+import { getPageFlightName } from '~/utils/page-flight/get-page-flight-name'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -43,6 +44,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       {latestArticle && (
         <ArticleHero
+          flightName={getPageFlightName('article-image', latestArticle.id)}
           image={latestArticle.featuredImage?.sources}
           imageAlt={latestArticle.featuredImage?.altText}
           isPreview={latestArticle.previewState !== null}
@@ -83,6 +85,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 >
                   <ContentLinkImage
                     alt={article.featuredImage?.altText}
+                    flightName={getPageFlightName('article-image', article.id)}
                     image={article.featuredImage?.sources}
                   />
                   <ContentLinkTitle level={3}>{article.title}</ContentLinkTitle>

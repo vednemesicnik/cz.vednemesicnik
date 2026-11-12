@@ -16,6 +16,9 @@ type Props = Partial<ImageSources> & {
   className?: string
   loading?: 'lazy' | 'eager'
   fetchPriority?: 'auto' | 'high' | 'low'
+  // The address of a file the browser already has of the same photo, smaller:
+  // shown over the placeholder until this image loads (design 18a, u6r1pxsx).
+  fallbackSource?: string
 }
 
 export const Image = ({
@@ -30,21 +33,28 @@ export const Image = ({
   className,
   loading = 'lazy',
   fetchPriority = 'low',
+  fallbackSource,
 }: Props) => {
   // Start "loaded" so a cache-hit image (already `complete` on mount, before any
   // onLoad can fire) shows immediately without a fade. The effect below flips it
   // back to false only for lazy images that still need to fetch — eager (LCP)
-  // images are never hidden, avoiding a post-hydration flash of the SSR image.
+  // images are never hidden, avoiding a post-hydration flash of the SSR image —
+  // and for one that has a fallback to fade in over.
   const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(true)
   const [highResImage, setHighResImage] = useState<HTMLImageElement | null>(
     null,
   )
+  // Kept from the first render: the flight that brought it ends before this
+  // image may have loaded.
+  const [heldFallbackSource] = useState(fallbackSource)
 
   useEffect(() => {
-    if (loading === 'lazy' && highResImage && !highResImage.complete) {
+    const fadesIn = loading === 'lazy' || heldFallbackSource !== undefined
+
+    if (fadesIn && highResImage && !highResImage.complete) {
       setIsHighResImageLoaded(false)
     }
-  }, [highResImage, loading])
+  }, [heldFallbackSource, highResImage, loading])
 
   if (src === undefined) {
     return <div className={clsx(styles.container, className)} />
@@ -68,6 +78,17 @@ export const Image = ({
         src={placeholder}
         width={width}
       />
+
+      {/* The list's file of the same photo, already loaded: decorative like the
+          placeholder, which it covers until the image below loads. */}
+      {heldFallbackSource !== undefined && (
+        <img
+          alt={''}
+          aria-hidden
+          className={clsx(styles.image, styles.fallbackImage)}
+          src={heldFallbackSource}
+        />
+      )}
 
       {/* High-res responsive image — rendered on the server too so the browser's
           preload scanner can discover and fetch it for LCP (no hydration gate). */}

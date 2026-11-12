@@ -16,6 +16,7 @@ import { StatusTag } from '~/components/status-tag'
 import { Subheadline } from '~/components/subheadline'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
 import { showsPublishDate } from '~/utils/content-preview/shows-publish-date'
+import { getPageFlightName } from '~/utils/page-flight/get-page-flight-name'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -79,6 +80,7 @@ export default function ArticleRoute({
       {article.featuredImage && (
         <FeaturedImage
           alt={article.featuredImage.altText}
+          flightName={getPageFlightName('article-image', article.id)}
           image={article.featuredImage.sources}
         >
           <FeaturedImageCaption>

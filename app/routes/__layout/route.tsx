@@ -1,10 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Outlet, useRouteLoaderData } from 'react-router'
+import { Outlet, useLocation, useRouteLoaderData } from 'react-router'
 import { AppBody } from '~/components/app-body'
 import { AppFooter } from '~/components/app-footer'
 import { AppHeader } from '~/components/app-header'
 import { BoundaryError } from '~/components/boundary-error'
+import { PageTransition } from '~/components/page-transition'
+import { usePageFlightClicks } from '~/hooks/use-page-flight-clicks'
 import { getSiteFeedLinks } from '~/utils/feeds/get-site-feed-links'
 import type { loader } from './_loader'
 import type { Route } from './+types/route'
@@ -19,13 +21,20 @@ export { meta } from './_meta'
 export const links: Route.LinksFunction = () => getSiteFeedLinks()
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+  const { pathname, search } = useLocation()
+
+  usePageFlightClicks()
+
+  // A new page for every address, the next page of a list included (18d).
   return (
     <>
       <AppHeader>
         <SitePreviewBar previewMode={loaderData.previewMode} />
       </AppHeader>
       <AppBody>
-        <Outlet />
+        <PageTransition transitionKey={pathname + search}>
+          <Outlet />
+        </PageTransition>
       </AppBody>
       <AppFooter />
     </>

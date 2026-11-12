@@ -20,6 +20,14 @@
   }
 }
 
+/* While the page changes, the header doesn't slide in or out: it stands
+   where the new page has it (18a, u6r1pxsx). */
+:global(:root:active-view-transition) .container {
+  @layer variant {
+    transition: none;
+  }
+}
+
 /* The header's shift as one variable, so what sticks under it rides along in
    the same transition (10a, d104jrnd): minus its height while scrolling down,
    0 on the way up. It stays put with reduced motion; browsers without

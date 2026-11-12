@@ -1,7 +1,9 @@
 import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 import { Image } from '~/components/image'
+import { PageFlight } from '~/components/page-flight'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
+import { usePageFlight } from '~/utils/page-flight/use-page-flight'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -10,6 +12,7 @@ type Props = {
   children?: ReactNode
   className?: string
   imageClassName?: string
+  flightName?: string
 }
 
 /**
@@ -19,6 +22,9 @@ type Props = {
  * @param props.children - The caption, a `FeaturedImageCaption`.
  * @param props.imageClassName - Styles the image frame, e.g. a ratio instead of
  *   the fixed height where the column is narrower.
+ * @param props.flightName - Its view transition name, such as
+ *   `article-image-<id>`: a list's image with the same name flies here, and the
+ *   image shows that file until its own loads (design 18a, 18b).
  */
 export const FeaturedImage = ({
   alt,
@@ -26,17 +32,23 @@ export const FeaturedImage = ({
   children,
   className,
   imageClassName,
+  flightName,
 }: Props) => {
+  const flight = usePageFlight(flightName ?? '')
+
   return (
     <figure className={clsx(styles.container, className)}>
-      <Image
-        {...image}
-        alt={alt}
-        className={clsx(styles.image, imageClassName)}
-        fetchPriority={'high'}
-        loading={'eager'}
-        sizes={'(min-width: 60rem) 940px, 100vw'}
-      />
+      <PageFlight kind={flight?.kind} name={flight?.name}>
+        <Image
+          {...image}
+          alt={alt}
+          className={clsx(styles.image, imageClassName)}
+          fallbackSource={flight?.source}
+          fetchPriority={'high'}
+          loading={'eager'}
+          sizes={'(min-width: 60rem) 940px, 100vw'}
+        />
+      </PageFlight>
       {children}
     </figure>
   )

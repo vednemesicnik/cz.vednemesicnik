@@ -15,6 +15,7 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
+import { PageFlight } from '~/components/page-flight'
 import { StatusTag } from '~/components/status-tag'
 import { Tile } from '~/components/tile'
 import { TileCaption } from '~/components/tile-caption'
@@ -22,6 +23,7 @@ import { TileCard } from '~/components/tile-card'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
 import { sizeConfig } from '~/config/size-config'
+import { getPageFlightName } from '~/utils/page-flight/get-page-flight-name'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -39,17 +41,30 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <Heading level={2}>Podcasty</Heading>
           <TileGrid>
             {podcasts.map((podcast) => {
+              // The cover flies into the podcast's header; the tile's frame
+              // and shadow stay on the list (18c).
+              const flightName =
+                podcast.cover === null
+                  ? undefined
+                  : getPageFlightName('podcast-cover', podcast.id)
+
               return (
                 <TileGridItem key={podcast.id}>
-                  <BaseLink to={`/podcasts/${podcast.slug}`}>
+                  <BaseLink
+                    data-page-flight={flightName}
+                    data-page-flight-kind={flightName && 'tile'}
+                    to={`/podcasts/${podcast.slug}`}
+                  >
                     <Tile isPreview={podcast.previewState !== null}>
                       <TileCard>
                         {podcast.cover !== null && (
-                          <Image
-                            {...podcast.cover.sources}
-                            alt={podcast.cover.altText}
-                            sizes={`${sizeConfig.podcastCover.width}px`}
-                          />
+                          <PageFlight kind={'tile'} name={flightName}>
+                            <Image
+                              {...podcast.cover.sources}
+                              alt={podcast.cover.altText}
+                              sizes={`${sizeConfig.podcastCover.width}px`}
+                            />
+                          </PageFlight>
                         )}
                       </TileCard>
                       <TileCaption>
@@ -81,7 +96,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     isPreview={episode.isPreview}
                     to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
                   >
-                    <ContentLinkCover alt={coverAlt} image={coverSources} />
+                    <ContentLinkCover
+                      alt={coverAlt}
+                      flightName={getPageFlightName(
+                        'episode-cover',
+                        episode.id,
+                      )}
+                      image={coverSources}
+                    />
                     <ContentLinkTitle level={3}>
                       {episode.number !== null && (
                         <>

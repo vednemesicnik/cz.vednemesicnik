@@ -73,11 +73,7 @@ export default function RouteComponent({
           Účet: <span className={styles.value}>{loaderData.email}</span>
         </p>
         {/* A navigation drawn as the primary button (20f). */}
-        <Form
-          action={href('/administration/settings')}
-          method={'get'}
-          viewTransition
-        >
+        <Form action={href('/administration/settings')} method={'get'}>
           <Button type={'submit'}>Pokračovat do Nastavení</Button>
         </Form>
       </AdminSignInCard>

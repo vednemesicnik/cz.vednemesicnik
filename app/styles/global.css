@@ -41,6 +41,51 @@
   --transition-base: 200ms ease-in-out;
   --transition-slow: 300ms ease-in-out;
 
+  /* The spring a photo moves on from place to place (12b, 1vd3dq22; 18a,
+     u6r1pxsx): mass 1, stiffness 246.7, damping 26.7 (Apple's duration
+     0.4 s, bounce 0.15), sampled into linear() and cut at 600 ms, 0.04 %
+     short of the end. It overshoots by 0.63 % at 380 ms, a few pixels at
+     most. Only for position, size and corners: opacity mustn't overshoot. */
+  --spring-easing: linear(
+    0,
+    0.0011 0.5%,
+    0.0057 1.2%,
+    0.0135 1.8%,
+    0.0243 2.5%,
+    0.0376 3.2%,
+    0.0532 3.8%,
+    0.0707 4.5%,
+    0.095 5.3%,
+    0.1326 6.5%,
+    0.1854 8%,
+    0.4131 14%,
+    0.4682 15.5%,
+    0.5209 17%,
+    0.5708 18.5%,
+    0.6177 20%,
+    0.6613 21.5%,
+    0.7017 23%,
+    0.7387 24.5%,
+    0.7724 26%,
+    0.803 27.5%,
+    0.8305 29%,
+    0.8551 30.5%,
+    0.8794 32.2%,
+    0.9006 33.8%,
+    0.9206 35.7%,
+    0.9376 37.5%,
+    0.9519 39.3%,
+    0.9647 41.3%,
+    0.9751 43.3%,
+    0.984 45.5%,
+    0.9913 47.8%,
+    1.0012 53%,
+    1.0052 57.8%,
+    1.0063 63.8%,
+    1
+  );
+  --spring-duration: 600ms;
+
   /* ========================================
      Border Radius
      ======================================== */
@@ -76,5 +121,84 @@
     @supports (min-width: 100dvh) {
       min-height: 100dvh;
     }
+  }
+
+  /* ========================================
+     Page transitions (design 18a–18d, u6r1pxsx)
+     ======================================== */
+
+  /* A press goes through to the new page; where Chrome hit-tests the
+     transition as <html> anyway, `skipViewTransitionOnInput` hands it on. */
+  ::view-transition {
+    pointer-events: none;
+  }
+
+  /* The old page leaves and the new one comes in where each stands, in one
+     200 ms cross-fade (`PageTransition`). The rest of the old window (header,
+     footer), which React lets go once the new page is in, fades with it. */
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(.page),
+  ::view-transition-new(.page) {
+    animation-duration: 200ms;
+    animation-timing-function: ease-in-out;
+  }
+
+  /* The image flies on the spring; its crop opens from the middle and its
+     corners go from the source's to the target's on the same spring. The two
+     snapshots cross in 200 ms with the page, since opacity mustn't overshoot
+     (`PageFlight`). */
+  ::view-transition-group(.page-flight) {
+    animation-duration: var(--spring-duration);
+    animation-timing-function: var(--spring-easing);
+  }
+
+  ::view-transition-image-pair(.page-flight) {
+    overflow: clip;
+    animation: page-flight-corners var(--spring-duration) var(--spring-easing)
+      both;
+  }
+
+  ::view-transition-old(.page-flight),
+  ::view-transition-new(.page-flight) {
+    height: 100%;
+    object-fit: cover;
+    animation-duration: 200ms;
+    animation-timing-function: ease-in-out;
+  }
+
+  /* An article row's frame to the main image (18a). */
+  ::view-transition-image-pair(.page-flight-article-row) {
+    --page-flight-from-radius: var(--radius-md);
+    --page-flight-to-radius: var(--radius-lg);
+  }
+
+  /* The home page's main article to the main image (18b). */
+  ::view-transition-image-pair(.page-flight-article-hero) {
+    --page-flight-from-radius: var(--radius-lg);
+    --page-flight-to-radius: var(--radius-lg);
+  }
+
+  /* A podcast tile's cover, inside its 1 px border, to the cover in the
+     header's frame, inside its own (18c). */
+  ::view-transition-image-pair(.page-flight-tile) {
+    --page-flight-from-radius: calc(var(--radius-lg) - 1px);
+    --page-flight-to-radius: calc(var(--radius-md) - 1px);
+  }
+
+  /* An episode row's cover to the cover in the header's frame (18c). */
+  ::view-transition-image-pair(.page-flight-cover) {
+    --page-flight-from-radius: var(--radius-md);
+    --page-flight-to-radius: calc(var(--radius-md) - 1px);
+  }
+}
+
+@keyframes page-flight-corners {
+  from {
+    border-radius: var(--page-flight-from-radius);
+  }
+
+  to {
+    border-radius: var(--page-flight-to-radius);
   }
 }

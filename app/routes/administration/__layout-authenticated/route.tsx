@@ -26,6 +26,7 @@ import { AdministrationSidebarUserText } from '~/components/administration-sideb
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
 import { ColumnAdministrationSidebar } from '~/components/column-administration-sidebar'
 import { FullScreenAdministrationSidebar } from '~/components/full-screen-administration-sidebar'
+import { PageTransition } from '~/components/page-transition'
 import { RootBoundaryError } from '~/components/root-boundary-error'
 import { ToastProvider } from '~/components/toast-provider'
 import { useAccountEvents } from '~/hooks/use-account-events'
@@ -191,7 +192,11 @@ export default function RouteComponent({
               </FullScreenAdministrationSidebar>
             </dialog>
             <AdministrationContent className={styles.page}>
-              <Outlet />
+              {/* Keyed by the path alone: a list's filters write the search,
+                  and a new page would take the focus out of the field. */}
+              <PageTransition transitionKey={pathname}>
+                <Outlet />
+              </PageTransition>
             </AdministrationContent>
           </div>
         </ToastProvider>

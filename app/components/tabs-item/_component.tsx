@@ -28,7 +28,6 @@ export const TabsItem = ({ children, className, end, to }: Props) => {
         data-label={children}
         end={end}
         to={to}
-        viewTransition={true}
       >
         {children}
       </NavLink>
