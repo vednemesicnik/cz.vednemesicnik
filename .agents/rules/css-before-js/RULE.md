@@ -27,20 +27,29 @@ the fallback that skill gives, rather than rebuilding it in JS.
 
 ```tsx
 // bad: JS measures and decides how it looks
-<div style={{ maxHeight: isUnfolded ? measuredFoldHeight : 0 }} ref={measureFold}>
+<div style={{ maxHeight: isPanelOpen ? measuredPanelHeight : 0 }} ref={measurePanel}>
 
-// good: JS states the fact, CSS decides how it looks
-<div data-unfolded={isUnfolded || undefined} className={styles.fold}>
+// good: JS states the fact (and keeps a shut panel out of reach), CSS decides how it looks
+<div data-expanded={isPanelOpen || undefined} className={styles.panel}>
+  <div inert={!isPanelOpen}>…</div>
+</div>
 ```
 
 ```css
-.fold {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 200ms ease-in-out;
+.panel {
+  @layer component {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 200ms ease-in-out;
 
-  &[data-unfolded] {
-    grid-template-rows: 1fr;
+    /* A 0fr row still holds its content's height until the content may shrink. */
+    & > * {
+      overflow: hidden;
+    }
+
+    &[data-expanded] {
+      grid-template-rows: 1fr;
+    }
   }
 }
 ```
