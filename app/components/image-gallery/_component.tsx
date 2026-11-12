@@ -28,7 +28,8 @@ const revealTile = (tile: HTMLElement | null | undefined) =>
  * them (design 12a/12b). A single image takes one tile in the first column.
  * The photo grows out of its tile and flies back into the tile of the image
  * open at the close (l18gjrxu), which then has the focus. Back closes the
- * viewer too.
+ * viewer too. The flight assumes one gallery in the document, as an article
+ * has; with two it doesn't play.
  *
  * @param images - In gallery order; the article puts its featured image first.
  */

@@ -8,8 +8,9 @@ type Options = {
  * the photo flies between its tile and the viewer (design 12b, l18gjrxu).
  * Only the start is here: the styles name the photo, time the flight and
  * honour reduced motion by the transition's types, `gallery-viewer` and
- * `open` or `close`. A browser with transitions but without types
- * (Firefox 144–146) runs the update as it is, as one without the API does.
+ * `open` or `close`. A browser with transitions but without types (Safari
+ * 18.0–18.1, Firefox 144–146) runs the update as it is, as one without the
+ * API does, and the viewer fades by itself.
  *
  * @param options.update - Shows or hides the viewer; resolve it once the new
  *   state is on screen.

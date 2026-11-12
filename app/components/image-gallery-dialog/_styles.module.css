@@ -29,9 +29,9 @@
       opacity: 1;
     }
 
-    /* With view transitions the page's cross-fade carries the viewer and the
-       photo flies (l18gjrxu); without them it fades by itself. */
-    @supports not (view-transition-name: none) {
+    /* With typed view transitions the page's cross-fade carries the viewer
+       and the photo flies (l18gjrxu); without them it fades by itself. */
+    @supports not selector(:active-view-transition-type(gallery-viewer)) {
       transition-property: opacity, display, overlay;
       transition-duration: 150ms;
       transition-timing-function: ease-in-out;
@@ -104,7 +104,9 @@
   }
 }
 
-:global(html):active-view-transition-type(close) {
+:global(html):active-view-transition-type(
+  gallery-viewer
+):active-view-transition-type(close) {
   @layer component {
     &::view-transition-image-pair(gallery-photo) {
       animation-direction: reverse;
@@ -260,13 +262,21 @@
     }
 
     /* A zoomed photo is whole in the close's first frame, so it doesn't fly
-       out past the stage. */
-    :global(html):active-view-transition-type(close) &[data-zoomed] {
+       out past the stage; without the flight, it fades out whole. */
+    :global(html):active-view-transition-type(
+        gallery-viewer
+      ):active-view-transition-type(close)
+      &[data-zoomed] {
       transform: none;
       transition: none;
     }
 
-    @supports not (view-transition-name: none) {
+    @supports not selector(:active-view-transition-type(gallery-viewer)) {
+      .dialog:not([open]) &[data-zoomed] {
+        transform: none;
+        transition: none;
+      }
+
       @media (prefers-reduced-motion: no-preference) {
         .dialog[open] & {
           scale: 1;
