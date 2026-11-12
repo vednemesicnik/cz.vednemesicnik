@@ -33,13 +33,16 @@ favour of React's `<ViewTransition>` (React 19.3). The React source
   - A change at the same address (data reloaded after an action) has `update="none"`.
   - A POP navigation is skipped as it starts.
 - **`PageFlight` names an image at either end.**
-  - The list's images carry permanent unique names (`getPageFlightName`, e.g.
-    `article-image-<id>`).
-  - The page's image carries one only while `pageFlightStore` holds a flight for it.
+  - Both ends carry permanent unique names (`getPageFlightName`, e.g. `article-image-<id>`).
+  - The page's end has a share class only while `pageFlightStore` holds a flight for it, and
+    declines to pair otherwise. Its name stays, since React tracks a name by the one a boundary
+    mounted with: a name taken away and given back reads as a duplicate.
   - A click listener (`startPageFlight`) starts that flight when the image has loaded, at least
     half of it is visible below the header and motion isn't reduced.
-  - `PageTransition` clears the store when the transition ends, so the page that is left has no
-    name to fly back with.
+  - `PageTransition` clears the store when the transition ends, so the page that is left declines
+    to fly back.
+- **The header has a name of its own during a page transition**, shown only in its new state,
+  so the old page's top, which was under it, doesn't show through it.
 - **Skipping finishes every `::view-transition` animation** (`skipViewTransition`), the list React
   itself walks, on a press, a key, the wheel or a touch.
 - **The new page's image first shows the list's file** (`Image`'s `fallbackSource`), as the
