@@ -144,6 +144,17 @@
     animation-timing-function: ease-in-out;
   }
 
+  /* The header stands over both pages as the new one has it, without
+     sliding or fading (app-header). */
+  ::view-transition-group(app-header),
+  ::view-transition-new(app-header) {
+    animation: none;
+  }
+
+  ::view-transition-old(app-header) {
+    display: none;
+  }
+
   /* The image flies on the spring; its crop opens from the middle and its
      corners go from the source's to the target's on the same spring. The two
      snapshots cross in 200 ms with the page, since opacity mustn't overshoot
