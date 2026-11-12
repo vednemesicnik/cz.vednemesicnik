@@ -12,6 +12,11 @@ type Options = {
  * 18.0–18.1, Firefox 144–146) runs the update as it is, as one without the
  * API does, and the viewer fades by itself.
  *
+ * The flight delays nothing (1vd3dq22): a pointer or key going down while it
+ * runs skips it to its end and then goes on to its target, which the flight
+ * lets the pointer through to. So an arrow pages, ×, Esc and Space close and
+ * a tile opens again at once.
+ *
  * @param options.update - Shows or hides the viewer; resolve it once the new
  *   state is on screen.
  */
@@ -28,4 +33,36 @@ export const runViewerTransition = ({ kind, update }: Options) => {
 
   // A run skipped by a newer one rejects `ready`; nothing waits on it.
   transition.ready.catch(() => {})
+
+  const options = { capture: true, passive: true }
+
+  // During a transition Chrome hit-tests the flight as `<html>`, even with
+  // `pointer-events: none` on it, so the click that skipped the flight lands
+  // there too. It is handed on to the button or link under it, now on top.
+  const handOnClick = (event: MouseEvent) => {
+    if (event.target !== document.documentElement) return
+
+    const target = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest('button, a')
+
+    if (target instanceof HTMLElement) target.click()
+  }
+
+  const skipByPointer = () => {
+    transition.skipTransition()
+    window.addEventListener('click', handOnClick, { ...options, once: true })
+  }
+
+  const skipByKey = () => transition.skipTransition()
+
+  window.addEventListener('pointerdown', skipByPointer, options)
+  window.addEventListener('keydown', skipByKey, options)
+
+  transition.finished
+    .catch(() => {})
+    .finally(() => {
+      window.removeEventListener('pointerdown', skipByPointer, options)
+      window.removeEventListener('keydown', skipByKey, options)
+    })
 }
