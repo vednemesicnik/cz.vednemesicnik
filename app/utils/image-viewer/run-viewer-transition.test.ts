@@ -3,12 +3,20 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { runViewerTransition } from './run-viewer-transition'
 
-// A stand-in for the browser: it records the options and runs the update.
+const skipTransition = vi.fn()
+let finish = () => {}
+
+// A stand-in for the browser: it records the options, runs the update and
+// finishes when the test says so.
 const startViewTransition = vi.fn(
   (options: { update: () => void | Promise<void> }) => {
     void options.update()
 
-    return { ready: Promise.resolve() }
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+
+    return { finished, ready: Promise.resolve(), skipTransition }
   },
 )
 
@@ -22,6 +30,7 @@ const stubBrowser = ({ hasTypes }: { hasTypes: boolean }) => {
 }
 
 afterEach(() => {
+  finish()
   vi.unstubAllGlobals()
   vi.clearAllMocks()
   Reflect.deleteProperty(document, 'startViewTransition')
@@ -39,6 +48,27 @@ describe('runViewerTransition', () => {
       update,
     })
     expect(update).toHaveBeenCalledTimes(1)
+  })
+
+  test('a pointer or key going down during the flight skips it', () => {
+    stubBrowser({ hasTypes: true })
+
+    runViewerTransition({ kind: 'open', update: () => {} })
+    window.dispatchEvent(new Event('pointerdown'))
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
+
+    expect(skipTransition).toHaveBeenCalledTimes(2)
+  })
+
+  test('once the flight has finished, input skips nothing', async () => {
+    stubBrowser({ hasTypes: true })
+
+    runViewerTransition({ kind: 'open', update: () => {} })
+    finish()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    window.dispatchEvent(new Event('pointerdown'))
+
+    expect(skipTransition).not.toHaveBeenCalled()
   })
 
   test('without types the update runs at once', () => {

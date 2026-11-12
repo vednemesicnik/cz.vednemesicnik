@@ -38,9 +38,9 @@ type Props = {
   tileImageSource?: string
 }
 
-// The time the close takes (design 12b, l18gjrxu): the photo is put back
-// after it.
-const CLOSE_DURATION = 300
+// The time the close takes, the spring's 600 ms (design 12b, 1vd3dq22): the
+// photo is put back after it.
+const CLOSE_DURATION = 600
 
 /**
  * The image viewer for the whole gallery (design 12b, zn43av9y): the window
@@ -125,7 +125,10 @@ export const ImageGalleryDialog = ({
     let timeout: ReturnType<typeof setTimeout> | undefined
 
     const handleDialogClose = () => {
-      timeout = setTimeout(reset, CLOSE_DURATION)
+      // Not if a tile has opened the viewer again meanwhile.
+      timeout = setTimeout(() => {
+        if (!dialog.open) reset()
+      }, CLOSE_DURATION)
     }
 
     dialog.addEventListener('close', handleDialogClose)
