@@ -308,14 +308,14 @@
   }
 }
 
-/* At the window edge, vertically centred on the area below the band, so they
-   never move while paging; a drag down fades them with the band. */
 /* From 10 : 7, at the window's edges, vertically centred on the area below
-   the band, so they never move while paging; they fade with the band. */
+   the band, so they never move while paging; they fade with the band. Above
+   the stage, which comes later and would take their clicks, and close. */
 .arrowAnchor {
   @layer variant {
     @media (aspect-ratio >= 10 / 7) {
       position: absolute;
+      z-index: 1;
       top: calc((100% + 64px + env(safe-area-inset-top)) / 2);
       transform: translateY(-50%);
     }
