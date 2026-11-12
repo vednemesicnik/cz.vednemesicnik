@@ -109,7 +109,9 @@
      important declaration in the lowest layer beats every normal one. */
   @media (forced-colors: active) {
     :focus-visible {
+      /* biome-ignore lint/complexity/noImportantStyles: beats every component's outline: none, in this mode only */
       outline: 2px solid Highlight !important;
+      /* biome-ignore lint/complexity/noImportantStyles: as above */
       outline-offset: 2px !important;
     }
   }
