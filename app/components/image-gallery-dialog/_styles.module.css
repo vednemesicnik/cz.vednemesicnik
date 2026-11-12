@@ -29,9 +29,9 @@
       opacity: 1;
     }
 
-    /* With view transitions the page's cross-fade carries the viewer and the
-       photo flies (l18gjrxu); without them it fades by itself. */
-    @supports not (view-transition-name: none) {
+    /* With typed view transitions the page's cross-fade carries the viewer
+       and the photo flies (l18gjrxu); without them it fades by itself. */
+    @supports not selector(:active-view-transition-type(gallery-viewer)) {
       transition-property: opacity, display, overlay;
       transition-duration: 150ms;
       transition-timing-function: ease-in-out;
@@ -73,8 +73,10 @@
 
 /* The flight (12b, l18gjrxu): the photo 300 ms on a curve that brakes late,
    its crop opening from the tile's 3 : 2 and its corners from 7 px to none;
-   the backdrop, band, arrows and caption one cross-fade of the page. */
-:global(html)[data-viewer-transition] {
+   the backdrop, band, arrows and caption one cross-fade of the page. Timed
+   by the viewer's own transition type, so the site's other transitions keep
+   theirs. */
+:global(html):active-view-transition-type(gallery-viewer) {
   @layer component {
     &::view-transition-group(gallery-photo) {
       animation-duration: 300ms;
@@ -102,7 +104,9 @@
   }
 }
 
-:global(html)[data-viewer-transition="close"] {
+:global(html):active-view-transition-type(
+  gallery-viewer
+):active-view-transition-type(close) {
   @layer component {
     &::view-transition-image-pair(gallery-photo) {
       animation-direction: reverse;
@@ -247,14 +251,32 @@
       transition: scale 200ms ease-in-out;
     }
 
+    /* The photo's end of the flight, named only in the viewer's own
+       transition; with reduced motion the page only cross-fades. */
+    @media (prefers-reduced-motion: no-preference) {
+      :global(html):active-view-transition-type(gallery-viewer)
+        .dialog[open]
+        & {
+        view-transition-name: gallery-photo;
+      }
+    }
+
     /* A zoomed photo is whole in the close's first frame, so it doesn't fly
-       out past the stage. */
-    .dialog[data-closing] &[data-zoomed] {
+       out past the stage; without the flight, it fades out whole. */
+    :global(html):active-view-transition-type(
+        gallery-viewer
+      ):active-view-transition-type(close)
+      &[data-zoomed] {
       transform: none;
       transition: none;
     }
 
-    @supports not (view-transition-name: none) {
+    @supports not selector(:active-view-transition-type(gallery-viewer)) {
+      .dialog:not([open]) &[data-zoomed] {
+        transform: none;
+        transition: none;
+      }
+
       @media (prefers-reduced-motion: no-preference) {
         .dialog[open] & {
           scale: 1;
