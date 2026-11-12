@@ -60,7 +60,7 @@ const KEEPS_OPEN = 'button, a, figcaption, [data-keeps-open]'
  * flies the photo between its tile and the frame (`data-viewer-photo`,
  * l18gjrxu). The ×, Esc, a click on the dark area and a drag down ask the
  * parent to close it; a zoomed photo is whole again in the close's first
- * frame (`data-closing` on the dialog).
+ * frame (the `close` transition type).
  *
  * @param index - The image shown; the parent owns it, so a tile can open the
  *   viewer at its own image.

@@ -12,5 +12,17 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 1rem;
     }
+
+    /* The photo flies from and back into the image of the current tile, named
+       only in the viewer's own transition and only while the viewer is shut
+       (12b, l18gjrxu); with reduced motion the page only cross-fades. */
+    @media (prefers-reduced-motion: no-preference) {
+      :global(html):active-view-transition-type(gallery-viewer)
+        &:not(:has(~ dialog[open]))
+        > [data-current]
+        > :first-child {
+        view-transition-name: gallery-photo;
+      }
+    }
   }
 }

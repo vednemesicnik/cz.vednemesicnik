@@ -40,13 +40,6 @@ export const ImageGallery = ({ images, className }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const [tileImageSource, setTileImageSource] = useState<string>()
 
-  // The tile's image, which the photo flies from and back into.
-  const getTileImage = (index: number) => {
-    const image = tileRefs.current[index]?.firstElementChild
-
-    return image instanceof HTMLElement ? image : null
-  }
-
   const getFrame = () =>
     dialogRef.current?.querySelector<HTMLElement>('[data-viewer-photo]') ?? null
 
@@ -69,15 +62,7 @@ export const ImageGallery = ({ images, className }: Props) => {
       return
     }
 
-    // A zoomed photo is whole again in the first frame (design 12b).
-    dialog.dataset.closing = ''
-
-    runViewerTransition({
-      from: getFrame(),
-      getTo: () => getTileImage(currentIndexRef.current),
-      kind: 'close',
-      update: () => dialog.close(),
-    })
+    runViewerTransition({ kind: 'close', update: () => dialog.close() })
   }
 
   const openViewer = useViewerHistory(dialogRef, (event) =>
@@ -86,15 +71,14 @@ export const ImageGallery = ({ images, className }: Props) => {
   )
 
   const handleOpen = (index: number) => {
+    // Current before the transition starts, so its first snapshot names the
+    // clicked tile's image.
+    flushSync(() => showImage(index))
+
     runViewerTransition({
-      from: getTileImage(index),
-      getTo: getFrame,
       kind: 'open',
       update: async () => {
-        flushSync(() => {
-          showImage(index)
-          setIsOpen(true)
-        })
+        flushSync(() => setIsOpen(true))
         openViewer()
         // The dialog, not the ×: Safari shows the focus ring and tooltip of a
         // button focused on open, a tap included.
@@ -113,7 +97,6 @@ export const ImageGallery = ({ images, className }: Props) => {
     if (dialog === null) return
 
     const handleClose = () => {
-      delete dialog.dataset.closing
       setIsOpen(false)
       const tile = tileRefs.current[currentIndexRef.current]
       revealTile(tile)
@@ -132,6 +115,7 @@ export const ImageGallery = ({ images, className }: Props) => {
           <ImageGalleryPreview
             alt={image.alt}
             image={image.sources}
+            isCurrent={index === currentIndex}
             key={image.id}
             onClick={() => handleOpen(index)}
             ref={(tile) => {
