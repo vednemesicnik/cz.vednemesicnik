@@ -70,7 +70,7 @@ Commits. Stop before pushing and before the PR — that is `/ship-issue`.
 
 5. **Load what governs the files you'll touch** before the first edit:
    `.agents/rules/*/RULE.md` (file-naming, typescript-conventions, naming-no-abbreviations,
-   functional-style), the relevant `.agents/skills/*/SKILL.md` (general-guidance for CSS and
+   functional-style, css-before-js), the relevant `.agents/skills/*/SKILL.md` (general-guidance for CSS and
    stories, component-authoring for markup and components, react-router, prisma-*), and the
    `modern-web-guidance` search for HTML/CSS/JS.
 

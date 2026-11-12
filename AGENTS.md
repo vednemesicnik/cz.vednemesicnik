@@ -440,6 +440,13 @@ Applies when writing any stateful object (store, registry, cache, manager) or co
 
 Read `.agents/rules/functional-style/RULE.md` before acting.
 
+### CSS Before JS
+
+Applies when writing client code that changes how something looks or moves with state, or
+reviewing such a diff.
+
+Read `.agents/rules/css-before-js/RULE.md` before acting.
+
 ### One Function per File
 
 Applies when writing a new utility, helper or server function, or adding a function to an existing module.
