@@ -89,6 +89,7 @@ import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useReplaceFrame } from '~/hooks/use-replace-frame'
+import { useReturnLink } from '~/hooks/use-return-link'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
@@ -253,6 +254,9 @@ export default function RouteComponent({
       : href('/administration/articles/:articleId', {
           articleId: params.articleId,
         })
+  // Back up to the detail or to the list as it was left (30i).
+  const listReturn = useReturnLink(listHref)
+  const closeReturn = useReturnLink(closeHref)
 
   // Addresses another article holds as published (24d, log 0039); the
   // schema turns them into the field's error.
@@ -553,10 +557,14 @@ export default function RouteComponent({
   const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
     if (uploadingCountRef.current > 0) {
-      askBeforeLeaving(closeHref, () => navigate(closeHref))
+      askBeforeLeaving(closeReturn.href, () =>
+        navigate(closeReturn.href, { state: closeReturn.state }),
+      )
       return
     }
-    void leaveTo(closeHref, () => navigate(closeHref))
+    void leaveTo(closeReturn.href, () =>
+      navigate(closeReturn.href, { state: closeReturn.state }),
+    )
   }
 
   // The gallery: every image change saves on its own (24b, log 0027).
@@ -1183,7 +1191,8 @@ export default function RouteComponent({
         <LinkButton
           onClick={handleClose}
           size={'sm'}
-          to={closeHref}
+          state={closeReturn.state}
+          to={closeReturn.href}
           variant={'ghost'}
         >
           Zavřít
@@ -1211,7 +1220,8 @@ export default function RouteComponent({
         <LinkButton
           className={styles.headerClose}
           onClick={handleClose}
-          to={closeHref}
+          state={closeReturn.state}
+          to={closeReturn.href}
           variant={'outline'}
         >
           Zavřít
@@ -1297,7 +1307,9 @@ export default function RouteComponent({
 
       {isDeletedDialogOpen && (
         <ContentDeletedDialog
-          onOpenList={() => navigate(listHref)}
+          onOpenList={() =>
+            navigate(listReturn.href, { state: listReturn.state })
+          }
           onStay={() => setIsDeletedDialogOpen(false)}
         >
           <AdminModalTitle>Článek byl smazán</AdminModalTitle>
@@ -1323,7 +1335,9 @@ export default function RouteComponent({
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
           holderName={holdLoss.holderName}
-          onOpenDetail={() => navigate(closeHref)}
+          onOpenDetail={() =>
+            navigate(closeReturn.href, { state: closeReturn.state })
+          }
           onStay={closeHoldLossDialog}
         >
           <AdminModalDescription>
@@ -1351,7 +1365,9 @@ export default function RouteComponent({
           <ContentChangedDialog
             canReload={canReloadChanged}
             onClose={closeHoldLossDialog}
-            onOpenDetail={() => navigate(closeHref)}
+            onOpenDetail={() =>
+              navigate(closeReturn.href, { state: closeReturn.state })
+            }
             onReload={reload}
           >
             <AdminModalTitle>Článek se mezitím změnil</AdminModalTitle>
@@ -1380,7 +1396,9 @@ export default function RouteComponent({
           holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
-          onCancel={() => navigate(closeHref)}
+          onCancel={() =>
+            navigate(closeReturn.href, { state: closeReturn.state })
+          }
           onConfirm={() => void editHold.takeOver()}
         />
       )}
@@ -1389,7 +1407,9 @@ export default function RouteComponent({
           content={'article'}
           key={editHold.attempt}
           kind={'other-tab'}
-          onCancel={() => navigate(closeHref)}
+          onCancel={() =>
+            navigate(closeReturn.href, { state: closeReturn.state })
+          }
           onConfirm={() => void editHold.takeOver()}
         />
       )}

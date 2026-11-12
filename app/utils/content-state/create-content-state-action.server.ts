@@ -6,6 +6,7 @@ import { flashAdminNotice } from '~/utils/admin-notice/flash-admin-notice.server
 import { requireCSRF } from '~/utils/csrf.server'
 import type { EditHoldContent } from '~/utils/edit-hold/edit-hold-content'
 import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
+import { getDeleteRedirectTarget } from '~/utils/navigation-trail/get-delete-redirect-target'
 
 import type {
   ContentStateHandlers,
@@ -139,7 +140,7 @@ const dispatchContentStateIntent = async (
 
       if (withRedirect) {
         throw redirect(
-          options.deleteRedirectTo,
+          getDeleteRedirectTarget(formData, options.deleteRedirectTo),
           options.deleteNotice === undefined
             ? undefined
             : {

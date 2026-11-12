@@ -9,6 +9,7 @@ import { ImageGalleryPreview } from '~/components/image-gallery-preview'
 import { useViewerHistory } from '~/hooks/use-viewer-history'
 import { runViewerTransition } from '~/utils/image-viewer/run-viewer-transition'
 import { waitForTileImage } from '~/utils/image-viewer/wait-for-tile-image'
+import { focusAfterInput } from '~/utils/input-modality/focus-after-input'
 import { readLoadedImageSource } from '~/utils/read-loaded-image-source'
 import styles from './_styles.module.css'
 
@@ -91,7 +92,8 @@ export const ImageGallery = ({ images, className }: Props) => {
 
   // Safari doesn't focus a button on click, so the dialog's own return of the
   // focus can land on the page. The focus goes to the tile the photo went
-  // back into, shown first also when the browser closed the viewer itself.
+  // back into, shown first also when the browser closed the viewer itself,
+  // with its ring only after the keyboard (30i).
   useEffect(() => {
     const dialog = dialogRef.current
 
@@ -101,7 +103,7 @@ export const ImageGallery = ({ images, className }: Props) => {
       setIsOpen(false)
       const tile = tileRefs.current[currentIndexRef.current]
       revealTile(tile)
-      tile?.focus({ preventScroll: true })
+      if (tile) focusAfterInput(tile)
     }
 
     dialog.addEventListener('close', handleClose)

@@ -24,3 +24,11 @@
     gap: 6px;
   }
 }
+
+/* The link around a tile draws no outline of its own: the focus ring is the
+   card's (design 10g, pwldhxq3). */
+:focus-visible:has(> .container) {
+  @layer component {
+    outline: none;
+  }
+}

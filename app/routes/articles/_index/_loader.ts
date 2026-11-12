@@ -1,8 +1,8 @@
-import { data } from 'react-router'
-import type { NotFoundPageData } from '~/components/boundary-error'
+import { redirect } from 'react-router'
 import { PAGE_PARAM } from '~/components/pagination'
 import { buildVisibleArticleWhere } from '~/routes/articles/utils/build-visible-article-where'
 import { findArticlesDraftsFirst } from '~/routes/articles/utils/find-articles-drafts-first.server'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { getListPreview } from '~/utils/content-preview/get-list-preview'
 import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
 import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
@@ -27,14 +27,13 @@ import type { Route } from './+types/route'
 const PAGE_SIZE = 9
 const CATEGORY_ROW_SIZE = 5
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const visibility = await getWebContentVisibility(request, [
     'article',
     'article_category',
   ])
   const visibleArticles = buildVisibleArticleWhere(visibility)
 
-  const url = new URL(request.url)
   const currentPage = parsePositiveIntegerParam(url.searchParams, PAGE_PARAM, 1)
 
   const [articles, totalCount, categories] = await Promise.all([
@@ -84,9 +83,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
+  // A page that no longer exists, a return through ‹ Články included, opens the
+  // last one (design 11a, 30i, fhhx3q8l), as in the administration.
   if (isPagePastLast(currentPage, totalPages)) {
-    const notFoundData: NotFoundPageData = { cause: 'page-past-last' }
-    throw data(notFoundData, { status: 404 })
+    throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
   const articlesWithSources = articles

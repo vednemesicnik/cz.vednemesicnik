@@ -112,3 +112,5 @@ Code comments cite an entry by its number (`log 0022`).
 | [0078](0078-a-subtree-turns-dark-by-declaring-the-roles-again-and-back-closes-an-overlay-the-router-never-sees.md) | A subtree turns dark by declaring the roles again, and Back closes an overlay the router never sees | 2026-11-11 |  |
 | [0079](0079-a-long-page-has-no-floating-button-to-its-top-or-bottom.md) | A long page has no floating button to its top or bottom | 2026-11-12 |  |
 | [0080](0080-pages-cross-fade-through-reacts-view-transition-keyed-by-their-address.md) | Pages cross-fade through React's ViewTransition, keyed by their address, and a list's image flies only on the click that chose it | 2026-11-12 |  |
+| [0081](0081-the-link-up-returns-the-list-as-it-was-left-through-a-per-tab-trail.md) | The link up returns the list as it was left, through a per-tab trail keyed by history entry | 2026-11-12 | [0082](0082-a-web-list-page-past-the-last-redirects-to-the-last-page.md) |
+| [0082](0082-a-web-list-page-past-the-last-redirects-to-the-last-page.md) | A web list page past the last redirects to the last page | 2026-11-12 |  |

@@ -10,7 +10,9 @@ export const BaseBreadcrumbLink = ({
   end = true,
   ...rest
 }: Props) => {
-  const path = typeof to === 'string' ? to : (to.pathname ?? '')
+  // A step back to a remembered list carries its query; the page is its path.
+  const path =
+    typeof to === 'string' ? (to.split('?')[0] ?? '') : (to.pathname ?? '')
   const pathMatch = useMatch({ end, path })
   const isCurrentPage = pathMatch !== null
 

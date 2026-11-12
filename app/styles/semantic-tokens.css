@@ -436,21 +436,18 @@
     /* ========================================
        Focus rings
        ======================================== */
-    --focus-shadow: 0 0 0 3px
-      light-dark(
-        color-mix(in srgb, var(--color-violet-500) 30%, transparent),
-        color-mix(in srgb, var(--color-violet-400) 40%, transparent)
-      );
-    --focus-shadow-error: 0 0 0 3px
-      light-dark(
-        color-mix(in srgb, var(--color-rose-500) 30%, transparent),
-        color-mix(in srgb, var(--color-rose-400) 40%, transparent)
-      );
-    --focus-shadow-danger: 0 0 0 3px
-      light-dark(
-        color-mix(in srgb, var(--color-rose-600) 30%, transparent),
-        color-mix(in srgb, var(--color-rose-600) 45%, transparent)
-      );
+    /* A 1 px gap in the page colour, then a solid 2 px band: at least 3 : 1
+       on every surface, and apart from a filled button (design 33a,
+       80lyvxih). */
+    --focus-shadow:
+      0 0 0 1px var(--bg-primary),
+      0 0 0 3px light-dark(var(--color-violet-600), var(--color-violet-400));
+    --focus-shadow-error:
+      0 0 0 1px var(--bg-primary),
+      0 0 0 3px light-dark(var(--color-rose-600), var(--color-rose-400));
+    --focus-shadow-danger:
+      0 0 0 1px var(--bg-primary),
+      0 0 0 3px light-dark(var(--color-rose-700), var(--color-rose-400));
 
     /* ========================================
        Pre-redesign roles — not in the design system; each goes with

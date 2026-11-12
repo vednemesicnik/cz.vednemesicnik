@@ -1,8 +1,8 @@
-import { data, href } from 'react-router'
-import type { NotFoundPageData } from '~/components/boundary-error'
+import { data, href, redirect } from 'react-router'
 import { PAGE_PARAM } from '~/components/pagination'
 import { buildVisibleArticleWhere } from '~/routes/articles/utils/build-visible-article-where'
 import { findArticlesDraftsFirst } from '~/routes/articles/utils/find-articles-drafts-first.server'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { getListPreview } from '~/utils/content-preview/get-list-preview'
 import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
 import type { PagePreview } from '~/utils/content-preview/page-preview'
@@ -25,7 +25,7 @@ import type { Route } from './+types/route'
 
 const PAGE_SIZE = 9
 
-export const loader = async ({ params, request }: Route.LoaderArgs) => {
+export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
   const { slug } = params
 
   const visibility = await getWebContentVisibility(request, [
@@ -42,7 +42,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  const url = new URL(request.url)
   const currentPage = parsePositiveIntegerParam(url.searchParams, PAGE_PARAM, 1)
 
   const where = {
@@ -89,9 +88,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
+  // A page that no longer exists opens the last one (design 11a, fhhx3q8l), as
+  // in the administration.
   if (isPagePastLast(currentPage, totalPages)) {
-    const notFoundData: NotFoundPageData = { cause: 'page-past-last' }
-    throw data(notFoundData, { status: 404 })
+    throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
   const articlesWithSources = articles

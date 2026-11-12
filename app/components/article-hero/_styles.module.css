@@ -5,6 +5,10 @@
     margin-block-end: 2.5rem;
     color: inherit;
     text-decoration: none;
+
+    &:focus-visible {
+      outline: none;
+    }
   }
 }
 
@@ -98,5 +102,13 @@
   @layer variant {
     outline: 2px dashed var(--preview-outline);
     outline-offset: 4px;
+  }
+}
+
+/* The focus ring is the card's, the system's --focus-shadow in place of the
+   browser's outline, as on MediaContentLink in the design system. */
+.link:focus-visible > .container {
+  @layer component {
+    box-shadow: var(--focus-shadow);
   }
 }

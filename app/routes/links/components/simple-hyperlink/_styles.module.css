@@ -16,10 +16,11 @@
     border: none;
     min-height: 44px;
 
+    /* The system's ring on a light surface, as on simple-link. */
     &:focus-visible {
       box-shadow:
-        0 0 0 2px var(--color-white),
-        0 0 0 4px var(--primary);
+        0 0 0 1px var(--color-white),
+        0 0 0 3px var(--color-violet-600);
       outline: none;
     }
   }

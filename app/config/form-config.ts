@@ -44,4 +44,8 @@ export const FORM_CONFIG = {
   redirect: {
     name: 'redirect',
   },
+  // The list a delete from a record goes back to, as it was left (30i).
+  redirectTo: {
+    name: 'redirectTo',
+  },
 } as const
