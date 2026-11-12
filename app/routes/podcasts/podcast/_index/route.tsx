@@ -25,6 +25,7 @@ import { Subheadline } from '~/components/subheadline'
 import { EPISODE_NOUN } from '~/config/list-noun-config'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
 import { formatListCount } from '~/utils/format-list-count'
+import { getPageFlightName } from '~/utils/page-flight/get-page-flight-name'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -43,6 +44,7 @@ export default function PodcastPage({
         {podcast.cover !== null && (
           <CoverHeaderCover
             alt={podcast.cover.altText}
+            flightName={getPageFlightName('podcast-cover', podcast.id)}
             image={podcast.cover.sources}
           />
         )}

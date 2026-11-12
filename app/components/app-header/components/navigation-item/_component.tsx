@@ -14,7 +14,6 @@ export const NavigationItem = ({ children, to }: Props) => (
       className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
       prefetch={'intent'}
       to={to}
-      viewTransition={true}
     >
       {children}
     </NavLink>

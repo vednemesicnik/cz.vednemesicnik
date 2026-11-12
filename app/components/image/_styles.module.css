@@ -35,3 +35,18 @@
   width: 100%;
   height: auto;
 }
+
+/* The file a list already showed, over the placeholder until the image's own
+   loads; that one then fades in faster, over a sharp picture (design 18a).
+   After `.image`, so its height wins over `auto`. */
+.fallbackImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fallbackImage ~ .highResPicture {
+  transition-duration: 150ms;
+}

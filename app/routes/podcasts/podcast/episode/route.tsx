@@ -14,6 +14,7 @@ import { StatusTag } from '~/components/status-tag'
 import { Subheadline } from '~/components/subheadline'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
 import { showsPublishDate } from '~/utils/content-preview/shows-publish-date'
+import { getPageFlightName } from '~/utils/page-flight/get-page-flight-name'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ListenLinkCard } from './components/listen-link-card'
@@ -37,6 +38,7 @@ export default function RouteComponent({
         {podcastEpisode.cover !== null && (
           <CoverHeaderCover
             alt={podcastEpisode.cover.altText}
+            flightName={getPageFlightName('episode-cover', podcastEpisode.id)}
             image={podcastEpisode.cover.sources}
           />
         )}

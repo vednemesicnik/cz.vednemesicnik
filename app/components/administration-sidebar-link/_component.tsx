@@ -41,7 +41,6 @@ export const AdministrationSidebarLink = ({
       end={end}
       prefetch={'intent'}
       to={to}
-      viewTransition={true}
       {...rest}
     >
       {children}

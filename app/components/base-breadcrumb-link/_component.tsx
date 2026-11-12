@@ -8,7 +8,6 @@ export const BaseBreadcrumbLink = ({
   to,
   prefetch = 'intent',
   end = true,
-  viewTransition = true,
   ...rest
 }: Props) => {
   const path = typeof to === 'string' ? to : (to.pathname ?? '')
@@ -21,7 +20,6 @@ export const BaseBreadcrumbLink = ({
       end={end}
       prefetch={prefetch}
       to={to}
-      viewTransition={viewTransition}
       {...rest}
     >
       {children}

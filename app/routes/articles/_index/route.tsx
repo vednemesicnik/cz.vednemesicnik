@@ -18,6 +18,7 @@ import { NavRowMore } from '~/components/nav-row-more'
 import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
 import { PostContentLink } from '~/components/post-content-link'
+import { getPageFlightName } from '~/utils/page-flight/get-page-flight-name'
 import type { Route } from './+types/route'
 
 export { loader } from './_loader'
@@ -69,6 +70,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               >
                 <ContentLinkImage
                   alt={article.featuredImage?.altText}
+                  flightName={getPageFlightName('article-image', article.id)}
                   image={article.featuredImage?.sources}
                 />
                 <ContentLinkTitle>{article.title}</ContentLinkTitle>

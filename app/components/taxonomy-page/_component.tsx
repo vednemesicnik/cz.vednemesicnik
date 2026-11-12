@@ -19,6 +19,7 @@ import { PostContentLink } from '~/components/post-content-link'
 import type { StatusTagState } from '~/components/status-tag'
 import type { FormattedDate } from '~/utils/format-date'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
+import { getPageFlightName } from '~/utils/page-flight/get-page-flight-name'
 
 type TaxonomyArticle = {
   authors: { name: string }[]
@@ -91,6 +92,7 @@ export const TaxonomyPage = ({
               >
                 <ContentLinkImage
                   alt={article.featuredImage?.altText}
+                  flightName={getPageFlightName('article-image', article.id)}
                   image={article.featuredImage?.sources}
                 />
                 <ContentLinkTitle>{article.title}</ContentLinkTitle>
