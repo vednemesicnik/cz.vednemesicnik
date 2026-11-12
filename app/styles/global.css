@@ -104,6 +104,18 @@
 }
 
 @layer base {
+  /* High contrast draws no box-shadow, and the controls take the outline away,
+     so focus gets the system's outline back here (design 33b, 80lyvxih). An
+     important declaration in the lowest layer beats every normal one. */
+  @media (forced-colors: active) {
+    :focus-visible {
+      /* biome-ignore lint/complexity/noImportantStyles: beats every component's outline: none, in this mode only */
+      outline: 2px solid Highlight !important;
+      /* biome-ignore lint/complexity/noImportantStyles: as above */
+      outline-offset: 2px !important;
+    }
+  }
+
   /* Lets the header query the page's scroll direction (app-header). */
   html {
     container-type: scroll-state;
