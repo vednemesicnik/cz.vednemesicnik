@@ -7,9 +7,9 @@ import {
 } from '~/components/image-gallery-dialog'
 import { ImageGalleryPreview } from '~/components/image-gallery-preview'
 import { useViewerHistory } from '~/hooks/use-viewer-history'
-import { readTileImageSource } from '~/utils/image-viewer/read-tile-image-source'
 import { runViewerTransition } from '~/utils/image-viewer/run-viewer-transition'
 import { waitForTileImage } from '~/utils/image-viewer/wait-for-tile-image'
+import { readLoadedImageSource } from '~/utils/read-loaded-image-source'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -47,7 +47,7 @@ export const ImageGallery = ({ images, className }: Props) => {
   const showImage = (index: number) => {
     currentIndexRef.current = index
     setCurrentIndex(index)
-    setTileImageSource(readTileImageSource(tileRefs.current[index]))
+    setTileImageSource(readLoadedImageSource(tileRefs.current[index]))
   }
 
   const closeViewer = ({ animate = true }: { animate?: boolean } = {}) => {

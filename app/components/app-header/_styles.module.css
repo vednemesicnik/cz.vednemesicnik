@@ -20,6 +20,23 @@
   }
 }
 
+/* While the page changes, the header doesn't slide in or out: it stands
+   where the new page has it (18a, u6r1pxsx). It is lifted out with a name of
+   its own, so the old page, whose top was under it, doesn't show through it;
+   global.css shows only its new state. Not for the gallery viewer, which
+   covers it. */
+:global(
+    :root:active-view-transition:not(
+      :active-view-transition-type(gallery-viewer)
+    )
+  )
+  .container {
+  @layer variant {
+    view-transition-name: app-header;
+    transition: none;
+  }
+}
+
 /* The header's shift as one variable, so what sticks under it rides along in
    the same transition (10a, d104jrnd): minus its height while scrolling down,
    0 on the way up. It stays put with reduced motion; browsers without

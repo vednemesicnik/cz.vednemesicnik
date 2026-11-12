@@ -26,6 +26,14 @@
   }
 }
 
+/* The clicked frame flies square: the flight draws the corners, which would
+   otherwise grow with the snapshot (18a, u6r1pxsx). */
+:global(:root:active-view-transition) .frame[data-page-flight-flying] {
+  @layer variant {
+    border-radius: 0;
+  }
+}
+
 /* The Image fills the frame. Its unlayered `height: auto` on the img beats any
    layered `height`, so min- and max-height pin the img to the frame instead. A photo
    covers the frame, cropped around its middle, at any width. */

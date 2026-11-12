@@ -15,7 +15,8 @@ type Props = {
  */
 export const AppHeader = ({ children }: Props) => {
   return (
-    <header className={styles.container}>
+    // `data-app-header`: a flight starts only where an image is clear of it (18d).
+    <header className={styles.container} data-app-header>
       <section className={styles.content}>
         <HomeLink />
         <Navigation>
