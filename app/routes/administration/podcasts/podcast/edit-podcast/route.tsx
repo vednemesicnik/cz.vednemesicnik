@@ -61,6 +61,7 @@ import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useCoverUpload } from '~/hooks/use-cover-upload'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
+import { useReturnLink } from '~/hooks/use-return-link'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
@@ -217,6 +218,9 @@ export default function RouteComponent({
     podcast.isEmptyDraft || isDeleted
       ? listHref
       : href('/administration/podcasts/:podcastId', { podcastId })
+  // Back up to the detail or to the list as it was left (30i).
+  const listReturn = useReturnLink(listHref)
+  const closeReturn = useReturnLink(closeHref)
 
   const loadedValues: FieldValues = {
     authorId: podcast.authorId,
@@ -605,10 +609,14 @@ export default function RouteComponent({
   const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
     if (isCoverUploadingRef.current) {
-      askBeforeLeaving(closeHref, () => navigate(closeHref))
+      askBeforeLeaving(closeReturn.href, () =>
+        navigate(closeReturn.href, { state: closeReturn.state }),
+      )
       return
     }
-    void leaveTo(closeHref, () => navigate(closeHref))
+    void leaveTo(closeReturn.href, () =>
+      navigate(closeReturn.href, { state: closeReturn.state }),
+    )
   }
 
   // The address follows the title until changed by hand (24a, 27e): one that
@@ -967,7 +975,12 @@ export default function RouteComponent({
           {renderSaveLine()}
         </div>
         {/* Sends what waits, then leaves (24e). */}
-        <LinkButton onClick={handleClose} to={closeHref} variant={'outline'}>
+        <LinkButton
+          onClick={handleClose}
+          state={closeReturn.state}
+          to={closeReturn.href}
+          variant={'outline'}
+        >
           Zavřít
         </LinkButton>
       </header>
@@ -999,7 +1012,9 @@ export default function RouteComponent({
 
       {deletion?.isDialogOpen && (
         <ContentDeletedDialog
-          onOpenList={() => navigate(listHref)}
+          onOpenList={() =>
+            navigate(listReturn.href, { state: listReturn.state })
+          }
           onStay={() =>
             setDeletion((current) =>
               current === null ? null : { ...current, isDialogOpen: false },
@@ -1031,7 +1046,9 @@ export default function RouteComponent({
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
           holderName={holdLoss.holderName}
-          onOpenDetail={() => navigate(closeHref)}
+          onOpenDetail={() =>
+            navigate(closeReturn.href, { state: closeReturn.state })
+          }
           onStay={closeHoldLossDialog}
         >
           <AdminModalDescription>{holdTakenLead}</AdminModalDescription>
@@ -1053,7 +1070,9 @@ export default function RouteComponent({
           <ContentChangedDialog
             canReload={canReloadChanged}
             onClose={closeHoldLossDialog}
-            onOpenDetail={() => navigate(closeHref)}
+            onOpenDetail={() =>
+              navigate(closeReturn.href, { state: closeReturn.state })
+            }
             onReload={reload}
           >
             <AdminModalTitle>Podcast se mezitím změnil</AdminModalTitle>
@@ -1088,7 +1107,9 @@ export default function RouteComponent({
           holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
-          onCancel={() => navigate(closeHref)}
+          onCancel={() =>
+            navigate(closeReturn.href, { state: closeReturn.state })
+          }
           onConfirm={() => void editHold.takeOver()}
         />
       )}
@@ -1097,7 +1118,9 @@ export default function RouteComponent({
           content={'podcast'}
           key={editHold.attempt}
           kind={'other-tab'}
-          onCancel={() => navigate(closeHref)}
+          onCancel={() =>
+            navigate(closeReturn.href, { state: closeReturn.state })
+          }
           onConfirm={() => void editHold.takeOver()}
         />
       )}

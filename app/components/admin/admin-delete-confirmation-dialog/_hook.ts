@@ -4,6 +4,8 @@ import { type FetcherSubmitOptions, useFetcher } from 'react-router'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useParentReturnAddress } from '~/hooks/use-parent-return-address'
+import { navigationTrailStore } from '~/utils/navigation-trail/navigation-trail-store'
 
 type Options = {
   withRedirect?: boolean
@@ -11,6 +13,18 @@ type Options = {
   key?: string
 }
 
+/**
+ * The delete confirmation of a row or a record: on accept, it submits the
+ * delete.
+ *
+ * @param dialogRef - The confirmation dialog.
+ * @param options.action - The record's action.
+ * @param options.key - The fetcher's key.
+ * @param options.withRedirect - Whether the server redirects to the list after
+ *   it, as from a record's own page. Opened from that list, it sends the list
+ *   as it was left, which the server takes only for the same list (30i).
+ * @returns `openDialog`.
+ */
 export const useAdminDeleteConfirmationDialog = (
   dialogRef: RefObject<HTMLDialogElement | null>,
   options: Options,
@@ -24,6 +38,9 @@ export const useAdminDeleteConfirmationDialog = (
   const intentValue = FORM_CONFIG.intent.value.delete
   const redirectName = FORM_CONFIG.redirect.name
   const redirectValue = options?.withRedirect ? 'true' : 'false'
+  const redirectToName = FORM_CONFIG.redirectTo.name
+  const parentReturnAddress = useParentReturnAddress()
+  const redirectTo = options.withRedirect ? parentReturnAddress : undefined
 
   // After every render, not once: a row whose state changes in place renders
   // its dialog only once Smazat… becomes possible (archived after published),
@@ -50,6 +67,12 @@ export const useAdminDeleteConfirmationDialog = (
       formData.append(intentName, intentValue)
       formData.append(redirectName, redirectValue)
 
+      if (redirectTo !== undefined) {
+        formData.append(redirectToName, redirectTo)
+        // The list the server redirects to is a return to it (30i).
+        navigationTrailStore.expectRedirect(redirectTo)
+      }
+
       void submit(formData, { action: options.action, method: 'POST' })
     }
   }, [
@@ -59,6 +82,8 @@ export const useAdminDeleteConfirmationDialog = (
     intentValue,
     options.action,
     redirectName,
+    redirectTo,
+    redirectToName,
     redirectValue,
     returnValue,
     submit,

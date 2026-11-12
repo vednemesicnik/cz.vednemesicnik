@@ -21,10 +21,17 @@ import '~/styles/sizes.css'
 import { RootBoundaryError } from '~/components/root-boundary-error'
 import { ENV_META_NAME } from '~/config/env-meta-config'
 import { useColorScheme } from '~/hooks/use-color-scheme'
+import { useNavigationTrail } from '~/hooks/use-navigation-trail'
 import interVariableFontUrl from '~/styles/fonts/inter-variable.woff2'
 import { getColorSchemeMetaContent } from '~/utils/get-color-scheme-meta-content'
+import { getScrollRestorationKey } from '~/utils/navigation-trail/get-scroll-restoration-key'
 
 import type { Route } from './+types/root'
+
+// A return up to a list takes the list's scroll position (30i).
+const getScrollKey = (
+  location: Parameters<typeof getScrollRestorationKey>[0],
+) => getScrollRestorationKey(location)
 
 export const links: LinksFunction = () => [
   { href: '/favicon.svg', rel: 'icon', type: 'image/svg+xml' },
@@ -81,7 +88,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
-        <ScrollRestoration />
+        <ScrollRestoration getKey={getScrollKey} />
         <Scripts />
       </body>
     </html>
@@ -89,6 +96,8 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  useNavigationTrail()
+
   return <Outlet />
 }
 
