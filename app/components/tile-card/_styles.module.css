@@ -37,3 +37,11 @@
     aspect-ratio: 3 / 4;
   }
 }
+
+/* Focused from the keyboard, the link around the tile rings the card in place
+   of its shadow; the caption stays outside it (design 10g, pwldhxq3). */
+:focus-visible > * > .card {
+  @layer component {
+    box-shadow: var(--focus-shadow);
+  }
+}
