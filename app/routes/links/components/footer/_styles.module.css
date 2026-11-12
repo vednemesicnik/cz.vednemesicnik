@@ -11,3 +11,12 @@
     border-bottom-right-radius: 16px;
   }
 }
+
+/* The social links' ring on this white footer, as on simple-link. */
+.container a:focus-visible {
+  @layer route {
+    box-shadow:
+      0 0 0 1px var(--color-white),
+      0 0 0 3px var(--color-violet-600);
+  }
+}
