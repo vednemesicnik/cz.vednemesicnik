@@ -43,11 +43,11 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
 
-// Why the verify step sent the donor back (15l, 8jxiph0x).
+// Why the verify step sent the donor back (15l, 8jxiph0x; copy thread 5uc4li12).
 const REASON_MESSAGES = {
   expired: 'Vyplněné údaje už nejsou k dispozici. Vyplňte je prosím znovu.',
   rejected:
-    'Žádost se neodeslala, protože ji s těmito údaji nešlo zapsat. Zkontrolujte je prosím a pokračujte. E-mail zůstává ověřený.',
+    'Žádost se neodeslala. Zkontrolujte prosím vyplněné údaje a pokračujte. E-mail zůstává ověřený.',
 } as const
 
 export default function RouteComponent({

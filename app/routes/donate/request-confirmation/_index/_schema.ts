@@ -4,7 +4,9 @@ import { DONATION_FIELD_LIMITS as LIMITS } from '~/config/donation-request-confi
 
 const email = z
   .email({ error: 'E-mail nemá platný formát.' })
-  .max(LIMITS.email, { error: 'E-mail je příliš dlouhý.' })
+  .max(LIMITS.email, {
+    error: `E-mail může mít nejvýš ${LIMITS.email} znaků.`,
+  })
 
 const accounts = z
   .array(
@@ -14,7 +16,9 @@ const accounts = z
       .regex(/^[\d\-/]+$/, {
         error: 'Číslo účtu může obsahovat pouze číslice a lomítko.',
       })
-      .max(LIMITS.accountLength, { error: 'Číslo účtu je příliš dlouhé.' }),
+      .max(LIMITS.accountLength, {
+        error: `Číslo účtu může mít nejvýš ${LIMITS.accountLength} znaků.`,
+      }),
   )
   .max(LIMITS.accounts, {
     error: `Uveďte nejvýš ${LIMITS.accounts} účtů.`,
@@ -38,8 +42,9 @@ const year = z
     { error: 'Vyberte rok, za který žádáte o potvrzení.' },
   )
 
+// Length messages from copy thread 5uc4li12.
 const tooLong = (maxLength: number) =>
-  `Zkraťte prosím údaj na ${maxLength} znaků.`
+  `Zkraťte prosím údaj na nejvýš ${maxLength} znaků.`
 
 const firstName = z
   .string({ error: 'Vyplňte prosím jméno.' })

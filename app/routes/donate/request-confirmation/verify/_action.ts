@@ -24,15 +24,15 @@ import { getStepPath } from '../_step'
 import { parseIntent } from './_intent'
 import type { Route } from './+types/route'
 
-// Design 15m (8jxiph0x): the code's messages as for the membership application
-// (15k, copy thread zup07jj5).
+// Design 15m (8jxiph0x), copy thread 5uc4li12: the code's messages as for the
+// membership application (15k, copy thread zup07jj5).
 const NEW_CODE_SENT = 'Poslali jsme nový kód. Předchozí už neplatí.'
 const NEW_CODE_NOT_SENT_KEEP_OLD =
   'Použijte dosavadní kód. Nový kód z tohoto pokusu nelze použít, ani pokud vám přišel e-mailem.'
 const NEW_CODE_NOT_SENT =
   'Zkuste prosím znovu stisknout tlačítko Poslat nový kód. Kód z tohoto pokusu nelze použít, ani pokud vám přišel e-mailem.'
 const NOT_VERIFIED =
-  'Žádost se neodeslala, protože e-mail není ověřený. Ověřte ho a žádost odešlete.'
+  'Žádost se neodeslala, protože e-mail není ověřený. Ověřením e-mailu ji odešlete.'
 const UNAVAILABLE =
   'Žádost se nepodařilo odeslat. Kód už zadávat nemusíte, zkuste ji prosím odeslat znovu.'
 const sendLimited = (retryAfter: number) =>

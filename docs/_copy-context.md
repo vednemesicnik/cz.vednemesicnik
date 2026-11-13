@@ -227,6 +227,11 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   dar pomůže vydat další číslo“), nebo slibuje akce jako jistotu, je nepravda.
 - **Potvrzení o daru** vystaví spolek na žádost. Údaje ze žádosti se drží jen do vystavení
   a odeslání potvrzení; kdo potvrzení ztratí, požádá znovu.
+- **Žádost o potvrzení o daru se odešle až kódem z e-mailu** (rozhodnuto 13. 11. 2026). Dva kroky,
+  `Údaje` a `Ověření a odeslání`: formulář nic nezapisuje, jen pošle ověřovací kód (8 znaků,
+  24 hodin, nový ruší předchozí) a údaje drží 7 dní jen prohlížeč dárce. Správný kód žádost rovnou
+  odešle. Adresa a kód přitom projdou skriptem, který e-mail posílá, takže věta „spolek vaše údaje
+  nedostane“ je pro adresu nepravda; pravda je `Bez ověření e-mailu se žádost neodešle.`
 - **Web nemá stránku o zpracování osobních údajů.** Každý formulář nese vlastní odstavec nad
   tlačítkem, který musí obstát sám, a žádné zaškrtávací pole. Odkaz typu *Jak s údaji
   zacházíme* nemá kam vést. Dotazy k údajům jdou na jednu společnou adresu
