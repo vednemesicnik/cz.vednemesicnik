@@ -1,0 +1,12 @@
+.subheadline {
+  @layer component {
+    color: var(--text-on-accent);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-lg);
+    font-weight: var(--font-weight-medium);
+    max-width: 560px;
+    margin: 0;
+    margin-block-start: 0.75rem;
+    text-wrap: pretty;
+  }
+}

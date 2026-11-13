@@ -14,6 +14,9 @@ import { DownloadIcon } from '~/components/icons/download-icon'
 import { LinkButton } from '~/components/link-button'
 import { Page } from '~/components/page'
 import { PageHero } from '~/components/page-hero'
+import { PageHeroEyebrow } from '~/components/page-hero-eyebrow'
+import { PageHeroHeadline } from '~/components/page-hero-headline'
+import { PageHeroSubheadline } from '~/components/page-hero-subheadline'
 import { DONATION_PAYMENT } from '~/data/donation-payment'
 import styles from './_styles.module.css'
 import { DonationCard } from './components/donation-card'
@@ -71,14 +74,12 @@ export default function RouteComponent() {
   return (
     <>
       <PageHero>
-        <span className={styles.heroEyebrow}>Staňte se podporovatelem</span>
-        <h1 className={styles.heroHeadline}>
-          Dobré nápady si zaslouží prostor
-        </h1>
-        <p className={styles.heroSubheadline}>
+        <PageHeroEyebrow>Staňte se podporovatelem</PageHeroEyebrow>
+        <PageHeroHeadline>Dobré nápady si zaslouží prostor</PageHeroHeadline>
+        <PageHeroSubheadline>
           Díky darům můžeme vydávat Vedneměsíčník a provozovat web, a dávat tak
           studentům prostor psát, tvořit a být slyšet.
-        </p>
+        </PageHeroSubheadline>
       </PageHero>
 
       <Page>

@@ -1,18 +1,28 @@
+/* The signature gradient under a uniform veil (tfma8scr): the veil is one colour,
+   so the gradient's size and wave don't move it. */
 .pageHero {
-  display: grid;
-  position: relative;
-  width: 100%;
-  grid-template-columns: minmax(auto, var(--page-max-width));
-  grid-auto-flow: row;
-  justify-content: center;
-  align-content: start;
-  justify-items: center;
-  text-align: center;
-  padding-inline: var(--page-side-padding);
-  padding-block: 12rem;
-  background: var(--gradient-signature);
-  background-size: 200% 200%;
-  animation: wave-animation 12s ease-in-out infinite;
+  @layer component {
+    display: grid;
+    position: relative;
+    width: 100%;
+    grid-template-columns: minmax(auto, var(--page-max-width));
+    grid-auto-flow: row;
+    justify-content: center;
+    align-content: start;
+    justify-items: center;
+    text-align: center;
+    padding-inline: var(--page-side-padding);
+    padding-block: 12rem;
+    background:
+      linear-gradient(var(--hero-veil), var(--hero-veil)),
+      var(--gradient-signature);
+    background-size: 200% 200%;
+    animation: wave-animation 12s ease-in-out infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
 }
 
 @keyframes wave-animation {
@@ -22,11 +32,5 @@
   }
   50% {
     background-position: 95% 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pageHero {
-    animation: none;
   }
 }

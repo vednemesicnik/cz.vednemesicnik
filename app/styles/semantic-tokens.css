@@ -320,6 +320,9 @@
       color-mix(in srgb, var(--color-charcoal-950) 40%, transparent),
       color-mix(in srgb, var(--color-black) 60%, transparent)
     );
+    /* Over the whole PageHero band, so white text holds 4.5 : 1 wherever the
+       gradient has moved; the same in both schemes (tfma8scr) */
+    --hero-veil: color-mix(in srgb, var(--color-black) 40%, transparent);
     /* Behind the image viewer, the same in both schemes (zn43av9y) */
     --viewer-backdrop: color-mix(
       in srgb,
