@@ -16,7 +16,6 @@ import { Page } from '~/components/page'
 import { PageHero } from '~/components/page-hero'
 import { DONATION_PAYMENT } from '~/data/donation-payment'
 import styles from './_styles.module.css'
-import type { Route } from './+types/route'
 import { DonationCard } from './components/donation-card'
 import { DonationConfirmation } from './components/donation-confirmation'
 import { DonationConfirmationDescription } from './components/donation-confirmation-description'
@@ -28,18 +27,11 @@ import { DonationQrImage } from './components/donation-qr-image'
 import { PaymentDetail } from './components/payment-detail'
 import { PaymentDetailGroup } from './components/payment-detail-group'
 
-export { loader } from './_loader'
 export { meta } from './_meta'
 
 const PRESET_AMOUNTS = [150, 300, 600, 1200] as const
 
-export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { totalDonated } = loaderData
-  const formattedTotalDonated = new Intl.NumberFormat('cs-CZ', {
-    currency: 'CZK',
-    style: 'currency',
-  }).format(totalDonated)
-
+export default function RouteComponent() {
   const [amount, setAmount] = useState<number | ''>(PRESET_AMOUNTS[1])
   const [qrAmount, setQrAmount] = useState<number | ''>(PRESET_AMOUNTS[1])
   const debounceRef = useRef<number>(undefined)
@@ -84,8 +76,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           Dobré nápady si zaslouží prostor
         </h1>
         <p className={styles.heroSubheadline}>
-          Díky darům můžeme vydávat Vedneměsíčník a podporovat studenty, kteří
-          chtějí psát, tvořit a být slyšet.
+          Díky darům můžeme vydávat Vedneměsíčník a provozovat web, a dávat tak
+          studentům prostor psát, tvořit a být slyšet.
         </p>
       </PageHero>
 
@@ -93,9 +85,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <DonationCard>
           <h2 className={styles.donationTitle}>Vyberte výši daru</h2>
           <p className={styles.donationSubtitle}>
-            Každý dar pomáhá vydávat Vedneměsíčník a vytvářet prostor pro
-            studentskou tvorbu. Zvolte některou z doporučených částek nebo
-            zadejte vlastní.
+            Vyberte částku nebo zadejte vlastní. Dar pošlete bankovním převodem.
           </p>
 
           <div className={styles.amountPicker}>
@@ -110,7 +100,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     type="radio"
                     value={preset}
                   />
-                  {preset} Kč
+                  {preset.toLocaleString('cs-CZ')} Kč
                 </label>
               ))}
             </fieldset>
@@ -145,7 +135,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 {DONATION_PAYMENT.accountNumber}
               </CopyButton>
             </PaymentDetail>
-            <PaymentDetail label="VS">
+            <PaymentDetail label="Variabilní symbol">
               <CopyButton value={DONATION_PAYMENT.variableSymbol}>
                 {DONATION_PAYMENT.variableSymbol}
               </CopyButton>
@@ -181,15 +171,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </DonationCard>
 
         <section className={styles.thanksSection}>
-          <h2 className={styles.thanksHeading}>Děkujeme za podporu!</h2>
+          <h2 className={styles.thanksHeading}>Děkujeme za podporu</h2>
           <p className={styles.thanksText}>
-            Letos jsme na transparentním účtu zaznamenali dary v celkové výši{' '}
-            <span className={styles.thanksAmount}>{formattedTotalDonated}</span>
-            . Děkujeme všem, kteří Vedneměsíčník podporují.
+            Děkujeme všem, kteří přispívají na Vedneměsíčník.
           </p>
-          <LinkButton className={styles.thanksLink} size="lg" to="#">
-            Zobrazit transparentní účet
-          </LinkButton>
         </section>
 
         <DonationConfirmation>
@@ -197,9 +182,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             Potřebujete potvrzení o daru?
           </DonationConfirmationHeading>
           <DonationConfirmationDescription>
-            Vyplňte krátký formulář, podle kterého dohledáme Vaše platby.
-            Následně vystavíme potvrzení o přijatých darech za daný kalendářní
-            rok, které můžete použít pro daňové účely.
+            Vyplňte krátký formulář, podle kterého dohledáme vaše platby. Pak
+            vystavíme potvrzení o přijatých darech za kalendářní rok, které
+            můžete použít pro daňové účely.
           </DonationConfirmationDescription>
           <LinkButton size="lg" to="/donate/request-confirmation">
             Požádat o potvrzení

@@ -247,19 +247,6 @@
   }
 }
 
-.thanksAmount {
-  @layer route {
-    color: var(--secondary);
-    font-weight: var(--font-weight-bold);
-  }
-}
-
-.thanksLink {
-  @layer route {
-    margin-block-start: 1rem;
-  }
-}
-
 /* ===================================================
    QR placeholder
    =================================================== */
