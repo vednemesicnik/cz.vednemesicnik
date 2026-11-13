@@ -1,5 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { href } from 'react-router'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { CheckIcon } from '~/components/icons/check-icon'
@@ -44,9 +45,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <LinkButton
         className={styles.backButton}
-        size="lg"
-        to="/donate"
-        variant="primary"
+        to={href('/donate')}
+        variant="outline"
       >
         Zpět na darování
       </LinkButton>

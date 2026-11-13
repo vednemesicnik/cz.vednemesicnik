@@ -1,18 +1,13 @@
-/* One detail after another, wrapping between details, never inside one; 8 px
-   between the rows keeps the copy buttons 44 px apart for touch (15f). */
+/* The details one under another, read like payment details in a bank
+   (15f, tfma8scr). */
 .group {
   @layer route {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 16px;
+    flex-direction: column;
+    gap: 12px;
     margin: 0;
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
     color: var(--text-primary);
-
-    @media (width >= 768px) {
-      column-gap: 20px;
-    }
   }
 }

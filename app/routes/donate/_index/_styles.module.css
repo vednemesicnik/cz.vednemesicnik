@@ -52,14 +52,10 @@
 .cardText {
   @layer route {
     margin: 0;
-    font-size: var(--font-size-sm);
-    line-height: 1.55;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
     color: var(--text-secondary);
     text-wrap: pretty;
-
-    @media (width >= 768px) {
-      font-size: var(--font-size-md);
-    }
   }
 }
 
@@ -117,13 +113,9 @@
   @layer route {
     max-inline-size: 560px;
     margin: 0;
-    font-size: var(--font-size-md);
-    line-height: 1.6;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-lg);
     color: var(--text-secondary);
     text-wrap: pretty;
-
-    @media (width >= 768px) {
-      font-size: var(--font-size-lg);
-    }
   }
 }

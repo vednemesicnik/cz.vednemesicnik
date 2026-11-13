@@ -22,7 +22,7 @@
     inline-size: 168px;
     block-size: 168px;
     padding: 12px;
-    background-color: var(--color-white);
+    background-color: var(--qr-bg);
     border-radius: calc(var(--radius-xl) - 3px);
 
     @media (width >= 768px) {

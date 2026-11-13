@@ -1,19 +1,16 @@
-/* A detail stays whole: its name and its value with the copy button don't
-   break inside (15f). Only on a column too narrow for both does the value go
-   under the name. */
+/* The name above the value; the copy button stands beside the value (15f). */
 .detail {
   @layer route {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
   }
 }
 
 .label {
   @layer route {
     color: var(--text-secondary);
-    white-space: nowrap;
   }
 }
 
@@ -21,6 +18,5 @@
   @layer route {
     margin: 0;
     font-weight: var(--font-weight-semibold);
-    white-space: nowrap;
   }
 }

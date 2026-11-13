@@ -1,16 +1,16 @@
+/* Centred on a phone, at the start in the form's 540 px column from 768 px,
+   like the membership application's sent step (15l, 15d); Page does the
+   alignment. */
 .headlineGroup {
   @layer route {
-    max-width: 640px;
-    justify-self: center;
-    justify-items: center;
-    text-align: center;
+    @container page (width >= 940px) {
+      max-inline-size: 540px;
+    }
   }
 }
 
 .heading {
   @layer route {
-    font-weight: var(--font-weight-bold);
-    letter-spacing: var(--letter-spacing-tight);
     text-wrap: balance;
   }
 }
@@ -23,20 +23,26 @@
 
 .note {
   @layer route {
+    margin: 0;
+    margin-block-end: 1.25rem;
     font-size: var(--font-size-md);
     line-height: var(--line-height-md);
-    color: var(--text-tertiary);
-    margin: 0;
-    max-width: 640px;
-    justify-self: center;
-    text-align: center;
-    text-wrap: balance;
-    margin-block-end: 1.25rem;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+
+    @container page (width >= 940px) {
+      max-inline-size: 540px;
+    }
   }
 }
 
+/* Full width on a phone, as wide as its words from 768 px. */
 .backButton {
   @layer route {
-    justify-self: center;
+    justify-self: stretch;
+
+    @media (width >= 768px) {
+      justify-self: start;
+    }
   }
 }
