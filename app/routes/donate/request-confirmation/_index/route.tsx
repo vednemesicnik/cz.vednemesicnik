@@ -23,6 +23,8 @@ import { HoneypotProvider } from '~/components/honeypot-provider'
 import { AddIcon } from '~/components/icons/add-icon'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Page } from '~/components/page'
+import { RadioTile } from '~/components/radio-tile'
+import { RadioTileGroup } from '~/components/radio-tile-group'
 import { Subheadline } from '~/components/subheadline'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
@@ -34,8 +36,6 @@ import { FormField } from './components/form-field'
 import { Hint } from './components/hint'
 import { Input } from './components/input'
 import { Label } from './components/label'
-import { RadioOption } from './components/radio-option'
-import { RadioOptionGroup } from './components/radio-option-group'
 import { Textarea } from './components/textarea'
 
 export { action } from './_action'
@@ -114,23 +114,23 @@ export default function RouteComponent({
             <FieldGroup>
               <FieldGroupLabel required>Rok daru</FieldGroupLabel>
               <Hint>Vyberte rok, za který o potvrzení žádáte.</Hint>
-              <RadioOptionGroup>
+              <RadioTileGroup columns={3}>
                 {getCollectionProps(fields.year, {
                   options: requestableYears,
                   type: 'radio',
                 }).map(({ key, value, ...rest }) => (
-                  <RadioOption key={key} value={value} {...rest}>
+                  <RadioTile key={key} value={value} {...rest}>
                     {value}
-                  </RadioOption>
+                  </RadioTile>
                 ))}
-              </RadioOptionGroup>
+              </RadioTileGroup>
               <ErrorMessage>{fields.year.errors}</ErrorMessage>
             </FieldGroup>
 
             <FieldGroup>
               <FieldGroupLabel>Typ dárce</FieldGroupLabel>
-              <RadioOptionGroup>
-                <RadioOption
+              <RadioTileGroup columns={1}>
+                <RadioTile
                   checked={type.value === 'individual'}
                   name={fields.type.name}
                   onBlur={type.blur}
@@ -139,8 +139,8 @@ export default function RouteComponent({
                   value="individual"
                 >
                   Fyzická osoba
-                </RadioOption>
-                <RadioOption
+                </RadioTile>
+                <RadioTile
                   checked={type.value === 'sole_trader'}
                   name={fields.type.name}
                   onBlur={type.blur}
@@ -149,8 +149,8 @@ export default function RouteComponent({
                   value="sole_trader"
                 >
                   Podnikající fyzická osoba
-                </RadioOption>
-                <RadioOption
+                </RadioTile>
+                <RadioTile
                   checked={type.value === 'entity'}
                   name={fields.type.name}
                   onBlur={type.blur}
@@ -159,8 +159,8 @@ export default function RouteComponent({
                   value="entity"
                 >
                   Právnická osoba
-                </RadioOption>
-              </RadioOptionGroup>
+                </RadioTile>
+              </RadioTileGroup>
             </FieldGroup>
 
             {type.value === 'individual' && (

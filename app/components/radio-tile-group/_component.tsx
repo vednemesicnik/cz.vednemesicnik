@@ -1,30 +1,34 @@
 import { clsx } from 'clsx'
-import type { ComponentProps, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
-type Props = ComponentProps<'fieldset'> & {
+type Props = {
   children: ReactNode
+  /** Tiles to a row: 2 by default (amounts), 3 for years, 1 for longer labels. */
+  columns?: 1 | 2 | 3
+  className?: string
 }
 
 /**
- * A choice of one as tiles, two to a row: the design system's
- * `RadioOptionGroup` with `variant="tile"` (15f). A fieldset, so its legend
- * names the choice; a legend only a screen reader needs goes in
- * `VisuallyHidden`.
+ * The grid of a choice of one shown as tiles: the design system's
+ * `RadioOptionGroup` with `variant="tile"` (15f). It names nothing itself, so
+ * it goes inside a fieldset whose legend names the choice.
  *
  * @example
  * ```tsx
- * <RadioTileGroup>
- *   <legend><VisuallyHidden>Rychlá volba</VisuallyHidden></legend>
- *   <RadioTile name={'amount'} value={'150'}>150 Kč</RadioTile>
- * </RadioTileGroup>
+ * <RadioGroup>
+ *   <RadioGroupLegend>Rok daru</RadioGroupLegend>
+ *   <RadioTileGroup columns={3}>
+ *     <RadioTile name={'year'} value={'2025'}>2025</RadioTile>
+ *   </RadioTileGroup>
+ * </RadioGroup>
  * ```
  *
- * @param props.children - The legend first, then the {@link RadioTile}s.
+ * @param props.children - The {@link RadioTile}s
  */
-export const RadioTileGroup = ({ children, className, ...rest }: Props) => (
-  <fieldset className={clsx(styles.group, className)} {...rest}>
+export const RadioTileGroup = ({ children, columns = 2, className }: Props) => (
+  <div className={clsx(styles.group, styles[`columns${columns}`], className)}>
     {children}
-  </fieldset>
+  </div>
 )

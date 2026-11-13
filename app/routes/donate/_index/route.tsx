@@ -15,6 +15,7 @@ import { PageHero } from '~/components/page-hero'
 import { PageHeroEyebrow } from '~/components/page-hero-eyebrow'
 import { PageHeroHeadline } from '~/components/page-hero-headline'
 import { PageHeroSubheadline } from '~/components/page-hero-subheadline'
+import { RadioGroup } from '~/components/radio-group'
 import { RadioTile } from '~/components/radio-tile'
 import { RadioTileGroup } from '~/components/radio-tile-group'
 import { TextField } from '~/components/text-field'
@@ -97,22 +98,24 @@ export default function RouteComponent() {
               </p>
             </div>
 
-            <RadioTileGroup>
+            <RadioGroup>
               <legend>
                 <VisuallyHidden>Rychlá volba</VisuallyHidden>
               </legend>
-              {PRESET_AMOUNTS.map((preset) => (
-                <RadioTile
-                  checked={amount === preset}
-                  key={preset}
-                  name={'preset-amount'}
-                  onChange={() => handlePresetChange(preset)}
-                  value={preset}
-                >
-                  {preset.toLocaleString('cs-CZ')} Kč
-                </RadioTile>
-              ))}
-            </RadioTileGroup>
+              <RadioTileGroup>
+                {PRESET_AMOUNTS.map((preset) => (
+                  <RadioTile
+                    checked={amount === preset}
+                    key={preset}
+                    name={'preset-amount'}
+                    onChange={() => handlePresetChange(preset)}
+                    value={preset}
+                  >
+                    {preset.toLocaleString('cs-CZ')} Kč
+                  </RadioTile>
+                ))}
+              </RadioTileGroup>
+            </RadioGroup>
 
             <TextField id={'donate-amount'}>
               <TextFieldLabel>Vlastní částka</TextFieldLabel>

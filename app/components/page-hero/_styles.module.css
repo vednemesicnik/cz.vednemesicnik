@@ -1,5 +1,17 @@
-/* The signature gradient under a uniform veil (tfma8scr): the veil is one colour,
-   so the gradient's size and wave don't move it. */
+/* Where the band's green begins, measured from its bottom edge; registered so
+   the wave can move it. */
+@property --page-hero-green {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 10rem;
+}
+
+/* The signature colours top to bottom, tied to the band's bottom edge, so all
+   the white text stands on violet (at least 4.9 : 1) however it wraps, and the
+   violet turns green in the bottom 20rem, under the text (tfma8scr). The same
+   colours in both schemes: the band is a surface under white text, like
+   --primary. Primitives, because the design system has no token for the band
+   yet. */
 .pageHero {
   @layer component {
     display: grid;
@@ -11,20 +23,22 @@
     align-content: start;
     justify-items: center;
     text-align: center;
-    /* Starts under the header, which is see-through over it; the bottom leaves
-       room for the content that overlaps the band (15f). */
+    /* Starts under the header, which is see-through over it (15f). */
     margin-block-start: calc(-1 * var(--app-header-height));
     padding-inline: var(--page-side-padding);
-    padding-block: calc(var(--app-header-height) + 1.75rem) 7.5rem;
+    padding-block: calc(var(--app-header-height) + 1.75rem) 20rem;
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-violet-500) -60%,
+      var(--color-violet-600) calc(100% - 20rem),
+      var(--color-emerald-500) calc(100% - var(--page-hero-green)),
+      var(--color-emerald-400) 100%
+    );
+    animation: page-hero-wave 12s ease-in-out infinite;
 
     @media (width >= 768px) {
-      padding-block: calc(var(--app-header-height) + 5.5rem) 10.5rem;
+      padding-block-start: calc(var(--app-header-height) + 5.5rem);
     }
-    background:
-      linear-gradient(var(--hero-veil), var(--hero-veil)),
-      var(--gradient-signature);
-    background-size: 200% 200%;
-    animation: wave-animation 12s ease-in-out infinite;
 
     @media (prefers-reduced-motion: reduce) {
       animation: none;
@@ -32,12 +46,13 @@
   }
 }
 
-@keyframes wave-animation {
+/* Only the green moves; the violet under the text stands. */
+@keyframes page-hero-wave {
   0%,
   100% {
-    background-position: 5% 100%;
+    --page-hero-green: 7rem;
   }
   50% {
-    background-position: 95% 100%;
+    --page-hero-green: 13rem;
   }
 }
