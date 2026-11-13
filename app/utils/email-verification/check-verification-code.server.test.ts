@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import { VERIFICATION_CODE_LIFETIME_MILLISECONDS } from '~/config/membership-application-config'
+import { VERIFICATION_CODE_LIFETIME_MILLISECONDS } from '~/config/email-verification-config'
 
 import { checkVerificationCode } from './check-verification-code.server'
 import { createVerificationCode } from './create-verification-code.server'
 
 const ISSUED_AT = Date.UTC(2026, 10, 6, 17, 42)
 const EMAIL = 'tereza@local.dev'
-const CODE = createVerificationCode('secret', EMAIL, ISSUED_AT)
+const CODE = createVerificationCode({
+  email: EMAIL,
+  issuedAt: ISSUED_AT,
+  purpose: 'membership-verify',
+  secret: 'secret',
+})
 
 const check = (code: string, now = ISSUED_AT + 1000, secret = 'secret') =>
   checkVerificationCode({
@@ -15,6 +20,7 @@ const check = (code: string, now = ISSUED_AT + 1000, secret = 'secret') =>
     email: EMAIL,
     issuedAt: ISSUED_AT,
     now,
+    purpose: 'membership-verify',
     secret,
   })
 
@@ -33,7 +39,14 @@ describe('checkVerificationCode', () => {
     expect(check('22222222')).toBe('wrong')
     expect(check(CODE.slice(0, 7))).toBe('wrong')
     expect(
-      check(createVerificationCode('secret', EMAIL, ISSUED_AT - 60_000)),
+      check(
+        createVerificationCode({
+          email: EMAIL,
+          issuedAt: ISSUED_AT - 60_000,
+          purpose: 'membership-verify',
+          secret: 'secret',
+        }),
+      ),
     ).toBe('wrong')
   })
 
@@ -44,6 +57,19 @@ describe('checkVerificationCode', () => {
     expect(
       check(CODE, ISSUED_AT + VERIFICATION_CODE_LIFETIME_MILLISECONDS),
     ).toBe('expired')
+  })
+
+  it('refuses a code made for another form', () => {
+    expect(
+      check(
+        createVerificationCode({
+          email: EMAIL,
+          issuedAt: ISSUED_AT,
+          purpose: 'donation-verify',
+          secret: 'secret',
+        }),
+      ),
+    ).toBe('wrong')
   })
 
   it('takes no code without a secret', () => {

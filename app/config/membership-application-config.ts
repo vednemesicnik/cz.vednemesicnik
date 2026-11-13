@@ -1,17 +1,13 @@
 /** The largest signed declaration the script stores (design 15d, #394). */
 export const MAX_DECLARATION_BYTES = 8 * 1024 * 1024
 
+import { VERIFICATION_CODE_ALPHABET } from './email-verification-config'
+
 /**
- * The characters of the application code and the verification code: without
+ * The characters of the application code, the verification code's: without
  * 0/O and 1/I/L, which get mixed up when a code is read out or retyped.
  */
-export const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
-
-/** The code that confirms the applicant's address (#972, design 15k). */
-export const VERIFICATION_CODE_LENGTH = 8
-
-/** How long a verification code works after it is sent (design 15k). */
-export const VERIFICATION_CODE_LIFETIME_MILLISECONDS = 24 * 60 * 60 * 1000
+export const CODE_ALPHABET = VERIFICATION_CODE_ALPHABET
 
 /**
  * Sends of a verification code an hour: per IP, protecting the script, and
@@ -22,5 +18,3 @@ export const VERIFICATION_SENDS_PER_ADDRESS = 5
 
 /** Tries of a verification code an hour, per IP. */
 export const VERIFICATION_TRIES_PER_IP = 20
-
-export const VERIFICATION_LIMIT_WINDOW_MILLISECONDS = 60 * 60 * 1000

@@ -4,13 +4,13 @@ import { data, redirect } from 'react-router'
 import { z } from 'zod'
 
 import { MAX_DECLARATION_BYTES } from '~/config/membership-application-config'
+import { checkVerificationCode } from '~/utils/email-verification/check-verification-code.server'
+import { getVerificationCodeExpiry } from '~/utils/email-verification/get-verification-code-expiry'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { checkHoneypot } from '~/utils/honeypot.server'
-import { checkVerificationCode } from '~/utils/membership-application/check-verification-code.server'
 import { detectDeclarationType } from '~/utils/membership-application/detect-declaration-type'
 import { generateApplicationCode } from '~/utils/membership-application/generate-application-code.server'
-import { getVerificationCodeExpiry } from '~/utils/membership-application/get-verification-code-expiry'
 import { isEmailVerified } from '~/utils/membership-application/is-email-verified'
 import { isMinorOnDate } from '~/utils/membership-application/is-minor-on-date'
 import { issueVerificationCode } from '~/utils/membership-application/issue-verification-code.server'
@@ -68,7 +68,7 @@ export type VerificationNotice = {
 }
 
 const hasLiveCode = (application: DetailsState, now: number) =>
-  getVerificationCodeExpiry(application, now) !== null
+  getVerificationCodeExpiry(application.verification?.issuedAt, now) !== null
 
 // Answered before the body is read, and without a form's own validation.
 const emptySubmission = () =>
@@ -192,6 +192,7 @@ const verifyCode = async (
     email,
     issuedAt: application.verification.issuedAt,
     now: Date.now(),
+    purpose: 'membership-verify',
     secret: process.env.MEMBERSHIP_VERIFICATION_SECRET ?? '',
   })
 

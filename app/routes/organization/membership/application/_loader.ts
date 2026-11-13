@@ -1,10 +1,9 @@
 import { redirect } from 'react-router'
-
+import { getVerificationCodeExpiry } from '~/utils/email-verification/get-verification-code-expiry'
 import { formatDate } from '~/utils/format-date'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatTime } from '~/utils/format-time'
 import { getHoneypotInputProps } from '~/utils/honeypot.server'
-import { getVerificationCodeExpiry } from '~/utils/membership-application/get-verification-code-expiry'
 import { isEmailVerified } from '~/utils/membership-application/is-email-verified'
 import { isMinorOnDate } from '~/utils/membership-application/is-minor-on-date'
 import {
@@ -26,7 +25,10 @@ const getVerificationState = (
 ) => {
   if (isEmailVerified(application)) return { state: 'verified' as const }
 
-  const expiresAt = getVerificationCodeExpiry(application, now)
+  const expiresAt = getVerificationCodeExpiry(
+    application.verification?.issuedAt,
+    now,
+  )
 
   if (expiresAt === null) return { state: 'expired' as const }
 

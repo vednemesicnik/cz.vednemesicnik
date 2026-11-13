@@ -1,14 +1,14 @@
 import * as Sentry from '@sentry/react-router'
 
+import { VERIFICATION_LIMIT_WINDOW_MILLISECONDS } from '~/config/email-verification-config'
 import {
-  VERIFICATION_LIMIT_WINDOW_MILLISECONDS,
   VERIFICATION_SENDS_PER_ADDRESS,
   VERIFICATION_SENDS_PER_IP,
 } from '~/config/membership-application-config'
+import { createVerificationCode } from '~/utils/email-verification/create-verification-code.server'
 import { getRateLimitSubject } from '~/utils/get-rate-limit-subject.server'
 import { getClientIp, rateLimitStore } from '~/utils/rate-limit.server'
 
-import { createVerificationCode } from './create-verification-code.server'
 import { sendVerificationCodeEmail } from './send-verification-code-email.server'
 
 export type IssueVerificationCodeResult =
@@ -61,7 +61,12 @@ const issue = async (
     }
 
     const issuedAt = Date.now()
-    const code = createVerificationCode(secret, email, issuedAt)
+    const code = createVerificationCode({
+      email,
+      issuedAt,
+      purpose: 'membership-verify',
+      secret,
+    })
     const isSent = await sendVerificationCodeEmail({ code, email })
 
     return isSent ? { issuedAt, status: 'sent' } : { status: 'failed' }

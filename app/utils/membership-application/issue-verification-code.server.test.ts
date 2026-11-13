@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createVerificationCode } from './create-verification-code.server'
+import { createVerificationCode } from '~/utils/email-verification/create-verification-code.server'
+
 import { issueVerificationCode } from './issue-verification-code.server'
 import { sendVerificationCodeEmail } from './send-verification-code-email.server'
 
@@ -34,7 +35,12 @@ describe('issueVerificationCode', () => {
     expect(result.status).toBe('sent')
     if (result.status !== 'sent') return
     expect(sendMock).toHaveBeenCalledExactlyOnceWith({
-      code: createVerificationCode('secret', email, result.issuedAt),
+      code: createVerificationCode({
+        email,
+        issuedAt: result.issuedAt,
+        purpose: 'membership-verify',
+        secret: 'secret',
+      }),
       email,
     })
   })

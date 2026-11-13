@@ -1,12 +1,10 @@
 import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  MAX_DECLARATION_BYTES,
-  VERIFICATION_CODE_LIFETIME_MILLISECONDS,
-} from '~/config/membership-application-config'
+import { VERIFICATION_CODE_LIFETIME_MILLISECONDS } from '~/config/email-verification-config'
+import { MAX_DECLARATION_BYTES } from '~/config/membership-application-config'
+import { createVerificationCode } from '~/utils/email-verification/create-verification-code.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
-import { createVerificationCode } from '~/utils/membership-application/create-verification-code.server'
 import { issueVerificationCode } from '~/utils/membership-application/issue-verification-code.server'
 import { readMembershipApplicationCookie } from '~/utils/membership-application/read-membership-application-cookie.server'
 import { submitMembershipApplication } from '~/utils/membership-application/submit-membership-application.server'
@@ -563,7 +561,12 @@ describe('membership application action', () => {
       ).catch((thrown) => thrown)
 
     it('verifies the address with the code from the e-mail, written as the e-mail shows it', async () => {
-      const code = createVerificationCode(SECRET, 'tereza@local.dev', ISSUED_AT)
+      const code = createVerificationCode({
+        email: 'tereza@local.dev',
+        issuedAt: ISSUED_AT,
+        purpose: 'membership-verify',
+        secret: SECRET,
+      })
 
       const response = (await verify(
         `${code.slice(0, 4)} ${code.slice(4)}`.toLowerCase(),
@@ -608,7 +611,12 @@ describe('membership application action', () => {
 
     it('takes no code once it has expired', async () => {
       const issuedAt = issuedAgo(VERIFICATION_CODE_LIFETIME_MILLISECONDS + 1000)
-      const code = createVerificationCode(SECRET, 'tereza@local.dev', issuedAt)
+      const code = createVerificationCode({
+        email: 'tereza@local.dev',
+        issuedAt,
+        purpose: 'membership-verify',
+        secret: SECRET,
+      })
 
       const result = (await verify(
         code,
