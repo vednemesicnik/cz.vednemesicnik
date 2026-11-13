@@ -5,6 +5,7 @@ import type { z } from 'zod'
 import { generateRequestId } from '~/utils/donation-request/generate-request-id.server'
 import { isDonationEmailVerified } from '~/utils/donation-request/is-donation-email-verified'
 import { issueDonationVerificationCode } from '~/utils/donation-request/issue-donation-verification-code.server'
+import { normalizeAccountNumber } from '~/utils/donation-request/normalize-account-number'
 import {
   type DonationRequestDetails,
   type DonationRequestState,
@@ -30,10 +31,11 @@ const sendLimited = (retryAfter: number) =>
 
 type DetailsState = Extract<DonationRequestState, { state: 'details' }>
 
-// What the form posts, as the cookie keeps it: accounts and PSČ without spaces.
+// What the form posts, as the cookie keeps it: accounts and PSČ without spaces,
+// an IBAN in capitals.
 const toDetails = (value: z.output<typeof schema>): DonationRequestDetails => ({
   ...value,
-  accounts: value.accounts.map((account) => account.trim()),
+  accounts: value.accounts.map(normalizeAccountNumber),
   address: { ...value.address, zip: value.address.zip.replace(/\s/g, '') },
 })
 

@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 import { DONATION_FIELD_LIMITS as LIMITS } from '~/config/donation-request-config'
+import { isAccountNumber } from '~/utils/donation-request/is-account-number'
+import { normalizeAccountNumber } from '~/utils/donation-request/normalize-account-number'
 
 const email = z
   .email({ error: 'Zadejte e-mail ve tvaru jmeno@priklad.cz.' })
@@ -13,13 +15,22 @@ const accounts = z
     z
       .string({ error: 'Vyplňte prosím číslo účtu.' })
       .trim()
-      .regex(/^[\d\-/]+$/, {
-        error:
-          'Zkontrolujte číslo účtu. Může obsahovat jen číslice, pomlčku a lomítko.',
-      })
-      .max(LIMITS.accountLength, {
-        error: `Číslo účtu může mít nejvýš ${LIMITS.accountLength} znaků.`,
-      }),
+      // An IBAN may come in groups: shape and length are judged without the spaces,
+      // as the action stores it.
+      .refine(
+        (accountNumber) =>
+          isAccountNumber(normalizeAccountNumber(accountNumber)),
+        {
+          error: 'Zadejte číslo účtu ve tvaru 123456789/0800 nebo jako IBAN.',
+        },
+      )
+      .refine(
+        (accountNumber) =>
+          normalizeAccountNumber(accountNumber).length <= LIMITS.accountLength,
+        {
+          error: `Číslo účtu může mít nejvýš ${LIMITS.accountLength} znaků bez mezer.`,
+        },
+      ),
   )
   .max(LIMITS.accounts, {
     error: `Uveďte nejvýš ${LIMITS.accounts} účtů.`,

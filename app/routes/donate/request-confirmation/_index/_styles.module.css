@@ -128,18 +128,6 @@
   }
 }
 
-/* Notes in the form's small print, as in the membership and editorial board
-   forms (15l). */
-.foreignAccount {
-  @layer route {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.5;
-    text-wrap: pretty;
-  }
-}
-
 /* The personal-data paragraph on its tinted ground (15l, hjjdkbb6). */
 .notice {
   @layer route {

@@ -47,7 +47,6 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
 
-const DONATIONS_ADDRESS = 'dary@vednemesicnik.cz'
 const PERSONAL_DATA_ADDRESS = 'udaje@vednemesicnik.cz'
 
 // Why the verify step sent the donor back (15l, 8jxiph0x; copy thread 5uc4li12).
@@ -372,7 +371,11 @@ export default function RouteComponent({
                 <FieldGroupLabel required>
                   Čísla účtů, ze kterých dar přišel
                 </FieldGroupLabel>
-                <Hint>Pokud jste posílali z více účtů, přidejte další.</Hint>
+                {/* Copy thread j6aus9gj: the accounts take an IBAN too. */}
+                <Hint>
+                  Zahraniční účet zadejte jako IBAN. Pokud jste posílali z více
+                  účtů, přidejte další.
+                </Hint>
                 {accountList.map((account, index) => (
                   <FormField key={account.key}>
                     <div className={styles.accountInputRow}>
@@ -408,14 +411,6 @@ export default function RouteComponent({
                   Přidat účet
                 </Button>
                 <ErrorMessage>{fields.accounts.errors}</ErrorMessage>
-                <p className={styles.foreignAccount}>
-                  Dar jste poslali ze zahraničního účtu? O potvrzení požádejte
-                  e-mailem na{' '}
-                  <MailHyperlink address={DONATIONS_ADDRESS}>
-                    {DONATIONS_ADDRESS}
-                  </MailHyperlink>
-                  .
-                </p>
               </FieldGroup>
 
               <FormField>

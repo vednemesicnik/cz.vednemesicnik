@@ -97,7 +97,7 @@
       "additionalProperties": false,
       "properties": {
         "accounts": {
-          "description": "Account number(s) the donation came from, comma-separated.",
+          "description": "Account number(s) the donation came from, comma-separated: each a Czech account number or an IBAN without spaces.",
           "type": "string"
         },
         "action": {

@@ -123,6 +123,30 @@ describe('donation request form action', () => {
     })
   })
 
+  it('keeps an IBAN typed in groups without spaces, in capitals', async () => {
+    const response = await runToResponse({
+      ...FORM,
+      'accounts[1]': 'sk31 1200 0000 1987 4263 7541',
+    })
+
+    const state = await savedState(response)
+    expect(state).toMatchObject({
+      details: { accounts: ['123456789/0800', 'SK3112000000198742637541'] },
+    })
+  })
+
+  it('rejects an account of neither shape', async () => {
+    const result = await runToData({ ...FORM, 'accounts[0]': 'účet 42' })
+
+    expect(result.init.status).toBe(400)
+    expect(result.data.error).toEqual({
+      'accounts[0]': [
+        'Zadejte číslo účtu ve tvaru 123456789/0800 nebo jako IBAN.',
+      ],
+    })
+    expect(issueMock).not.toHaveBeenCalled()
+  })
+
   it('answers the field errors and mails nothing', async () => {
     const result = await runToData({ ...FORM, email: 'nope' })
 
