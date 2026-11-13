@@ -33,5 +33,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
             expiresAt: formatVerificationExpiry(expiresAt),
             state: 'pending' as const,
           },
+    year: saved.details.year,
   }
 }

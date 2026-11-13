@@ -2,7 +2,6 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { data, redirect } from 'react-router'
 import type { z } from 'zod'
 
-import { buildSubmitRequest } from '~/utils/donation-request/build-submit-request'
 import { generateRequestId } from '~/utils/donation-request/generate-request-id.server'
 import { isDonationEmailVerified } from '~/utils/donation-request/is-donation-email-verified'
 import { issueDonationVerificationCode } from '~/utils/donation-request/issue-donation-verification-code.server'
@@ -11,7 +10,6 @@ import {
   type DonationRequestState,
   readDonationRequestCookie,
 } from '~/utils/donation-request/read-donation-request-cookie.server'
-import { submitDonationRequest } from '~/utils/donation-request/submit-donation-request.server'
 import { writeDonationRequestCookie } from '~/utils/donation-request/write-donation-request-cookie.server'
 import { getVerificationCodeExpiry } from '~/utils/email-verification/get-verification-code-expiry'
 import { formatRetryAfter } from '~/utils/format-retry-after'
@@ -22,14 +20,11 @@ import { getStepPath } from '../_step'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
-// Design 15l (hjjdkbb6); the code's messages as for the membership application
-// (15k, copy thread zup07jj5).
-const NOT_SENT = 'Žádost se nepodařilo odeslat. Zkuste to prosím znovu.'
-const UNAVAILABLE = 'Server je dočasně nedostupný. Zkuste to prosím za chvíli.'
+// Design 15l (8jxiph0x), worded as for the membership application (15k, copy
+// thread zup07jj5). The form's own limit and the code's say the same: the code
+// does not go now.
 const CODE_NOT_SENT =
-  'Zkuste prosím znovu stisknout tlačítko Odeslat žádost. Kód z tohoto pokusu nelze použít, ani pokud vám přišel e-mailem. Údaje zůstaly vyplněné.'
-const tooMany = (retryAfter: number) =>
-  `Příliš mnoho požadavků. Zkuste to prosím ${formatRetryAfter(retryAfter)}.`
+  'Zkuste prosím znovu stisknout tlačítko Pokračovat. Kód z tohoto pokusu nelze použít, ani pokud vám přišel e-mailem. Údaje zůstaly vyplněné.'
 const sendLimited = (retryAfter: number) =>
   `Ověřovací kód teď nelze poslat. Zkuste to prosím ${formatRetryAfter(retryAfter)}.`
 
@@ -55,7 +50,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (limited) {
     const submission = parseWithZod(formData, { schema })
     return data(
-      submission.reply({ formErrors: [tooMany(limited.retryAfter)] }),
+      submission.reply({ formErrors: [sendLimited(limited.retryAfter)] }),
       { status: 429 },
     )
   }
@@ -87,35 +82,15 @@ export async function action({ request, context }: Route.ActionArgs) {
       ? saved
       : null
 
+  // The form stores nothing: a confirmed address takes the corrected request to
+  // the verify step, which sends it (15m).
   if (previous !== null && isDonationEmailVerified(previous)) {
-    // The address is confirmed: the corrected request goes at once.
-    const result = await submitDonationRequest(
-      buildSubmitRequest(requestId, details),
-    )
-
-    if (result.ok) {
-      throw await redirectWithCookie(getStepPath('sent'), {
-        requestId,
-        state: 'sent',
-      })
-    }
-
-    return data(
-      submission.reply({
-        formErrors: [result.reason === 'rejected' ? NOT_SENT : UNAVAILABLE],
-      }),
-      {
-        headers: {
-          'Set-Cookie': await writeDonationRequestCookie({
-            details,
-            requestId,
-            state: 'details',
-            verifiedEmail: email,
-          }),
-        },
-        status: result.reason === 'rejected' ? 400 : 503,
-      },
-    )
+    throw await redirectWithCookie(getStepPath('verify'), {
+      details,
+      requestId,
+      state: 'details',
+      verifiedEmail: email,
+    })
   }
 
   if (

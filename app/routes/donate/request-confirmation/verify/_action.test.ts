@@ -179,6 +179,23 @@ describe('donation request verify action', () => {
       expect(submitMock).not.toHaveBeenCalled()
     })
 
+    it('takes details the script refused back to the form, address confirmed', async () => {
+      submitMock.mockResolvedValue({ ok: false, reason: 'rejected' })
+
+      const response = await runToResponse(
+        'verify-code',
+        { code: codeFor(ISSUED_AT) },
+        await cookieOf(),
+      )
+
+      expect(response.headers.get('Location')).toBe(
+        '/donate/request-confirmation?reason=rejected',
+      )
+      await expect(
+        stateOf(response.headers.get('Set-Cookie')),
+      ).resolves.toMatchObject({ verifiedEmail: 'tereza@local.dev' })
+    })
+
     it('keeps the address confirmed when the request does not go', async () => {
       submitMock.mockResolvedValue({ ok: false, reason: 'unavailable' })
 
@@ -189,7 +206,11 @@ describe('donation request verify action', () => {
       )
 
       expect(result.init.status).toBe(503)
-      expect(result.data.notice?.tone).toBe('error')
+      expect(result.data.notice).toEqual({
+        message:
+          'Žádost se nepodařilo odeslat. Kód už zadávat nemusíte, zkuste ji prosím odeslat znovu.',
+        tone: 'error',
+      })
       await expect(
         stateOf(new Headers(result.init.headers).get('Set-Cookie')),
       ).resolves.toMatchObject({ verifiedEmail: 'tereza@local.dev' })

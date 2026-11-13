@@ -1,23 +1,48 @@
-/* The form's 540 px column at the start from 940 px, centred content on a phone
-   (15l). */
-.headlineGroup {
+/* Under the heading, across the content as in 15d (15m). */
+.stepper {
   @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 36px;
+    }
+  }
+}
+
+/* The sentence and the card in the form's 540 px column at the start (15l). */
+.column {
+  @layer route {
+    display: grid;
+    gap: 20px;
+    width: 100%;
+    text-align: start;
+
     @container page (width >= 940px) {
       max-inline-size: 540px;
     }
   }
 }
 
-.column {
+.status {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+}
+
+/* The form's card from 15l; inside, the parts 12 px apart as in 15k. */
+.card {
   @layer route {
     display: flex;
     flex-direction: column;
     gap: 12px;
     min-width: 0;
-
-    @container page (width >= 940px) {
-      max-inline-size: 540px;
-    }
+    padding: 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
   }
 }
 

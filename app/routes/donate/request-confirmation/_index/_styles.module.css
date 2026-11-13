@@ -7,6 +7,17 @@
   }
 }
 
+/* Under the subheadline, across the content as in 15d (15l). */
+.stepper {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 36px;
+    }
+  }
+}
+
 /* ===================================================
    Form card
    =================================================== */

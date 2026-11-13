@@ -186,7 +186,7 @@ describe('donation request form action', () => {
     expect(submitMock).not.toHaveBeenCalled()
   })
 
-  it('sends corrected details at once when the address is confirmed', async () => {
+  it('takes corrected details with a confirmed address to the verify step, and stores nothing', async () => {
     const cookie = await cookieOf({
       details: DETAILS,
       requestId: `${YEAR}-K7M2QX`,
@@ -197,30 +197,14 @@ describe('donation request form action', () => {
     const response = await runToResponse({ ...FORM, note: 'v březnu' }, cookie)
 
     expect(response.headers.get('Location')).toBe(
-      '/donate/request-confirmation/sent',
+      '/donate/request-confirmation/verify',
     )
     expect(issueMock).not.toHaveBeenCalled()
-    expect(submitMock).toHaveBeenCalledOnce()
+    expect(submitMock).not.toHaveBeenCalled()
     await expect(savedState(response)).resolves.toMatchObject({
-      state: 'sent',
-    })
-  })
-
-  it('keeps the confirmed address when the corrected request does not go', async () => {
-    submitMock.mockResolvedValue({ ok: false, reason: 'unavailable' })
-    const cookie = await cookieOf({
-      details: DETAILS,
-      requestId: `${YEAR}-K7M2QX`,
-      state: 'details',
+      details: { note: 'v březnu' },
       verifiedEmail: 'tereza@local.dev',
     })
-
-    const result = await runToData(FORM, cookie)
-
-    expect(result.init.status).toBe(503)
-    expect(new Headers(result.init.headers).get('Set-Cookie')).toContain(
-      'vdm_donation_request=',
-    )
   })
 
   it('says why no code went and keeps the cookie as it was', async () => {
@@ -241,6 +225,9 @@ describe('donation request form action', () => {
     const result = await runToData(FORM, undefined, context)
 
     expect(result.init.status).toBe(429)
+    expect(result.data.error?.['']).toEqual([
+      'Ověřovací kód teď nelze poslat. Zkuste to prosím za 15 minut.',
+    ])
     expect(issueMock).not.toHaveBeenCalled()
   })
 })

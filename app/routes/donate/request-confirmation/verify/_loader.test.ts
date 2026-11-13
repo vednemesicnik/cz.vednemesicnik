@@ -50,6 +50,7 @@ describe('donation request verify loader', () => {
     )
 
     expect(result.email).toBe('Firma@local.dev')
+    expect(result.year).toBe('2025')
     expect(result.verification).toEqual({
       // No break after the day and after the v.
       expiresAt: `7.${NO_BREAK_SPACE}listopadu 2026 v${NO_BREAK_SPACE}18:42`,

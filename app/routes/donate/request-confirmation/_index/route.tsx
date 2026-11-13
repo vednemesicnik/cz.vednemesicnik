@@ -23,6 +23,8 @@ import { HoneypotProvider } from '~/components/honeypot-provider'
 import { Page } from '~/components/page'
 import { RadioTile } from '~/components/radio-tile'
 import { RadioTileGroup } from '~/components/radio-tile-group'
+import { Stepper } from '~/components/stepper'
+import { StepperStep } from '~/components/stepper-step'
 import { Subheadline } from '~/components/subheadline'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
@@ -41,12 +43,18 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
 
+// Why the verify step sent the donor back (15l, 8jxiph0x).
+const REASON_MESSAGES = {
+  expired: 'Vyplněné údaje už nejsou k dispozici. Vyplňte je prosím znovu.',
+  rejected:
+    'Žádost se neodeslala, protože ji s těmito údaji nešlo zapsat. Zkontrolujte je prosím a pokračujte. E-mail zůstává ověřený.',
+} as const
+
 export default function RouteComponent({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { details, honeypotInputProps, isExpired, requestableYears } =
-    loaderData
+  const { details, honeypotInputProps, reason, requestableYears } = loaderData
   const nav = useNavigation()
   const errorAlertRef = useRef<HTMLDivElement>(null)
 
@@ -94,6 +102,11 @@ export default function RouteComponent({
           </Subheadline>
         </HeadlineGroup>
 
+        <Stepper className={styles.stepper} label={'Kroky žádosti'}>
+          <StepperStep state={'current'}>Údaje</StepperStep>
+          <StepperStep state={'upcoming'}>Ověření a odeslání</StepperStep>
+        </Stepper>
+
         <div className={styles.column}>
           <Callout className={styles.callout}>
             O potvrzení lze požádat až 3 roky zpětně. Ve formuláři vyberte rok,
@@ -106,9 +119,9 @@ export default function RouteComponent({
                 <Alert className={styles.formError}>
                   {form.errors.join(' ')}
                 </Alert>
-              ) : isExpired ? (
+              ) : reason !== null ? (
                 <Alert className={styles.formError}>
-                  Rozepsaná žádost vypršela. Vyplňte ji prosím znovu.
+                  {REASON_MESSAGES[reason]}
                 </Alert>
               ) : null}
             </div>
@@ -332,7 +345,8 @@ export default function RouteComponent({
                   placeholder="vas@email.cz"
                 />
                 <Hint>
-                  Na tuto e-mailovou adresu vám zašleme potvrzení o daru.
+                  E-mail ověříte kódem. Na tuto adresu vám pak pošleme i
+                  potvrzení o daru.
                 </Hint>
                 <ErrorMessage>{fields.email.errors}</ErrorMessage>
               </FormField>
@@ -406,7 +420,7 @@ export default function RouteComponent({
                 disabled={nav.state !== 'idle'}
                 type="submit"
               >
-                {nav.state === 'submitting' ? 'Odesílám…' : 'Odeslat žádost'}
+                Pokračovat
               </Button>
             </Form>
           </section>

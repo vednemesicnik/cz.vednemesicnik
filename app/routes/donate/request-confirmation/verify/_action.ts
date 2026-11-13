@@ -24,8 +24,8 @@ import { getStepPath } from '../_step'
 import { parseIntent } from './_intent'
 import type { Route } from './+types/route'
 
-// As for the membership application (design 15k, copy thread zup07jj5), until
-// the copywriter settles the donation's own.
+// Design 15m (8jxiph0x): the code's messages as for the membership application
+// (15k, copy thread zup07jj5).
 const NEW_CODE_SENT = 'Poslali jsme nový kód. Předchozí už neplatí.'
 const NEW_CODE_NOT_SENT_KEEP_OLD =
   'Použijte dosavadní kód. Nový kód z tohoto pokusu nelze použít, ani pokud vám přišel e-mailem.'
@@ -33,10 +33,8 @@ const NEW_CODE_NOT_SENT =
   'Zkuste prosím znovu stisknout tlačítko Poslat nový kód. Kód z tohoto pokusu nelze použít, ani pokud vám přišel e-mailem.'
 const NOT_VERIFIED =
   'Žádost se neodeslala, protože e-mail není ověřený. Ověřte ho a žádost odešlete.'
-const REJECTED =
-  'Žádost se nepodařilo odeslat. Přes odkaz Opravit údaje prosím zkontrolujte své údaje a zkuste to znovu.'
 const UNAVAILABLE =
-  'Žádost se teď nepodařilo odeslat. E-mail zůstává ověřený, zkuste to prosím za chvíli.'
+  'Žádost se nepodařilo odeslat. Kód už zadávat nemusíte, zkuste ji prosím odeslat znovu.'
 const sendLimited = (retryAfter: number) =>
   `Ověřovací kód teď nelze poslat. Zkuste to prosím ${formatRetryAfter(retryAfter)}.`
 const triesLimited = (retryAfter: number) =>
@@ -58,7 +56,8 @@ const errorNotice = (message: string): VerificationNotice => ({
 /**
  * Sends the confirmed request. On success the cookie keeps only the request's
  * code for the sent page; otherwise it keeps the confirmed address, so the
- * next try needs no code.
+ * next try needs no code. Details the script refused go back to the form,
+ * where they can be corrected (15l).
  */
 const submitRequest = async (saved: DetailsState) => {
   const verifiedState: DonationRequestState = {
@@ -83,18 +82,18 @@ const submitRequest = async (saved: DetailsState) => {
     })
   }
 
+  const setCookie = await writeDonationRequestCookie(verifiedState)
+
+  if (result.reason === 'rejected') {
+    throw redirect(`${getStepPath('details')}?reason=rejected`, {
+      headers: { 'Set-Cookie': setCookie },
+      status: 303,
+    })
+  }
+
   return data(
-    {
-      notice: errorNotice(
-        result.reason === 'rejected' ? REJECTED : UNAVAILABLE,
-      ),
-    },
-    {
-      headers: {
-        'Set-Cookie': await writeDonationRequestCookie(verifiedState),
-      },
-      status: result.reason === 'rejected' ? 400 : 503,
-    },
+    { notice: errorNotice(UNAVAILABLE) },
+    { headers: { 'Set-Cookie': setCookie }, status: 503 },
   )
 }
 
