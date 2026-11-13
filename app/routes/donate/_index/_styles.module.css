@@ -1,8 +1,11 @@
 /* Everything under the band: the card overlaps the band's bottom edge, then
-   the thanks and the confirmation box follow (15f). */
+   the thanks and the confirmation box follow (15f). The full content width,
+   not the width of what is shown, so opening the disclosure doesn't widen the
+   card. */
 .content {
   @layer route {
     display: grid;
+    justify-self: stretch;
     position: relative;
     gap: 48px;
     margin-block-start: -88px;
