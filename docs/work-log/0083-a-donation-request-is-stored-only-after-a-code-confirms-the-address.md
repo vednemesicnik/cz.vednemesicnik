@@ -41,6 +41,15 @@ Release order: Toolkit 13, then the script with a new long `OWN_SECRET` set on b
 (`docs/_deploy-to-fly.md`). The limits and the in-flight guard live in process memory, as in
 log 0073.
 
+The cookie's path is `/donate`, not the form's own address: a cookie scoped to
+`/donate/request-confirmation` never reaches `/donate/request-confirmation.data`, and the form
+would lose the saved request on every client-side visit.
+
+The verify step's code card repeats the membership application's code part
+(`EmailVerification`, design 15k) with another main button and correction link. One shared
+compound component for both is the next step, in its own change, since it reworks the membership
+form too.
+
 ## Turned down
 
 - **A link in the e-mail with a pending row**, as in the enrolment: a request with a date of birth

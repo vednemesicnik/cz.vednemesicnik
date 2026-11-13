@@ -39,6 +39,7 @@ import { Label } from './components/label'
 import { Textarea } from './components/textarea'
 
 export { action } from './_action'
+export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'

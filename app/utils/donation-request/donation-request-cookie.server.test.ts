@@ -40,7 +40,7 @@ describe('donation request cookie', () => {
     const setCookie = await write(DETAILS_STATE)
 
     expect(setCookie).toContain('Max-Age=604800')
-    expect(setCookie).toContain('Path=/donate/request-confirmation')
+    expect(setCookie).toContain('Path=/donate;')
     expect(setCookie).toContain('HttpOnly')
     await expect(read(requestWith(cookieValue(setCookie)))).resolves.toEqual(
       DETAILS_STATE,

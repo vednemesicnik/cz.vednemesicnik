@@ -118,7 +118,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   // The cookie stays as it was: a code from this attempt never verifies, and
-  // the next *Odeslat žádost* sends another.
+  // the next *Pokračovat* sends another.
   return data(
     submission.reply({
       formErrors: [
