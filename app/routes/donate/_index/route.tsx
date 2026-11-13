@@ -10,6 +10,9 @@ import {
 } from 'react'
 import { href } from 'react-router'
 import { CopyButton } from '~/components/copy-button'
+import { Disclosure } from '~/components/disclosure'
+import { DisclosureContent } from '~/components/disclosure-content'
+import { DisclosureSummary } from '~/components/disclosure-summary'
 import { LinkButton } from '~/components/link-button'
 import { PageHero } from '~/components/page-hero'
 import { PageHeroEyebrow } from '~/components/page-hero-eyebrow'
@@ -24,9 +27,7 @@ import { TextFieldLabel } from '~/components/text-field-label'
 import { VisuallyHidden } from '~/components/visually-hidden'
 import { DONATION_PAYMENT } from '~/data/donation-payment'
 import styles from './_styles.module.css'
-import { DonationAbroad } from './components/donation-abroad'
 import { DonationAbroadDescription } from './components/donation-abroad-description'
-import { DonationAbroadHeading } from './components/donation-abroad-heading'
 import { DonationCard } from './components/donation-card'
 import { DonationConfirmation } from './components/donation-confirmation'
 import { DonationConfirmationDescription } from './components/donation-confirmation-description'
@@ -161,6 +162,33 @@ export default function RouteComponent() {
                 </CopyButton>
               </PaymentDetail>
             </PaymentDetailGroup>
+
+            {/* Closed for the donor paying from a Czech account (wnyfw8po);
+                wording from copy thread ti38wq1x. */}
+            <Disclosure>
+              <DisclosureSummary>
+                Posíláte dar ze zahraničního účtu?
+              </DisclosureSummary>
+              <DisclosureContent>
+                <DonationAbroadDescription>
+                  Pošlete dar v eurech na IBAN níže se zprávou pro příjemce
+                  „Dar“, bez variabilního symbolu. Eura naše banka převede na
+                  koruny. QR kód zahraniční aplikace obvykle nepřečtou.
+                </DonationAbroadDescription>
+                <PaymentDetailGroup>
+                  <PaymentDetail label="IBAN">
+                    <CopyButton value={DONATION_PAYMENT.iban}>
+                      {IBAN_IN_GROUPS}
+                    </CopyButton>
+                  </PaymentDetail>
+                  <PaymentDetail label="BIC (SWIFT)">
+                    <CopyButton value={DONATION_PAYMENT.bic}>
+                      {DONATION_PAYMENT.bic}
+                    </CopyButton>
+                  </PaymentDetail>
+                </PaymentDetailGroup>
+              </DisclosureContent>
+            </Disclosure>
           </div>
 
           <DonationQr>
@@ -185,30 +213,6 @@ export default function RouteComponent() {
               Stáhnout QR kód
             </LinkButton>
           </DonationQr>
-
-          {/* Copy thread ti38wq1x. */}
-          <DonationAbroad>
-            <DonationAbroadHeading>
-              Posíláte dar ze zahraničního účtu?
-            </DonationAbroadHeading>
-            <DonationAbroadDescription>
-              Pošlete dar v eurech na IBAN níže se zprávou pro příjemce „Dar“,
-              bez variabilního symbolu. Eura naše banka převede na koruny. QR
-              kód zahraniční aplikace obvykle nepřečtou.
-            </DonationAbroadDescription>
-            <PaymentDetailGroup>
-              <PaymentDetail label="IBAN">
-                <CopyButton value={DONATION_PAYMENT.iban}>
-                  {IBAN_IN_GROUPS}
-                </CopyButton>
-              </PaymentDetail>
-              <PaymentDetail label="BIC (SWIFT)">
-                <CopyButton value={DONATION_PAYMENT.bic}>
-                  {DONATION_PAYMENT.bic}
-                </CopyButton>
-              </PaymentDetail>
-            </PaymentDetailGroup>
-          </DonationAbroad>
         </DonationCard>
 
         <section className={styles.thanks}>
