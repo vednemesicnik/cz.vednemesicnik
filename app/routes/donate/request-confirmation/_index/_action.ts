@@ -77,6 +77,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     ...donorFields,
   }
 
+  // Unset outside production (required there by env.server.ts): skip the
+  // request so the flow can be exercised without a live deployment.
+  if (!GAS_URL || !GAS_SECRET) {
+    console.info(
+      `[donate] GAS_DONATION_CONFIRMATION_URL/SECRET unset, request ${requestId} not sent`,
+    )
+    const params = new URLSearchParams({ id: requestId })
+    return replace(`${href('/donate/request-confirmation/sent')}?${params}`)
+  }
+
   try {
     const res = await fetch(GAS_URL, {
       body: JSON.stringify(payload),

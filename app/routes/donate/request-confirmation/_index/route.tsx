@@ -349,9 +349,8 @@ export default function RouteComponent({
                     />
                     {accountList.length > 1 ? (
                       <Button
-                        color="danger"
                         size="md"
-                        variant="filled"
+                        variant="danger"
                         {...form.remove.getButtonProps({
                           index,
                           name: fields.accounts.name,

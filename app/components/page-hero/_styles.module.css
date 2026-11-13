@@ -2,7 +2,7 @@
   display: grid;
   position: relative;
   width: 100%;
-  grid-template-columns: minmax(auto, var(--content-max-width));
+  grid-template-columns: minmax(auto, var(--page-max-width));
   grid-auto-flow: row;
   justify-content: center;
   align-content: start;

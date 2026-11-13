@@ -46,7 +46,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         className={styles.backButton}
         size="lg"
         to="/donate"
-        variant="filled"
+        variant="primary"
       >
         Zpět na darování
       </LinkButton>

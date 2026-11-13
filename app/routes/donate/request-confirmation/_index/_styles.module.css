@@ -28,7 +28,7 @@
 
 .formErrorWrapper {
   @layer route {
-    scroll-margin-top: calc(var(--header-height) + 1rem);
+    scroll-margin-top: calc(var(--app-header-height) + 1rem);
   }
 }
 

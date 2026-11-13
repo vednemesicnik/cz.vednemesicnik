@@ -5,14 +5,14 @@
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: color-mix(in oklab, var(--text-inverted) 85%, transparent);
+    color: color-mix(in oklab, var(--text-on-accent) 85%, transparent);
     margin-block-end: 1rem;
   }
 }
 
 .heroHeadline {
   @layer route {
-    color: var(--text-inverted);
+    color: var(--text-on-accent);
     font-size: var(--font-size-4xl);
     font-weight: var(--font-weight-bold);
     line-height: var(--line-height-4xl);
@@ -29,7 +29,7 @@
 
 .heroSubheadline {
   @layer route {
-    color: color-mix(in oklab, var(--text-inverted) 85%, transparent);
+    color: color-mix(in oklab, var(--text-on-accent) 85%, transparent);
     font-size: var(--font-size-lg);
     line-height: var(--line-height-lg);
     margin: 0;
