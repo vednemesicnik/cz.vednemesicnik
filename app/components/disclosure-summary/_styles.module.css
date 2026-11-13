@@ -1,0 +1,56 @@
+/* Looks like a link, with a 44 px touch target; the chevron says it opens in
+   place rather than leading away (15f, wnyfw8po). */
+.summary {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    min-block-size: 44px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--link-strong);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:hover {
+      color: var(--link-strong-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-radius: 4px;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+.chevron {
+  @layer variant {
+    flex: none;
+    font-size: 16px;
+    transition: rotate 150ms ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+}
+
+[open] > .summary > .chevron {
+  @layer variant {
+    rotate: 90deg;
+  }
+}
+
+.text {
+  @layer component {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}

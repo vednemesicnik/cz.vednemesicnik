@@ -78,6 +78,15 @@ const schema = z
     // (log 0073). Optional locally (no code is made, so the form stops at the
     // details), required in production.
     [ENV_KEYS.MEMBERSHIP_VERIFICATION_SECRET]: z.string().optional(),
+    // Google Apps Script web app that stores a donation-confirmation request (see
+    // the SCRIPT__Donate__Request_Confirmation repo). Optional locally, required in
+    // production (see the superRefine below).
+    [ENV_KEYS.GAS_DONATION_CONFIRMATION_URL]: z.string().optional(),
+    [ENV_KEYS.GAS_DONATION_CONFIRMATION_SECRET]: z.string().optional(),
+    // Makes and checks the code that confirms a donor's address before the request
+    // is stored (#104). Optional locally (no code is made, so the form stops at the
+    // details), required in production.
+    [ENV_KEYS.DONATION_VERIFICATION_SECRET]: z.string().optional(),
     // WebAuthn relying-party settings for the passkey flow. Optional in the shape
     // so local development falls back gracefully, but required in production (see
     // the superRefine below) — an empty rpID/origin makes every passkey ceremony
@@ -141,6 +150,10 @@ const schema = z
           ENV_KEYS.GAS_MEMBERSHIP_URL,
           ENV_KEYS.GAS_MEMBERSHIP_SECRET,
           ENV_KEYS.MEMBERSHIP_VERIFICATION_SECRET,
+          // Donation-confirmation requests (Google Apps Script)
+          ENV_KEYS.GAS_DONATION_CONFIRMATION_URL,
+          ENV_KEYS.GAS_DONATION_CONFIRMATION_SECRET,
+          ENV_KEYS.DONATION_VERIFICATION_SECRET,
           // Passkey / WebAuthn relying party
           ENV_KEYS.RELYING_PARTY_ID,
           ENV_KEYS.RELYING_PARTY_NAME,

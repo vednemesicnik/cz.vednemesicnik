@@ -1,0 +1,11 @@
+.eyebrow {
+  @layer component {
+    color: var(--text-on-accent);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+    margin-block-end: 1rem;
+  }
+}

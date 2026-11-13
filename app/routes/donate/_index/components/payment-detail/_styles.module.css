@@ -1,0 +1,22 @@
+/* The name above the value; the copy button stands beside the value (15f). */
+.detail {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+.label {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+.value {
+  @layer route {
+    margin: 0;
+    font-weight: var(--font-weight-semibold);
+  }
+}

@@ -10,7 +10,8 @@
     position: relative;
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-md);
-    color: var(--text-secondary);
+    /* White over a PageHero band (see app-header). */
+    color: var(--app-header-text-secondary, var(--text-secondary));
     text-transform: uppercase;
     text-decoration: none;
     padding-bottom: 4px;
@@ -30,7 +31,7 @@
     }
 
     &:hover {
-      color: var(--text-primary);
+      color: var(--app-header-text-primary, var(--text-primary));
 
       &::after {
         transform: scaleX(1);

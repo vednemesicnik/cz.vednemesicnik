@@ -1,0 +1,21 @@
+/* The white card that overlaps the band: the choice and the payment details,
+   then the QR code, side by side from 768 px (15f). */
+.card {
+  @layer route {
+    display: grid;
+    gap: 18px;
+    padding: 24px 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    text-align: start;
+
+    @media (width >= 768px) {
+      grid-template-columns: minmax(0, 1fr) 240px;
+      align-items: start;
+      column-gap: 48px;
+      padding: 36px 40px;
+    }
+  }
+}

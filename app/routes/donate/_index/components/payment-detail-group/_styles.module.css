@@ -1,0 +1,13 @@
+/* The details one under another, read like payment details in a bank
+   (15f, tfma8scr). */
+.group {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+    color: var(--text-primary);
+  }
+}

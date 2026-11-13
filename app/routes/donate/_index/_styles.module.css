@@ -1,0 +1,124 @@
+/* Everything under the band: the card overlaps the band's bottom edge, then
+   the thanks and the confirmation box follow (15f). The full content width,
+   not the width of what is shown, so opening the disclosure doesn't widen the
+   card. */
+.content {
+  @layer route {
+    display: grid;
+    justify-self: stretch;
+    position: relative;
+    gap: 48px;
+    margin-block-start: -88px;
+
+    @media (width >= 768px) {
+      gap: 72px;
+      margin-block-start: -120px;
+    }
+  }
+}
+
+/* The card's first column: the choice, the custom amount and the payment
+   details. */
+.choice {
+  @layer route {
+    display: grid;
+    gap: 18px;
+    min-inline-size: 0;
+
+    @media (width >= 768px) {
+      gap: 20px;
+    }
+  }
+}
+
+.intro {
+  @layer route {
+    display: grid;
+    gap: 6px;
+
+    @media (width >= 768px) {
+      gap: 8px;
+    }
+  }
+}
+
+.cardTitle {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    color: var(--text-primary);
+  }
+}
+
+.cardText {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}
+
+/* The custom amount's input with Kč after it. */
+.amountRow {
+  @layer route {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.amountInput {
+  @layer route {
+    flex: 1;
+    min-inline-size: 0;
+
+    @media (width >= 768px) {
+      flex: 0 1 200px;
+    }
+  }
+}
+
+.currency {
+  @layer route {
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
+  }
+}
+
+/* ===================================================
+   Thanks
+   =================================================== */
+.thanks {
+  @layer route {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+.thanksHeading {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    color: var(--text-primary);
+    text-wrap: balance;
+  }
+}
+
+.thanksText {
+  @layer route {
+    max-inline-size: 560px;
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-lg);
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}

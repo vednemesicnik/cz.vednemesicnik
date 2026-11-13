@@ -13,6 +13,7 @@ flowchart LR
     application["/organization/membership/application"]
     enrolment["/editorial-board/enrolment"]
     board["/editorial-board"]
+    donation["/donate/request-confirmation"]
   end
 
   subgraph scripts["Under web.app@"]
@@ -23,7 +24,9 @@ flowchart LR
     contacts["SCRIPT__Editorial_Board__Contacts<br/>Reads the public subset"]
   end
 
+  donationRequests["SCRIPT__Donate__Request_Confirmation<br/>Mails the verification code, stores a request"]
   mailer["SCRIPT__Mail__Send<br/>under oznameni@<br/>Sends for the scripts beside it"]
+  donationStore[("Donation requests<br/>one tab per year")]
   membershipStore[("Přihlášky do spolku<br/>sheet and declarations on Drive")]
   editorialSheet[("Vedneměsíčník — Redakce<br/>Kontakty, Přihlášky, Role")]
   chiefEditors(["Chief editors"])
@@ -33,10 +36,13 @@ flowchart LR
   application --> membershipApplications
   enrolment --> boardMembership
   board --> contacts
+  donation --> donationRequests
 
   magicLink --> mailer
   usersNotice --> mailer
   membershipApplications --> mailer
+  donationRequests --> mailer
+  donationRequests -->|writes| donationStore
   membershipApplications -->|writes| membershipStore
   boardMembership --> mailer
   boardMembership -->|"writes, edit trigger, daily jobs"| editorialSheet
@@ -55,16 +61,18 @@ Schema, which `pnpm gas:schema:fetch <name>` saves under `schemas/<name>/`.
 | `users-notice` | `SCRIPT__Users__Notice_Send` | `app/utils/users-notice/send-users-notice.server.ts`: the invitation, the e-mail change notice | signed request, `GAS_USERS_NOTICE_SECRET` |
 | `editorial-board` | `SCRIPT__Editorial_Board__Contacts` | `app/utils/editorial-board.server.ts`: the `/editorial-board` loader | secret in the body, `GAS_EDITORIAL_BOARD_SECRET` |
 | `editorial-board-membership` | `SCRIPT__Editorial_Board__Membership` | `app/utils/editorial-board-enrolment/send-enrolment-email.server.ts`: the enrolment form. `app/utils/editorial-board-membership.server.ts`: its confirmation, and the answers from the re-confirmation e-mails | signed request, `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET`; the e-mails' links are signed the other way, by the script with `LINK_SECRET` and checked against `GAS_EDITORIAL_BOARD_LINK_SECRET` |
+| `donation-confirmation` | `SCRIPT__Donate__Request_Confirmation` | `app/utils/donation-request/send-donation-verification-code-email.server.ts`: the code that confirms the donor's address. `app/utils/donation-request/submit-donation-request.server.ts`: the request for a tax confirmation, sent only after the code (log 0083) | signed request, `GAS_DONATION_CONFIRMATION_SECRET`; the code is made and checked by the app alone, with `DONATION_VERIFICATION_SECRET` |
 | `membership` | `SCRIPT__Membership__Applications` | `app/utils/membership-application/send-verification-code-email.server.ts`: the code that confirms the applicant's address. `app/utils/membership-application/submit-membership-application.server.ts`: the membership application | signed request, `GAS_MEMBERSHIP_SECRET`; the code is made and checked by the app alone, with `MEMBERSHIP_VERIFICATION_SECRET` |
 
 The web never sends e-mail itself and holds no mail service secret: a script behind it renders the
 message and hands it to `SCRIPT__Mail__Send`.
 
 `postGasRequest` walks the redirect from `/exec` itself and logs each hop as a `[gas]` line. Only
-`magic-link`, `editorial-board-membership` and the verification code of `membership` try a
-transport failure again, once, through `postSignedGasRequest` (log 0061).
-`editorial-board-membership` answers a repeat with its first result (log 0064), and the code's
-e-mail is keyed by the code (log 0073). The others do not:
+`magic-link`, `editorial-board-membership`, both actions of `donation-confirmation` and the
+verification code of `membership` try a transport failure again, once, through
+`postSignedGasRequest` (log 0061). `editorial-board-membership` answers a repeat with its first
+result (log 0064), a code's e-mail is keyed by the code (log 0073), and a donation request is
+stored once per `requestId` (log 0083). The others do not:
 
 - `users-notice` must not: its e-mail change notice is keyed on the request signature, and a retry
   has a new one.
@@ -90,7 +98,6 @@ The web does not call these. They are here so a name found in `apps-script-ops` 
 | ---- | ------- | -------- |
 | Billing, for `cz.vednemesicnik.billing` | `SCRIPT__Auth__Group_Membership`, `SCRIPT__Drive__Invoice_Pdf`, `SCRIPT__Drive__Database_Backup`, `SCRIPT__Sheets__Accounting_Export`, `SCRIPT__Mail__Bounces`, `SCRIPT__Mail__Send` | Sign-in by group, the invoice PDF on Drive, the nightly backup, the accountant's sheet, delivery failures, sending an invoice |
 | Invoices | `SCRIPT__Billing__Invoices` | A web app of its own: a form, a sheet and the PDF on Drive |
-| Donations | `SCRIPT__Donate__Request_Confirmation` | Stores a request for a tax confirmation. Its README names a form at `/donate/request-confirmation`, which `app/routes.ts` does not have today, and the app has no endpoint for it |
 | Publication, under `publikace@` | `SCRIPT__Publication__Issue_Create`, `…__Article_Create`, `…__Article_Approve`, `…__Approval_Send`, `…__Artwork_Upload`, `…__Artwork_Group_Create`, `…__Comment_Digest`, `…__Designer_Handoff` | Preparing a printed issue in Google Docs and Drive, from creating it to the designer's folder |
 
 Under `publikace@`, only `SCRIPT__Mail__Send` sends and only one script reads (log 0071). The scripts

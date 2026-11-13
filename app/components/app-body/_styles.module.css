@@ -10,3 +10,24 @@
   padding: var(--page-top-padding) var(--page-side-padding)
     var(--page-bottom-padding) var(--page-side-padding);
 }
+
+/* A page that opens with a PageHero: the band runs edge to edge from the top,
+   under the header, and the rest keeps the column (15f). Unlayered, like the
+   rule above it overrides. */
+.container:has(> [data-page-hero]) {
+  grid-template-columns:
+    [full-start] minmax(var(--page-side-padding), 1fr)
+    [content-start] minmax(0, var(--content-max-width))
+    [content-end] minmax(var(--page-side-padding), 1fr)
+    [full-end];
+  padding-block-start: 0;
+  padding-inline: 0;
+
+  & > * {
+    grid-column: content;
+  }
+
+  & > [data-page-hero] {
+    grid-column: full;
+  }
+}
