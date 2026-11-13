@@ -13,7 +13,7 @@ import { detectDeclarationType } from '~/utils/membership-application/detect-dec
 import { generateApplicationCode } from '~/utils/membership-application/generate-application-code.server'
 import { isEmailVerified } from '~/utils/membership-application/is-email-verified'
 import { isMinorOnDate } from '~/utils/membership-application/is-minor-on-date'
-import { issueVerificationCode } from '~/utils/membership-application/issue-verification-code.server'
+import { issueMembershipVerificationCode } from '~/utils/membership-application/issue-membership-verification-code.server'
 import {
   type MembershipApplicationState,
   readMembershipApplicationCookie,
@@ -128,7 +128,7 @@ const saveDetails = async (request: Request) => {
     throw await toSignature({ verification: previous.verification })
   }
 
-  const issued = await issueVerificationCode(email, request)
+  const issued = await issueMembershipVerificationCode(email, request)
 
   if (issued.status === 'sent') {
     throw await toSignature({ verification: { issuedAt: issued.issuedAt } })
@@ -233,7 +233,7 @@ const sendCode = async (request: Request, application: DetailsState) => {
   checkHoneypot(formData)
 
   const hadLiveCode = hasLiveCode(application, Date.now())
-  const issued = await issueVerificationCode(
+  const issued = await issueMembershipVerificationCode(
     application.details.email.toLowerCase(),
     request,
   )

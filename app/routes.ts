@@ -130,6 +130,7 @@ export default [
       ...prefix('request-confirmation', [
         index('routes/donate/request-confirmation/_index/route.tsx'),
         route('sent', 'routes/donate/request-confirmation/sent/route.tsx'),
+        route('verify', 'routes/donate/request-confirmation/verify/route.tsx'),
       ]),
     ]),
 

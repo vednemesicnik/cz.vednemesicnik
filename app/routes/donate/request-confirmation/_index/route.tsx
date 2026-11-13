@@ -45,13 +45,15 @@ export default function RouteComponent({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { requestableYears, honeypotInputProps } = loaderData
+  const { details, honeypotInputProps, isExpired, requestableYears } =
+    loaderData
   const nav = useNavigation()
   const errorAlertRef = useRef<HTMLDivElement>(null)
 
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
-    defaultValue: {
+    // Back from the code to correct them, the details are filled in again.
+    defaultValue: details ?? {
       accounts: [''],
       type: 'individual',
       year: requestableYears[0],
@@ -103,6 +105,10 @@ export default function RouteComponent({
               {form.errors && form.errors.length > 0 ? (
                 <Alert className={styles.formError}>
                   {form.errors.join(' ')}
+                </Alert>
+              ) : isExpired ? (
+                <Alert className={styles.formError}>
+                  Rozepsaná žádost vypršela. Vyplňte ji prosím znovu.
                 </Alert>
               ) : null}
             </div>

@@ -1,17 +1,32 @@
 import { z } from 'zod'
 
-const email = z.email({ error: 'E-mail nemá platný formát.' })
+import { DONATION_FIELD_LIMITS as LIMITS } from '~/config/donation-request-config'
 
-const accounts = z.array(
-  z
-    .string({ error: 'Vyplňte prosím číslo účtu.' })
-    .trim()
-    .regex(/^[\d\-/]+$/, {
-      error: 'Číslo účtu může obsahovat pouze číslice a lomítko.',
-    }),
-)
+const email = z
+  .email({ error: 'E-mail nemá platný formát.' })
+  .max(LIMITS.email, { error: 'E-mail je příliš dlouhý.' })
 
-const note = z.string().trim().optional()
+const accounts = z
+  .array(
+    z
+      .string({ error: 'Vyplňte prosím číslo účtu.' })
+      .trim()
+      .regex(/^[\d\-/]+$/, {
+        error: 'Číslo účtu může obsahovat pouze číslice a lomítko.',
+      })
+      .max(LIMITS.accountLength, { error: 'Číslo účtu je příliš dlouhé.' }),
+  )
+  .max(LIMITS.accounts, {
+    error: `Uveďte nejvýš ${LIMITS.accounts} účtů.`,
+  })
+
+const note = z
+  .string()
+  .trim()
+  .max(LIMITS.note, {
+    error: `Doplňující informace mohou mít nejvýš ${LIMITS.note} znaků.`,
+  })
+  .optional()
 
 const year = z
   .string({ error: 'Vyberte rok, za který žádáte o potvrzení.' })
@@ -23,9 +38,32 @@ const year = z
     { error: 'Vyberte rok, za který žádáte o potvrzení.' },
   )
 
+const tooLong = (maxLength: number) =>
+  `Zkraťte prosím údaj na ${maxLength} znaků.`
+
+const firstName = z
+  .string({ error: 'Vyplňte prosím jméno.' })
+  .trim()
+  .min(1)
+  .max(LIMITS.name, { error: tooLong(LIMITS.name) })
+
+const lastName = z
+  .string({ error: 'Vyplňte prosím příjmení.' })
+  .trim()
+  .min(1)
+  .max(LIMITS.name, { error: tooLong(LIMITS.name) })
+
 const address = z.object({
-  city: z.string({ error: 'Vyplňte prosím obec.' }).trim().min(1),
-  street: z.string({ error: 'Vyplňte prosím ulici a číslo.' }).trim().min(1),
+  city: z
+    .string({ error: 'Vyplňte prosím obec.' })
+    .trim()
+    .min(1)
+    .max(LIMITS.city, { error: tooLong(LIMITS.city) }),
+  street: z
+    .string({ error: 'Vyplňte prosím ulici a číslo.' })
+    .trim()
+    .min(1)
+    .max(LIMITS.street, { error: tooLong(LIMITS.street) }),
   zip: z
     .string({ error: 'Vyplňte prosím PSČ.' })
     .regex(/^\d{3} ?\d{2}$/, { error: 'PSČ nemá platný formát.' }),
@@ -70,24 +108,28 @@ const common = {
 const individual = z.object({
   ...common,
   dateOfBirth,
-  firstName: z.string({ error: 'Vyplňte prosím jméno.' }).trim().min(1),
-  lastName: z.string({ error: 'Vyplňte prosím příjmení.' }).trim().min(1),
+  firstName,
+  lastName,
   type: z.literal('individual'),
 })
 
 const soleTrader = z.object({
   ...common,
-  firstName: z.string({ error: 'Vyplňte prosím jméno.' }).trim().min(1),
+  firstName,
   ico: z
     .string({ error: 'Vyplňte prosím IČO.' })
     .regex(/^\d{8}$/, { error: 'IČO musí mít 8 číslic.' }),
-  lastName: z.string({ error: 'Vyplňte prosím příjmení.' }).trim().min(1),
+  lastName,
   type: z.literal('sole_trader'),
 })
 
 const entity = z.object({
   ...common,
-  companyName: z.string({ error: 'Vyplňte prosím název firmy.' }).trim().min(1),
+  companyName: z
+    .string({ error: 'Vyplňte prosím název firmy.' })
+    .trim()
+    .min(1)
+    .max(LIMITS.companyName, { error: tooLong(LIMITS.companyName) }),
   ico: z
     .string({ error: 'Vyplňte prosím IČO.' })
     .regex(/^\d{8}$/, { error: 'IČO musí mít 8 číslic.' }),

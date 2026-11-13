@@ -5,7 +5,7 @@ import { VERIFICATION_CODE_LIFETIME_MILLISECONDS } from '~/config/email-verifica
 import { MAX_DECLARATION_BYTES } from '~/config/membership-application-config'
 import { createVerificationCode } from '~/utils/email-verification/create-verification-code.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
-import { issueVerificationCode } from '~/utils/membership-application/issue-verification-code.server'
+import { issueMembershipVerificationCode } from '~/utils/membership-application/issue-membership-verification-code.server'
 import { readMembershipApplicationCookie } from '~/utils/membership-application/read-membership-application-cookie.server'
 import { submitMembershipApplication } from '~/utils/membership-application/submit-membership-application.server'
 import { writeMembershipApplicationCookie } from '~/utils/membership-application/write-membership-application-cookie.server'
@@ -19,12 +19,12 @@ vi.mock(
   () => ({ submitMembershipApplication: vi.fn() }),
 )
 vi.mock(
-  '~/utils/membership-application/issue-verification-code.server',
-  () => ({ issueVerificationCode: vi.fn() }),
+  '~/utils/membership-application/issue-membership-verification-code.server',
+  () => ({ issueMembershipVerificationCode: vi.fn() }),
 )
 
 const submitMock = vi.mocked(submitMembershipApplication)
-const issueMock = vi.mocked(issueVerificationCode)
+const issueMock = vi.mocked(issueMembershipVerificationCode)
 
 const SECRET = 'verification-secret'
 // An hour ago: the code is live.

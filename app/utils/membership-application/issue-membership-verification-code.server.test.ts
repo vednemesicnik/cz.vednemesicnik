@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createVerificationCode } from '~/utils/email-verification/create-verification-code.server'
 
-import { issueVerificationCode } from './issue-verification-code.server'
+import { issueMembershipVerificationCode } from './issue-membership-verification-code.server'
 import { sendVerificationCodeEmail } from './send-verification-code-email.server'
 
 vi.mock('./send-verification-code-email.server', () => ({
@@ -19,7 +19,7 @@ const requestFrom = (ip: string) =>
   new Request('https://local.dev/', { headers: { 'X-Forwarded-For': ip } })
 const nextRequest = () => requestFrom(`10.0.0.${++counter}`)
 
-describe('issueVerificationCode', () => {
+describe('issueMembershipVerificationCode', () => {
   beforeEach(() => {
     sendMock.mockReset().mockResolvedValue(true)
     vi.stubEnv('MEMBERSHIP_VERIFICATION_SECRET', 'secret')
@@ -30,7 +30,7 @@ describe('issueVerificationCode', () => {
   it('mails the code made for the address and the moment it answers', async () => {
     const email = nextAddress()
 
-    const result = await issueVerificationCode(email, nextRequest())
+    const result = await issueMembershipVerificationCode(email, nextRequest())
 
     expect(result.status).toBe('sent')
     if (result.status !== 'sent') return
@@ -49,7 +49,7 @@ describe('issueVerificationCode', () => {
     sendMock.mockResolvedValue(false)
 
     await expect(
-      issueVerificationCode(nextAddress(), nextRequest()),
+      issueMembershipVerificationCode(nextAddress(), nextRequest()),
     ).resolves.toEqual({ status: 'failed' })
   })
 
@@ -57,7 +57,7 @@ describe('issueVerificationCode', () => {
     vi.stubEnv('MEMBERSHIP_VERIFICATION_SECRET', '')
 
     await expect(
-      issueVerificationCode(nextAddress(), nextRequest()),
+      issueMembershipVerificationCode(nextAddress(), nextRequest()),
     ).resolves.toEqual({ status: 'failed' })
     expect(sendMock).not.toHaveBeenCalled()
   })
@@ -67,14 +67,14 @@ describe('issueVerificationCode', () => {
 
     for (let attempt = 0; attempt < 5; attempt++) {
       await expect(
-        issueVerificationCode(email, nextRequest()),
+        issueMembershipVerificationCode(email, nextRequest()),
       ).resolves.toMatchObject({
         status: 'sent',
       })
     }
 
     await expect(
-      issueVerificationCode(email, nextRequest()),
+      issueMembershipVerificationCode(email, nextRequest()),
     ).resolves.toMatchObject({
       status: 'limited',
     })
@@ -85,10 +85,13 @@ describe('issueVerificationCode', () => {
     const request = nextRequest()
 
     for (let attempt = 0; attempt < 10; attempt++) {
-      await issueVerificationCode(nextAddress(), request)
+      await issueMembershipVerificationCode(nextAddress(), request)
     }
 
-    const limited = await issueVerificationCode(nextAddress(), request)
+    const limited = await issueMembershipVerificationCode(
+      nextAddress(),
+      request,
+    )
     expect(limited).toMatchObject({ status: 'limited' })
     expect(sendMock).toHaveBeenCalledTimes(10)
   })
@@ -102,9 +105,9 @@ describe('issueVerificationCode', () => {
       }),
     )
 
-    const first = issueVerificationCode(email, nextRequest())
+    const first = issueMembershipVerificationCode(email, nextRequest())
     await vi.waitFor(() => expect(sendMock).toHaveBeenCalledOnce())
-    const second = issueVerificationCode(email, nextRequest())
+    const second = issueMembershipVerificationCode(email, nextRequest())
 
     finishSend(true)
 

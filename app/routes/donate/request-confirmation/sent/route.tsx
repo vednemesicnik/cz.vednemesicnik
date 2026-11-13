@@ -14,6 +14,7 @@ import type { Route } from './+types/route'
 import { HeadlineIcon } from './components/headline-icon'
 import { RequestIdBadge } from './components/request-id-badge'
 
+export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
