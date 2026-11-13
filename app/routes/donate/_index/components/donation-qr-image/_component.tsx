@@ -21,9 +21,9 @@ export const DonationQrImage = ({ isLoading, src }: Props) => {
         <img
           alt="QR kód pro platbu"
           className={styles.qrImage}
-          height={180}
+          height={200}
           src={src}
-          width={180}
+          width={200}
         />
       )}
     </div>

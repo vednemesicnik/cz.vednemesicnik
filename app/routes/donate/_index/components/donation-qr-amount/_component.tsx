@@ -6,6 +6,11 @@ type Props = {
   children: ReactNode
 }
 
+/** The amount the QR code carries, announced when it changes. */
 export const DonationQrAmount = ({ children }: Props) => {
-  return <p className={styles.donationAmount}>{children}</p>
+  return (
+    <p aria-live={'polite'} className={styles.donationAmount}>
+      {children}
+    </p>
+  )
 }

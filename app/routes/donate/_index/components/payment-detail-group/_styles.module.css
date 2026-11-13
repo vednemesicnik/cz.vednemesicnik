@@ -1,18 +1,18 @@
-@layer component {
-  .group {
-    grid-area: payment;
+/* One detail after another, wrapping between details, never inside one; 8 px
+   between the rows keeps the copy buttons 44 px apart for touch (15f). */
+.group {
+  @layer route {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.25em 1em;
-    color: var(--text-primary);
-    font-size: var(--font-size-sm);
+    gap: 8px 16px;
     margin: 0;
-    margin-block-start: 1rem;
+    font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
-  }
+    color: var(--text-primary);
 
-  .group > span {
-    white-space: nowrap;
+    @media (width >= 768px) {
+      column-gap: 20px;
+    }
   }
 }

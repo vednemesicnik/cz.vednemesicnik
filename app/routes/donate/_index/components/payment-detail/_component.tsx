@@ -7,11 +7,12 @@ type Props = {
   children: ReactNode
 }
 
+/** One payment detail: its name, then its value (with a copy button). */
 export const PaymentDetail = ({ label, children }: Props) => {
   return (
-    <span className={styles.detail}>
-      <span className={styles.label}>{label}:</span>
-      {children}
-    </span>
+    <div className={styles.detail}>
+      <dt className={styles.label}>{label}:</dt>
+      <dd className={styles.value}>{children}</dd>
+    </div>
   )
 }

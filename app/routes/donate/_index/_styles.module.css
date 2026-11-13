@@ -1,157 +1,84 @@
-/* ===================================================
-   Donation card grid areas
-   =================================================== */
-.donationTitle {
+/* Everything under the band: the card overlaps the band's bottom edge, then
+   the thanks and the confirmation box follow (15f). */
+.content {
   @layer route {
-    grid-area: title;
-    text-align: start;
-    margin-block-end: -1rem;
-    font-size: var(--font-size-3xl);
+    display: grid;
+    position: relative;
+    gap: 48px;
+    margin-block-start: -88px;
+
+    @media (width >= 768px) {
+      gap: 72px;
+      margin-block-start: -120px;
+    }
+  }
+}
+
+/* The card's first column: the choice, the custom amount and the payment
+   details. */
+.choice {
+  @layer route {
+    display: grid;
+    gap: 18px;
+    min-inline-size: 0;
+
+    @media (width >= 768px) {
+      gap: 20px;
+    }
+  }
+}
+
+.intro {
+  @layer route {
+    display: grid;
+    gap: 6px;
+
+    @media (width >= 768px) {
+      gap: 8px;
+    }
+  }
+}
+
+.cardTitle {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-3xl);
-    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.2;
     color: var(--text-primary);
-    margin: 0;
-    text-wrap: balance;
   }
 }
 
-.donationSubtitle {
+.cardText {
   @layer route {
-    grid-area: subtitle;
-    text-align: start;
+    margin: 0;
     font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
-    margin: 0;
-    text-wrap: pretty;
-  }
-}
-
-.amountPicker {
-  @layer route {
-    grid-area: amount;
-    display: grid;
-    gap: 1.25rem;
-    min-width: 0;
-    margin-block-start: 1rem;
-  }
-}
-
-/* ===================================================
-   Amount selection
-   =================================================== */
-.presets {
-  @layer route {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-    border: none;
-    padding: 0;
-    margin: 0;
-  }
-}
-
-.presetsLegend {
-  @layer route {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-}
-
-.preset {
-  @layer route {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 28px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition:
-      background var(--transition-fast),
-      border-color var(--transition-fast),
-      color var(--transition-fast);
-
-    input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    &:hover {
-      border-color: var(--secondary);
-      color: var(--secondary);
-    }
-
-    &:has(input:focus-visible) {
-      border-color: var(--primary);
-      outline: none;
-      box-shadow: var(--focus-shadow);
-    }
-
-    &:has(input:checked) {
-      background: var(--secondary);
-      border-color: var(--secondary);
-      color: var(--text-on-accent);
-    }
-
-    &:has(input:checked):hover {
-      background: var(--secondary-hover);
-      border-color: var(--secondary-hover);
-    }
-  }
-}
-
-.customRow {
-  @layer route {
-    display: grid;
-    gap: 0.5rem;
-  }
-}
-
-.label {
-  @layer route {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+    line-height: 1.55;
     color: var(--text-secondary);
+    text-wrap: pretty;
+
+    @media (width >= 768px) {
+      font-size: var(--font-size-md);
+    }
   }
 }
 
-.inputGroup {
+/* The custom amount's input with Kč after it. */
+.amountRow {
   @layer route {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    max-width: 280px;
+    gap: 10px;
   }
 }
 
-.input {
+.amountInput {
   @layer route {
     flex: 1;
-    padding: 12px 16px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: var(--font-size-md);
-    font-family: inherit;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    transition:
-      border-color var(--transition-fast),
-      box-shadow var(--transition-fast);
+    min-inline-size: 0;
 
-    &:focus-visible {
-      border-color: var(--primary);
-      outline: none;
-      box-shadow: var(--focus-shadow);
+    @media (width >= 768px) {
+      flex: 0 1 200px;
     }
   }
 }
@@ -159,85 +86,44 @@
 .currency {
   @layer route {
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-medium);
     color: var(--text-secondary);
-    flex-shrink: 0;
   }
 }
 
 /* ===================================================
-   Thanks section
+   Thanks
    =================================================== */
-.thanksSection {
+.thanks {
   @layer route {
     display: grid;
-    gap: 0.75rem;
-    max-width: 600px;
-    margin-inline: auto;
     justify-items: center;
+    gap: 12px;
     text-align: center;
-    margin-block-start: 6rem;
   }
 }
 
 .thanksHeading {
   @layer route {
+    margin: 0;
     font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-3xl);
-    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.2;
     color: var(--text-primary);
-    margin: 0;
     text-wrap: balance;
   }
 }
 
 .thanksText {
   @layer route {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-md);
-    color: var(--text-secondary);
+    max-inline-size: 560px;
     margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    color: var(--text-secondary);
     text-wrap: pretty;
-  }
-}
 
-/* ===================================================
-   QR placeholder
-   =================================================== */
-.qrDownload {
-  @layer route {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: 9999px;
-    background: var(--bg-primary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--primary);
-    text-decoration: none;
-    transition: border-color var(--transition-fast);
-
-    &:hover {
-      border-color: var(--primary);
+    @media (width >= 768px) {
+      font-size: var(--font-size-lg);
     }
-  }
-}
-
-.qrPlaceholder {
-  @layer route {
-    width: 180px;
-    height: 180px;
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-secondary);
-    color: var(--text-tertiary);
-    font-size: var(--font-size-sm);
-    user-select: none;
   }
 }

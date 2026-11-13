@@ -1,43 +1,52 @@
+/* The QR code in a 3 px frame of the signature gradient. The code itself
+   stays on white in both schemes, so every banking app reads it. */
 .qrBorder {
-  @layer component {
+  @layer route {
     padding: 3px;
     border-radius: var(--radius-xl);
     background-image: var(--gradient-signature);
     background-size: 200% 200%;
     animation: wave-animation 6s ease-in-out infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 }
 
-.qrImage {
-  @layer component {
+.qrImage,
+.qrLoader {
+  @layer route {
     display: block;
-    width: 180px;
-    height: 180px;
+    box-sizing: border-box;
+    inline-size: 168px;
+    block-size: 168px;
     padding: 12px;
-    background: #ffffff;
+    background-color: var(--color-white);
     border-radius: calc(var(--radius-xl) - 3px);
+
+    @media (width >= 768px) {
+      inline-size: 200px;
+      block-size: 200px;
+      padding: 16px;
+    }
   }
 }
 
 .qrLoader {
-  @layer component {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 180px;
-    height: 180px;
-    background: #ffffff;
-    border-radius: calc(var(--radius-xl) - 3px);
+  @layer route {
+    display: grid;
+    place-items: center;
   }
 }
 
 .spinner {
-  @layer component {
+  @layer route {
     display: block;
-    width: 32px;
-    height: 32px;
+    inline-size: 32px;
+    block-size: 32px;
     border: 3px solid var(--primary-light);
-    border-top-color: var(--primary);
+    border-block-start-color: var(--primary);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }

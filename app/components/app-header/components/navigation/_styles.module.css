@@ -41,7 +41,7 @@
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--text-primary);
+    color: var(--app-header-text-primary, var(--text-primary));
     cursor: pointer;
 
     &:focus-visible {
@@ -69,6 +69,12 @@
     border: none;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+
+    /* The open menu is solid even over a PageHero band: it doesn't take the
+       header's white text and logo (see app-header). */
+    --app-header-text-primary: var(--text-primary);
+    --app-header-text-secondary: var(--text-secondary);
+    --app-header-logo-filter: none;
 
     @media (prefers-reduced-motion: no-preference) {
       &[open] {

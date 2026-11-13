@@ -1,34 +1,21 @@
-@layer component {
-  .card {
+/* The white card that overlaps the band: the choice and the payment details,
+   then the QR code, side by side from 768 px (15f). */
+.card {
+  @layer route {
     display: grid;
-    grid-template-areas:
-      "title"
-      "subtitle"
-      "amount"
-      "payment"
-      "qrcode";
-    grid-template-columns: 1fr;
-    width: 100%;
-    padding: 2rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-2xl);
+    gap: 18px;
+    padding: 24px 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
-    transform: translateY(-7.5rem);
-    margin-block-end: -7.5rem;
-    justify-self: center;
-    align-items: start;
-  }
+    text-align: start;
 
-  @media (width > 640px) {
-    .card {
-      grid-template-areas:
-        "title qrcode"
-        "subtitle qrcode"
-        "amount qrcode"
-        "payment qrcode";
-      grid-template-columns: 2fr 1fr;
-      column-gap: 32px;
+    @media (width >= 768px) {
+      grid-template-columns: minmax(0, 1fr) 240px;
+      align-items: start;
+      column-gap: 48px;
+      padding: 36px 40px;
     }
   }
 }

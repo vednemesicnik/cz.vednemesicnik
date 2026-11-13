@@ -1,11 +1,9 @@
 .heading {
-  @layer component {
+  @layer route {
+    margin: 0;
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-xl);
-    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.25;
     color: var(--text-primary);
-    margin: 0;
-    text-align: start;
   }
 }

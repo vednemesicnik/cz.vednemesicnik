@@ -11,8 +11,15 @@
     align-content: start;
     justify-items: center;
     text-align: center;
+    /* Starts under the header, which is see-through over it; the bottom leaves
+       room for the content that overlaps the band (15f). */
+    margin-block-start: calc(-1 * var(--app-header-height));
     padding-inline: var(--page-side-padding);
-    padding-block: 12rem;
+    padding-block: calc(var(--app-header-height) + 1.75rem) 7.5rem;
+
+    @media (width >= 768px) {
+      padding-block: calc(var(--app-header-height) + 5.5rem) 10.5rem;
+    }
     background:
       linear-gradient(var(--hero-veil), var(--hero-veil)),
       var(--gradient-signature);

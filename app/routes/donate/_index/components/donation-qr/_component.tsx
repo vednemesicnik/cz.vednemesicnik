@@ -7,5 +7,5 @@ type Props = {
 }
 
 export const DonationQr = ({ children }: Props) => {
-  return <aside className={styles.donationQr}>{children}</aside>
+  return <div className={styles.donationQr}>{children}</div>
 }

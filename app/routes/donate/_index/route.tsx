@@ -10,13 +10,17 @@ import {
 } from 'react'
 import { href } from 'react-router'
 import { CopyButton } from '~/components/copy-button'
-import { DownloadIcon } from '~/components/icons/download-icon'
 import { LinkButton } from '~/components/link-button'
-import { Page } from '~/components/page'
 import { PageHero } from '~/components/page-hero'
 import { PageHeroEyebrow } from '~/components/page-hero-eyebrow'
 import { PageHeroHeadline } from '~/components/page-hero-headline'
 import { PageHeroSubheadline } from '~/components/page-hero-subheadline'
+import { RadioTile } from '~/components/radio-tile'
+import { RadioTileGroup } from '~/components/radio-tile-group'
+import { TextField } from '~/components/text-field'
+import { TextFieldControl } from '~/components/text-field-control'
+import { TextFieldLabel } from '~/components/text-field-label'
+import { VisuallyHidden } from '~/components/visually-hidden'
 import { DONATION_PAYMENT } from '~/data/donation-payment'
 import styles from './_styles.module.css'
 import { DonationCard } from './components/donation-card'
@@ -82,71 +86,73 @@ export default function RouteComponent() {
         </PageHeroSubheadline>
       </PageHero>
 
-      <Page>
+      <div className={styles.content}>
         <DonationCard>
-          <h2 className={styles.donationTitle}>Vyberte výši daru</h2>
-          <p className={styles.donationSubtitle}>
-            Vyberte částku nebo zadejte vlastní. Dar pošlete bankovním převodem.
-          </p>
+          <div className={styles.choice}>
+            <div className={styles.intro}>
+              <h2 className={styles.cardTitle}>Vyberte výši daru</h2>
+              <p className={styles.cardText}>
+                Vyberte částku nebo zadejte vlastní. Dar pošlete bankovním
+                převodem.
+              </p>
+            </div>
 
-          <div className={styles.amountPicker}>
-            <fieldset className={styles.presets}>
-              <legend className={styles.presetsLegend}>Rychlá volba</legend>
+            <RadioTileGroup>
+              <legend>
+                <VisuallyHidden>Rychlá volba</VisuallyHidden>
+              </legend>
               {PRESET_AMOUNTS.map((preset) => (
-                <label className={styles.preset} key={preset}>
-                  <input
-                    checked={amount === preset}
-                    name="preset-amount"
-                    onChange={() => handlePresetChange(preset)}
-                    type="radio"
-                    value={preset}
-                  />
+                <RadioTile
+                  checked={amount === preset}
+                  key={preset}
+                  name={'preset-amount'}
+                  onChange={() => handlePresetChange(preset)}
+                  value={preset}
+                >
                   {preset.toLocaleString('cs-CZ')} Kč
-                </label>
+                </RadioTile>
               ))}
-            </fieldset>
+            </RadioTileGroup>
 
-            <div className={styles.customRow}>
-              <label className={styles.label} htmlFor="donate-amount">
-                Vlastní částka
-              </label>
-              <div className={styles.inputGroup}>
-                <input
-                  className={styles.input}
-                  id="donate-amount"
-                  min="1"
+            <TextField id={'donate-amount'}>
+              <TextFieldLabel>Vlastní částka</TextFieldLabel>
+              <div className={styles.amountRow}>
+                <TextFieldControl
+                  className={styles.amountInput}
+                  inputMode={'numeric'}
+                  min={1}
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  placeholder="Zadejte částku"
-                  step="1"
-                  type="number"
+                  placeholder={'Zadejte částku'}
+                  step={1}
+                  type={'number'}
                   value={amount}
                 />
                 <span className={styles.currency}>Kč</span>
               </div>
-            </div>
-          </div>
+            </TextField>
 
-          <PaymentDetailGroup>
-            <PaymentDetail label="Příjemce">
-              {DONATION_PAYMENT.name}
-            </PaymentDetail>
-            <PaymentDetail label="Číslo účtu">
-              <CopyButton value={DONATION_PAYMENT.accountNumber}>
-                {DONATION_PAYMENT.accountNumber}
-              </CopyButton>
-            </PaymentDetail>
-            <PaymentDetail label="Variabilní symbol">
-              <CopyButton value={DONATION_PAYMENT.variableSymbol}>
-                {DONATION_PAYMENT.variableSymbol}
-              </CopyButton>
-            </PaymentDetail>
-            <PaymentDetail label="Zpráva pro příjemce">
-              <CopyButton value={DONATION_PAYMENT.message}>
-                {DONATION_PAYMENT.message}
-              </CopyButton>
-            </PaymentDetail>
-          </PaymentDetailGroup>
+            <PaymentDetailGroup>
+              <PaymentDetail label="Příjemce">
+                {DONATION_PAYMENT.recipient}
+              </PaymentDetail>
+              <PaymentDetail label="Číslo účtu">
+                <CopyButton value={DONATION_PAYMENT.accountNumber}>
+                  {DONATION_PAYMENT.accountNumber}
+                </CopyButton>
+              </PaymentDetail>
+              <PaymentDetail label="Variabilní symbol">
+                <CopyButton value={DONATION_PAYMENT.variableSymbol}>
+                  {DONATION_PAYMENT.variableSymbol}
+                </CopyButton>
+              </PaymentDetail>
+              <PaymentDetail label="Zpráva pro příjemce">
+                <CopyButton value={DONATION_PAYMENT.message}>
+                  {DONATION_PAYMENT.message}
+                </CopyButton>
+              </PaymentDetail>
+            </PaymentDetailGroup>
+          </div>
 
           <DonationQr>
             <DonationQrImage
@@ -163,15 +169,16 @@ export default function RouteComponent() {
             <LinkButton
               disabled={!hasValidAmount}
               reloadDocument
+              size={'sm'}
               to={`${href('/resources/donation-qr-code-download')}?${paymentParams}`}
+              variant={'outline'}
             >
-              <DownloadIcon />
               Stáhnout QR kód
             </LinkButton>
           </DonationQr>
         </DonationCard>
 
-        <section className={styles.thanksSection}>
+        <section className={styles.thanks}>
           <h2 className={styles.thanksHeading}>Děkujeme za podporu</h2>
           <p className={styles.thanksText}>
             Děkujeme všem, kteří přispívají na Vedneměsíčník.
@@ -187,11 +194,14 @@ export default function RouteComponent() {
             vystavíme potvrzení o přijatých darech za kalendářní rok, které
             můžete použít pro daňové účely.
           </DonationConfirmationDescription>
-          <LinkButton size="lg" to="/donate/request-confirmation">
+          <LinkButton
+            to={href('/donate/request-confirmation')}
+            variant={'outline'}
+          >
             Požádat o potvrzení
           </LinkButton>
         </DonationConfirmation>
-      </Page>
+      </div>
     </>
   )
 }

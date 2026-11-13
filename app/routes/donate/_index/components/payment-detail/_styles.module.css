@@ -1,13 +1,26 @@
-@layer component {
-  .detail {
-    display: inline-flex;
+/* A detail stays whole: its name and its value with the copy button don't
+   break inside (15f). Only on a column too narrow for both does the value go
+   under the name. */
+.detail {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.5em;
-    font-weight: var(--font-weight-semibold);
+    gap: 6px;
   }
+}
 
-  .label {
-    font-weight: var(--font-weight-regular);
+.label {
+  @layer route {
     color: var(--text-secondary);
+    white-space: nowrap;
+  }
+}
+
+.value {
+  @layer route {
+    margin: 0;
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
   }
 }

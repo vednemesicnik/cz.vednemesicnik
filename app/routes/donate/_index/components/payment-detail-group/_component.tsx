@@ -6,6 +6,7 @@ type Props = {
   children: ReactNode
 }
 
+/** The payment details as a list of names and values (15f). */
 export const PaymentDetailGroup = ({ children }: Props) => {
-  return <p className={styles.group}>{children}</p>
+  return <dl className={styles.group}>{children}</dl>
 }

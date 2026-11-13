@@ -1,8 +1,10 @@
 .description {
-  @layer component {
-    color: var(--text-secondary);
+  @layer route {
+    max-inline-size: 720px;
     margin: 0;
-    padding-block-end: 1rem;
-    text-align: start;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-wrap: pretty;
   }
 }
