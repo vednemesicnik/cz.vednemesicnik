@@ -127,8 +127,13 @@ export default [
     // Donate routes
     ...prefix('donate', [
       index('routes/donate/_index/route.tsx'),
+      // A plain route, not an index: the form posts to its own address,
+      // without the `?index` React Router adds for an index route.
+      route(
+        'request-confirmation',
+        'routes/donate/request-confirmation/_index/route.tsx',
+      ),
       ...prefix('request-confirmation', [
-        index('routes/donate/request-confirmation/_index/route.tsx'),
         route('sent', 'routes/donate/request-confirmation/sent/route.tsx'),
         route('verify', 'routes/donate/request-confirmation/verify/route.tsx'),
       ]),
