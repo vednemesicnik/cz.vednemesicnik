@@ -2,13 +2,10 @@
 
 import { href } from 'react-router'
 import { Headline } from '~/components/headline'
-import { HeadlineGroup } from '~/components/headline-group'
 import { CheckIcon } from '~/components/icons/check-icon'
 import { LinkButton } from '~/components/link-button'
 import { MailHyperlink } from '~/components/mail-hyperlink'
 import { Page } from '~/components/page'
-import { Paragraph } from '~/components/paragraph'
-import { Subheadline } from '~/components/subheadline'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { HeadlineIcon } from './components/headline-icon'
@@ -18,39 +15,42 @@ export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
+const DONATIONS_ADDRESS = 'dary@vednemesicnik.cz'
+
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { requestId, year } = loaderData
 
   return (
     <Page>
-      <HeadlineGroup className={styles.headlineGroup}>
+      <div className={styles.sent}>
         <HeadlineIcon>
           <CheckIcon />
         </HeadlineIcon>
-        <Headline className={styles.heading}>Děkujeme za Vaši žádost</Headline>
-        <Subheadline className={styles.subheadline}>
-          Vaše žádost o potvrzení o daru za rok {year} byla přijata. Potvrzení
-          připravíme a zašleme na e-mailovou adresu uvedenou v žádosti.
-        </Subheadline>
-      </HeadlineGroup>
+        <Headline className={styles.heading}>Děkujeme za vaši žádost</Headline>
+        <p className={styles.lead}>
+          Žádost o potvrzení o daru za rok {year} jsme přijali. Potvrzení
+          pošleme na e-mail uvedený v žádosti.
+        </p>
 
-      {requestId && <RequestIdBadge value={requestId} />}
+        <RequestIdBadge value={requestId} />
 
-      <Paragraph className={styles.note}>
-        Pokud potvrzení neobdržíte do několika pracovních dnů, napište nám na{' '}
-        <MailHyperlink address="dary@vednemesicnik.cz">
-          dary@vednemesicnik.cz
-        </MailHyperlink>
-        {requestId && ' a uveďte referenční kód žádosti'}.
-      </Paragraph>
+        <p className={styles.note}>
+          Prosíme o trpělivost při vyřizování žádosti. Pokud potvrzení nepřijde
+          do dvou týdnů, napište na{' '}
+          <MailHyperlink address={DONATIONS_ADDRESS}>
+            {DONATIONS_ADDRESS}
+          </MailHyperlink>{' '}
+          a uveďte kód žádosti.
+        </p>
 
-      <LinkButton
-        className={styles.backButton}
-        to={href('/donate')}
-        variant="outline"
-      >
-        Zpět na darování
-      </LinkButton>
+        <LinkButton
+          className={styles.backButton}
+          to={href('/donate')}
+          variant="outline"
+        >
+          Zpět na darování
+        </LinkButton>
+      </div>
     </Page>
   )
 }

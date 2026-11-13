@@ -1,8 +1,13 @@
-/* Centred on a phone, at the start in the form's 540 px column from 768 px,
-   like the membership application's sent step (15l, 15d); Page does the
-   alignment. */
-.headlineGroup {
+/* One column 18 px apart: centred on a phone, at the start in the form's
+   540 px column from 768 px, like the membership application's sent page
+   (15l, 15d). Page does the alignment. */
+.sent {
   @layer route {
+    display: grid;
+    justify-items: inherit;
+    gap: 1.125rem;
+    width: 100%;
+
     @container page (width >= 940px) {
       max-inline-size: 540px;
     }
@@ -15,8 +20,11 @@
   }
 }
 
-.subheadline {
+.lead {
   @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
     text-wrap: pretty;
   }
 }
@@ -24,15 +32,10 @@
 .note {
   @layer route {
     margin: 0;
-    margin-block-end: 1.25rem;
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-md);
     color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
     text-wrap: pretty;
-
-    @container page (width >= 940px) {
-      max-inline-size: 540px;
-    }
   }
 }
 
@@ -41,7 +44,7 @@
   @layer route {
     justify-self: stretch;
 
-    @media (width >= 768px) {
+    @media (width > 768px) {
       justify-self: start;
     }
   }

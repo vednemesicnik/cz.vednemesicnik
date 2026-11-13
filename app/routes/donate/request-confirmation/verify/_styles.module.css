@@ -1,3 +1,15 @@
+/* The stepper 22 px under the heading, 28 px on a computer, as in the
+   membership application (15d, 15l, 15m). */
+.headlineGroup {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 28px;
+    }
+  }
+}
+
 /* Under the heading, across the content as in 15d (15m). */
 .stepper {
   @layer route {

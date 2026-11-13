@@ -1,21 +1,17 @@
 /* At the start of the column, whatever the page's alignment: the label, the
-   code and its button stand one under another (15l, 4rk17v4o). */
+   code and its button stand one under another (15l, 4rk17v4o). As wide as the
+   column. */
 .requestIdBadge {
   @layer route {
     display: flex;
     flex-direction: column;
     gap: 4px;
     justify-self: stretch;
-    margin-block-end: 1.25rem;
     padding: 12px 24px;
     background-color: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     text-align: start;
-
-    @container page (width >= 940px) {
-      max-inline-size: 540px;
-    }
   }
 }
 
@@ -28,7 +24,7 @@
 
 .value {
   @layer route {
-    font-size: var(--font-size-lg);
+    font-size: 1.25rem;
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.06em;
     font-variant-numeric: tabular-nums;

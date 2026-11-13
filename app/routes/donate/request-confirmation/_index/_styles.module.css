@@ -7,6 +7,18 @@
   }
 }
 
+/* The stepper 22 px under the heading, 28 px on a computer, as in the
+   membership application (15d, 15l, 15m). */
+.headlineGroup {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 28px;
+    }
+  }
+}
+
 /* Under the subheadline, across the content as in 15d (15l). */
 .stepper {
   @layer route {
@@ -116,25 +128,28 @@
   }
 }
 
-/* ===================================================
-   GDPR section
-   =================================================== */
-.gdpr {
+/* Notes in the form's small print, as in the membership and editorial board
+   forms (15l). */
+.foreignAccount {
   @layer route {
-    display: grid;
-    gap: 1rem;
-    background: var(--bg-secondary);
-    border-radius: var(--radius-xl);
-    padding: 1.25rem;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+    text-wrap: pretty;
   }
 }
 
-.gdprText {
+/* The personal-data paragraph on its tinted ground (15l, hjjdkbb6). */
+.notice {
   @layer route {
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-sm);
-    color: var(--text-secondary);
     margin: 0;
+    padding: 0.875rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.55;
     text-wrap: pretty;
   }
 }

@@ -16,16 +16,19 @@ import { Alert } from '~/components/alert'
 import { BackLink } from '~/components/back-link'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
+import { FormLegend } from '~/components/form-legend'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { HoneypotProvider } from '~/components/honeypot-provider'
+import { MailHyperlink } from '~/components/mail-hyperlink'
 import { Page } from '~/components/page'
 import { RadioTile } from '~/components/radio-tile'
 import { RadioTileGroup } from '~/components/radio-tile-group'
 import { Stepper } from '~/components/stepper'
 import { StepperStep } from '~/components/stepper-step'
 import { Subheadline } from '~/components/subheadline'
+import { ORGANIZATION_REGISTRATION_NUMBER } from '~/config/site-config'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -43,6 +46,9 @@ export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
+
+const DONATIONS_ADDRESS = 'dary@vednemesicnik.cz'
+const PERSONAL_DATA_ADDRESS = 'udaje@vednemesicnik.cz'
 
 // Why the verify step sent the donor back (15l, 8jxiph0x; copy thread 5uc4li12).
 const REASON_MESSAGES = {
@@ -95,11 +101,11 @@ export default function RouteComponent({
           Zpět na darování
         </BackLink>
 
-        <HeadlineGroup>
+        <HeadlineGroup className={styles.headlineGroup}>
           <Headline>Žádost o potvrzení o daru</Headline>
           <Subheadline>
-            Pokud jste podpořili Vedneměsíčník darem, můžete prostřednictvím
-            tohoto formuláře požádat o vystavení potvrzení pro daňové účely.
+            Pokud jste Vedneměsíčník podpořili darem, můžete tu požádat o
+            potvrzení pro daňové účely.
           </Subheadline>
         </HeadlineGroup>
 
@@ -110,8 +116,8 @@ export default function RouteComponent({
 
         <div className={styles.column}>
           <Callout className={styles.callout}>
-            O potvrzení lze požádat až 3 roky zpětně. Ve formuláři vyberte rok,
-            za který o potvrzení žádáte.
+            O potvrzení můžete požádat za jeden ze tří předchozích kalendářních
+            roků.
           </Callout>
 
           <section className={styles.formCard}>
@@ -130,6 +136,8 @@ export default function RouteComponent({
             <Form method="post" {...getFormProps(form)} className={styles.form}>
               <HoneypotInputs />
 
+              <FormLegend />
+
               <FieldGroup>
                 <FieldGroupLabel required>Rok daru</FieldGroupLabel>
                 <Hint>Vyberte rok, za který o potvrzení žádáte.</Hint>
@@ -147,7 +155,7 @@ export default function RouteComponent({
               </FieldGroup>
 
               <FieldGroup>
-                <FieldGroupLabel>Typ dárce</FieldGroupLabel>
+                <FieldGroupLabel required>Typ dárce</FieldGroupLabel>
                 <RadioTileGroup columns={1}>
                   <RadioTile
                     checked={type.value === 'individual'}
@@ -194,6 +202,7 @@ export default function RouteComponent({
                           fields.firstName as FieldMetadata<string>,
                           { type: 'text' },
                         )}
+                        autoComplete="given-name"
                       />
                       <ErrorMessage>{fields.firstName?.errors}</ErrorMessage>
                     </FormField>
@@ -206,6 +215,7 @@ export default function RouteComponent({
                           fields.lastName as FieldMetadata<string>,
                           { type: 'text' },
                         )}
+                        autoComplete="family-name"
                       />
                       <ErrorMessage>{fields.lastName?.errors}</ErrorMessage>
                     </FormField>
@@ -220,8 +230,8 @@ export default function RouteComponent({
                         fields.dateOfBirth as FieldMetadata<string>,
                         { type: 'text' },
                       )}
-                      inputMode="numeric"
-                      placeholder="DD.MM.RRRR"
+                      autoComplete="bday"
+                      placeholder="14. 5. 1990"
                     />
                     <ErrorMessage>{fields.dateOfBirth?.errors}</ErrorMessage>
                   </FormField>
@@ -240,6 +250,7 @@ export default function RouteComponent({
                           fields.firstName as FieldMetadata<string>,
                           { type: 'text' },
                         )}
+                        autoComplete="given-name"
                       />
                       <ErrorMessage>{fields.firstName?.errors}</ErrorMessage>
                     </FormField>
@@ -252,6 +263,7 @@ export default function RouteComponent({
                           fields.lastName as FieldMetadata<string>,
                           { type: 'text' },
                         )}
+                        autoComplete="family-name"
                       />
                       <ErrorMessage>{fields.lastName?.errors}</ErrorMessage>
                     </FormField>
@@ -277,13 +289,14 @@ export default function RouteComponent({
                 <>
                   <FormField>
                     <Label htmlFor={fields.companyName?.id} required>
-                      Název firmy
+                      Název právnické osoby
                     </Label>
                     <Input
                       {...getInputProps(
                         fields.companyName as FieldMetadata<string>,
                         { type: 'text' },
                       )}
+                      autoComplete="organization"
                     />
                     <ErrorMessage>{fields.companyName?.errors}</ErrorMessage>
                   </FormField>
@@ -310,6 +323,7 @@ export default function RouteComponent({
                 </Label>
                 <Input
                   {...getInputProps(addressFields.street, { type: 'text' })}
+                  autoComplete="street-address"
                 />
                 <ErrorMessage>{addressFields.street.errors}</ErrorMessage>
               </FormField>
@@ -321,6 +335,7 @@ export default function RouteComponent({
                   </Label>
                   <Input
                     {...getInputProps(addressFields.zip, { type: 'text' })}
+                    autoComplete="postal-code"
                     inputMode="numeric"
                     placeholder="123 45"
                   />
@@ -332,6 +347,7 @@ export default function RouteComponent({
                   </Label>
                   <Input
                     {...getInputProps(addressFields.city, { type: 'text' })}
+                    autoComplete="address-level2"
                   />
                   <ErrorMessage>{addressFields.city.errors}</ErrorMessage>
                 </FormField>
@@ -343,7 +359,7 @@ export default function RouteComponent({
                 </Label>
                 <Input
                   {...getInputProps(fields.email, { type: 'email' })}
-                  placeholder="vas@email.cz"
+                  autoComplete="email"
                 />
                 <Hint>
                   E-mail ověříte kódem. Na tuto adresu vám pak pošleme i
@@ -354,12 +370,9 @@ export default function RouteComponent({
 
               <FieldGroup>
                 <FieldGroupLabel required>
-                  Čísla účtů, ze kterých byl dar odeslán
+                  Čísla účtů, ze kterých dar přišel
                 </FieldGroupLabel>
-                <Hint>
-                  Uveďte číslo účtu, ze kterého byl dar odeslán. Pokud jste
-                  použili více účtů, přidejte další pole.
-                </Hint>
+                <Hint>Pokud jste posílali z více účtů, přidejte další.</Hint>
                 {accountList.map((account, index) => (
                   <FormField key={account.key}>
                     <div className={styles.accountInputRow}>
@@ -395,26 +408,34 @@ export default function RouteComponent({
                   Přidat účet
                 </Button>
                 <ErrorMessage>{fields.accounts.errors}</ErrorMessage>
+                <p className={styles.foreignAccount}>
+                  Dar jste poslali ze zahraničního účtu? O potvrzení požádejte
+                  e-mailem na{' '}
+                  <MailHyperlink address={DONATIONS_ADDRESS}>
+                    {DONATIONS_ADDRESS}
+                  </MailHyperlink>
+                  .
+                </p>
               </FieldGroup>
 
               <FormField>
                 <Label htmlFor={fields.note.id}>Doplňující informace</Label>
                 <Textarea {...getTextareaProps(fields.note)} />
-                <Hint>
-                  Můžete uvést informace, které nám pomohou dar dohledat.
-                </Hint>
+                <Hint>Cokoli, co nám pomůže dar dohledat.</Hint>
                 <ErrorMessage>{fields.note.errors}</ErrorMessage>
               </FormField>
 
-              <div className={styles.gdpr}>
-                <p className={styles.gdprText}>
-                  Odesláním formuláře berete na vědomí, že spolek Vedneměsíčník,
-                  z. s. zpracuje uvedené osobní údaje za účelem vyřízení žádosti
-                  a vystavení potvrzení o daru. Údaje budou uchovány pouze po
-                  dobu nezbytnou k vyřízení žádosti a splnění souvisejících
-                  zákonných povinností.
-                </p>
-              </div>
+              <p className={styles.notice}>
+                Spolek Vedneměsíčník,&nbsp;z.&nbsp;s., IČO&nbsp;
+                {ORGANIZATION_REGISTRATION_NUMBER}, použije uvedené údaje k
+                dohledání darů, vyřízení žádosti a vystavení potvrzení. Údaje ze
+                žádosti uchováme do vystavení a odeslání potvrzení. Poté je
+                smažeme. S dotazy ke zpracování údajů nám napište na{' '}
+                <MailHyperlink address={PERSONAL_DATA_ADDRESS}>
+                  {PERSONAL_DATA_ADDRESS}
+                </MailHyperlink>
+                .
+              </p>
 
               <Button
                 className={styles.submitButton}

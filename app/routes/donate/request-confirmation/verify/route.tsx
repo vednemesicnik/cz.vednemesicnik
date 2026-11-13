@@ -89,7 +89,7 @@ export default function RouteComponent({
   return (
     <HoneypotProvider {...honeypotInputProps}>
       <Page>
-        <HeadlineGroup>
+        <HeadlineGroup className={styles.headlineGroup}>
           <Headline>Žádost o potvrzení o daru</Headline>
         </HeadlineGroup>
 

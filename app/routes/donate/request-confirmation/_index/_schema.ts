@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { DONATION_FIELD_LIMITS as LIMITS } from '~/config/donation-request-config'
 
 const email = z
-  .email({ error: 'E-mail nemá platný formát.' })
+  .email({ error: 'Zadejte e-mail ve tvaru jmeno@priklad.cz.' })
   .max(LIMITS.email, {
     error: `E-mail může mít nejvýš ${LIMITS.email} znaků.`,
   })
@@ -14,7 +14,8 @@ const accounts = z
       .string({ error: 'Vyplňte prosím číslo účtu.' })
       .trim()
       .regex(/^[\d\-/]+$/, {
-        error: 'Číslo účtu může obsahovat pouze číslice a lomítko.',
+        error:
+          'Zkontrolujte číslo účtu. Může obsahovat jen číslice, pomlčku a lomítko.',
       })
       .max(LIMITS.accountLength, {
         error: `Číslo účtu může mít nejvýš ${LIMITS.accountLength} znaků.`,
@@ -69,9 +70,9 @@ const address = z.object({
     .trim()
     .min(1)
     .max(LIMITS.street, { error: tooLong(LIMITS.street) }),
-  zip: z
-    .string({ error: 'Vyplňte prosím PSČ.' })
-    .regex(/^\d{3} ?\d{2}$/, { error: 'PSČ nemá platný formát.' }),
+  zip: z.string({ error: 'Vyplňte prosím PSČ.' }).regex(/^\d{3} ?\d{2}$/, {
+    error: 'Zadejte pět číslic PSČ, například 370 01.',
+  }),
 })
 
 const dateOfBirth = z
@@ -131,7 +132,7 @@ const soleTrader = z.object({
 const entity = z.object({
   ...common,
   companyName: z
-    .string({ error: 'Vyplňte prosím název firmy.' })
+    .string({ error: 'Vyplňte prosím název právnické osoby.' })
     .trim()
     .min(1)
     .max(LIMITS.companyName, { error: tooLong(LIMITS.companyName) }),
