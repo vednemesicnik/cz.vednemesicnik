@@ -1,5 +1,6 @@
 /* The white card that overlaps the band: the choice and the payment details,
-   then the QR code, side by side from 768 px (15f). */
+   then the QR code, side by side from 768 px, and the way to pay from abroad
+   across both (15f). */
 .card {
   @layer route {
     display: grid;
@@ -14,7 +15,7 @@
     @media (width >= 768px) {
       grid-template-columns: minmax(0, 1fr) 240px;
       align-items: start;
-      column-gap: 48px;
+      gap: 32px 48px;
       padding: 36px 40px;
     }
   }

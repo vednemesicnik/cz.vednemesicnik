@@ -24,6 +24,9 @@ import { TextFieldLabel } from '~/components/text-field-label'
 import { VisuallyHidden } from '~/components/visually-hidden'
 import { DONATION_PAYMENT } from '~/data/donation-payment'
 import styles from './_styles.module.css'
+import { DonationAbroad } from './components/donation-abroad'
+import { DonationAbroadDescription } from './components/donation-abroad-description'
+import { DonationAbroadHeading } from './components/donation-abroad-heading'
 import { DonationCard } from './components/donation-card'
 import { DonationConfirmation } from './components/donation-confirmation'
 import { DonationConfirmationDescription } from './components/donation-confirmation-description'
@@ -38,6 +41,9 @@ import { PaymentDetailGroup } from './components/payment-detail-group'
 export { meta } from './_meta'
 
 const PRESET_AMOUNTS = [150, 300, 600, 1200] as const
+
+// Shown in groups of four, as banks print it; copied without the spaces (wnyfw8po).
+const IBAN_IN_GROUPS = DONATION_PAYMENT.iban.replace(/.{4}(?!$)/g, '$& ')
 
 export default function RouteComponent() {
   const [amount, setAmount] = useState<number | ''>(PRESET_AMOUNTS[1])
@@ -179,6 +185,30 @@ export default function RouteComponent() {
               Stáhnout QR kód
             </LinkButton>
           </DonationQr>
+
+          {/* Copy thread ti38wq1x. */}
+          <DonationAbroad>
+            <DonationAbroadHeading>
+              Posíláte dar ze zahraničního účtu?
+            </DonationAbroadHeading>
+            <DonationAbroadDescription>
+              Pošlete dar v eurech na IBAN níže se zprávou pro příjemce „Dar“,
+              bez variabilního symbolu. Eura naše banka převede na koruny. QR
+              kód zahraniční aplikace obvykle nepřečtou.
+            </DonationAbroadDescription>
+            <PaymentDetailGroup>
+              <PaymentDetail label="IBAN">
+                <CopyButton value={DONATION_PAYMENT.iban}>
+                  {IBAN_IN_GROUPS}
+                </CopyButton>
+              </PaymentDetail>
+              <PaymentDetail label="BIC (SWIFT)">
+                <CopyButton value={DONATION_PAYMENT.bic}>
+                  {DONATION_PAYMENT.bic}
+                </CopyButton>
+              </PaymentDetail>
+            </PaymentDetailGroup>
+          </DonationAbroad>
         </DonationCard>
 
         <section className={styles.thanks}>

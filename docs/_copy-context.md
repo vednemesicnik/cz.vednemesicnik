@@ -323,7 +323,9 @@ ukázka účtu stojí na této doméně, s vymyšleným jménem. Skutečné jsou
 které web ukazuje nebo ukazovat bude: `podpora@`, `redakce@`, `dary@`, `udaje@` a `clenstvi@vednemesicnik.cz`. Jmenují
 schránky podle tématu, česky a bez diakritiky. Skutečná je i `oznameni@vednemesicnik.cz`:
 není to kontakt, ale schránka, ze které odcházejí všechny automatické e‑maily webu, se jménem
-odesílatele `Oznámení Vedneměsíčník`. Když uvidíš něco jiného, co vypadá jako skutečný
+odesílatele `Oznámení Vedneměsíčník`. Skutečné jsou i platební údaje spolku, které ukazuje
+stránka Darovat: číslo účtu, IBAN, BIC, variabilní symbol a zpráva pro příjemce. Účet dárce
+v příkladu je vymyšlený. Když uvidíš něco jiného, co vypadá jako skutečný
 záznam, **je to nález** — řekni to.
 
 ## Jak má vypadat odpověď
