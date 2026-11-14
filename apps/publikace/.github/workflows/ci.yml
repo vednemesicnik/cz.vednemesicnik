@@ -3,10 +3,8 @@ name: CI
 # The gates lefthook runs on push, run again on a machine that is not whoever pushed.
 # `git push --no-verify` skips the hook; it does not skip this.
 #
-# The repository has no application code yet, so the gates are the title, the release
-# version, lint and format. `typecheck`, the suite and `remix doctor` join here and in
-# lefthook.yaml with the first code, as they run in cz.vednemesicnik.billing. See
-# docs/branching-model.md.
+# The gates are the title, the release version, lint, format, typecheck, the suite and
+# `remix doctor`. See docs/branching-model.md.
 #
 # **On pull requests only.** The hook covers a commit pushed straight to `dev` without a PR.
 # `edited` is among the types because a PR's title is a gate: a release retitled after its
@@ -95,3 +93,50 @@ jobs:
       # Its own job because of how it is usually broken: `oxfmt` formats Markdown, the
       # pre-commit hook only globs code, so an unformatted .md commits fine and fails here.
       - run: pnpm format:check
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  # The one job that is not about our code. lint, format, typecheck and the suite ask whether
+  # what we wrote follows our own rules; doctor asks whether the project still has the shape
+  # Remix expects — `engines.node` against the runtime, `remix` resolvable, `app/routes.ts`
+  # loading and exporting `routes`, and every route map with its controller on disk.
+  #
+  # It fails on **warnings** because `doctor.strict` in remix.json says so. `remix doctor
+  # --fix` writes files, which is a command for a person who has read the finding, not for
+  # this job.
+  doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # The environment check asks whether `remix` resolves from the project root, and
+      # without node_modules the answer is no.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm app:doctor
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # No database to provision: the store is `node:sqlite` and every test opens `:memory:`.
+      - run: pnpm test

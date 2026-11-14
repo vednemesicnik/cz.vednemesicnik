@@ -142,11 +142,10 @@ its CI: the base becomes `dev`, so the workflow filter finally matches.
 
 `cz.vednemesicnik`'s model leans on CI. This one has part of it:
 
-- **`ci.yml` runs on every PR into `main` or `dev`** — the PR title, the release version, lint
-  and format, on Node 26 read from `.nvmrc`. `typecheck`, the suite and `remix doctor` join with the first
-  application code, as in `cz.vednemesicnik.billing`.
+- **`ci.yml` runs on every PR into `main` or `dev`** — the PR title, the release version, lint,
+  format, typecheck, the suite and `remix doctor`, on Node 26 read from `.nvmrc`.
 - **The checks are required.** The repository is public, so the `branch-protection` ruleset
-  on `main` and `dev` requires a pull request and the `pr-title`, `release-version`, `lint` and `format` checks,
+  on `main` and `dev` requires a pull request and the `pr-title`, `release-version`, `lint`, `format`, `typecheck`, `test` and `doctor` checks,
   and forbids force-pushes and deletion. Repository admins can bypass it, as in
   `cz.vednemesicnik`. When a gate is added to `ci.yml`, add it to the ruleset too.
 - **No deploy workflow.** **Merging to `main` deploys nothing** — the app is not deployed

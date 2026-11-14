@@ -1,5 +1,9 @@
 {
-  "ignorePatterns": [".agents/skills/modern-web-guidance/**", ".agents/skills/remix/**"],
+  "ignorePatterns": [
+    ".agents/skills/modern-web-guidance/**",
+    ".agents/skills/remix/**",
+    "app/ui/public/ds/**"
+  ],
   "printWidth": 100,
   "semi": false,
   "singleQuote": true,

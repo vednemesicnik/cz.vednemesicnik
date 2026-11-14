@@ -5,34 +5,47 @@ what it does; this file is about working in it without breaking something expens
 
 ## Where the project stands
 
-**Design, no application code yet.** The app is drawn in the design canvas
+**A skeleton on a finished design.** The app is drawn in the design canvas
 ([docs/design-project.md](docs/design-project.md)) and the open decisions are on its page
-`03 K rozhodnutí`. What this repository carries today is the setup shared with
-`cz.vednemesicnik` and `cz.vednemesicnik.billing`: the workflow skills, the agent rules, the
-designer agent, the PR and issue templates, CI and the hooks. The gates that need code
-(`typecheck`, the suite, `remix doctor`) join `lefthook.yaml`, `ci.yml` and the ruleset with the
-first code.
+`03 K rozhodnutí`. The code is the skeleton every screen builds on: Remix 3 serving `/` with the
+editors-in-chief's panel, the magazine's design system, and a SQLite database that migrates on
+startup. Beside it sits the setup shared with `cz.vednemesicnik` and
+`cz.vednemesicnik.billing`: the workflow skills, the agent rules, the designer agent, the PR and
+issue templates, CI and the hooks.
 
 ## Commands
 
 ```sh
 pnpm install
 pnpm dev:setup-claude # the .claude/skills symlinks, the Remix skill, and a CLAUDE.md importing this file
+pnpm app:dev          # http://localhost:44100, restarts on change
+pnpm app:start        # the same server with NODE_ENV=production
+pnpm typecheck        # tsc --noEmit
+pnpm test             # remix test --type server
+pnpm app:doctor       # remix doctor, strict: a warning fails it
+pnpm db:status        # remix db status — also db:migrate, db:rollback
 pnpm lint             # oxlint
 pnpm format           # oxfmt --write
 pnpm format:check
 pnpm design:screen    # one screen out of a saved design file — docs/design-project.md
 ```
 
-**Node 26 or newer is required**, as in billing: the app will use `Temporal`, `node:sqlite` and
+**Node 26 or newer is required**, as in billing: the app uses `Temporal`, `node:sqlite` and
 the runtime's own TypeScript stripping (`node scripts/….ts` runs without a build step).
 
-`lefthook` runs lint and format on commit and on push. `postinstall` writes the hooks by running
+**The database is `DATABASE_PATH`, `./db/publikace.sqlite` by default.** `server.ts` applies
+pending migrations from `db/migrations` before it listens, and `pnpm db:*` reads the same
+directory through `remix db`, configured in `remix.json`. A migration that has run is never
+edited; the journal keeps its checksum and both refuse a database whose history changed.
+
+`lefthook` runs lint and format on commit, and lint, format, typecheck, the suite and doctor on
+push. `postinstall` writes the hooks by running
 `lefthook install`, and [pnpm-workspace.yaml](pnpm-workspace.yaml) refuses lefthook's own install
 script so that the step reads from this repository. A clone whose hooks never fire had its
 install scripts skipped: `pnpm exec lefthook install` is the fix.
-[ci.yml](.github/workflows/ci.yml) runs the PR title, the release version, lint and format on every PR into `dev` or
-`main`, and the `branch-protection` ruleset requires them. Every merge into `main` is tagged
+[ci.yml](.github/workflows/ci.yml) runs the PR title, the release version, lint, format,
+typecheck, the suite and doctor on every PR into `dev` or `main`, and the `branch-protection`
+ruleset requires them. Every merge into `main` is tagged
 with a version by [release.yml](.github/workflows/release.yml): `0.x` until the app runs on
 Fly.io, and from `v1.0.0` also a GitHub Release. See
 [docs/branching-model.md](docs/branching-model.md).
@@ -139,6 +152,13 @@ files until this one has its own.
   _poskytovatel_, _souhlas_ — [docs/copy-context.md](docs/copy-context.md) lists them.
 
 ## Things that will bite you
+
+**`app/ui/public/ds/` is a copy of the design system, not its source.** The tokens,
+`components.css` and the fonts come byte for byte from the design system's artifact
+([docs/design-project.md](docs/design-project.md)), and its `README.md` says from which version.
+A change goes into the design system first and is copied here after, whole; oxfmt leaves the
+folder alone so that a refresh stays a plain copy. A component here writes the design system's
+`vdm-*` markup and lets `components.css` style it.
 
 **`oxfmt` formats Markdown too.** The pre-commit hook only globs code, so an unformatted `.md`
 commits fine and then fails `format:check` on push. Run `pnpm format` after writing docs.

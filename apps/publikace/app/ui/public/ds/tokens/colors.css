@@ -1,0 +1,108 @@
+/* ============================================================
+   Vedneměsíčník — Color tokens
+   Primitive ramps: a neutral charcoal ramp + accent ramps (violet,
+   emerald, amber, rose, azure) used to build the semantic tokens that
+   components actually consume, plus the one signature gradient.
+   Never reference primitives directly in a component — use the
+   semantic aliases in semantic.css. Every semantic value is one step
+   of these ramps (0imbycuj).
+
+   Accent ramps run 50–950 like charcoal; step 200 is not used.
+
+   Note: the product carries no separate "vivid brand palette" of
+   named hues. The logo's own blue→teal→green gradient lives inside the
+   VdmLogo component (as literal light-dark() values, with editMode/admin
+   variants) — not as primitives, not as roles. The only global brand
+   gradient is --gradient-signature below.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* ========================================
+     Signature gradient — the one brand gradient
+     Violet → emerald (135°). Used clipped behind headlines and on
+     dividers, featured banners, and content-thumbnail veils.
+     ======================================== */
+  --gradient-signature: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 25%, #10b981 75%, #34d399 100%); /* @kind color */
+
+  /* ========================================
+     Neutral — Charcoal (cool-tinted)
+     ======================================== */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-charcoal-50:  #f8fafb;
+  --color-charcoal-100: #f0f4f8;
+  --color-charcoal-200: #e2ebf3;
+  --color-charcoal-300: #cad5e2;
+  --color-charcoal-400: #9ca3af;
+  --color-charcoal-500: #6b7280;
+  --color-charcoal-600: #4b5563;
+  --color-charcoal-700: #1e2229;
+  --color-charcoal-800: #1a1d24;
+  --color-charcoal-900: #121418;
+  --color-charcoal-950: #0a0a0f;
+
+  /* ========================================
+     Accent ramps
+     ======================================== */
+  /* Violet — primary UI accent */
+  --color-violet-50:  #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+  --color-violet-950: #2e1065;
+
+  /* Emerald — secondary accent (logo green) */
+  --color-emerald-50:  #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065f46;
+  --color-emerald-900: #064e3b;
+  --color-emerald-950: #022c22;
+
+  /* Amber — secondary accent */
+  --color-amber-50:  #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
+
+  /* Rose — error / danger */
+  --color-rose-50:  #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-300: #fda4af;
+  --color-rose-400: #fb7185;
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+  --color-rose-700: #be123c;
+  --color-rose-800: #9f1239;
+  --color-rose-900: #881337;
+  --color-rose-950: #4c0519;
+
+  /* Azure — info */
+  --color-azure-50:  #eff6ff;
+  --color-azure-100: #dbeafe;
+  --color-azure-300: #93c5fd;
+  --color-azure-400: #60a5fa;
+  --color-azure-500: #3b82f6;
+  --color-azure-600: #2563eb;
+  --color-azure-700: #1d4ed8;
+  --color-azure-800: #1e40af;
+  --color-azure-900: #1e3a8a;
+  --color-azure-950: #172554;
+}

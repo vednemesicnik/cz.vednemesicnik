@@ -1,0 +1,42 @@
+/* ============================================================
+   Vedneměsíčník — Printed document tokens
+   The sheet a recipient prints or files: an invoice, a confirmation.
+   One look only — paper is white in both themes, so nothing here has a
+   dark value, and nothing here is used on a screen surface.
+   Set in Arial, not Inter: the PDF is set by a renderer whose only
+   dependable face is Arial, and the sheet is drawn the way it prints.
+   Arial has no U+2011 (non-breaking hyphen): use U+00A0 or U+2060
+   instead. Sizes are in pt because the sheet is measured on paper.
+   Every colour is one step of colors.css (0imbycuj).
+   Carried from Fakturace, where they were --doc-*; the names stay.
+   Rozhodnuto 14. 11. 2026 (a6bqeswz).
+   ============================================================ */
+
+:root {
+  --doc-font-family: Arial, Helvetica, sans-serif;
+
+  --doc-bg:        #ffffff;
+  --doc-ink:       #1a1d24; /* charcoal-800: titles, values */
+  --doc-ink-body:  #4b5563; /* charcoal-600: running text */
+  --doc-ink-soft:  #6b7280; /* charcoal-500: labels, 4.8 : 1 on white */
+  --doc-line:      #e2ebf3; /* charcoal-200: table rules */
+  --doc-line-soft: #f0f4f8; /* charcoal-100: panel edge, empty QR frame */
+  --doc-panel:     #f8fafb; /* charcoal-50: the data strip */
+  --doc-check:     #f0f4f8; /* charcoal-100: checkerboard under a signature image (was #eef0f3, off the ramp) */
+  --doc-mark:      #9f1239; /* rose-800: KONCEPT / STORNO stamp */
+  --doc-mark-fill: #ffe4e6; /* rose-100 */
+  --doc-radius:    6pt;
+
+  --doc-font-size-title:  21pt;   --doc-line-height-title:  1.1;
+  --doc-font-size-amount: 19.5pt; --doc-line-height-amount: 1.1;
+  --doc-font-size-number: 16.5pt; --doc-line-height-number: 1.15;
+  --doc-font-size-total:  13pt;   --doc-line-height-total:  1.2;
+  --doc-font-size-party:  12pt;   --doc-line-height-party:  1.3;
+  --doc-font-size-body:   11pt;   --doc-line-height-body:   1.55;
+  --doc-font-size-meta:   10pt;   --doc-line-height-meta:   1.55;
+  --doc-font-size-label:  8.5pt;  --doc-line-height-label:  1.3;
+  --doc-font-size-fine:   7pt;    --doc-line-height-fine:   1.6;
+
+  --doc-tracking-tight:  -0.4pt;
+  --doc-tracking-normal: 0;
+}

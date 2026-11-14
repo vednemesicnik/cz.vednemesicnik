@@ -1,0 +1,1026 @@
+/* ============================================================
+   Vedneměsíčník — Component styles
+   Global classes consumed by the React component library.
+   BEM-ish, flattened from the product's CSS modules.
+   ============================================================ */
+
+/* ---------- Button ---------- */
+.vdm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  /* Every variant carries the 2px border (transparent unless outline) and it is
+     taken out of the padding, so each size has one height for all variants: sm 30, md 40 px (zf1nry4o). */
+  padding-block: 10px;
+  padding-inline: 22px;
+  border-radius: var(--radius-lg);
+  border: 2px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  /* A button label never wraps; in a row it holds its width and the text beside it wraps instead (w3nb7rq2). */
+  white-space: nowrap;
+  transition: background-color var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.vdm-btn:active:not(:disabled) { transform: scale(0.98); }
+.vdm-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+.vdm-btn:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+
+.vdm-btn--sm { padding-block: 6px; padding-inline: 14px; font-size: var(--font-size-sm); }
+.vdm-btn--lg { padding-block: 14px; padding-inline: 30px; font-size: var(--font-size-lg); }
+
+.vdm-btn--primary { background-color: var(--primary); color: var(--text-on-accent); }
+.vdm-btn--primary:hover:not(:disabled):not(:focus-visible) { background-color: var(--primary-hover); }
+.vdm-btn--primary:active:not(:disabled) { background-color: var(--primary-active); }
+
+.vdm-btn--secondary { background-color: var(--secondary); color: var(--text-on-accent); }
+.vdm-btn--secondary:hover:not(:disabled):not(:focus-visible) { background-color: var(--secondary-hover); }
+.vdm-btn--secondary:active:not(:disabled) { background-color: var(--secondary-active); }
+
+.vdm-btn--outline { background-color: transparent; color: var(--text-primary); border-color: var(--border); }
+.vdm-btn--outline:hover:not(:disabled):not(:focus-visible) { background-color: var(--bg-accent); border-color: var(--border-accent); }
+
+.vdm-btn--ghost { background-color: transparent; color: var(--text-secondary); }
+.vdm-btn--ghost:hover:not(:disabled):not(:focus-visible) { background-color: var(--bg-tertiary); color: var(--text-primary); }
+
+.vdm-btn--danger { background-color: var(--danger); color: var(--danger-text); }
+.vdm-btn--danger:hover:not(:disabled):not(:focus-visible) { background-color: var(--danger-hover); }
+.vdm-btn--danger:active:not(:disabled) { background-color: var(--danger-active); }
+.vdm-btn--danger:focus-visible { box-shadow: var(--focus-shadow-danger); }
+
+/* ---------- Badge ---------- */
+.vdm-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+}
+.vdm-badge--emerald { background: var(--badge-emerald-bg); color: var(--badge-emerald-text); }
+.vdm-badge--violet  { background: var(--badge-violet-bg);  color: var(--badge-violet-text); }
+.vdm-badge--amber   { background: var(--badge-amber-bg);   color: var(--badge-amber-text); }
+.vdm-badge--rose    { background: var(--badge-rose-bg);    color: var(--badge-rose-text); }
+.vdm-badge--azure   { background: var(--badge-azure-bg);   color: var(--badge-azure-text); }
+
+/* ---------- Copy button ----------
+   With a value: the value as plain text, beside it Button outline sm with the copy icon and
+   Kopírovat; the button under the value when they do not fit, one rule at every width.
+   Rozhodnuto 8. 11. 2026 (4c4ynjih), in the system since 10. 11. 2026 (4rk17v4o). */
+.vdm-copybutton { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; text-align: start; vertical-align: middle; }
+.vdm-copybutton__value { min-width: 0; user-select: text; }
+/* Drawings only (state="failed"): the selection the live component makes with a Range. */
+.vdm-copybutton__value--selected { background-color: Highlight; color: HighlightText; }
+/* The button keeps the site's type wherever the value's box sets its own (15d, 28e, 29c). */
+.vdm-copybutton__button { position: relative; flex: none; font-family: var(--font-family); font-variant-numeric: normal; letter-spacing: normal; word-break: normal; }
+/* Tap area 44 px high without moving anything; the 8 px gap keeps it off the value (17b). */
+.vdm-copybutton__button::after { content: ""; position: absolute; inset-block: min(0px, calc((100% - 44px) / 2)); inset-inline: 0; }
+.vdm-copybutton__button--hover { background-color: var(--bg-accent); border-color: var(--border-accent); }
+.vdm-copybutton__button--focus { box-shadow: var(--focus-shadow); }
+.vdm-copybutton__content { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+/* Two states in one cell: copy and check icon, Kopírovat and Zkopírováno; the cell is as wide as the longer. */
+.vdm-copybutton__cell { display: inline-grid; justify-items: center; }
+.vdm-copybutton__cell > * { grid-area: 1 / 1; }
+.vdm-copybutton__cell > svg { width: 16px; height: 16px; }
+.vdm-copybutton__off { opacity: 0; }
+/* Clipboard refused: grey, not an error, from the value's first character (17b). */
+.vdm-copybutton__failed { display: block; margin-block-start: 4px; color: var(--text-secondary); font-family: var(--font-family); font-size: var(--font-size-sm); font-variant-numeric: normal; font-weight: var(--font-weight-regular); letter-spacing: normal; line-height: 1.5; text-align: start; word-break: normal; }
+/* The icon alone: transparent, the icon in the line's size, Tooltip Kopírovat (jhwfoyxs). */
+.vdm-copybutton-icon { position: relative; display: inline-grid; place-items: center; padding: 2px 4px; font: inherit; border-radius: 6px; background: transparent; color: var(--text-primary); border: none; cursor: pointer; vertical-align: middle; transition: background-color 150ms ease-out, color 150ms ease-out, transform 150ms ease-out; }
+.vdm-copybutton-icon::after { content: ""; position: absolute; inset-block: min(0px, calc((100% - 44px) / 2)); inset-inline: min(0px, calc((100% - 44px) / 2)); }
+.vdm-copybutton-icon:hover:not(:focus-visible),
+.vdm-copybutton-icon--hover { background-color: var(--bg-accent); color: var(--primary); }
+.vdm-copybutton-icon:active { transform: scale(0.97); }
+.vdm-copybutton-icon:focus-visible,
+.vdm-copybutton-icon--focus { background-color: var(--bg-accent); color: var(--primary); box-shadow: var(--focus-shadow); outline: none; }
+.vdm-copybutton-icon__glyph { grid-area: 1 / 1; width: 1em; height: 1em; opacity: 1; transition: opacity 200ms ease-out; }
+.vdm-copybutton-icon__glyph--hidden { opacity: 0; }
+.vdm-copybutton-icon.vdm-copybutton-icon--copied,
+.vdm-copybutton-icon.vdm-copybutton-icon--copied:hover:not(:focus-visible) { background-color: var(--bg-success); color: var(--text-success); }
+.vdm-copybutton-icon__anchor { vertical-align: middle; }
+
+/* ---------- Card ---------- */
+.vdm-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.vdm-card--pad { padding: 24px; }
+.vdm-card--hover { transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base); }
+.vdm-card--hover:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-hover); }
+
+/* ---------- Callout ----------
+   Built like the card and the state tag: tinted fill, 1px border in the tone, --radius-lg,
+   no leading bar, no shadow. Warning and error carry an icon (Lucide triangle-alert /
+   circle-alert, 16 px, centred on the first line) so the tone is not carried by colour alone;
+   info and success have none. One look for the web and the administration.
+   Rozhodnuto 22. 10. 2026 (rmridl1f) */
+.vdm-callout {
+  font-family: var(--font-family);
+  background: var(--callout-info-bg);
+  border: 1px solid var(--callout-info-border);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+}
+.vdm-callout--success { background: var(--callout-success-bg); border-color: var(--callout-success-border); }
+.vdm-callout--warning { background: var(--callout-warning-bg); border-color: var(--callout-warning-border); }
+.vdm-callout--error   { background: var(--callout-error-bg);   border-color: var(--callout-error-border); }
+.vdm-callout--icon { display: flex; align-items: flex-start; gap: 8px; }
+.vdm-callout__icon { flex: none; width: 16px; height: 1lh; }
+.vdm-callout--warning .vdm-callout__icon { color: var(--callout-warning-icon); }
+.vdm-callout--error .vdm-callout__icon   { color: var(--callout-error-icon); }
+.vdm-callout__body { flex: 1; min-width: 0; }
+/* Outline button on a tinted callout: own fill and a 3:1 border (WCAG 1.4.11). Rozhodnuto 15. 10. 2026 (jb81di02) */
+.vdm-callout .vdm-btn--outline { background-color: var(--bg-primary); border-color: var(--border-on-tint); }
+
+/* ---------- Nav item ---------- */
+.vdm-navitem {
+  position: relative;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  color: var(--nav-item-text);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  text-decoration: none;
+  padding-bottom: 4px;
+  transition: color var(--transition-fast);
+  cursor: pointer;
+}
+.vdm-navitem::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%; height: 2px;
+  background-color: var(--primary-hover);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--transition-base);
+}
+.vdm-navitem:hover { color: var(--nav-item-text-hover); }
+.vdm-navitem:hover::after { transform: scaleX(1); }
+.vdm-navitem--active { color: var(--nav-item-text-active); }
+.vdm-navitem--active::after { transform: scaleX(1); }
+
+/* ---------- Text field ---------- */
+.vdm-field { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-family); }
+.vdm-field__label { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--text-primary); }
+.vdm-field__input {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.vdm-field__input::placeholder { color: var(--text-tertiary); }
+.vdm-field__input:hover { border-color: var(--border-hover); }
+.vdm-field__input:focus-visible { outline: none; border-color: var(--border-accent); box-shadow: var(--focus-shadow); }
+.vdm-field__input--error { border-color: var(--error); }
+.vdm-field__input--error:focus-visible { box-shadow: var(--focus-shadow-error); }
+.vdm-field__hint { font-size: var(--font-size-sm); color: var(--text-tertiary); }
+.vdm-field__hint--error { color: var(--error-text); }
+/* Grows into free space of a filter row; 240 px leaves 162 px of text (cioukqn6) */
+.vdm-field--grow { flex: 1 1 240px; min-width: 240px; max-width: 480px; }
+/* Search look (qx3tx3bz) */
+.vdm-field__search { position: relative; display: flex; }
+.vdm-field__search .vdm-field__input { flex: 1; min-width: 0; }
+.vdm-field__search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.vdm-field__input--search { padding-left: 36px; padding-right: 40px; appearance: none; -webkit-appearance: none; }
+.vdm-field__input--search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.vdm-field__input--search::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+.vdm-field__clear { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-full); background: transparent; color: var(--text-secondary); cursor: pointer; transition: background var(--transition-fast), box-shadow var(--transition-fast); }
+.vdm-field__clear:hover { background: var(--bg-hover); color: var(--text-primary); }
+.vdm-field__clear:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+@media (max-width: 767.98px) {
+  .vdm-field__input--search { min-height: 44px; padding-right: 48px; }
+  .vdm-field__clear { right: 0; width: 44px; height: 44px; }
+}
+
+/* ---------- PostContentLink (article row) ---------- */
+.vdm-postcontentlink {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "title image" "details image";
+  gap: 16px;
+  padding: 24px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  font-family: var(--font-family);
+  transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+}
+.vdm-postcontentlink:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-hover); }
+.vdm-postcontentlink:hover .vdm-postcontentlink__title { color: var(--primary-hover); }
+/* Keyboard focus: the ring is the card's, in place of its shadow; nothing else changes.
+   A preview keeps its dashed frame, so only a card without one drops the outline (pwldhxq3). */
+.vdm-postcontentlink:focus-visible { box-shadow: var(--focus-shadow); }
+.vdm-postcontentlink:focus-visible:not(.vdm-preview) { outline: none; }
+.vdm-postcontentlink__title {
+  grid-area: title;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-height-xl);
+  margin: 0;
+  transition: color var(--transition-base);
+}
+.vdm-postcontentlink__footer {
+  grid-area: details;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-self: end;
+}
+.vdm-postcontentlink__author { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--text-secondary); }
+.vdm-postcontentlink__date { font-size: var(--font-size-sm); color: var(--text-tertiary); }
+.vdm-postcontentlink__image {
+  grid-area: image;
+  position: relative;
+  width: 192px; height: 108px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-tertiary);
+}
+.vdm-postcontentlink__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vdm-postcontentlink__image::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: var(--gradient-signature);
+  background-size: 200% 200%;
+  opacity: 0.45;
+  transition: opacity var(--transition-base);
+}
+.vdm-postcontentlink:hover .vdm-postcontentlink__image::after { opacity: 0.2; }
+/* Under 640px: stacked, left-aligned like every card on the page; title stays --font-size-xl;
+   the frame keeps 16:9 at every width, no height cap (vhn58g3f). */
+@media (max-width: 640px) {
+  .vdm-postcontentlink { grid-template-columns: 1fr; grid-template-areas: "image" "title" "details"; padding: 16px; }
+  .vdm-postcontentlink__image { width: 100%; height: auto; aspect-ratio: 16 / 9; }
+}
+/* No image: no image area, full-width text, like the page the row opens (0q3rezo1). */
+.vdm-postcontentlink:not(:has(> .vdm-postcontentlink__image)) { grid-template-columns: 1fr; grid-template-areas: "title" "details"; }
+
+/* ---------- MediaContentLink (square cover) ----------
+   A written-down exception to PostContentLink (Principles): the square cover shows
+   whole, in its own shape, instead of inscribed in a 16:9 frame on the gradient.
+   The exception belongs to the shape: any content with a square cover gets this
+   card (wa4gbn6u); today every episode list. No veil, like the show Tile (aec7mifb). */
+.vdm-mediacontentlink {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "cover title" "cover details";
+  gap: 16px;
+  padding: 24px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  font-family: var(--font-family);
+  transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+}
+.vdm-mediacontentlink:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-hover); }
+.vdm-mediacontentlink:hover .vdm-mediacontentlink__title { color: var(--primary-hover); }
+/* Keyboard focus as on PostContentLink; a preview keeps its dashed frame (pwldhxq3). */
+.vdm-mediacontentlink:focus-visible { box-shadow: var(--focus-shadow); }
+.vdm-mediacontentlink:focus-visible:not(.vdm-preview) { outline: none; }
+.vdm-mediacontentlink__cover { grid-area: cover; align-self: start; width: 108px; height: 108px; border-radius: var(--radius-md); overflow: hidden; background: var(--bg-tertiary); }
+.vdm-mediacontentlink__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vdm-mediacontentlink__title { grid-area: title; margin: 0; font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); line-height: var(--line-height-xl); color: var(--text-primary); text-wrap: pretty; transition: color var(--transition-base); }
+.vdm-mediacontentlink__number { color: var(--text-tertiary); }
+.vdm-mediacontentlink__footer { grid-area: details; align-self: end; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.vdm-mediacontentlink__show { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--text-secondary); }
+.vdm-mediacontentlink__date { font-size: var(--font-size-sm); color: var(--text-tertiary); }
+/* Under 640px the cover stays beside the text at 80 × 80 — the list stays a list. */
+@media (max-width: 640px) {
+  .vdm-mediacontentlink { grid-template-columns: 80px minmax(0, 1fr); padding: 16px; }
+  .vdm-mediacontentlink__cover { width: 80px; height: 80px; }
+}
+/* No cover: no cover area, text runs full width, like PostContentLink (0q3rezo1). */
+.vdm-mediacontentlink:not(:has(> .vdm-mediacontentlink__cover)) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; grid-template-areas: "title" "details"; }
+
+/* ---------- Tile (cover tile) ---------- */
+.vdm-tile { display: grid; grid-template-rows: max-content max-content; row-gap: 12px; font-family: var(--font-family); text-decoration: none; }
+.vdm-tile__card { background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; transition: box-shadow var(--transition-base); aspect-ratio: 1; }
+.vdm-tile:hover .vdm-tile__card { box-shadow: var(--shadow-lg); }
+/* Keyboard focus: one link round card and caption, the ring on the card alone, in place
+   of its shadow, where hover acts. A preview keeps its dashed frame (pwldhxq3). */
+.vdm-tile:focus-visible:not(.vdm-tile--preview) { outline: none; }
+.vdm-tile:focus-visible .vdm-tile__card { box-shadow: var(--focus-shadow); }
+.vdm-tile__card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vdm-tile__label { color: var(--text-primary); font-size: var(--font-size-md); font-weight: var(--font-weight-medium); text-align: center; }
+
+/* ---------- Avatar ---------- */
+.vdm-avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-full); overflow: hidden; background: var(--gradient-signature); color: var(--color-white); font-family: var(--font-family); font-weight: var(--font-weight-semibold); flex: none; }
+.vdm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ============================================================
+   Additions 2026-10 (yv8gi9i0): candidates from the app screens,
+   variants of existing components, form set, dark map support.
+   ============================================================ */
+
+.vdm-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.vdm-preview { outline: 2px dashed var(--preview-outline); outline-offset: 4px; }
+/* Small pill with its own edge (badge, NavRow item): the line replaces the edge, no offset (b04zn65r). */
+.vdm-badge--preview, .vdm-navrow__item--preview { outline: 2px dashed var(--preview-outline); outline-offset: -2px; }
+/* Text item in a line (tag index, link strip): frame on its own edge, 6px to the sides, nothing moves (b04zn65r). */
+.vdm-preview--inline { outline: 2px dashed var(--preview-outline); outline-offset: 0; border-radius: var(--radius-sm); padding: 0 6px; margin: 0 -6px; }
+
+/* ---------- Badge — outline (tags) ---------- */
+.vdm-badge--outline { background: transparent; color: var(--text-secondary); box-shadow: inset 0 0 0 1px var(--badge-outline-border); }
+
+/* ---------- Status tag ---------- */
+.vdm-status { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; font-family: var(--font-family); vertical-align: middle; }
+.vdm-status--inline { flex-direction: row; align-items: center; gap: 8px; }
+.vdm-status__tag { display: inline-flex; align-items: center; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); line-height: 16px; padding: 2px 9px; border-radius: var(--radius-full); border: 1px solid; white-space: nowrap; }
+.vdm-status__detail { font-size: var(--font-size-xs); line-height: 1.4; color: var(--text-secondary); }
+.vdm-status--draft .vdm-status__tag     { background: var(--state-draft-bg);     color: var(--state-draft-text);     border-color: var(--state-draft-border); }
+.vdm-status--pending .vdm-status__tag   { background: var(--state-pending-bg);   color: var(--state-pending-text);   border-color: var(--state-pending-border); }
+.vdm-status--approved .vdm-status__tag  { background: var(--state-approved-bg);  color: var(--state-approved-text);  border-color: var(--state-approved-border); }
+.vdm-status--published .vdm-status__tag { background: var(--state-published-bg); color: var(--state-published-text); border-color: var(--state-published-border); }
+.vdm-status--archived .vdm-status__tag  { background: var(--state-archived-bg);  color: var(--state-archived-text);  border-color: var(--state-archived-border); }
+.vdm-status--archived .vdm-status__detail { color: var(--text-tertiary); }
+.vdm-status--muted .vdm-status__tag { background: var(--state-draft-bg); color: var(--state-draft-text); border-color: var(--state-draft-border); }
+
+/* ---------- Chip ---------- */
+.vdm-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 6px 3px 10px; border-radius: var(--radius-full); background: var(--bg-tertiary); border: 1px solid var(--border); font-family: var(--font-family); font-size: var(--font-size-sm); line-height: 1.4; color: var(--text-primary); }
+.vdm-chip--muted { background: var(--bg-primary); border-style: dashed; border-color: var(--border-strong); color: var(--text-secondary); }
+.vdm-chip__note { font-size: var(--font-size-xs); color: var(--text-tertiary); }
+.vdm-chip__remove { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: var(--radius-full); background: transparent; color: inherit; cursor: pointer; }
+.vdm-chip__remove:hover { background: var(--bg-hover); }
+.vdm-chip__remove:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+
+/* ---------- Chip input + listbox ---------- */
+.vdm-chipinput-wrap { position: relative; }
+.vdm-chipinput { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-md); transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
+.vdm-chipinput:hover { border-color: var(--border-hover); }
+.vdm-chipinput:focus-within { border-color: var(--border-accent); box-shadow: var(--focus-shadow); }
+.vdm-chipinput__input { flex: 1 1 120px; min-width: 120px; border: 0; outline: 0; background: transparent; padding: 3px 4px; font-family: inherit; font-size: var(--font-size-sm); color: var(--text-primary); }
+.vdm-chipinput__input::placeholder { color: var(--text-tertiary); }
+.vdm-listbox { list-style: none; margin: 4px 0 0; padding: 6px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); font-family: var(--font-family); font-size: var(--font-size-sm); display: flex; flex-direction: column; }
+.vdm-listbox__option { padding: 9px 12px; border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; }
+.vdm-listbox__option:hover, .vdm-listbox__option--active { background: var(--bg-tertiary); }
+.vdm-listbox__option--create { color: var(--link-strong); }
+.vdm-listbox__empty { padding: 9px 12px; color: var(--text-tertiary); }
+
+/* ---------- Action menu "⋯" ---------- */
+.vdm-actionmenu { position: relative; display: inline-flex; vertical-align: middle; }
+.vdm-actionmenu__trigger { padding-inline: 0; width: 40px; flex-shrink: 0; font-weight: var(--font-weight-bold); letter-spacing: 0.05em; }
+.vdm-btn--sm.vdm-actionmenu__trigger { width: 30px; }
+.vdm-btn--lg.vdm-actionmenu__trigger { width: 50px; }
+.vdm-actionmenu__chip { display: inline-flex; align-items: center; padding: 0 8px; height: 20px; border: 0; border-radius: var(--radius-md); background: var(--card-bg); color: var(--text-primary); font-family: var(--font-family); font-size: 13px; font-weight: var(--font-weight-semibold); cursor: pointer; }
+.vdm-actionmenu__chip:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+.vdm-menu { position: absolute; top: calc(100% + 6px); z-index: var(--z-nav-dropdown); min-width: 200px; width: max-content; max-width: 300px; box-sizing: border-box; padding: 6px; display: flex; flex-direction: column; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); font-family: var(--font-family); font-size: var(--font-size-sm); text-align: left; }
+.vdm-menu--end { right: 0; }
+.vdm-menu--start { left: 0; }
+.vdm-menu__item { display: block; box-sizing: border-box; width: 100%; padding: 9px 12px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--text-primary); font: inherit; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.vdm-menu__item:hover, .vdm-menu__item:focus-visible, .vdm-menu__item--active { outline: none; background: var(--bg-tertiary); }
+.vdm-menu__item--danger { color: var(--error-text); }
+.vdm-menu__sep { height: 1px; background: var(--border); margin: 4px 6px; }
+
+/* ---------- Dialog ---------- */
+.vdm-dialog { box-sizing: border-box; width: 100%; padding: 24px; display: flex; flex-direction: column; gap: 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); font-family: var(--font-family); color: var(--text-primary); }
+.vdm-dialog__title { margin: 0; font-size: 18px; font-weight: var(--font-weight-semibold); line-height: 1.35; text-wrap: pretty; }
+.vdm-dialog__body { display: flex; flex-direction: column; gap: 12px; font-size: var(--font-size-sm); line-height: 1.5; color: var(--text-secondary); }
+.vdm-dialog__text { margin: 0; text-wrap: pretty; }
+/* 12 px between paragraphs in every dialog body (0zgyl1ao). */
+.vdm-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+.vdm-dialog-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 24px; background: var(--overlay); }
+
+/* ---------- Toast ---------- */
+.vdm-toast { display: inline-flex; align-items: center; gap: 12px; max-width: 440px; box-sizing: border-box; padding: 12px 16px; background: var(--surface-inverse); color: var(--text-inverse); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); font-family: var(--font-family); font-size: var(--font-size-sm); line-height: 1.4; }
+.vdm-toast__icon { flex: none; color: var(--toast-error); }
+.vdm-toast__action { margin-left: auto; padding: 0; border: 0; background: transparent; color: var(--toast-action); font: inherit; font-weight: var(--font-weight-semibold); cursor: pointer; }
+
+/* ---------- Preview bar ---------- */
+.vdm-previewbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 24px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-hover); font-family: var(--font-family); font-size: 13px; line-height: 1.45; color: var(--text-primary); }
+.vdm-previewbar__msg { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.vdm-previewbar__msg strong { font-weight: var(--font-weight-semibold); }
+.vdm-previewbar__marker { flex: none; width: 16px; height: 11px; border: 2px dashed var(--preview-outline); border-radius: 3px; }
+.vdm-previewbar__link { flex: none; font-weight: var(--font-weight-medium); color: var(--link-strong); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* ---------- Admin sidebar ---------- */
+.vdm-sidebar { box-sizing: border-box; width: 224px; min-height: 100%; padding: 20px 12px; display: flex; flex-direction: column; gap: 24px; background: var(--bg-secondary); border-right: 1px solid var(--border); font-family: var(--font-family); color: var(--text-primary); }
+/* Brand + public site link (s21ljh49): the link is a row under the brand, text on the logo's left edge. */
+.vdm-sidebar__head { display: flex; flex-direction: column; gap: 8px; }
+.vdm-sidebar__brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+.vdm-sidebar__site { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; padding: 7px 8px; border-radius: var(--radius-lg); transition: background-color var(--transition-fast), color var(--transition-fast); }
+.vdm-sidebar__site:hover { background: var(--bg-tertiary); }
+.vdm-sidebar__site svg { flex: none; }
+.vdm-sidebar__brandtext { display: flex; flex-direction: column; gap: 1px; }
+.vdm-sidebar__product { font-size: var(--font-size-xs); color: var(--text-secondary); }
+.vdm-sidebar__nav { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-size-sm); }
+.vdm-sidebar__item { padding: 8px 10px; border-radius: var(--radius-lg); color: var(--text-secondary); text-decoration: none; transition: background-color var(--transition-fast), color var(--transition-fast); }
+.vdm-sidebar__item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.vdm-sidebar__item--active, .vdm-sidebar__item--active:hover { background: var(--primary-light); color: var(--link-strong); font-weight: var(--font-weight-semibold); }
+.vdm-sidebar__sep { height: 1px; background: var(--border); margin: 8px 10px; }
+.vdm-sidebar__foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 0 8px; }
+.vdm-sidebar__user { display: flex; align-items: center; gap: 10px; }
+.vdm-sidebar__usertext { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.vdm-sidebar__username { font-size: 13px; font-weight: var(--font-weight-medium); }
+.vdm-sidebar__role { font-size: 11px; color: var(--text-secondary); }
+.vdm-sidebar__link { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+.vdm-sidebar__link:hover { color: var(--text-primary); }
+/* Foot rows: Nastavení (accountLabel) and Odhlásit se are siblings under the name, so both get the same box,
+   hit area and hover as an item; the box is the same in every state so nothing moves, text lines up with
+   the name (u6432mlm, puutrqhh). Two rows sit 2px apart, like items. */
+.vdm-sidebar__row { margin: 0 -8px; padding: 7px 8px; border-radius: var(--radius-lg); transition: background-color var(--transition-fast), color var(--transition-fast); }
+.vdm-sidebar__row:hover { background: var(--bg-tertiary); }
+.vdm-sidebar__row + .vdm-sidebar__row { margin-top: -8px; }
+/* Nastavení is a page, so it has an active state like an item (u6432mlm); Odhlásit se is an action and has none. */
+.vdm-sidebar__account--active, .vdm-sidebar__account--active:hover { background: var(--primary-light); color: var(--link-strong); font-weight: var(--font-weight-semibold); }
+/* Below 768px: whole screen from Menu in AdminTopBar (tbi5qpq9). */
+.vdm-sidebar--menu { width: 100%; min-height: 100dvh; padding: 0 12px 20px; gap: 16px; border-right: 0; }
+.vdm-sidebar--menu .vdm-sidebar__brand { margin: 0 -12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.vdm-sidebar__close { margin-left: auto; }
+.vdm-sidebar--menu .vdm-sidebar__item, .vdm-sidebar--menu .vdm-sidebar__row { box-sizing: border-box; min-height: 44px; display: flex; align-items: center; }
+.vdm-sidebar--menu .vdm-sidebar__site { box-sizing: border-box; min-height: 44px; align-self: stretch; }
+.vdm-topbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 1px solid var(--border); }
+.vdm-topbar__title { min-width: 0; font-size: 15px; font-weight: var(--font-weight-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vdm-topbar__menu { margin-left: auto; }
+
+/* ---------- Tabs ---------- */
+.vdm-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); font-family: var(--font-family); font-size: var(--font-size-sm); }
+.vdm-tabs__tab { padding: 8px 0 10px; margin-bottom: -1px; border-bottom: 2px solid transparent; color: var(--text-secondary); text-decoration: none; }
+.vdm-tabs__tab:hover { color: var(--text-primary); }
+.vdm-tabs__tab--active, .vdm-tabs__tab--active:hover { color: var(--link-strong); font-weight: var(--font-weight-semibold); border-bottom-color: var(--primary-hover); }
+
+/* ---------- Editor detail row (phone editor, u94oosdp) ---------- */
+.vdm-editorrow { position: relative; display: grid; grid-template-columns: 90px minmax(0, 1fr) 20px; align-items: center; gap: 12px; width: calc(100% + 16px); min-height: 48px; margin: 0 -8px; padding: 8px; box-sizing: border-box; border: 0; border-radius: var(--radius-md); background: transparent; font-family: var(--font-family); font-size: var(--font-size-sm); line-height: 1.4; color: var(--text-primary); text-align: left; cursor: pointer; transition: background-color var(--transition-fast); }
+.vdm-editorrow::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 0; height: 1px; background: var(--border); }
+.vdm-editorrow:hover, .vdm-editorrow:active { background: var(--bg-hover); }
+.vdm-editorrow:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+.vdm-editorrow__label { color: var(--text-secondary); }
+.vdm-editorrow__value { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.vdm-editorrow__thumbs { display: flex; gap: 4px; flex: none; }
+.vdm-editorrow__thumb { display: block; width: 32px; height: 32px; border-radius: var(--radius-sm); object-fit: cover; background: var(--placeholder-bg); }
+.vdm-editorrow__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vdm-editorrow__chevron { color: var(--link-strong); }
+
+/* ---------- State filter (pills with counts) ---------- */
+.vdm-statefilter { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--bg-tertiary); border-radius: var(--radius-lg); font-family: var(--font-family); font-size: 13px; }
+.vdm-statefilter__item { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); font: inherit; cursor: pointer; }
+.vdm-statefilter__item:hover { color: var(--text-primary); }
+.vdm-statefilter__item:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+.vdm-statefilter__item--active { background: var(--card-bg); color: var(--text-primary); font-weight: var(--font-weight-medium); box-shadow: var(--shadow-sm); }
+.vdm-statefilter__count { color: var(--text-tertiary); font-weight: var(--font-weight-regular); }
+.vdm-statefilter__count--attention { color: var(--state-attention-text); font-weight: var(--font-weight-semibold); }
+
+/* ---------- Table row ---------- */
+.vdm-row { display: grid; gap: 12px; align-items: center; padding: 14px 8px; border-bottom: 1px solid var(--border); font-family: var(--font-family); font-size: var(--font-size-sm); color: var(--text-primary); }
+.vdm-row--head { padding: 0 8px 10px; font-size: var(--font-size-xs); color: var(--text-tertiary); }
+/* One scroll (5r4m681k): the table never scrolls vertically; the head sticks to the window from 1024px, below that the wrapper scrolls sideways only. */
+.vdm-table { display: flex; flex-direction: column; min-width: 0; }
+@media (width >= 1024px) { .vdm-table { overflow: visible; } .vdm-table > .vdm-row--head { position: sticky; top: 0; z-index: 1; padding-top: 10px; background: var(--bg-primary); } }
+@media (width < 1024px) { .vdm-table { overflow-x: auto; overflow-y: hidden; } }
+.vdm-row--selected { background: var(--bg-secondary); border-radius: var(--radius-md); }
+.vdm-row--muted { color: var(--text-tertiary); }
+.vdm-row--last { border-bottom: 0; }
+.vdm-row__title { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.vdm-row__link { font-weight: var(--font-weight-medium); color: inherit; text-decoration: none; }
+.vdm-row__link:hover { color: var(--link-strong); text-decoration: underline; text-underline-offset: 2px; }
+.vdm-row__sub { font-size: var(--font-size-xs); color: var(--text-secondary); }
+.vdm-row__more { color: var(--text-tertiary); }
+
+/* ---------- Pagination ---------- */
+.vdm-pagination { display: flex; flex-direction: column; align-items: center; gap: 10px; font-family: var(--font-family); }
+.vdm-pagination--inline { flex-direction: row-reverse; justify-content: space-between; width: 100%; gap: 16px; }
+.vdm-pagination__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; font-size: 15px; font-weight: var(--font-weight-medium); }
+.vdm-pagination__item { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: var(--radius-lg); color: var(--text-primary); text-decoration: none; white-space: nowrap; transition: background-color var(--transition-fast); }
+a.vdm-pagination__item:hover { background: var(--bg-tertiary); }
+.vdm-pagination__item--current { background: var(--primary-hover); color: var(--text-on-accent); }
+.vdm-pagination__item--step { padding: 0 14px; color: var(--link-strong); }
+.vdm-pagination__item--disabled { color: var(--text-tertiary); }
+.vdm-pagination__ellipsis { padding: 0 6px; color: var(--text-tertiary); }
+.vdm-pagination__summary { margin: 0; font-size: var(--font-size-sm); color: var(--text-secondary); white-space: nowrap; }
+.vdm-pagination--sm .vdm-pagination__list { font-size: var(--font-size-sm); }
+.vdm-pagination--sm .vdm-pagination__item { min-width: 36px; height: 36px; padding: 0 8px; }
+.vdm-pagination--sm .vdm-pagination__summary { font-size: 13px; }
+
+/* ---------- PostContentLink — badges, number, preview ---------- */
+.vdm-postcontentlink__details { grid-area: details; display: flex; flex-direction: column; gap: 10px; align-self: end; }
+.vdm-postcontentlink__badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.vdm-postcontentlink__details .vdm-postcontentlink__footer { align-self: auto; }
+.vdm-postcontentlink__number { color: var(--text-tertiary); }
+
+/* ---------- Tile — cover ratio, sublabel, fallback, preview ---------- */
+.vdm-tile__card--cover { aspect-ratio: 3 / 4; }
+.vdm-tile__card--placeholder { background: var(--placeholder-bg); }
+.vdm-tile__fallback { display: flex; align-items: flex-end; padding: 14px; box-sizing: border-box; background-image: var(--gradient-signature); }
+.vdm-tile__fallbacktext { color: var(--color-white); font-size: 18px; font-weight: var(--font-weight-bold); line-height: 1.2; text-wrap: pretty; }
+.vdm-tile__label { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.vdm-tile__sublabel { font-size: var(--font-size-sm); font-weight: var(--font-weight-regular); color: var(--text-secondary); }
+.vdm-tile--preview { outline: 2px dashed var(--preview-outline); outline-offset: 6px; border-radius: var(--radius-lg); }
+.vdm-tile--preview .vdm-tile__label { gap: 6px; }
+
+/* ---------- Link row ---------- */
+.vdm-linkrow { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 76px; box-sizing: border-box; padding: 10px 14px 10px 10px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); color: var(--text-primary); text-decoration: none; font-family: var(--font-family); transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base); }
+.vdm-linkrow:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-hover); }
+.vdm-linkrow:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+.vdm-linkrow__thumb { width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--placeholder-bg); overflow: hidden; }
+.vdm-linkrow__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vdm-linkrow__thumb--gradient { background-image: var(--gradient-signature); opacity: 0.8; }
+.vdm-linkrow__thumb--cover { width: 42px; justify-self: center; border-radius: 3px; box-shadow: var(--shadow-xs); }
+.vdm-linkrow__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vdm-linkrow__kicker { font-size: 13px; color: var(--text-secondary); }
+.vdm-linkrow__title { font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); line-height: 1.35; text-wrap: pretty; }
+.vdm-linkrow__number { color: var(--text-tertiary); }
+.vdm-linkrow__chevron { color: var(--link-strong); }
+.vdm-linkrow__trail { font-size: 13px; font-weight: var(--font-weight-semibold); color: var(--link-strong); }
+.vdm-linkrow--sm { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; min-height: 66px; padding: 8px 12px 8px 8px; }
+.vdm-linkrow--sm .vdm-linkrow__thumb { width: 48px; height: 48px; }
+.vdm-linkrow--sm .vdm-linkrow__thumb--cover { width: 36px; }
+.vdm-linkrow--sm .vdm-linkrow__kicker { font-size: var(--font-size-xs); }
+.vdm-linkrow--sm .vdm-linkrow__title { font-size: 15px; }
+.vdm-linkrow--sm .vdm-linkrow__trail { font-size: var(--font-size-xs); }
+
+/* ---------- Image tile (editor gallery) ---------- */
+.vdm-imagetile { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; font-family: var(--font-family); }
+.vdm-imagetile__media { position: relative; aspect-ratio: 4 / 3; box-sizing: border-box; padding: 8px; display: flex; align-items: flex-start; gap: 6px; border-radius: var(--radius-md); background: var(--placeholder-bg); }
+.vdm-imagetile__media--empty { background-image: var(--gradient-signature); }
+.vdm-imagetile__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.vdm-imagetile--uploading .vdm-imagetile__media { opacity: 0.6; }
+.vdm-imagetile__pill { position: relative; font-size: 11px; font-weight: var(--font-weight-semibold); line-height: 18px; padding: 0 7px; border-radius: var(--radius-full); background: var(--card-bg); color: var(--text-primary); }
+.vdm-imagetile__pill--muted { font-weight: var(--font-weight-medium); color: var(--text-secondary); }
+.vdm-imagetile__menu { position: relative; margin-left: auto; }
+/* Order chip: number + drag grip, a mark, not a button; the whole preview drags (yj2t50dd) */
+.vdm-imagetile__order { position: relative; flex: none; display: inline-flex; align-items: center; gap: 2px; height: 20px; min-width: 20px; box-sizing: border-box; justify-content: center; padding: 0 6px; border-radius: var(--radius-md); background: var(--card-bg); color: var(--text-secondary); font-size: 13px; line-height: 1; font-variant-numeric: tabular-nums; pointer-events: none; }
+.vdm-imagetile__order--grip { padding-right: 2px; }
+.vdm-imagetile__order--gripOnly { padding: 0 2px; }
+.vdm-imagetile__grip { display: inline-flex; }
+.vdm-imagetile--grip .vdm-imagetile__media { cursor: grab; }
+.vdm-imagetile--lifted { margin: -9px; padding: 8px; background: var(--card-bg); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.vdm-imagetile--lifted .vdm-imagetile__media { cursor: grabbing; }
+.vdm-imagetile--lifted .vdm-imagetile__grip { color: var(--link-strong); }
+.vdm-imagetile__field { display: flex; flex-direction: column; gap: 4px; }
+.vdm-imagetile__label { font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--text-primary); }
+.vdm-imagetile__caption { display: flex; align-items: flex-start; gap: 8px; padding: 7px 6px 7px 10px; }
+.vdm-imagetile__captioninput { flex: 1; min-width: 0; border: 0; outline: 0; padding: 0; background: transparent; font: inherit; color: inherit; }
+.vdm-imagetile__captioninput::placeholder { color: var(--text-tertiary); }
+.vdm-imagetile__caption .vdm-tooltip-anchor { flex: none; display: inline-flex; }
+.vdm-imagetile__linkbtn { position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; height: 18px; padding: 0 6px; border: 0; border-radius: var(--radius-sm); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; }
+.vdm-imagetile__linkbtn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.vdm-imagetile__linkbtn:focus-visible { outline: 0; box-shadow: var(--focus-shadow); }
+@media (max-width: 767px) { .vdm-imagetile__linkbtn::after { content: ""; position: absolute; inset: -13px -11px; } }
+.vdm-imagetile__file { font-size: var(--font-size-xs); color: var(--text-tertiary); }
+.vdm-imagetile--compact { gap: 5px; }
+.vdm-imagetile--compact .vdm-imagetile__media { padding: 6px; }
+.vdm-imagetile__altline { font-size: var(--font-size-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vdm-imagetile__altline--missing { color: var(--text-tertiary); }
+.vdm-imagetile__media--failed { background: var(--callout-error-bg); border: 1px solid var(--error); }
+.vdm-imagetile__failtext { font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); line-height: 1.5; color: var(--error-text); }
+.vdm-imagetile__replacefail { display: flex; flex-direction: column; gap: 4px; }
+.vdm-imagetile__failactions { display: flex; flex-wrap: wrap; gap: 12px; }
+.vdm-imagetile__failaction { padding: 0; border: 0; background: none; font: inherit; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--link-strong); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.vdm-imagetile__failaction--quiet { color: var(--text-secondary); }
+
+/* ---------- Upload status (one step for every file, indeterminate bar; bxy8xxqs) ---------- */
+.vdm-upload { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-family: var(--font-family); }
+.vdm-upload__row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: var(--font-size-xs); line-height: 1.5; color: var(--text-secondary); }
+.vdm-upload__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vdm-upload__cancel { position: relative; flex: none; padding: 0; border: 0; background: none; font: inherit; font-weight: var(--font-weight-medium); color: var(--link-strong); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.vdm-upload__cancel:focus-visible { outline: 0; border-radius: var(--radius-sm); box-shadow: var(--focus-shadow); }
+@media (max-width: 767px) { .vdm-upload__cancel::after { content: ""; position: absolute; inset: -13px -10px; } }
+.vdm-upload__track { position: relative; height: 4px; border-radius: var(--radius-full); background: var(--bg-tertiary); overflow: hidden; }
+.vdm-upload__bar { position: absolute; top: 0; bottom: 0; left: 0; width: 30%; border-radius: inherit; background: var(--primary); animation: vdm-upload-slide 1.6s ease-in-out infinite; }
+@keyframes vdm-upload-slide { from { transform: translateX(-100%); } to { transform: translateX(334%); } }
+@media (prefers-reduced-motion: reduce) { .vdm-upload__bar { animation: none; left: 35%; } }
+.vdm-upload--compact { gap: 4px; }
+.vdm-upload--compact .vdm-upload__track { height: 3px; }
+.vdm-upload--compact .vdm-upload__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Stepper ---------- */
+.vdm-stepper { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(var(--vdm-steps, 2), minmax(0, 1fr)); gap: 12px; font-family: var(--font-family); }
+.vdm-stepper__step { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; box-shadow: inset 0 -1px 0 var(--border-hover); }
+.vdm-stepper__step--done { box-shadow: inset 0 -1px 0 var(--primary-hover); }
+.vdm-stepper__step--current { box-shadow: inset 0 -3px 0 var(--primary-hover); }
+.vdm-stepper__num { flex: none; width: 26px; height: 26px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-full); border: 1px solid var(--border-strong); color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.vdm-stepper__step--done .vdm-stepper__num { border-color: var(--primary-hover); color: var(--link-strong); }
+.vdm-stepper__step--current .vdm-stepper__num { width: 28px; height: 28px; border: 0; background: var(--primary-hover); color: var(--text-on-accent); font-weight: var(--font-weight-bold); }
+.vdm-stepper__text { display: flex; flex-direction: column; font-size: 15px; line-height: 1.25; }
+.vdm-stepper__label { color: var(--text-secondary); }
+.vdm-stepper__step--done .vdm-stepper__label { color: var(--link-strong); font-weight: var(--font-weight-medium); }
+.vdm-stepper__step--current .vdm-stepper__label { color: var(--text-primary); font-weight: var(--font-weight-bold); }
+.vdm-stepper__note { font-size: var(--font-size-xs); color: var(--text-secondary); }
+
+/* ---------- Form set ---------- */
+/* Required = asterisk in the label's own colour and weight (not --error-text: nothing is wrong yet), aria-hidden;
+   optional = "(nepovinné)" in regular --text-tertiary. Legend line before the first field of every form with an asterisk.
+   Public web and administration; no marks only on sign-in and single-field dialogs. Rozhodnuto 3. 11. 2026 (34on3abs). */
+.vdm-field__required { color: inherit; font-weight: inherit; }
+.vdm-field__optional { font-weight: var(--font-weight-regular); color: var(--text-tertiary); }
+.vdm-form__legend { margin: 0; font-family: var(--font-family); font-size: var(--font-size-sm); line-height: var(--line-height-sm); color: var(--text-secondary); }
+.vdm-form__legend .vdm-field__required { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+.vdm-field__error { display: flex; align-items: flex-start; gap: 4px; font-size: var(--font-size-sm); color: var(--error-text); }
+.vdm-field__erricon { flex: none; margin-top: 2px; }
+.vdm-field__textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+.vdm-field__input--sm { padding: 7px 10px; font-size: 13px; line-height: 1.4; }
+.vdm-field__input--focus { border-color: var(--border-accent); box-shadow: var(--focus-shadow); }
+.vdm-fieldgroup { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; font-family: var(--font-family); }
+.vdm-fieldgroup__legend { padding: 0; margin-bottom: 6px; }
+.vdm-radiogroup { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.vdm-radiogroup--tile { display: grid; grid-template-columns: repeat(var(--vdm-cols, 2), minmax(0, 1fr)); gap: 8px; }
+.vdm-radio { display: inline-flex; align-items: center; gap: 10px; width: fit-content; font-family: var(--font-family); font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-primary); cursor: pointer; }
+.vdm-radio__input { appearance: none; flex: none; position: relative; width: 20px; height: 20px; margin: 0; border: 2px solid var(--border-strong); border-radius: var(--radius-full); background: var(--bg-primary); cursor: pointer; transition: border-color var(--transition-fast); }
+.vdm-radio__input::before { content: ""; position: absolute; inset: 3px; border-radius: var(--radius-full); background: var(--primary); opacity: 0; transition: opacity var(--transition-fast); }
+.vdm-radio__input:checked { border-color: var(--primary); }
+.vdm-radio__input:checked::before { opacity: 1; }
+.vdm-radio__input:focus-visible { outline: none; border-color: var(--primary); box-shadow: var(--focus-shadow); }
+.vdm-radio--tile { position: relative; width: auto; justify-content: center; min-height: 48px; padding: 0 14px; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-primary); font-size: 15px; text-align: center; transition: border-color var(--transition-fast), background-color var(--transition-fast); }
+.vdm-radio--tile:hover { border-color: var(--border-hover); }
+.vdm-radio--tile .vdm-radio__input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.vdm-radio--tile:has(:checked) { padding: 0 13px; border: 2px solid var(--primary); background: var(--bg-accent); color: var(--link-strong); font-weight: var(--font-weight-bold); }
+.vdm-radio--tile:has(:focus-visible) { box-shadow: var(--focus-shadow); }
+
+/* ---------- PartnerLogo (gm5nuxml) ----------
+   Foreign logo (grant provider, partner) on a white plate in light and dark alike.
+   Logo 64px high; a logo wider than the plate (over 3.875 : 1 in a 320px frame)
+   is limited by the width and sits in the middle of the 64px. Plate height is
+   always 96px, so several plates line up in a wrapping row. */
+.vdm-partner-logo { box-sizing: border-box; display: inline-flex; align-items: center; vertical-align: top; max-width: 100%; height: calc(var(--partner-logo-height) + 2 * var(--partner-logo-padding)); padding: var(--partner-logo-padding); background: var(--partner-logo-bg); border-radius: var(--radius-md); }
+.vdm-partner-logo__img { display: block; min-width: 0; max-width: 100%; width: auto; height: var(--partner-logo-height); object-fit: contain; object-position: left center; }
+.vdm-partner-logos { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+
+/* ---------- Wordmark ---------- */
+.vdm-wordmark { display: inline-flex; margin: 0; font-family: var(--font-family); line-height: var(--headline-line-height); color: var(--text-primary); }
+.vdm-wordmark__letters { display: inline-flex; }
+.vdm-wordmark__l { display: inline-block; }
+.vdm-wordmark--gradient .vdm-wordmark__l { padding: 0.2em 0.1em 0; margin: -0.2em -0.1em 0; background-image: var(--gradient-signature); background-repeat: no-repeat; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.vdm-wordmark__l--flip { transition: transform var(--transition-slow); backface-visibility: visible; }
+.vdm-wordmark__l--turned { transform: rotateY(180deg); }
+
+/* ---------- ParentLink ---------- */
+.vdm-parentlink { display: inline-flex; align-items: center; align-self: flex-start; gap: 0.25em; min-height: 44px; margin: -10px 0; box-sizing: border-box; font-family: var(--font-family); font-size: 15px; font-weight: var(--font-weight-medium); color: var(--link-strong); text-decoration: none; }
+/* The underline runs under the label only, the "‹" stays outside it (jnd2p832). */
+.vdm-parentlink > :last-child { text-decoration: underline; text-underline-offset: 2px; }
+.vdm-parentlink:hover > :last-child { text-decoration-thickness: 2px; }
+.vdm-parentlink:focus-visible { outline: none; box-shadow: var(--focus-shadow); border-radius: var(--radius-sm); }
+
+/* ---------- NavRow: one shape at every width, scrolls only when it does not fit (d104jrnd) ---------- */
+.vdm-navrow { display: flex; align-items: center; gap: 12px; min-width: 0; font-family: var(--font-family); font-size: 15px; line-height: 1.4; }
+.vdm-navrow__label { flex: none; color: var(--text-secondary); }
+.vdm-navrow__scroller { flex: 1 1 auto; min-width: 0; position: relative; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px; margin: -4px; white-space: nowrap; }
+.vdm-navrow__scroller::-webkit-scrollbar { display: none; }
+.vdm-navrow__scroller[data-end] { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+.vdm-navrow__scroller[data-start] { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px); mask-image: linear-gradient(to right, transparent, #000 40px); }
+.vdm-navrow__scroller[data-start][data-end] { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }
+.vdm-navrow__item { flex: none; display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--border); border-radius: var(--radius-full); color: var(--link-strong); text-decoration: none; transition: background-color var(--transition-fast), border-color var(--transition-fast); }
+.vdm-navrow__item:hover { border-color: var(--border-hover); }
+.vdm-navrow__item--more { color: var(--text-secondary); }
+.vdm-navrow__item[aria-current], .vdm-navrow__item[aria-current]:hover { background: var(--primary-light); border-color: var(--primary-light); color: var(--link-strong); }
+.vdm-navrow__item:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+.vdm-navrow__step { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-full); background: transparent; color: var(--text-secondary); cursor: pointer; transition: background-color var(--transition-fast), color var(--transition-fast); }
+.vdm-navrow__step:hover { background: var(--bg-hover); color: var(--text-primary); }
+.vdm-navrow__step[aria-disabled="true"], .vdm-navrow__step[aria-disabled="true"]:hover { background: transparent; color: var(--text-tertiary); cursor: default; }
+.vdm-navrow__step:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+
+/* ---------- Admin detail page (bbih22nt) ----------
+   One layout for every detail page (settings, article, issue, podcast, episode,
+   author, user, category, tag). Container queries, not viewport: the sidebar
+   takes width above 768px and leaves it below.
+   - The columns narrow before they stack (8kd9crag): full from a 900px
+     container (main 560–620 + --detail-column-gap 40 + --detail-aside-width 300),
+     narrow from 732px (main >= 440 + 32 + 260), one column below. The block
+     stands centred; every grid nested in the main column holds at 440px.
+   - A row keeps its name column only while it is >= 480px wide; narrower
+     (phone, the 300px right column) the name stands above the value.
+   - Named parts AdminDetailMain / AdminDetailAside (zq49rfjo).
+   - An empty aside is not drawn (:empty); the main column takes the width.
+   - Every child of a column is a section; after the first, a hairline. */
+.vdm-detail { container-type: inline-size; min-width: 0; }
+.vdm-detail__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--detail-column-gap); align-items: start; justify-content: center; }
+.vdm-detail__aside:empty { display: none; }
+@container (width >= 732px) { .vdm-detail__grid { grid-template-columns: minmax(var(--detail-main-min-width-narrow), var(--detail-main-width)) var(--detail-aside-width-narrow); column-gap: var(--detail-column-gap-narrow); } }
+@container (width >= 900px) { .vdm-detail__grid { grid-template-columns: minmax(var(--detail-main-min-width), var(--detail-main-width)) var(--detail-aside-width); column-gap: var(--detail-column-gap); } }
+.vdm-detail__grid--single, .vdm-detail__grid:has(> .vdm-detail__aside:empty), .vdm-detail__grid:not(:has(> .vdm-detail__aside)) { grid-template-columns: minmax(0, 1fr); }
+.vdm-detail__col { container-type: inline-size; min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+.vdm-detail__block { min-width: 0; }
+.vdm-detail__col > * { min-width: 0; }
+.vdm-detail__col > * + * { padding-top: 24px; border-top: 1px solid var(--border); }
+.vdm-detail-section { display: flex; flex-direction: column; gap: 12px; min-width: 0; font-family: var(--font-family); color: var(--text-primary); }
+.vdm-detail-section__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vdm-detail-section__title { margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); line-height: 1.4; }
+.vdm-detail-section__actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.vdm-detail-row { display: grid; grid-template-columns: var(--detail-label-width) minmax(0, 1fr) auto; column-gap: 12px; row-gap: 4px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: var(--font-size-sm); line-height: 1.5; }
+.vdm-detail-row--start { align-items: start; }
+.vdm-detail-row__label { font-weight: var(--font-weight-medium); }
+.vdm-detail-row__value { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.vdm-detail-row__actions { display: flex; align-items: center; gap: 16px; }
+.vdm-detail-row__actions:empty { display: none; }
+.vdm-detail-row--list { grid-template-columns: var(--detail-label-width) minmax(0, 1fr); } /* 0p3dlr4w: no actions column */
+.vdm-detail-row__list-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding-top: 10px; }
+.vdm-detail-list { margin: 0; display: grid; grid-template-columns: var(--detail-label-width) minmax(0, 1fr); gap: 10px 12px; font-size: 13px; line-height: 1.5; }
+.vdm-detail-list > dt { color: var(--text-secondary); }
+.vdm-detail-list > dd { margin: 0; min-width: 0; }
+@container (width < 480px) {
+  .vdm-detail-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .vdm-detail-row__label { grid-column: 1 / -1; }
+  .vdm-detail-row--list { grid-template-columns: minmax(0, 1fr); }
+  .vdm-detail-list { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .vdm-detail-list > dd + dt { margin-top: 10px; }
+}
+
+/* ---------- Checkbox (0zgyl1ao) ---------- */
+.vdm-check { display: flex; align-items: flex-start; gap: 8px; width: fit-content; font-family: var(--font-family); font-size: var(--font-size-sm); font-weight: var(--font-weight-regular); line-height: 1.4; color: var(--text-primary); cursor: pointer; }
+.vdm-check__input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--primary); cursor: inherit; }
+.vdm-check__input:focus-visible { outline: none; box-shadow: var(--focus-shadow); border-radius: var(--radius-sm); }
+.vdm-check__input:disabled { cursor: not-allowed; }
+.vdm-check:has(:disabled) { color: var(--text-tertiary); cursor: not-allowed; }
+.vdm-check__text { display: flex; flex-direction: column; gap: 2px; text-wrap: pretty; }
+.vdm-check__hint { font-size: var(--font-size-xs); color: var(--text-secondary); }
+
+/* ---------- Link (0zgyl1ao) ---------- */
+.vdm-link { font-weight: var(--font-weight-medium); color: var(--link-strong); text-decoration: underline; text-underline-offset: 2px; }
+.vdm-link:hover { text-decoration-thickness: 2px; }
+.vdm-link:focus-visible { outline: none; box-shadow: var(--focus-shadow); border-radius: var(--radius-sm); }
+
+/* ---------- List header (cioukqn6) ---------- */
+.vdm-list-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; }
+.vdm-list-header > .vdm-page-title { min-width: 0; }
+.vdm-list-header__action { flex: none; display: flex; align-items: center; gap: 8px; }
+
+/* ---------- Page title (kh6gf6k6) ---------- */
+.vdm-page-title { margin: 0; font-family: var(--font-family); font-size: var(--page-title-font-size); line-height: var(--page-title-line-height); font-weight: var(--page-title-font-weight); letter-spacing: var(--page-title-letter-spacing); color: var(--text-primary); text-wrap: pretty; }
+
+/* ---------- Admin sign-in card (0zgyl1ao) ---------- */
+.vdm-signin { box-sizing: border-box; width: 100%; max-width: 400px; padding: 32px; display: flex; flex-direction: column; gap: 16px; font-family: var(--font-family); color: var(--text-primary); background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
+.vdm-signin__head { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.vdm-signin__title { margin: 0; font-size: 24px; font-weight: var(--font-weight-semibold); line-height: 1.25; letter-spacing: 0; text-wrap: balance; }
+.vdm-signin__names { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.vdm-signin--wordmark .vdm-signin__title { font-size: 17px; line-height: 1.4; }
+.vdm-signin__text { margin: 0; font-size: var(--font-size-sm); line-height: 1.55; color: var(--text-secondary); text-align: center; text-wrap: pretty; }
+.vdm-signin__note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-secondary); text-align: center; text-wrap: pretty; }
+.vdm-signin__note--quiet { color: var(--text-tertiary); }
+.vdm-signin .vdm-link { align-self: center; font-size: 13px; }
+.vdm-signin--page { max-width: none; padding: 24px 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+@media (max-width: 767.98px) { .vdm-signin:not(.vdm-signin--card) { max-width: none; padding: 24px 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; } }
+/* Standalone links in sign-in content (np5evn40): wherever there is no card, a 44 px touch target with the text in the middle; look unchanged. A link inside a sentence stays text height. */
+.vdm-signin--page a:not(:is(p, span) a) { display: inline-flex; align-items: center; min-height: 44px; }
+@media (max-width: 767.98px) { .vdm-signin:not(.vdm-signin--card) a:not(:is(p, span) a) { display: inline-flex; align-items: center; min-height: 44px; } }
+
+/* ---------- Tooltip ---------- */
+/* Only for an action whose name is not visible (icon-only, truncated). Never the only
+   carrier of information; text = the trigger's aria-label. Rozhodnuto 15. 10. 2026 (jb81di02)
+   Live bubble in the top layer, anchored to the trigger, flips below when there is no room;
+   it can be hovered (6 px bridge). --static = drawn in place, for drawings (`open`). Rozhodnuto 16. 10. 2026 (jhwfoyxs) */
+.vdm-tooltip-anchor { position: relative; display: inline-flex; }
+.vdm-tooltip { width: max-content; max-width: 240px; box-sizing: border-box; padding: 4px 8px; border: 0; border-radius: var(--radius-md); background: var(--tooltip-bg); color: var(--tooltip-text); box-shadow: var(--shadow-sm); font-family: var(--font-family); font-size: 12px; font-weight: var(--font-weight-medium); font-style: normal; line-height: 1.4; letter-spacing: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; text-wrap: pretty; }
+.vdm-tooltip[popover] { position: fixed; inset: auto; margin: 0 0 6px; overflow: visible; position-area: top; position-try-fallbacks: flip-block; opacity: 0; transition: opacity var(--transition-fast), display var(--transition-fast) allow-discrete, overlay var(--transition-fast) allow-discrete; }
+.vdm-tooltip--bottom[popover] { position-area: bottom; margin: 6px 0 0; }
+.vdm-tooltip[popover]::before { content: ""; position: absolute; inset: -6px 0; }
+.vdm-tooltip[popover]:popover-open { opacity: 1; }
+@starting-style { .vdm-tooltip[popover]:popover-open { opacity: 0; } }
+.vdm-tooltip--static { position: absolute; left: 50%; z-index: var(--z-tooltip); pointer-events: none; opacity: 0; transform: translateX(-50%); }
+.vdm-tooltip--static.vdm-tooltip--top { bottom: calc(100% + 6px); }
+.vdm-tooltip--static.vdm-tooltip--bottom { top: calc(100% + 6px); }
+.vdm-tooltip--static.vdm-tooltip--open { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .vdm-tooltip, .vdm-tooltip[popover] { transition: none; } }
+
+/* ============================================================
+   From Fakturace (a6bqeswz, 14. 11. 2026)
+   What the invoicing administration needed and the system lacked,
+   shaped so the magazine's administration can use it too. Plain classes
+   on plain HTML; the React components for the ones that have behaviour
+   (Popover, SplitButton, SelectionBar, History) come with the next bundle
+   build. Where Fakturace and the system drew the same thing differently,
+   the system's look stayed and these classes only add what was missing.
+   ============================================================ */
+
+/* ---------- StatusTag: problem and running ----------
+   Six meanings, chosen by `tone`: neutral (nobody waits / out of play),
+   waiting (waits for you), done-outline, done, problem, running. */
+.vdm-status--problem .vdm-status__tag { background: var(--state-problem-bg); color: var(--state-problem-text); border-color: var(--state-problem-border); }
+.vdm-status--running .vdm-status__tag { background: var(--state-running-bg); color: var(--state-running-text); border-color: var(--state-running-border); }
+/* On a tinted row (selected, hovered with a fill) the tag keeps its outline on a page-colour fill. */
+.vdm-status--on-tint .vdm-status__tag { background: var(--bg-primary); }
+/* A state the page could not read (a foreign source did not answer): the tag dims, the detail says why. */
+.vdm-status--unknown .vdm-status__tag { opacity: 0.55; }
+
+/* ---------- Numbers and money ----------
+   Every figure that is compared in a column or a total: tabular digits,
+   right-aligned, never broken inside itself (the name beside it gives way).
+   Money always with hellers and the currency
+   (8 400,00 Kč), thin-space thousands as the locale prints them. */
+.vdm-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vdm-num--amount { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+/* ---------- Spinner (work in progress inside a control) ---------- */
+.vdm-spinner { display: inline-block; flex: none; width: 0.75em; height: 0.75em; border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent; animation: vdm-spin 900ms linear infinite; }
+@keyframes vdm-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .vdm-spinner { animation-duration: 2.4s; } }
+
+/* ---------- Segmented choice ----------
+   Two to four short options in a form (and the language switch). The chosen
+   option is a page-colour plate with a hairline, not a coloured fill: colour
+   belongs to actions. A list filter is StateFilter, not this. */
+.vdm-seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-lg); font-family: var(--font-family); }
+.vdm-seg__opt { position: relative; display: inline-flex; align-items: center; min-height: 30px; box-sizing: border-box; padding: 4px 12px; border: 1px solid transparent; border-radius: var(--radius-md); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+.vdm-seg__opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.vdm-seg__opt:hover { color: var(--text-primary); }
+.vdm-seg__opt:has(input:checked) { background: var(--bg-primary); border-color: var(--border); color: var(--text-primary); box-shadow: var(--shadow-xs); }
+.vdm-seg__opt:has(input:focus-visible) { box-shadow: var(--focus-shadow); }
+/* The result under the choice, set the way it will print; an error sentence takes the same slot. */
+.vdm-seg__result { margin-top: 8px; font-size: var(--font-size-sm); color: var(--text-secondary); }
+
+/* ---------- Field: locked, bare ----------
+   Locked = readable, never only greyed: the reason stands right under it as a Hint. */
+.vdm-field__input--locked { background: var(--bg-disabled); color: var(--text-secondary); border-color: var(--border); cursor: not-allowed; }
+.vdm-field__input--locked:hover { border-color: var(--border); }
+/* Bare = a field in a table row (invoice items): no frame until typing or a refused save. */
+.vdm-field__input--bare { width: 100%; box-sizing: border-box; padding: 6px 8px; border-color: transparent; background: transparent; font-size: var(--font-size-sm); }
+.vdm-field__input--bare:hover { border-color: transparent; }
+.vdm-field__input--bare:focus-visible { background: var(--bg-primary); }
+.vdm-field__input--bare.vdm-field__input--error { border-color: var(--error); }
+.vdm-field__input--bare::placeholder { font-style: italic; }
+/* A changed value before it is saved (a row edited in a locked document). */
+.vdm-changed { background: var(--bg-accent); }
+
+/* ---------- Drop zone (choosing a file) ----------
+   The zone is the file picker: a label over a hidden input, the zone draws the
+   focus ring. Fixed height, so no state moves what is under it. Uploading
+   itself is UploadStatus. */
+.vdm-dropzone { position: relative; box-sizing: border-box; display: flex; align-items: center; gap: 14px; height: 96px; padding: 12px 16px; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--bg-primary); font-family: var(--font-family); font-size: var(--font-size-sm); color: var(--text-secondary); cursor: pointer; }
+.vdm-dropzone input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.vdm-dropzone:has(input:focus-visible) { box-shadow: var(--focus-shadow); }
+.vdm-dropzone--over { border-style: solid; border-color: var(--border-accent); background: var(--bg-accent); color: var(--link-strong); }
+.vdm-dropzone__thumb { flex: none; width: 72px; height: 72px; object-fit: contain; border-radius: var(--radius-sm); background: repeating-conic-gradient(var(--bg-tertiary) 0% 25%, var(--bg-primary) 0% 50%) 0 0 / 12px 12px; }
+.vdm-dropzone__actions { display: flex; gap: 8px; margin-left: auto; }
+
+/* ---------- Layer ----------
+   The one surface for what stands above the page: popover (shadow-md), menu
+   and dialog (shadow-lg). A hairline, because a layer lies over any content
+   where a shadow alone loses its edge. Same surface as .vdm-menu. */
+.vdm-layer { box-sizing: border-box; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.vdm-layer--low { box-shadow: var(--shadow-md); }
+
+/* ---------- Popover ----------
+   Edits one thing that already has its place on the screen, reversibly; the
+   page behind stays valid and readable. A decision is a Dialog. Anchored to
+   the control that opened it, under it and aligned to its start edge, flips
+   above when there is no room, never covers its trigger. At most 300 px, one
+   field or a short choice. Below 640 px a sheet along the bottom edge. */
+.vdm-popover { box-sizing: border-box; width: 300px; max-width: calc(100vw - 32px); padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); font-family: var(--font-family); font-size: var(--font-size-sm); color: var(--text-primary); }
+.vdm-popover__title { margin: 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.vdm-popover textarea { height: calc(4lh + 22px); resize: none; overflow: auto; }
+.vdm-popover__actions { display: flex; justify-content: flex-end; gap: 8px; }
+.vdm-popover[popover] { position: fixed; inset: auto; margin: 6px 0 0; position-area: bottom span-right; position-try-fallbacks: flip-block, flip-inline; }
+@media (max-width: 639.98px) {
+  .vdm-popover[popover] { position-area: none; inset: auto 0 0 0; width: auto; max-width: none; margin: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---------- Divider ----------
+   One line, 1 px --border, the air in its own margin (the column around it
+   sets no gap): tight 5 between groups of actions in a layer, row 11 between
+   siblings in a card. A block's foot draws the line as its own top edge,
+   14 above / 12 below. aria-hidden wherever the grouping is said in words. */
+.vdm-divider { height: 0; margin: 11px 0; border: 0; border-top: 1px solid var(--border); }
+.vdm-divider--tight { margin: 5px 0; }
+.vdm-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-size: var(--font-size-xs); color: var(--text-tertiary); }
+
+/* ---------- Empty state ----------
+   Always offers the next step. An empty search is never an empty app: it
+   names the filter that hid the results and offers to drop it. */
+.vdm-empty { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 24px; text-align: center; border: 1px dashed var(--border-hover); border-radius: var(--radius-lg); font-family: var(--font-family); }
+.vdm-empty__title { margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); color: var(--text-primary); text-wrap: pretty; }
+.vdm-empty__text { margin: 0 0 12px; max-width: 360px; font-size: var(--font-size-sm); line-height: 1.5; color: var(--text-secondary); text-wrap: pretty; }
+
+/* ---------- Skeleton ----------
+   Only for data the app does not own (a table another tool fills): the exact
+   shape of the rows to come, three at most. */
+.vdm-skeleton { display: block; height: 12px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 37%, var(--bg-tertiary) 63%); background-size: 400% 100%; animation: vdm-shimmer 1.4s ease infinite; }
+@keyframes vdm-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .vdm-skeleton { animation: none; } }
+
+/* ---------- Waiting line ----------
+   The one mark for "waiting for the server, this part will change" after
+   300 ms: a 3 px top edge of whatever changes (a card, a frame, the window
+   when the whole page will redraw). Same travelling segment as UploadStatus. */
+.vdm-waitline { position: relative; display: block; height: 3px; overflow: hidden; background: var(--bg-tertiary); }
+.vdm-waitline::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 30%; background: var(--primary); animation: vdm-upload-slide 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .vdm-waitline::after { animation: none; left: 35%; } }
+.vdm-waitline--window { position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-notification); }
+
+/* ---------- Callout: title, list, actions, close ----------
+   Error summary = Callout error with a title and a list whose every item is
+   a link to its field; it never appears without the error at the field. A
+   state strip under a record's header (waits for you / failed) = Callout
+   warning / error with a title, one sentence and the one action the state
+   needs. Only a callout that is a deferred message (a failed download) closes. */
+.vdm-callout__title { display: block; margin: 0 0 2px; font-weight: var(--font-weight-semibold); color: var(--text-primary); }
+.vdm-callout__list { margin: 6px 0 0; padding-left: 18px; }
+.vdm-callout__list li + li { margin-top: 2px; }
+.vdm-callout__list a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.vdm-callout__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.vdm-callout__close { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; margin: -6px -8px -6px auto; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.vdm-callout__close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.vdm-callout__close:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
+
+/* ---------- Split button ----------
+   An act with one-off variants: the left half acts, the right half opens
+   the variants (a menu whose highlighted row is the selected one). Each half
+   lights up on its own; the arrow half stays one step darker while its panel
+   is open. */
+.vdm-split { display: inline-flex; align-items: stretch; }
+.vdm-split > .vdm-btn:first-child { border-start-end-radius: 0; border-end-end-radius: 0; }
+.vdm-split > .vdm-btn + .vdm-btn { margin-left: 1px; padding-inline: 10px; border-start-start-radius: 0; border-end-start-radius: 0; }
+.vdm-split > .vdm-btn--primary[aria-expanded="true"] { background-color: var(--primary-active); }
+
+/* ---------- Open trigger ----------
+   A button that opens a menu or a popover holds its hover look while its
+   panel stands; hover does not add a third, darker step. */
+.vdm-btn--outline[aria-expanded="true"] { background-color: var(--bg-accent); border-color: var(--border-accent); }
+.vdm-btn--ghost[aria-expanded="true"] { background-color: var(--bg-tertiary); color: var(--text-primary); }
+
+/* ---------- Selection bar ----------
+   Takes the place of the filter row while rows are selected, at the filter
+   row's height (42 px), so the table does not move. The count, then an
+   optional sum of what is selected, then only the actions valid for every
+   selected row, Zrušit výběr at the end. */
+.vdm-selectionbar { box-sizing: border-box; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 42px; padding: 2px 2px 2px 16px; background: var(--primary-light); border-radius: var(--radius-lg); font-family: var(--font-family); font-size: var(--font-size-sm); }
+.vdm-selectionbar__count { font-weight: var(--font-weight-semibold); color: var(--link-strong); white-space: nowrap; }
+.vdm-selectionbar__sum { font-variant-numeric: tabular-nums; color: var(--link-strong); white-space: nowrap; }
+.vdm-selectionbar__sep { width: 1px; height: 20px; margin: 0 4px; background: var(--border-accent); }
+.vdm-selectionbar__end { margin-left: auto; }
+.vdm-selectionbar .vdm-btn--outline { background-color: var(--bg-primary); border-color: var(--border-on-tint); }
+
+/* ---------- Metric ----------
+   A figure on an overview: no card and no frame, at most two side by side,
+   no percentage changes. */
+.vdm-metrics { display: flex; flex-wrap: wrap; gap: 16px 44px; }
+.vdm-metric { display: flex; flex-direction: column; gap: 2px; font-family: var(--font-family); }
+.vdm-metric__label { font-size: var(--font-size-xs); color: var(--text-secondary); }
+.vdm-metric__value { font-size: var(--font-size-2xl); font-weight: var(--font-weight-semibold); line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text-primary); }
+.vdm-metric__meta { font-size: var(--font-size-xs); color: var(--text-tertiary); }
+
+/* ---------- History ----------
+   What happened to a record: newest on top, one line one event, the verb
+   first, a change as old → new, the person after a middle dot. Time in a
+   fixed 170 px column; under 480 px of width the time goes above the event.
+   The foot says the history cannot be deleted. */
+.vdm-history { margin: 0; padding: 0; list-style: none; container-type: inline-size; font-family: var(--font-family); font-size: var(--font-size-sm); line-height: 1.5; }
+.vdm-history__item { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; padding: 6px 0; }
+.vdm-history__time { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text-tertiary); }
+.vdm-history__event { min-width: 0; color: var(--text-primary); text-wrap: pretty; }
+.vdm-history__who { color: var(--text-secondary); }
+@container (max-width: 479.98px) { .vdm-history__item { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+
+/* ---------- Printed document ----------
+   Parts of a sheet that is printed or filed (an invoice, a confirmation):
+   header with the two parties, the data strip, the QR block, the signature
+   strip and the stamp. Arial and pt, tokens/document.css; never on a screen
+   surface except a preview of the sheet. */
+.vdm-doc { box-sizing: border-box; background: var(--doc-bg); color: var(--doc-ink); font-family: var(--doc-font-family); font-size: var(--doc-font-size-body); line-height: var(--doc-line-height-body); letter-spacing: var(--doc-tracking-normal); }
+.vdm-doc .vdm-num, .vdm-doc-num { font-variant-numeric: tabular-nums; }
+.vdm-doc-title { margin: 0; font-size: var(--doc-font-size-title); line-height: var(--doc-line-height-title); font-weight: 700; letter-spacing: var(--doc-tracking-tight); }
+.vdm-doc-subtitle { margin-top: 2pt; font-size: var(--doc-font-size-meta); line-height: var(--doc-line-height-meta); color: var(--doc-ink-soft); }
+.vdm-doc-label { display: block; margin-bottom: 4pt; font-size: var(--doc-font-size-label); line-height: var(--doc-line-height-label); color: var(--doc-ink-soft); }
+/* Two parties side by side at the same size, supplier left, customer right. */
+.vdm-doc-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 18pt; font-size: var(--doc-font-size-party); line-height: var(--doc-line-height-party); }
+/* Data strip: two columns of three rows, label: value, on a fixed auto / 1fr grid so a value starts
+   at the same place on every sheet. Bold only where a wrong copy costs money: account, VS, due date. */
+.vdm-doc-panel { display: grid; grid-template-columns: auto minmax(max-content, 1fr) auto minmax(max-content, 1fr); align-items: baseline; gap: 4pt 11pt; padding: 9pt 12pt; white-space: nowrap; background: var(--doc-panel); border: 1px solid var(--doc-line-soft); border-radius: var(--doc-radius); font-size: var(--doc-font-size-meta); line-height: var(--doc-line-height-meta); }
+.vdm-doc-panel__label { color: var(--doc-ink-soft); }
+.vdm-doc-panel__key { font-weight: 700; }
+/* QR block: a square without rounding or padding, on the QR plate. Before the number exists it stays and says when it comes. */
+.vdm-doc-qr { display: flex; flex-direction: column; gap: 4pt; }
+.vdm-doc-qr__code { display: block; width: 66pt; height: 66pt; background: var(--qr-bg); }
+.vdm-doc-qr__pending { display: grid; place-items: center; width: 66pt; height: 66pt; box-sizing: border-box; padding: 4pt; border: 1px solid var(--doc-line-soft); text-align: center; font-size: var(--doc-font-size-fine); line-height: var(--doc-line-height-fine); color: var(--doc-ink-soft); }
+/* Signature strip: one strip, the only variable is an uploaded signature above the name. No line, no second column. */
+.vdm-doc-sign { display: flex; flex-direction: column; align-items: flex-start; gap: 2pt; }
+.vdm-doc-sign__image { display: block; height: 36pt; width: auto; }
+.vdm-doc-sign__line { display: flex; align-items: baseline; gap: 5pt; font-size: var(--doc-font-size-meta); }
+.vdm-doc-sign__label { color: var(--doc-ink-soft); }
+.vdm-doc-sign__name { font-weight: 700; }
+/* Stamp: the only capitals on the sheet, because it is a stamp, not a label. */
+.vdm-doc-stamp { display: inline-block; padding: 2pt 8pt; border: 1.5pt solid var(--doc-mark); border-radius: 3pt; background: var(--doc-mark-fill); color: var(--doc-mark); font-weight: 700; letter-spacing: 1pt; text-transform: uppercase; }
+
+/* ---------- Keyboard focus in forced colours (80lyvxih) ----------
+   Windows high contrast does not draw box-shadow, and every component sets
+   outline: none, so the ring would vanish. There keyboard focus is a 2px outline
+   in the system's Highlight colour on the focused element, one rule for all. */
+@media (forced-colors: active) {
+  :focus-visible { outline: 2px solid Highlight !important; outline-offset: 2px !important; }
+}

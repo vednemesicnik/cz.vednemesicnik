@@ -14,7 +14,7 @@ description: |
 
 # Component Files
 
-> Carried over from `cz.vednemesicnik.billing` while this repository has no application code yet.
+> Carried over from `cz.vednemesicnik.billing`.
 > The rule applies here as written; the files it cites as examples are billing's. Replace them
 > with this repository's own as the app grows.
 

@@ -7,8 +7,9 @@ read. It replaces the web pages of the `SCRIPT__Publication__*` Apps Script proj
 
 The interface is Czech, because the people using it are. The code is English.
 
-**Status: design.** The screens are drawn in a design canvas (see
-[docs/design-project.md](docs/design-project.md)); there is no application code yet.
+**Status: skeleton.** The screens are drawn in a design canvas (see
+[docs/design-project.md](docs/design-project.md)); the code serves the editors-in-chief's panel
+and has its database, and the screens arrive one issue at a time.
 
 ## How it will work
 
@@ -35,10 +36,18 @@ The interface is Czech, because the people using it are. The code is English.
 
 ```sh
 pnpm install
-pnpm dev:setup-claude   # optional: skills and CLAUDE.md for Claude Code
+pnpm app:dev            # http://localhost:44100
+pnpm typecheck
+pnpm test
+pnpm app:doctor
 pnpm lint
 pnpm format:check
+pnpm dev:setup-claude   # optional: skills and CLAUDE.md for Claude Code
 ```
+
+The app needs no `.env` to start: the database defaults to `./db/publikace.sqlite` and is
+created and migrated on the first run. [.env.example](.env.example) lists every variable the
+app will read.
 
 ## Working here
 

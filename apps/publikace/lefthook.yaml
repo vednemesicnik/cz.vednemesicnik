@@ -4,9 +4,6 @@
 # Installed by `postinstall` in package.json, which runs `lefthook install`.
 # lefthook's own install script would do the same and is refused in
 # pnpm-workspace.yaml, so that the step is one this repository can be read to take.
-#
-# No application code yet: `typecheck`, `test` and `doctor` join pre-push with the first
-# code, the way cz.vednemesicnik.billing runs them.
 
 pre-commit:
   parallel: true
@@ -29,3 +26,9 @@ pre-push:
       run: pnpm format:check
     lint:
       run: pnpm lint
+    typecheck:
+      run: pnpm typecheck
+    test:
+      run: pnpm test
+    doctor:
+      run: pnpm app:doctor

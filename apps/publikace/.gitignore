@@ -1,13 +1,16 @@
 node_modules/
 
-# Secrets: the Google OAuth client, the tokens of publikace.app@ and publikace@, and the
-# Cloudflare credentials live in .env (and in Worker secrets once deployed). `.env.example`
-# is the tracked template and must never hold a real value.
+# Secrets: the Google OAuth client, the token of publikace.app@ and the secrets for the Mailer
+# and the scripts live in .env locally and in `fly secrets` once deployed. `.env.example` is
+# the tracked template and must never hold a real value.
 .env
 .env.*
 !.env.example
-.dev.vars
-.wrangler/
+
+# The local database and its WAL files (DATABASE_PATH defaults to db/publikace.sqlite).
+db/*.sqlite
+db/*.sqlite-shm
+db/*.sqlite-wal
 
 # Scratch drafts (/ask-copy questions, probes, saved design files).
 tmp/
