@@ -62,9 +62,13 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   `publikace.app@vednemesicnik.cz` runs everything else and is a Content manager of the shared
   drive _Publikace_, where every new issue lives, and a member of no other shared drive, because
   it holds the full `drive` scope. Files on a shared drive belong to the drive, not to an account.
-- **Two kinds of visitor.** Editors-in-chief sign in with Google (domain and an allowlist).
-  Everybody else arrives through a shared link that can do one thing in one issue
-  (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
+- **Two kinds of visitor.** Editors-in-chief sign in with Google: an account on the domain that
+  Settings names, or a member of a Google group Settings names. Group membership is asked of
+  `SCRIPT__Auth__Group_Membership`, the way Fakturace asks it, re-checked every ten minutes, and
+  an unreachable service denies without remembering the denial. Only an administrator, always a
+  named account and never a group, changes who may sign in; the first one comes from
+  `INITIAL_ADMIN_EMAIL`. Everybody else arrives through a shared link that can do one thing in
+  one issue (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
 - **The background jobs stay in Apps Script and talk to the app.** `SCRIPT__Publication__Approval_Send`,
   `…__Comment_Digest`, `…__Designer_Handoff` and the artwork reply check run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report

@@ -12,11 +12,11 @@ The interface is Czech, because the people using it are. The code is English.
 
 ## How it will work
 
-| Who               | How they get in                               | What they do                                                        |
-| ----------------- | --------------------------------------------- | ------------------------------------------------------------------- |
-| Editors-in-chief  | Google account on the domain, on an allowlist | create and close issues, send links, artwork groups, review replies |
-| Editorial board   | a shared link, no sign-in                     | start an article in one issue                                       |
-| Artwork providers | a shared link, no sign-in                     | upload artworks to one article or group                             |
+| Who               | How they get in                                                  | What they do                                                        |
+| ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Editors-in-chief  | Google account on the domain, named in Settings or in its groups | create and close issues, send links, artwork groups, review replies |
+| Editorial board   | a shared link, no sign-in                                        | start an article in one issue                                       |
+| Artwork providers | a shared link, no sign-in                                        | upload artworks to one article or group                             |
 
 - **Remix 3 on Fly.io**, the same stack as Fakturace: Node 26 and SQLite.
 - **The app's database is the source of truth.** Issues, articles, consents and artworks live

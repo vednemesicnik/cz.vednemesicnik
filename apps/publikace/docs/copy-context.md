@@ -38,6 +38,8 @@ s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail. Ji
 | **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly.                                     |
 | **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                      |
 | **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                       |
+| **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                   |
+| **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.              |
 
 ## Stavy: přesná jména
 
