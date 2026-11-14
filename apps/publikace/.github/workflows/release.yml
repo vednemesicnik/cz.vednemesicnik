@@ -7,14 +7,17 @@ name: Release
 # scripts/release-version.ts decides the version; `ci.yml` runs the same script before the
 # merge, so a version that would fail here has already blocked the PR. See
 # docs/branching-model.md.
+#
+# **Two jobs, so no code from the repository runs with a token that can write.** `version`
+# checks out the merge commit and runs the script on a read-only token; `tag` never checks
+# anything out, re-validates the three values it is handed and writes through the API alone.
 
 on:
   pull_request:
     types: [closed]
     branches: [main]
 
-permissions:
-  contents: write
+permissions: {}
 
 # Two merges into `main` in quick succession would otherwise read the same newest tag and
 # claim the same version.
@@ -23,13 +26,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  version:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      previous: ${{ steps.version.outputs.previous }}
+      is_stable: ${{ steps.version.outputs.is_stable }}
     steps:
+      # The tags are read with `git ls-remote` from a public remote, so the checkout keeps
+      # no token in `.git/config` for the script to find.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
@@ -40,28 +52,45 @@ jobs:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
           TITLE: ${{ github.event.pull_request.title }}
         run: node scripts/release-version.ts
-      - name: Tag the merge commit
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          SHA: ${{ github.event.pull_request.merge_commit_sha }}
-          NUMBER: ${{ github.event.pull_request.number }}
+
+  tag:
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.version.outputs.version }}
+      PREVIOUS: ${{ needs.version.outputs.previous }}
+      IS_STABLE: ${{ needs.version.outputs.is_stable }}
+      SHA: ${{ github.event.pull_request.merge_commit_sha }}
+      NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      # What the other job hands over is checked again here, where the token can write: a
+      # tag name is only ever a version, and nothing else reaches `gh`.
+      - name: Check what the version job produced
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git tag -a "$VERSION" -m "$VERSION (#$NUMBER)" "$SHA"
-          git push origin "refs/tags/$VERSION"
+          semver='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+          [[ "$VERSION" =~ $semver ]] || { echo "Not a version: '$VERSION'"; exit 1; }
+          [[ -z "$PREVIOUS" || "$PREVIOUS" =~ $semver ]] || { echo "Not a version: '$PREVIOUS'"; exit 1; }
+          [[ "$IS_STABLE" == true || "$IS_STABLE" == false ]] || { echo "Not a boolean: '$IS_STABLE'"; exit 1; }
+      - name: Tag the merge commit
+        run: |
+          set -euo pipefail
+          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags" \
+            -f tag="$VERSION" -f message="$VERSION (#$NUMBER)" -f object="$SHA" -f type=commit \
+            --jq .sha)
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f ref="refs/tags/$VERSION" -f sha="$tag_sha" --silent
+          echo "Tagged $SHA as $VERSION."
       # The notes start at the previous tag explicitly: the versions below 1.0.0 have no
       # release, so without it the first one would list the whole history.
       - name: Publish the release
-        if: steps.version.outputs.is_stable == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-          PREVIOUS: ${{ steps.version.outputs.previous }}
+        if: env.IS_STABLE == 'true'
         run: |
           set -euo pipefail
-          args=(--verify-tag --title "$VERSION" --generate-notes --latest)
+          args=(--repo "$GITHUB_REPOSITORY" --verify-tag --title "$VERSION" --generate-notes --latest)
           if [[ -n "$PREVIOUS" ]]; then
             args+=(--notes-start-tag "$PREVIOUS")
           fi
