@@ -1,4 +1,6 @@
-<!-- Release PR: dev → main. See docs/branching-model.md -->
+<!-- Release PR: dev → main. See docs/branching-model.md
+     Title it with the version it ships: `chore(release): v0.4.0` — the next patch, minor or
+     major after the newest tag. The `release-version` check says which ones are allowed. -->
 
 ## Summary
 
@@ -24,6 +26,14 @@ Say out loud while that is still true:
       would create real folders and send real e-mails to authors
 
 ## After merge
+
+`release.yml` tags the merge commit with the version in the title. From `v1.0.0` on it also
+publishes the release on the GitHub Releases page; below that the tag is the whole record.
+Check that the tag is there:
+
+```sh
+git ls-remote --tags origin 'refs/tags/v*'
+```
 
 There is no `sync-dev.yml` here, so **open the back-merge by hand**:
 

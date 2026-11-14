@@ -44,8 +44,9 @@ pnpm format:check
 
 [AGENTS.md](AGENTS.md) is the guide for people and agents alike: the workflow skills, the rules,
 the house style and the data rules. [docs/branching-model.md](docs/branching-model.md) covers
-branches, merge methods and releases: work goes to `dev` by squash, `dev` goes to `main` by a
-merge commit.
+branches, merge methods, versions and releases: work goes to `dev` by squash, `dev` goes to
+`main` by a merge commit, and every merge into `main` is tagged with a version — `0.x` until
+the app runs on Fly.io, published on GitHub Releases from `v1.0.0`.
 
 ## License
 

@@ -31,8 +31,10 @@ the runtime's own TypeScript stripping (`node scripts/….ts` runs without a bui
 `lefthook install`, and [pnpm-workspace.yaml](pnpm-workspace.yaml) refuses lefthook's own install
 script so that the step reads from this repository. A clone whose hooks never fire had its
 install scripts skipped: `pnpm exec lefthook install` is the fix.
-[ci.yml](.github/workflows/ci.yml) runs the PR title, lint and format on every PR into `dev` or
-`main`, and the `branch-protection` ruleset requires them. See
+[ci.yml](.github/workflows/ci.yml) runs the PR title, the release version, lint and format on every PR into `dev` or
+`main`, and the `branch-protection` ruleset requires them. Every merge into `main` is tagged
+with a version by [release.yml](.github/workflows/release.yml): `0.x` until the app runs on
+Fly.io, and from `v1.0.0` also a GitHub Release. See
 [docs/branching-model.md](docs/branching-model.md).
 
 ## What the app will be

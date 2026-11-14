@@ -1,0 +1,68 @@
+name: Release
+
+# Every PR merged into `main` gives `main` a version: the merge commit is tagged `vX.Y.Z`, and
+# from `v1.0.0` on the version is also published on the GitHub Releases page. Below 1.0.0 the
+# tag alone records it, because nothing has reached production yet.
+#
+# scripts/release-version.ts decides the version; `ci.yml` runs the same script before the
+# merge, so a version that would fail here has already blocked the PR. See
+# docs/branching-model.md.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+# Two merges into `main` in quick succession would otherwise read the same newest tag and
+# claim the same version.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+      # The title reaches the script through `env`, never through `${{ }}` in the shell.
+      - id: version
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/release-version.ts
+      - name: Tag the merge commit
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$VERSION" -m "$VERSION (#$NUMBER)" "$SHA"
+          git push origin "refs/tags/$VERSION"
+      # The notes start at the previous tag explicitly: the versions below 1.0.0 have no
+      # release, so without it the first one would list the whole history.
+      - name: Publish the release
+        if: steps.version.outputs.is_stable == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+        run: |
+          set -euo pipefail
+          args=(--verify-tag --title "$VERSION" --generate-notes --latest)
+          if [[ -n "$PREVIOUS" ]]; then
+            args+=(--notes-start-tag "$PREVIOUS")
+          fi
+          gh release create "$VERSION" "${args[@]}"

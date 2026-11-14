@@ -20,8 +20,9 @@ hotfix ────────────────────────�
 ```
 
 - **Feature / fix:** branch off `dev`, PR into `dev`.
-- **Release:** PR `dev → main`.
-- **Hotfix:** branch off `main`, PR into `main`, then back-merge into `dev`.
+- **Release:** PR `dev → main`, titled with the version it ships: `chore(release): v0.4.0`.
+- **Hotfix:** branch off `main`, PR into `main`, then back-merge into `dev`. It takes the next
+  patch version by itself.
 
 ## Merge methods
 
@@ -64,6 +65,45 @@ was 94 of them, each with a written message — is merged with a _merge commit_ 
 Squashing it would trade the whole history for one line. The rule exists so that a
 three-commit fix does not litter `dev`; it is not a reason to discard a month of messages.
 
+## Versions
+
+Every merge into `main` is a version, and the version is a tag on the merge commit:
+`v0.4.0`. Nothing else carries it — `package.json` has no `version`, because bumping it would
+take a PR into `dev` before every release.
+
+- **A release names its version in the PR title**, `chore(release): v0.4.0`, and it has to be
+  the next patch, minor or major after the newest tag. The first one is `v0.1.0`.
+- **A hotfix is the next patch**, without asking: `v0.4.0` → `v0.4.1`.
+- **Below 1.0.0 until the app runs on Fly.io.** A major of 1 is refused while the repository has
+  no `fly.toml`, so `v1.0.0` is the release that first reaches production, and it is cut in the
+  same release that brings the deploy.
+- **From `v1.0.0` on, each version is also a release on
+  [GitHub Releases](https://github.com/vednemesicnik/cz.vednemesicnik.publikace/releases)**,
+  with notes generated from the PRs since the previous tag. The `0.x` versions are tags only:
+  the page lists what reached production, and nothing below 1.0.0 did.
+
+Which part to raise follows semver: below 1.0.0 a minor for a release that adds something and a
+patch for one that only fixes; from 1.0.0 on a major for a release that breaks what the
+`SCRIPT__Publication__*` jobs or a shared link rely on.
+
+[scripts/release-version.ts](../scripts/release-version.ts) holds the rule, and it runs twice:
+as the `release-version` check in [ci.yml](../.github/workflows/ci.yml), so a wrong title blocks
+the merge, and in [release.yml](../.github/workflows/release.yml) after the merge, which tags the
+commit and, from 1.0.0, publishes the release. Retitling the PR re-runs the check.
+
+**The tags are fixed once made.** The `release-tags` ruleset forbids updating or deleting a `v*`
+tag, and the repository has immutable releases on, so a published release keeps its tag and its
+notes. Repository admins can bypass the ruleset; a mistaken tag is better followed by the next
+version than moved.
+
+**If `release.yml` fails, the merge is on `main` without a version.** Fix the cause and tag the
+merge commit by hand with the version the check printed:
+
+```sh
+git tag -a v0.4.0 -m "v0.4.0 (#<n>)" <merge-commit> && git push origin refs/tags/v0.4.0
+gh release create v0.4.0 --verify-tag --generate-notes --notes-start-tag <previous>  # from 1.0.0
+```
+
 ## Stacked PRs
 
 One issue too large for a single reviewable diff becomes an ordered chain: each PR targets
@@ -102,11 +142,11 @@ its CI: the base becomes `dev`, so the workflow filter finally matches.
 
 `cz.vednemesicnik`'s model leans on CI. This one has part of it:
 
-- **`ci.yml` runs on every PR into `main` or `dev`** — the PR title, lint and format, on
-  Node 26 read from `.nvmrc`. `typecheck`, the suite and `remix doctor` join with the first
+- **`ci.yml` runs on every PR into `main` or `dev`** — the PR title, the release version, lint
+  and format, on Node 26 read from `.nvmrc`. `typecheck`, the suite and `remix doctor` join with the first
   application code, as in `cz.vednemesicnik.billing`.
 - **The checks are required.** The repository is public, so the `branch-protection` ruleset
-  on `main` and `dev` requires a pull request and the `pr-title`, `lint` and `format` checks,
+  on `main` and `dev` requires a pull request and the `pr-title`, `release-version`, `lint` and `format` checks,
   and forbids force-pushes and deletion. Repository admins can bypass it, as in
   `cz.vednemesicnik`. When a gate is added to `ci.yml`, add it to the ruleset too.
 - **No deploy workflow.** **Merging to `main` deploys nothing** — the app is not deployed

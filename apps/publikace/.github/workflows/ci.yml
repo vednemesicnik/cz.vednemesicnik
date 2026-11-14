@@ -3,14 +3,18 @@ name: CI
 # The gates lefthook runs on push, run again on a machine that is not whoever pushed.
 # `git push --no-verify` skips the hook; it does not skip this.
 #
-# The repository has no application code yet, so the gates are the title, lint and format.
-# `typecheck`, the suite and `remix doctor` join here and in lefthook.yaml with the first
-# code, as they run in cz.vednemesicnik.billing. See docs/branching-model.md.
+# The repository has no application code yet, so the gates are the title, the release
+# version, lint and format. `typecheck`, the suite and `remix doctor` join here and in
+# lefthook.yaml with the first code, as they run in cz.vednemesicnik.billing. See
+# docs/branching-model.md.
 #
 # **On pull requests only.** The hook covers a commit pushed straight to `dev` without a PR.
+# `edited` is among the types because a PR's title is a gate: a release retitled after its
+# checks ran would otherwise merge on a version nobody checked.
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches: [main, dev]
 
 permissions:
@@ -49,6 +53,21 @@ jobs:
           echo "Types: ${types//|/, }. The scope is optional; this repository uses issues,"
           echo "articles, artworks, links, review, settings, ui, data, docs and agents."
           exit 1
+
+  # The version a PR into `main` would tag, checked before the merge rather than discovered
+  # by release.yml after it. A PR into `dev` passes at once.
+  release-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+      - env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/release-version.ts
 
   lint:
     runs-on: ubuntu-latest

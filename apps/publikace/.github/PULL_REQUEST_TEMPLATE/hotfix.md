@@ -25,6 +25,9 @@
 
 ## After merge
 
+`release.yml` tags the merge commit with the next patch version (`v0.4.0` → `v0.4.1`), and from
+`v1.0.0` on publishes it on the GitHub Releases page.
+
 **Open the back-merge by hand** — there is no `sync-dev.yml` in this repository:
 
 ```sh

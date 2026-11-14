@@ -238,6 +238,10 @@ what follows is that document, and where the two disagree the document wins.
    history for one line. **Name it and let the user decide**; never take it silently, and never
    use it to dodge the squash rule for a three-commit fix.
 
+   A release PR is titled with its version, `chore(release): v0.4.0`, and `release.yml` tags
+   the merge with it; a hotfix takes the next patch by itself. The rule is in
+   `docs/branching-model.md` under _Versions_.
+
    A squash puts the **PR title** on `dev`, not the branch's commits. If that title is not a
    Conventional Commit subject, fix it with `gh pr edit <n> --title` before merging — after the
    merge it is history.
