@@ -254,7 +254,7 @@ entries whose `for` or `names` holds `<n>`. A pair is retirable only when all th
   cites it back; the answer almost always names the issues it decides.
 
 - **every citation of it has somewhere else to point** — `grep -rno 'questions/[0-9a-z-]*\.md' app
-docs AGENTS.md .agents`, and a grep of every `.dc.html` (read just now, all in one call with
+  docs AGENTS.md .agents`, and a grep of every `.dc.html` (read just now, all in one call with
   `paths`) for the code or the slug. Rewrite a hit to the document that now carries the decision
   before the file goes. A pair no issue ever cited needs this proved by hand: name the code that
   implements it. No path, no retirement.

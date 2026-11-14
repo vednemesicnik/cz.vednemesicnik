@@ -27,7 +27,7 @@ The interface is Czech, because the people using it are. The code is English.
 ## Requirements
 
 - **Node 26 or newer.**
-- **pnpm 11.** The lockfile and the `packageManager` field expect it.
+- **pnpm 12.** The lockfile and the `packageManager` field expect it.
 
 ```sh
 pnpm install
