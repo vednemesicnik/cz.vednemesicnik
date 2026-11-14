@@ -110,7 +110,7 @@ its CI: the base becomes `dev`, so the workflow filter finally matches.
   and forbids force-pushes and deletion. Repository admins can bypass it, as in
   `cz.vednemesicnik`. When a gate is added to `ci.yml`, add it to the ruleset too.
 - **No deploy workflow.** **Merging to `main` deploys nothing** — the app is not deployed
-  anywhere yet. It will deploy to Cloudflare Workers from `main`; until then `main` is kept
+  anywhere yet. It will deploy to Fly.io from `main`; until then `main` is kept
   meaningful so that the deploy has somewhere to hang.
 - **No `sync-dev.yml`.** The back-merge after a release is opened by hand:
 

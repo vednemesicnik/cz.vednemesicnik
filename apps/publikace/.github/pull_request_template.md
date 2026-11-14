@@ -17,8 +17,9 @@
 
 - [ ] `pnpm lint` and `pnpm format:check` pass locally. CI runs them again on this PR, so
       the box is about catching it before the round trip — not about being believed
-- [ ] Google Drive stays the source of truth: anything the app shows from the Registr or an
-      Evidence is read from the cache, and anything it changes is written to the sheet first
+- [ ] The app's database stays the source of truth: nothing is read back from the Registr or an
+      Evidence sheet, a change reaches them only through the record queue after the database,
+      and an API change the Apps Script jobs call is versioned
 - [ ] **No real data.** Authors, providers, e-mail addresses, Drive IDs, folder links and
       shared-link keys are fictional; `priklad.cz` is the convention. This repository is public
 - [ ] Czech in anything a user reads, English in code, identifiers, URL paths and commit messages

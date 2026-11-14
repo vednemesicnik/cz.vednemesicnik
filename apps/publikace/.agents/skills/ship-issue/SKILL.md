@@ -77,8 +77,8 @@ No PR exists yet at this point, so neither packaged review engine fits:
 
 Read every hunk of `git diff dev...HEAD` yourself and check it against:
 
-- **`AGENTS.md`** — where a change belongs (what Google Drive owns and what the app's cache
-  only mirrors; domain rules apart from the UI; shared UI in `app/ui/`), house style (`let` in
+- **`AGENTS.md`** — where a change belongs (what the app's database owns, what stays a file on
+  Drive, what the Apps Script jobs reach only through the API; domain rules apart from the UI; shared UI in `app/ui/`), house style (`let` in
   function bodies, Czech for the user and English for the code, English URL paths, comments
   that say why), and the things that bite — `Temporal` dates, `*.test.tsx` actually reached by
   `pnpm test`.

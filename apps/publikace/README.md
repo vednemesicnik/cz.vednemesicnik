@@ -18,9 +18,13 @@ The interface is Czech, because the people using it are. The code is English.
 | Editorial board   | a shared link, no sign-in                     | start an article in one issue                                       |
 | Artwork providers | a shared link, no sign-in                     | upload artworks to one article or group                             |
 
-- **Remix 3 on Cloudflare Workers.**
-- **Google Drive stays the source of truth.** The Registr and each issue's Evidence are where the
-  background scripts read and write; the app keeps a cache and writes changes to the sheets.
+- **Remix 3 on Fly.io**, the same stack as Fakturace: Node 26 and SQLite.
+- **The app's database is the source of truth.** Issues, articles, consents and artworks live
+  there. Drive keeps the files, Gmail keeps the consent conversations.
+- **The Registr and Evidence sheets stay as a record.** The app writes them after every change
+  and never reads them; they are where a licence is looked up.
+- **The background jobs stay in Apps Script**, run as `publikace.app@` and read and write through
+  the app's API. `publikace@` is only the mailbox that sends and reads the e-mails.
 - **Writing, proofreading and consent stay where they are**: in the Google Doc of the article
   and in an e-mail reply „Souhlasím“.
 

@@ -42,7 +42,7 @@ ignore it and name the path in your report.
 Everything UX: the layout, which action is primary, dialog or toast, where a sentence sits, how a
 state is shown, and which of the data on offer a screen shows.
 
-Not yours: what the brief gives as decided is product, architecture or security — Google Drive as
+Not yours: what the brief gives as decided is product, architecture or security — the app's database as
 the source of truth, sign-in for editors-in-chief only, shared links for everybody else. Don't
 reopen it, not even as a variant. When you think one is wrong, draw to it anyway and say why at the
 end of your answer.

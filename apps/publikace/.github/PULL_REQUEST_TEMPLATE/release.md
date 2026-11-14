@@ -20,7 +20,7 @@ becomes the place to say what the release expects of it.
 Say out loud while that is still true:
 
 - [ ] **Nothing in this release writes to the real Drive.** Until the app is deployed, every
-      run uses a test Registr and test folders. A setting that points at the real Registr
+      run uses a test shared drive, a test Registr and a test Mailer. A setting that points at the real ones
       would create real folders and send real e-mails to authors
 
 ## After merge

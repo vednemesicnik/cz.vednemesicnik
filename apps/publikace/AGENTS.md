@@ -24,8 +24,8 @@ pnpm format:check
 pnpm design:screen    # one screen out of a saved design file — docs/design-project.md
 ```
 
-**Node 26 or newer is required**, as in billing: the app will use `Temporal` and the runtime's
-own TypeScript stripping (`node scripts/….ts` runs without a build step).
+**Node 26 or newer is required**, as in billing: the app will use `Temporal`, `node:sqlite` and
+the runtime's own TypeScript stripping (`node scripts/….ts` runs without a build step).
 
 `lefthook` runs lint and format on commit and on push. `postinstall` writes the hooks by running
 `lefthook install`, and [pnpm-workspace.yaml](pnpm-workspace.yaml) refuses lefthook's own install
@@ -37,21 +37,43 @@ install scripts skipped: `pnpm exec lefthook install` is the fix.
 
 ## What the app will be
 
-- **Remix 3 on Cloudflare Workers.** The same framework as Fakturace, deployed to Cloudflare
-  rather than Fly.io. Refer to `./.agents/skills/remix/SKILL.md` (the `remix` skill) once
-  `pnpm dev:setup-claude` has copied it.
-- **Google Drive is the source of truth.** The Registr (list _Vydání_) and each issue's Evidence
-  (_Články_, _Redakční doložky_, _Obrazová díla_) stay where the background scripts read them.
-  The app keeps a cache of them in D1 and writes every change to the sheet first. A second copy
-  of the truth is what this rules out.
-- **Two accounts act.** `publikace.app@vednemesicnik.cz` creates folders, documents and rows and
-  owns them; `publikace@vednemesicnik.cz` sends the e-mails and reads the replies.
+- **Remix 3 on Fly.io, the stack of Fakturace.** Node 26, `node:sqlite`, one machine with a
+  volume, the same patterns for the repository, migrations and backups. Refer to
+  `./.agents/skills/remix/SKILL.md` (the `remix` skill) once `pnpm dev:setup-claude` has copied
+  it.
+- **The app's SQLite database is the source of truth** for issues, articles, editorial clauses,
+  artworks and their groups, consent states, shared links and job runs. The editors-in-chief only
+  ever looked at the sheets, and the one thing done in them by hand, verifying a consent the
+  scripts could not read, is the app's _Ke kontrole_.
+- **The Registr and each issue's Evidence stay, as a record the app writes and never reads.**
+  They are where a licence is looked up, in the same columns for every issue, old or new. The
+  app writes the database first and the sheet after it, from a queue that retries, so a sheet
+  that does not answer delays the record and blocks nothing; a nightly rewrite from the database
+  mends whatever the queue missed. Only `publikace.app@` may edit them, people read them, and
+  neither the app nor a script reads them back: a hand edit would vanish unseen. _Podklady_ for
+  the graphic designer stays a sheet too, filled by its job.
+- **Drive holds the files, Gmail holds the proof.** Folders, article Docs, the PDFs of final
+  versions, artworks and licences stay on Drive; a consent is the archived e-mail conversation.
+  The database keeps their IDs and links, never their content.
+- **Two accounts, as `web.app@` in `cz.vednemesicnik`.** `publikace@vednemesicnik.cz` is a mailbox
+  and nothing else: it runs the deployments of `SCRIPT__Mail__Send` and `SCRIPT__Mail__Reply_Check`.
+  `publikace.app@vednemesicnik.cz` runs everything else and is a Content manager of the shared
+  drive _Publikace_, where every new issue lives, and a member of no other shared drive, because
+  it holds the full `drive` scope. Files on a shared drive belong to the drive, not to an account.
 - **Two kinds of visitor.** Editors-in-chief sign in with Google (domain and an allowlist).
   Everybody else arrives through a shared link that can do one thing in one issue
   (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
-- **The background scripts stay.** `SCRIPT__Publication__Approval_Send`, `…__Designer_Handoff`,
-  `…__Comment_Digest` and the reply checks keep running on their triggers; the app shows their
-  last run and can start them.
+- **The background jobs stay in Apps Script and talk to the app.** `SCRIPT__Publication__Approval_Send`,
+  `…__Comment_Digest`, `…__Designer_Handoff` and the artwork reply check run as `publikace.app@`
+  on their triggers and read and write through the app's API instead of the sheets. They report
+  every run to the app, which shows the last one and can start a job through the script's
+  `doPost`. The app reaches Gmail only through the Mailer and the reply check, never with a token
+  of its own.
+- **The article Doc's menu calls the app.** `SCRIPT__Publication__Article_Approve` is bound to the
+  article template, so every Doc carries a copy and anyone who edits the Doc, authors included,
+  can read it. It sends the app the Doc's ID and `ScriptApp.getIdentityToken()` of whoever
+  clicked, and the app decides by that e-mail whether they may. **No secret goes into a bound
+  script.**
 
 ## Workflow skills
 
@@ -125,8 +147,19 @@ thread closes. A turn that confirms and leaves nothing to ask back is answered b
 the very next call, with a resolution naming where the result is going.
 
 **The background scripts are other repositories.** `SCRIPT__Publication__*` live next to this one
-and deploy to Apps Script on their own. A change to what the Evidence holds is a change in them
-too, and their column names are read by header — rename one and the scripts stop finding it.
+and deploy to Apps Script on their own. The app's API is their contract: a change to what an
+endpoint takes or returns is a change in them too, so the API is versioned and a field is never
+renamed in place. Each job claims its batch before it acts and confirms it with the batch's key,
+so a run that dies between sending an e-mail and reporting it does not send it twice.
+
+**A trigger runs as the account that created it.** CI pushes code but never installs triggers.
+Moving a script to `publikace.app@` means running its `setupTriggers()` as `publikace.app@` and
+deleting the old trigger under `publikace@` the same day; two live copies send every e-mail twice.
+
+**The API is public, so every call proves who made it.** A call from a script carries a Google
+ID token, checked for its signature, its audience and the e-mail of `publikace.app@` (or of the
+person in the Doc menu). A call from the app to a script's `doPost` or to the Mailer is signed
+with a secret that lives only in the Script Properties of a standalone project.
 
 ## Data rules
 
@@ -134,7 +167,8 @@ too, and their column names are read by header — rename one and the scripts st
 comments, not in the design. Authors, providers, e-mail addresses, Drive IDs, folder links and
 shared-link keys must be fictional; `priklad.cz` is the convention.
 
-**Never open `.env`.** It will hold live secrets (the Google OAuth client, the tokens of
-`publikace.app@` and `publikace@`, Cloudflare credentials). `.env.example` is the tracked template
-and documents every variable by name and purpose — read that instead. Beware of `grep -r` from
+**Never open `.env`.** It will hold live secrets (the Google OAuth client, the token of
+`publikace.app@`, the secrets for the Mailer and the scripts); on Fly.io they are `fly secrets`.
+`.env.example` is the tracked template and documents every variable by name and purpose — read
+that instead. Beware of `grep -r` from
 the repository root, which reads `.env` before you can filter it out.

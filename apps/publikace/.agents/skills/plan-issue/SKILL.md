@@ -110,8 +110,8 @@ You are preparing an implementation plan for the GitHub issue shown above.
 
 7. **Respect the repo's conventions** in the plan:
    - branch `feat/<issue-number>-<kebab-slug>` (`fix/…` for bugfixes), off `dev`;
-   - where a change belongs as `AGENTS.md` says it (Google Drive is the source of truth, the
-     app keeps a cache of it; a rule about issues, articles or artworks is domain code, not UI);
+   - where a change belongs as `AGENTS.md` says it (the app's SQLite database is the source of
+     truth, Drive holds the files, the Apps Script jobs go through the app's API; a rule about issues, articles or artworks is domain code, not UI);
    - `let` inside function bodies, `const` only for module-level constants;
    - Czech in anything a user reads, English in code, identifiers and commit messages;
    - dates are `Temporal`;
