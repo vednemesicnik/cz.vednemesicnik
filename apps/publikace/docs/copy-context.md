@@ -47,7 +47,7 @@ s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail. Ji
 
 - Článek: _Píše se_, _Korektura_, _U autorů_, _Ke kontrole_, _Schváleno_, _Upraveno po schválení_, _Chyba_.
 - Obrazové dílo: _Zpracovává se_, _U poskytovatele_, _Ke kontrole_, _Schváleno_, _Chyba_.
-- Vydání: _Aktivní_, _Uzavřené_.
+- Vydání: _Nedokončené_, _Aktivní_, _Uzavřené_.
 
 V Evidenci (tabulka na Disku) mají stavy jiná jména (_Rozpracováno_, _Čeká na odpověď_,
 _Souhlas udělen_…). Šéfredakce je zná z tabulky; aplikace je v textu nepoužívá, kromě míst, kde
@@ -60,12 +60,25 @@ výslovně mluví o tabulce.
   licence.“). Hlášky aplikace _my_ nemají.
 - **Chybová věta začíná tím, co udělat**: _Zkraťte název na nejvýš 200 znaků._, _Vyberte obrázek
   do 15 MB — ples.tif má 22 MB._ Výjimka: když udělat nejde nic, věta řekne, co platí.
-- **Nikdy nepojmenuje stroj.** Žádná tabulka, řádek, server, token, metadata.
+- **Nikdy nepojmenuje stroj.** Žádná tabulka, řádek, server, token, metadata. Výjimka:
+  **Registr** a **Evidence** jsou dokumenty, které šéfredakce zná jménem a v nichž dohledává
+  licence, takže se smějí jmenovat, i jako tabulky, když se o nich mluví jako o dokumentu. Popis
+  vnitřního provozu (fronta, zápis, přepis) tuhle výjimku nemá. Skutečný ovládací prvek se
+  jmenuje přesně, jak se jmenuje, i se zakázaným slovem: _Publikace › Nastavit metadata článku_
+  je položka nabídky v dokumentu Google a každý dokument nese její vlastní kopii.
+- **Aplikace nezná rod.** O člověku ví jen adresu a po přihlášení jméno z Googlu. Věta o něm nesmí
+  rod ani pád jména odhadovat: _poslední přihlášení včera_, _účet přidán 10. 11. 2026_, ne
+  _přihlásila se_, ne _Odebrat Jakuba?_
+- **Čas dalšího běhu úlohy aplikace jen odhaduje.** Úlohy na pozadí spouští Google v intervalu,
+  ale minutu si volí sám, takže věta smí slíbit jen přibližný čas. Úloha, která neběží, žádný
+  další běh nemá.
 - Kratší vyhrává, ale nikdy za cenu tvrzení, které není pravda.
 
 ## Formáty a typografie
 
-- Datum v aplikaci `14. 11. 2026`, čas `9:12`. V e-mailech totéž.
+- Datum v aplikaci `14. 11. 2026`, čas `9:12`. V e-mailech totéž. V aktuálním roce smí rok
+  odpadnout: _zjištěno 14. 11. v 8:12_, _naposledy 10. 11._
+- Časové okno se píše rozsahem: _9:00–10:00_.
 - Pomlčka ve větě je em dash `—` s mezerami.
 - Uvozovky české „…“.
 
@@ -73,6 +86,10 @@ výslovně mluví o tabulce.
 
 Žádná skutečná data. Jména autorů a poskytovatelů jsou vymyšlená, e-maily končí na `priklad.cz`,
 odkazy a ID na Disku jsou smyšlené. Repozitář je veřejný.
+
+Výjimka je doména šéfredakce: přihlášení pustí jen adresu `@vednemesicnik.cz`, takže ukázky
+šéfredaktorů, účtů a skupin v Přístupu na ní stojí, s vymyšleným jménem. Vlastní účty aplikace
+(`publikace.app@`, `publikace@`) jsou skutečné a smějí se jmenovat.
 
 Když v otázce uvidíš něco, co vypadá jako skutečný záznam, **je to nález** — řekni to.
 

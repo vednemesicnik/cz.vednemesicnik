@@ -56,7 +56,13 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   the graphic designer stays a sheet too, filled by its job.
 - **Drive holds the files, Gmail holds the proof.** Folders, article Docs, the PDFs of final
   versions, artworks and licences stay on Drive; a consent is the archived e-mail conversation.
-  The database keeps their IDs and links, never their content.
+  The database keeps their IDs and links, never their content. A new issue is a database row
+  first and keeps each folder's ID as it is created, so an issue that Drive stopped halfway is
+  _Nedokončené_ and _Dokončit vydání_ adds only what is missing. When Drive fails at the issue
+  folder itself, the row is removed in the same request: nothing exists, and the issue can be
+  created again under any name. The app never deletes on Drive and never recreates a folder
+  somebody removed: it marks it missing, shows it to the editors-in-chief, and a link page that
+  needs it accepts nothing until it is back.
 - **Two accounts, as `web.app@` in `cz.vednemesicnik`.** `publikace@vednemesicnik.cz` is a mailbox
   and nothing else: it runs the deployments of `SCRIPT__Mail__Send` and `SCRIPT__Mail__Reply_Check`.
   `publikace.app@vednemesicnik.cz` runs everything else and is a Content manager of the shared
@@ -72,9 +78,10 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
 - **The background jobs stay in Apps Script and talk to the app.** `SCRIPT__Publication__Approval_Send`,
   `…__Comment_Digest`, `…__Designer_Handoff` and the artwork reply check run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report
-  every run to the app, which shows the last one and can start a job through the script's
-  `doPost`. The app reaches Gmail only through the Mailer and the reply check, never with a token
-  of its own.
+  every run to the app with the interval of their trigger, and the app shows the last one and can
+  start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a
+  next run the app shows is an estimate, never a promise. The app reaches Gmail only through the
+  Mailer and the reply check, never with a token of its own.
 - **The article Doc's menu calls the app.** `SCRIPT__Publication__Article_Approve` is bound to the
   article template, so every Doc carries a copy and anyone who edits the Doc, authors included,
   can read it. It sends the app the Doc's ID and `ScriptApp.getIdentityToken()` of whoever
