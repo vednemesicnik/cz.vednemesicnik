@@ -1,0 +1,31 @@
+# Lefthook Git hooks configuration.
+# https://lefthook.dev/configuration/
+#
+# Installed by `postinstall` in package.json, which runs `lefthook install`.
+# lefthook's own install script would do the same and is refused in
+# pnpm-workspace.yaml, so that the step is one this repository can be read to take.
+#
+# No application code yet: `typecheck`, `test` and `doctor` join pre-push with the first
+# code, the way cz.vednemesicnik.billing runs them.
+
+pre-commit:
+  parallel: true
+  commands:
+    # oxfmt formats, oxlint --fix applies auto-fixable lint errors. Both write,
+    # so their results are re-staged rather than only failing at pre-push.
+    format:
+      run: pnpm exec oxfmt {staged_files} --write
+      glob: '*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}'
+      stage_fixed: true
+    lint:
+      run: pnpm exec oxlint {staged_files} --fix --max-warnings=0
+      glob: '*.{js,ts,cjs,mjs,jsx,tsx}'
+      stage_fixed: true
+
+pre-push:
+  parallel: true
+  commands:
+    format:
+      run: pnpm format:check
+    lint:
+      run: pnpm lint

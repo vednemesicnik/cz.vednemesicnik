@@ -1,0 +1,78 @@
+name: CI
+
+# The gates lefthook runs on push, run again on a machine that is not whoever pushed.
+# `git push --no-verify` skips the hook; it does not skip this.
+#
+# The repository has no application code yet, so the gates are the title, lint and format.
+# `typecheck`, the suite and `remix doctor` join here and in lefthook.yaml with the first
+# code, as they run in cz.vednemesicnik.billing. See docs/branching-model.md.
+#
+# **On pull requests only.** The hook covers a commit pushed straight to `dev` without a PR.
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # A PR title is the squash subject on `dev` (squash title = PR_TITLE), so it has to read
+  # like a commit. It reaches the script through `env` rather than `${{ }}`, because a PR
+  # title is text a stranger can write and `${{ }}` pastes it into the shell.
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: The title is the squash subject, so it reads like one
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+          pattern="^(${types})(\([a-z0-9,/-]+\))?!?: .+"
+
+          if [[ "$TITLE" =~ $pattern ]]; then
+            echo "$TITLE"
+            exit 0
+          fi
+
+          echo "The PR title is not a Conventional Commit subject:"
+          echo
+          echo "    $TITLE"
+          echo
+          echo "Squashing this PR writes that line into dev's history, so it has to read like"
+          echo "a commit — 'feat(issues): the detail lists its artwork groups', not a sentence."
+          echo "Types: ${types//|/, }. The scope is optional; this repository uses issues,"
+          echo "articles, artworks, links, review, settings, ui, data, docs and agents."
+          exit 1
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Reads the pnpm version from package.json's `packageManager` field.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Its own job because of how it is usually broken: `oxfmt` formats Markdown, the
+      # pre-commit hook only globs code, so an unformatted .md commits fine and fails here.
+      - run: pnpm format:check

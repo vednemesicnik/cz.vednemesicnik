@@ -1,0 +1,72 @@
+# pnpm 11 reads settings from here, not from the "pnpm" field in package.json.
+#
+# esbuild arrives as a transitive dependency of @remix-run/test (via the remix
+# CLI). Its install script links the platform-specific binary; without it the
+# package is present but unusable.
+#
+# It is the only one allowed, and the list is meant to stay that way: an install
+# script is somebody else's code running on this machine. lefthook is the one that
+# would look like it belongs here and does not — its binary ships inside
+# lefthook-<platform>, a package with no scripts at all, and `postinstall` in
+# package.json calls `lefthook install` itself rather than letting the dependency
+# do it. Anything new showing up here is worth a second look before it is allowed.
+allowBuilds:
+  esbuild: true
+  # Refused, not merely left out: pnpm fails an install over a build script it
+  # skipped without being told to, and writes the missing entry into this file
+  # itself. `postinstall` in package.json runs `lefthook install` where it can be
+  # read, and lefthook's binary ships inside lefthook-<platform>, a package with
+  # no scripts, so nothing is lost by refusing this one.
+  lefthook: false
+
+minimumReleaseAgeExclude:
+  - '@oxfmt/binding-android-arm-eabi@0.61.0'
+  - '@oxfmt/binding-android-arm64@0.61.0'
+  - '@oxfmt/binding-darwin-arm64@0.61.0'
+  - '@oxfmt/binding-darwin-x64@0.61.0'
+  - '@oxfmt/binding-freebsd-x64@0.61.0'
+  - '@oxfmt/binding-linux-arm-gnueabihf@0.61.0'
+  - '@oxfmt/binding-linux-arm-musleabihf@0.61.0'
+  - '@oxfmt/binding-linux-arm64-gnu@0.61.0'
+  - '@oxfmt/binding-linux-arm64-musl@0.61.0'
+  - '@oxfmt/binding-linux-ppc64-gnu@0.61.0'
+  - '@oxfmt/binding-linux-riscv64-gnu@0.61.0'
+  - '@oxfmt/binding-linux-riscv64-musl@0.61.0'
+  - '@oxfmt/binding-linux-s390x-gnu@0.61.0'
+  - '@oxfmt/binding-linux-x64-gnu@0.61.0'
+  - '@oxfmt/binding-linux-x64-musl@0.61.0'
+  - '@oxfmt/binding-openharmony-arm64@0.61.0'
+  - '@oxfmt/binding-win32-arm64-msvc@0.61.0'
+  - '@oxfmt/binding-win32-ia32-msvc@0.61.0'
+  - '@oxfmt/binding-win32-x64-msvc@0.61.0'
+  - '@oxlint/binding-android-arm-eabi@1.76.0'
+  - '@oxlint/binding-android-arm64@1.76.0'
+  - '@oxlint/binding-darwin-arm64@1.76.0'
+  - '@oxlint/binding-darwin-x64@1.76.0'
+  - '@oxlint/binding-freebsd-x64@1.76.0'
+  - '@oxlint/binding-linux-arm-gnueabihf@1.76.0'
+  - '@oxlint/binding-linux-arm-musleabihf@1.76.0'
+  - '@oxlint/binding-linux-arm64-gnu@1.76.0'
+  - '@oxlint/binding-linux-arm64-musl@1.76.0'
+  - '@oxlint/binding-linux-ppc64-gnu@1.76.0'
+  - '@oxlint/binding-linux-riscv64-gnu@1.76.0'
+  - '@oxlint/binding-linux-riscv64-musl@1.76.0'
+  - '@oxlint/binding-linux-s390x-gnu@1.76.0'
+  - '@oxlint/binding-linux-x64-gnu@1.76.0'
+  - '@oxlint/binding-linux-x64-musl@1.76.0'
+  - '@oxlint/binding-openharmony-arm64@1.76.0'
+  - '@oxlint/binding-win32-arm64-msvc@1.76.0'
+  - '@oxlint/binding-win32-ia32-msvc@1.76.0'
+  - '@oxlint/binding-win32-x64-msvc@1.76.0'
+  - '@types/node@26.1.2'
+  - oxfmt@0.61.0
+  - oxlint@1.76.0
+
+# GHSA-g7r4-m6w7-qqqr: esbuild >= 0.27.3 < 0.28.1 allows arbitrary file read via
+# its development server on Windows. @remix-run/test asks for ^0.27.1, which caps
+# at 0.27.x and so cannot reach the fix on its own — hence the override.
+#
+# Drop this once the remix beta ships a version whose range already includes
+# 0.28.x; an override that outlives its cause silently pins the whole tree.
+overrides:
+  esbuild: '0.28.1'

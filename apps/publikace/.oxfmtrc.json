@@ -1,0 +1,11 @@
+{
+  "ignorePatterns": [".agents/skills/modern-web-guidance/**", ".agents/skills/remix/**"],
+  "printWidth": 100,
+  "semi": false,
+  "singleQuote": true,
+  "quoteProps": "as-needed",
+  "trailingComma": "all",
+  "arrowParens": "always",
+  "useTabs": false,
+  "tabWidth": 2
+}

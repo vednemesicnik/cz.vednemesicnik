@@ -1,0 +1,28 @@
+{
+  "name": "cz-vednemesicnik-publikace",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "postinstall": "case \"$CI\" in ''|0|false) lefthook install || echo \"lefthook install failed; run pnpm exec lefthook install by hand\";; esac",
+    "design:screen": "node scripts/design-screen.ts",
+    "dev:setup-claude": "node scripts/setup-claude.ts",
+    "lint": "oxlint . --max-warnings=0",
+    "lint:fix": "oxlint . --fix --max-warnings=0",
+    "format": "oxfmt . --write",
+    "format:check": "oxfmt . --check"
+  },
+  "dependencies": {
+    "remix": "3.0.0-rc.2"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "lefthook": "2.1.10",
+    "oxfmt": "0.61.0",
+    "oxlint": "1.76.0"
+  },
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "packageManager": "pnpm@11.17.0"
+}

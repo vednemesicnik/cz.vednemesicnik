@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "vdm-dev-exchange": {
+      "type": "http",
+      "url": "http://127.0.0.1:48000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${VDM_EXCHANGE_CLAUDE_TOKEN}"
+      }
+    }
+  }
+}
