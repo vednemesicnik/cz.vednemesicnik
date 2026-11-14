@@ -8,6 +8,7 @@ import { BoundaryError } from '~/components/boundary-error'
 import { PageTransition } from '~/components/page-transition'
 import { usePageFlightClicks } from '~/hooks/use-page-flight-clicks'
 import { getSiteFeedLinks } from '~/utils/feeds/get-site-feed-links'
+import { getPageTransitionKey } from '~/utils/view-transition/get-page-transition-key'
 import type { loader } from './_loader'
 import type { Route } from './+types/route'
 import { SitePreviewBar } from './components/site-preview-bar'
@@ -25,14 +26,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   usePageFlightClicks()
 
-  // A new page for every address, the next page of a list included (18d).
+  // A new page for every address, the next page of a list included (18d); a
+  // form's submission stays on its page.
   return (
     <>
       <AppHeader>
         <SitePreviewBar previewMode={loaderData.previewMode} />
       </AppHeader>
       <AppBody>
-        <PageTransition transitionKey={pathname + search}>
+        <PageTransition transitionKey={getPageTransitionKey(pathname, search)}>
           <Outlet />
         </PageTransition>
       </AppBody>
