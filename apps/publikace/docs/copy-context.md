@@ -20,8 +20,14 @@ Provází jedno vydání od založení po podklady pro tisk:
   článek. Otevírá ho většinou na telefonu ve vestavěném prohlížeči messengeru.
 - **Poskytovatel děl** (autor článku, ilustrátor, fotograf) dostane odkaz na nahrání obrazových
   děl, nahraje je a pak souhlasí s licencí odpovědí na e-mail.
+- **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Do aplikace se nepřihlašují
+  a nevidí ji. Od aplikace dostanou jen e-mail, když je článek předaný ke korektuře, a další,
+  když šéfredakce předání zruší. Jejich adresu vyplňuje šéfredakce v Nastavení. Dokud ji
+  nevyplní, předání projde, jen e-mail neodejde.
 
-Psaní a korektura probíhají v dokumentu Google, mimo aplikaci. Souhlas s finální verzí textu i
+Psaní a korektura probíhají v dokumentu Google, mimo aplikaci. Kdo text dopíše (autor nebo
+redaktor), **předá ho ke korektuře** v dokumentu, v menu _Publikace › Předat ke korektuře_.
+Šéfredakce může předání nastavit i zrušit v aplikaci. Souhlas s finální verzí textu i
 s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail. Jiná odpověď jde ke kontrole
 šéfredakci.
 
@@ -45,19 +51,28 @@ s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail. Ji
 
 Štítky, jak je aplikace ukazuje (zdroj pravdy je stránka `01 Stavy a souhlasy` v návrhu):
 
-- Článek: _Píše se_, _Korektura_, _U autorů_, _Ke kontrole_, _Schváleno_, _Upraveno po schválení_, _Chyba_.
+- Článek: _Píše se_, _Dopsáno_, _Korektura_, _K souhlasu_, _Ke kontrole_, _Schváleno_, _Upraveno
+  po schválení_, _Chyba_. _Dopsáno_ znamená, že je článek předaný ke korektuře a žádný korektor
+  zatím neoznačil, že na něm pracuje. _Korektura_ znamená, že korektura probíhá. _K souhlasu_
+  znamená, že finální verze jde autorům a čeká se na „Souhlasím“ od každého z nich.
 - Obrazové dílo: _Zpracovává se_, _U poskytovatele_, _Ke kontrole_, _Schváleno_, _Chyba_.
 - Vydání: _Nedokončené_, _Aktivní_, _Uzavřené_.
 
 V Evidenci (tabulka na Disku) mají stavy jiná jména (_Rozpracováno_, _Čeká na odpověď_,
 _Souhlas udělen_…). Šéfredakce je zná z tabulky; aplikace je v textu nepoužívá, kromě míst, kde
-výslovně mluví o tabulce.
+výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
 
 ## Hlas
 
 - **Aplikace vyká** a mluví neosobně, bez omluv. Nemá já ani osobnost.
 - **E-maily a stránky z odkazu mluví za redakci** a smějí mít _my_ („Na e-mail jsme poslali
   licence.“). Hlášky aplikace _my_ nemají.
+- **Dialog v dokumentu Google mluví hlasem aplikace.** Co se ukáže po kliknutí v menu
+  _Publikace_, vrací aplikace, takže dialog vyká a nemá _my_. Čte ho autor nebo redaktor, který
+  v aplikaci nic nenastaví: věta mu říká, co udělat sám, ne co má opravit šéfredakce.
+- **Aplikace ví, že e-mail odešel, ne že došel.** Věta smí říct _odešel_, nikdy _korektoři
+  dostali_ ani _vědí_. A když se e-mail vrátí jako nedoručitelný, neprokazuje to špatnou adresu:
+  skupina Google může odmítat zprávy z `publikace@`, i když adresa platí.
 - **Chybová věta začíná tím, co udělat**: _Zkraťte název na nejvýš 200 znaků._, _Vyberte obrázek
   do 15 MB — ples.tif má 22 MB._ Výjimka: když udělat nejde nic, věta řekne, co platí.
 - **Nikdy nepojmenuje stroj.** Žádná tabulka, řádek, server, token, metadata. Výjimka:
@@ -78,6 +93,14 @@ výslovně mluví o tabulce.
 
 - Datum v aplikaci `14. 11. 2026`, čas `9:12`. V e-mailech totéž. V aktuálním roce smí rok
   odpadnout: _zjištěno 14. 11. v 8:12_, _naposledy 10. 11._
+- Před časem se píše „ve“ u hodin 2, 3, 4, 12, 13, 14 a 20–23, jinak „v“: _ve 2:15_, _ve 13:30_,
+  _ve 21:47_, _v 9:12_, _v 18:04_. Platí v aplikaci i v e-mailech. Je to konvence Publikace, ne
+  obecné pravidlo češtiny.
+- Počet souhlasících autorů se píše _souhlas N z/ze M autora/autorů_. „Ze“ se píše při M = 2, 3,
+  4, 6 a 7, jinak „z“, protože rozhoduje výslovnost čísla ve 2. pádě („ze dvou“, „z pěti“). Při
+  M = 1 je tvar „autora“, při M = 2 až 10 „autorů“: _souhlas 0 z 1 autora_, _souhlas 1 ze 2
+  autorů_, _souhlas 2 z 5 autorů_. N tvar ani předložku nemění a „souhlas“ zůstává v jednotném
+  čísle. Platí pro tuto řádku a pro 1 až 10 autorů, ne jako obecné pravidlo skloňování.
 - Časové okno se píše rozsahem: _9:00–10:00_.
 - Pomlčka ve větě je em dash `—` s mezerami.
 - Uvozovky české „…“.
