@@ -69,7 +69,7 @@ issue, and hand over to a clean window.
 3. **Read the subject the squash actually landed** in the "Recent commits on dev" block. It
    should be a Conventional Commit; when it is not, the PR title was a sentence and the
    squash used it verbatim, as `PR_TITLE` always does
-   ([docs/branching-model.md](../../docs/branching-model.md)). **Say so plainly and do not
+   ([docs/branching-model.md](../../../docs/branching-model.md)). **Say so plainly and do not
    rewrite it** — it is pushed history. This is the last gate that can see it, so a silent
    pass here is how twenty-two of them got onto `dev`.
 
@@ -81,7 +81,7 @@ Work through these; report what each one did or why it was a no-op.
    branch, retarget it _before_ the branch is deleted — deleting the base of an open PR
    closes it, and a closed PR whose base is gone cannot be reopened. The exact order
    (`gh pr edit <child> --base dev`, then `git rebase --onto`, then the delete) is in
-   [docs/branching-model.md](../../docs/branching-model.md). Follow it as written.
+   [docs/branching-model.md](../../../docs/branching-model.md). Follow it as written.
 2. **Back to `dev`.** `git checkout dev`,
    `git fetch origin --recurse-submodules=no --prune`, `git pull --ff-only`. Fetch that
    way every time — the `--prune` is what clears the `origin/*` refs whose branches were

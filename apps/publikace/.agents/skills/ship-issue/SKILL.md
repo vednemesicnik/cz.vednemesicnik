@@ -49,7 +49,7 @@ You are the **close-out stage** of the issue pipeline:
 Run it for the implementation on this branch: review → auto-fix → PR → green CI →
 ready-to-merge. Reuse the existing pieces rather than re-implementing them: PR creation
 is the `commit-push-pr` skill (`commit-commands:commit-push-pr`), and the branch and
-merge rules are [docs/branching-model.md](../../docs/branching-model.md).
+merge rules are [docs/branching-model.md](../../../docs/branching-model.md).
 
 Follow the phases below in order. **Two human gates** exist — respect them.
 
@@ -85,8 +85,8 @@ Read every hunk of `git diff dev...HEAD` yourself and check it against:
 - **The PR checklist in `.github/pull_request_template.md`** — it is this repo's
   self-review list, and every box on it is something the gates cannot check.
 - **Migrations** — a new one is fine, an edited applied one is never
-  ([docs/migrations.md](../../docs/migrations.md)); plain `CREATE TABLE` / `ALTER TABLE`,
-  not the `IF NOT EXISTS` idiom of the initial schema.
+  ([docs/migrations.md](../../../docs/migrations.md)); plain `CREATE TABLE` / `ALTER TABLE`
+  without `IF NOT EXISTS`, `STRICT` tables.
 - **No real data** — authors, providers, e-mail addresses, Drive IDs and links all
   fictional, `priklad.cz`.
 - **Design conformance** where the issue cites a design document: check the diff against
@@ -132,7 +132,7 @@ Drive the `commit-push-pr` skill. Enforce the repo's conventions:
   with `PR_TITLE`, so this line — not the branch's commits, however well they are written —
   is what lands in `dev`'s history. Write it as `feat(issues): …` from the start; the
   `pr-title` CI job checks it, and
-  [docs/branching-model.md](../../docs/branching-model.md) says why it is worth a rule.
+  [docs/branching-model.md](../../../docs/branching-model.md) says why it is worth a rule.
 - PR **title and body in English**, using `.github/pull_request_template.md` (the default
   template; `release.md` and `hotfix.md` are for the other two directions). Body: a summary
   and how it satisfies the issue's acceptance criteria; link the issue (`Closes #<n>`).
@@ -199,7 +199,7 @@ Only once the question above has been answered yes. If the answer was to hold, s
 say what it is waiting on, in a sentence the next session can act on without re-reading this
 one.
 
-The rules are [docs/branching-model.md](../../docs/branching-model.md). Do not re-derive them;
+The rules are [docs/branching-model.md](../../../docs/branching-model.md). Do not re-derive them;
 what follows is that document, and where the two disagree the document wins.
 
 1. **Refuse the merge** if the PR is a draft, if `state` is not `OPEN`, or if `mergeable`

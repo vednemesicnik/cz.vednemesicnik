@@ -116,10 +116,10 @@ You are preparing an implementation plan for the GitHub issue shown above.
    - Czech in anything a user reads, English in code, identifiers and commit messages;
    - dates are `Temporal`;
    - **a migration that has already run is never edited** — plan a new one
-     ([docs/migrations.md](../../docs/migrations.md));
+     ([docs/migrations.md](../../../docs/migrations.md));
    - no real data anywhere, `priklad.cz` is the convention;
    - Conventional Commits — **the PR title included**, because a squash makes it the subject
-     on `dev` ([docs/branching-model.md](../../docs/branching-model.md)); issue and PR text in
+     on `dev` ([docs/branching-model.md](../../../docs/branching-model.md)); issue and PR text in
      English.
 
 8. **Present the plan for approval.** Call `ExitPlanMode` with the drafted plan. Do not

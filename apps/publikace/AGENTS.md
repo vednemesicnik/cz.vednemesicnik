@@ -37,6 +37,8 @@ the runtime's own TypeScript stripping (`node scripts/….ts` runs without a bui
 pending migrations from `db/migrations` before it listens, and `pnpm db:*` reads the same
 directory through `remix db`, configured in `remix.json`. A migration that has run is never
 edited; the journal keeps its checksum and both refuse a database whose history changed.
+[docs/migrations.md](docs/migrations.md) has the layout, the commands and how the SQL is
+written.
 
 `lefthook` runs lint and format on commit, and lint, format, typecheck, the suite and doctor on
 push. `postinstall` writes the hooks by running

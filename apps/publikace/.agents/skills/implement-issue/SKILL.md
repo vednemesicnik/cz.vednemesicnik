@@ -68,7 +68,7 @@ Conventional Commits. Stop before pushing and before the PR — that is `/ship-i
    - On `dev` or `main`: `git fetch origin --recurse-submodules=no --prune`, then create
      `feat/<number>-<kebab-slug>` from
      up-to-date `dev` (slug from the issue title; `fix/…` for bugfixes, per
-     [docs/branching-model.md](../../docs/branching-model.md)).
+     [docs/branching-model.md](../../../docs/branching-model.md)).
    - Already on a feature branch carrying this issue number: continue on it.
    - On a feature branch for a **different** issue: stop and ask. If the new work
      genuinely builds on that unmerged branch, branching off it — a stacked PR — is
@@ -78,7 +78,7 @@ Conventional Commits. Stop before pushing and before the PR — that is `/ship-i
    (where a change belongs, house style, the things that bite),
    `.agents/skills/remix/SKILL.md` for routes, controllers, middleware and `remix/ui`
    components, the `modern-web-guidance` search for HTML/CSS/client-side JS, and
-   [docs/migrations.md](../../docs/migrations.md) before any schema work.
+   [docs/migrations.md](../../../docs/migrations.md) before any schema work.
 
 ### Phase 1 — Implement
 
