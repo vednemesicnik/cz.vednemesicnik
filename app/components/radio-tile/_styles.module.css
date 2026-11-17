@@ -1,0 +1,56 @@
+/* The frame grows from 1 to 2 px when chosen and the padding gives the pixel
+   back, so the label doesn't move (15f). */
+.tile {
+  @layer component {
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 48px;
+    padding-inline: 14px;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color var(--transition-fast),
+      background-color var(--transition-fast);
+
+    @media (width >= 768px) {
+      min-block-size: 52px;
+    }
+
+    &:hover {
+      border-color: var(--border-hover);
+    }
+
+    &:has(:checked) {
+      padding-inline: 13px;
+      border: 2px solid var(--primary);
+      background-color: var(--bg-accent);
+      color: var(--link-strong);
+      font-weight: var(--font-weight-bold);
+    }
+
+    &:has(:focus-visible) {
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+/* Hidden, but still in the tile and in the tab order. */
+.input {
+  @layer component {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+}

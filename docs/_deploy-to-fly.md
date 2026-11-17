@@ -12,9 +12,23 @@ fly volume create data --count 1 --region fra --size 1 --app cz-vednemesicnik
 ```
 3. Set secrets for the app.
 ```shell
-fly secrets set SESSION_SECRET=$(openssl rand -hex 32) HONEYPOT_SECRET=$(openssl rand -hex 32) --app cz-vednemesicnik
+fly secrets set \
+  SESSION_SECRET=$(openssl rand -hex 32) \
+  HONEYPOT_SECRET=$(openssl rand -hex 32) \
+  GAS_DONATION_CONFIRMATION_SECRET=$(openssl rand -hex 32) \
+  DONATION_VERIFICATION_SECRET=$(openssl rand -hex 32) \
+  --app cz-vednemesicnik
 ```
-4. Deploy the app.
+`GAS_DONATION_CONFIRMATION_SECRET` must equal the `OWN_SECRET` Script Property of
+`SCRIPT__Donate__Request_Confirmation`: generate it once and set the same value on both sides.
+The app signs each request with it. `DONATION_VERIFICATION_SECRET` makes and checks the code
+that confirms the donor's address, is used for nothing else and shared with no script (#104);
+changing it makes every code on its way invalid, nothing more.
+4. Set the Google Apps Script webhook URL for donation confirmation.
+```shell
+fly secrets set GAS_DONATION_CONFIRMATION_URL="https://script.google.com/..." --app cz-vednemesicnik
+```
+5. Deploy the app.
 ```shell
 fly deploy
 ```

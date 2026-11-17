@@ -1,0 +1,172 @@
+/* The stepper 22 px under the heading, 28 px on a computer, as in the
+   membership application (15d, 15l, 15m). */
+.headlineGroup {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 28px;
+    }
+  }
+}
+
+/* Under the heading, across the content as in 15d (15m). */
+.stepper {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 36px;
+    }
+  }
+}
+
+/* The sentence and the card in the form's 540 px column at the start (15l). */
+.column {
+  @layer route {
+    display: grid;
+    gap: 20px;
+    width: 100%;
+    text-align: start;
+
+    @container page (width >= 940px) {
+      max-inline-size: 540px;
+    }
+  }
+}
+
+.status {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+}
+
+/* The form's card from 15l; inside, the parts 12 px apart as in 15k. */
+.card {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Focused after an error, so it is read and in view; the Callout shows it. */
+.notice {
+  @layer route {
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.text {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+}
+
+.value {
+  @layer route {
+    overflow-wrap: anywhere;
+  }
+}
+
+.codeField {
+  @layer route {
+    width: 100%;
+
+    & input {
+      text-transform: uppercase;
+    }
+  }
+}
+
+/* On a phone the main button spans the column and the links stand centred under
+   it; on a computer all three share a row (15k). */
+.actions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0 28px;
+
+    @container page (width >= 940px) {
+      justify-content: flex-start;
+      gap: 0 20px;
+    }
+  }
+}
+
+/* The form only carries *Poslat znovu*; its button sits in the row. */
+.sendForm {
+  @layer route {
+    display: contents;
+  }
+}
+
+.primary {
+  @layer route {
+    width: 100%;
+    margin-block-end: 4px;
+
+    @container page (width >= 940px) {
+      width: auto;
+      margin-block-end: 0;
+    }
+  }
+}
+
+.link {
+  @layer route {
+    padding-block: 8px;
+    font-size: 15px;
+  }
+}
+
+.replaces {
+  @layer route {
+    margin: -8px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+
+    @container page (width >= 940px) {
+      margin-block-start: -4px;
+      text-align: start;
+    }
+  }
+}
+
+/* After the code, a line with the confirmed address. */
+.verified {
+  @layer route {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+  }
+}
+
+.verifiedIcon {
+  @layer route {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-block-start: 0.3em;
+    color: var(--text-success);
+  }
+}

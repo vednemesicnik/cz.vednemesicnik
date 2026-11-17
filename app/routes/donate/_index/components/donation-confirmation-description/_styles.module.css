@@ -1,0 +1,10 @@
+.description {
+  @layer route {
+    max-inline-size: 720px;
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}

@@ -19,6 +19,8 @@
   @layer component {
     width: 32px;
     height: 32px;
+    /* All white over a PageHero band (see app-header). */
+    filter: var(--app-header-logo-filter, none);
 
     @media (width >= 768px) {
       width: 40px;

@@ -1,10 +1,8 @@
 import { redirect } from 'react-router'
-
-import { formatDate } from '~/utils/format-date'
+import { formatVerificationExpiry } from '~/utils/email-verification/format-verification-expiry'
+import { getVerificationCodeExpiry } from '~/utils/email-verification/get-verification-code-expiry'
 import { formatNumericDate } from '~/utils/format-numeric-date'
-import { formatTime } from '~/utils/format-time'
 import { getHoneypotInputProps } from '~/utils/honeypot.server'
-import { getVerificationCodeExpiry } from '~/utils/membership-application/get-verification-code-expiry'
 import { isEmailVerified } from '~/utils/membership-application/is-email-verified'
 import { isMinorOnDate } from '~/utils/membership-application/is-minor-on-date'
 import {
@@ -15,9 +13,6 @@ import {
 import { getStepPath, parseStepName } from './_step'
 import type { Route } from './+types/route'
 
-// U+00A0, spelled out: in the source it would look like a plain space.
-const NO_BREAK_SPACE = String.fromCodePoint(0xa0)
-
 // A cookie from before the code (#972) has no `verification`, and is expired
 // like a code past its lifetime: the way on is a new code (design 15k).
 const getVerificationState = (
@@ -26,16 +21,15 @@ const getVerificationState = (
 ) => {
   if (isEmailVerified(application)) return { state: 'verified' as const }
 
-  const expiresAt = getVerificationCodeExpiry(application, now)
+  const expiresAt = getVerificationCodeExpiry(
+    application.verification?.issuedAt,
+    now,
+  )
 
   if (expiresAt === null) return { state: 'expired' as const }
 
-  // `7. listopadu 2026 v 18:42`, in Prague time (copy thread zup07jj5), with no
-  // break after the day and after the `v` (15k).
-  const day = formatDate(expiresAt).replace(/^(\d+\.) /, `$1${NO_BREAK_SPACE}`)
-
   return {
-    expiresAt: `${day} v${NO_BREAK_SPACE}${formatTime(expiresAt)}`,
+    expiresAt: formatVerificationExpiry(expiresAt),
     state: 'pending' as const,
   }
 }

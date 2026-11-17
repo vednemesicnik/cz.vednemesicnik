@@ -1,0 +1,157 @@
+/* ===================================================
+   Back link
+   =================================================== */
+.backLink {
+  @layer route {
+    margin-block-end: 0.75rem;
+  }
+}
+
+/* The stepper 22 px under the heading, 28 px on a computer, as in the
+   membership application (15d, 15l, 15m). */
+.headlineGroup {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 28px;
+    }
+  }
+}
+
+/* Under the subheadline, across the content as in 15d (15l). */
+.stepper {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 36px;
+    }
+  }
+}
+
+/* ===================================================
+   Form card
+   =================================================== */
+/* The Callout and the form in one column, 540 px at the start from the page's
+   full width, like the membership application (15l, 15d). */
+.column {
+  @layer route {
+    display: grid;
+    gap: 20px;
+    width: 100%;
+    text-align: start;
+
+    @container page (width >= 940px) {
+      max-inline-size: 540px;
+    }
+  }
+}
+
+.callout {
+  @layer route {
+    margin-block: 0;
+  }
+}
+
+.formCard {
+  @layer route {
+    padding: 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+  }
+}
+
+.formErrorWrapper {
+  @layer route {
+    scroll-margin-top: calc(var(--app-header-height) + 1rem);
+  }
+}
+
+.formError {
+  @layer route {
+    margin-block-end: 1.25rem;
+  }
+}
+
+/* ===================================================
+   Form layout
+   =================================================== */
+.form {
+  @layer route {
+    display: grid;
+    gap: 20px;
+  }
+}
+
+/* ===================================================
+   Two equal columns
+   =================================================== */
+/* First and last name one under the other, as in 15d (15l). */
+.twoColEqual {
+  @layer route {
+    display: grid;
+    gap: 20px;
+  }
+}
+
+/* PSČ 120 px beside Obec (15l). */
+.twoColNarrowFirst {
+  @layer route {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+}
+
+/* ===================================================
+   Accounts
+   =================================================== */
+.accountInputRow {
+  @layer route {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    & > :first-child {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+.addButton {
+  @layer route {
+    justify-self: start;
+  }
+}
+
+/* The personal-data paragraph on its tinted ground (15l, hjjdkbb6). */
+.notice {
+  @layer route {
+    margin: 0;
+    padding: 0.875rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+}
+
+/* ===================================================
+   Submit button
+   =================================================== */
+/* Full width on a phone, as wide as its words from 768 px (15l). */
+.submitButton {
+  @layer route {
+    justify-self: stretch;
+
+    @media (width >= 768px) {
+      justify-self: start;
+    }
+  }
+}

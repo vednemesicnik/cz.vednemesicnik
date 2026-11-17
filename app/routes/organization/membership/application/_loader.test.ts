@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { VERIFICATION_CODE_LIFETIME_MILLISECONDS } from '~/config/membership-application-config'
+import { VERIFICATION_CODE_LIFETIME_MILLISECONDS } from '~/config/email-verification-config'
 import { writeMembershipApplicationCookie } from '~/utils/membership-application/write-membership-application-cookie.server'
 
 import { loader } from './_loader'

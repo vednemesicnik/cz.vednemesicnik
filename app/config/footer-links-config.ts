@@ -30,6 +30,7 @@ export const footerColumns: ReadonlyArray<FooterColumn> = [
     links: [
       { kind: 'internal', label: 'O spolku', to: href('/organization') },
       { kind: 'internal', label: 'Dotace', to: href('/grants') },
+      { kind: 'internal', label: 'Darovat', to: href('/donate') },
     ],
     title: 'Spolek',
   },

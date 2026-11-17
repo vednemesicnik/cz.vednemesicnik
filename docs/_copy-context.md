@@ -227,6 +227,11 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   dar pomůže vydat další číslo“), nebo slibuje akce jako jistotu, je nepravda.
 - **Potvrzení o daru** vystaví spolek na žádost. Údaje ze žádosti se drží jen do vystavení
   a odeslání potvrzení; kdo potvrzení ztratí, požádá znovu.
+- **Žádost o potvrzení o daru se odešle až kódem z e-mailu** (rozhodnuto 13. 11. 2026). Dva kroky,
+  `Údaje` a `Ověření a odeslání`: formulář nic nezapisuje, jen pošle ověřovací kód (8 znaků,
+  24 hodin, nový ruší předchozí) a údaje drží 7 dní jen prohlížeč dárce. Správný kód žádost rovnou
+  odešle. Adresa a kód přitom projdou skriptem, který e-mail posílá, takže věta „spolek vaše údaje
+  nedostane“ je pro adresu nepravda; pravda je `Bez ověření e-mailu se žádost neodešle.`
 - **Web nemá stránku o zpracování osobních údajů.** Každý formulář nese vlastní odstavec nad
   tlačítkem, který musí obstát sám, a žádné zaškrtávací pole. Odkaz typu *Jak s údaji
   zacházíme* nemá kam vést. Dotazy k údajům jdou na jednu společnou adresu
@@ -318,7 +323,9 @@ ukázka účtu stojí na této doméně, s vymyšleným jménem. Skutečné jsou
 které web ukazuje nebo ukazovat bude: `podpora@`, `redakce@`, `dary@`, `udaje@` a `clenstvi@vednemesicnik.cz`. Jmenují
 schránky podle tématu, česky a bez diakritiky. Skutečná je i `oznameni@vednemesicnik.cz`:
 není to kontakt, ale schránka, ze které odcházejí všechny automatické e‑maily webu, se jménem
-odesílatele `Oznámení Vedneměsíčník`. Když uvidíš něco jiného, co vypadá jako skutečný
+odesílatele `Oznámení Vedneměsíčník`. Skutečné jsou i platební údaje spolku, které ukazuje
+stránka Darovat: číslo účtu, IBAN, BIC, variabilní symbol a zpráva pro příjemce. Účet dárce
+v příkladu je vymyšlený. Když uvidíš něco jiného, co vypadá jako skutečný
 záznam, **je to nález** — řekni to.
 
 ## Jak má vypadat odpověď

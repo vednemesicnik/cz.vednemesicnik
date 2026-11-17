@@ -1,3 +1,12 @@
+/* How solid the header is: 0 over a PageHero band at the top of the page, 1
+   everywhere else. Registered, so the scroll-driven reveal below can
+   interpolate it. */
+@property --app-header-solidity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
 .container {
   @layer component {
     grid-area: header;
@@ -6,7 +15,11 @@
     top: 0;
     grid-template-columns: minmax(0, 1fr);
     block-size: var(--app-header-height);
-    background-color: var(--bg-primary);
+    background-color: color-mix(
+      in srgb,
+      var(--bg-primary) calc(var(--app-header-solidity) * 100%),
+      transparent
+    );
     z-index: var(--z-header);
     backdrop-filter: blur(8px);
 
@@ -34,6 +47,33 @@
   @layer variant {
     view-transition-name: app-header;
     transition: none;
+  }
+}
+
+/* Over a PageHero band the header starts see-through, with white text and a
+   white logo, and turns solid over its first two heights of scrolling (15f).
+   Decorative only: browsers without scroll-driven animations keep the solid
+   header. */
+@keyframes header-hero-reveal {
+  from {
+    --app-header-solidity: 0;
+    --app-header-text-primary: var(--text-on-accent);
+    --app-header-text-secondary: var(--text-on-accent);
+    --app-header-logo-filter: brightness(0) invert(1);
+    backdrop-filter: none;
+  }
+  to {
+    --app-header-solidity: 1;
+  }
+}
+
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  :global(html:has([data-page-hero])) .container {
+    @layer variant {
+      animation: header-hero-reveal linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 calc(2 * var(--app-header-height));
+    }
   }
 }
 
@@ -69,7 +109,12 @@
     block-size: var(--app-header-content-height);
     padding: 12px
       max(var(--page-side-padding), (100% - var(--page-max-width)) / 2);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid
+      color-mix(
+        in srgb,
+        var(--border) calc(var(--app-header-solidity) * 100%),
+        transparent
+      );
     align-items: center;
 
     @media (width >= 768px) {

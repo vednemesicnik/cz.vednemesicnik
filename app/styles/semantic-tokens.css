@@ -47,6 +47,9 @@
     /* A foreign logo's plate: white in both schemes, so the logo stays in its
        original colours (gm5nuxml). */
     --partner-logo-bg: light-dark(var(--color-white), var(--color-white));
+    /* Under a payment QR code: white in both schemes, because banking apps
+       read dark modules on a light ground (tfma8scr). */
+    --qr-bg: light-dark(var(--color-white), var(--color-white));
 
     /* ========================================
        Borders
@@ -160,6 +163,10 @@
       var(--color-violet-400)
     );
     --link-strong: light-dark(var(--color-violet-700), var(--color-violet-300));
+    --link-strong-hover: light-dark(
+      var(--color-violet-800),
+      var(--color-violet-200)
+    );
 
     /* ========================================
        Category / tag badges

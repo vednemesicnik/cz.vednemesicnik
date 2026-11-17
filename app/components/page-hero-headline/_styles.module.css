@@ -1,0 +1,10 @@
+/* Restyles the Headline it renders: no gradient in the text and no wave of its
+   own; the band moves under it. */
+.headline {
+  @layer variant {
+    color: var(--text-on-accent);
+    background: none;
+    animation: none;
+    text-wrap: balance;
+  }
+}

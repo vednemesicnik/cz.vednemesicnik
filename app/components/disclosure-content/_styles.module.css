@@ -1,0 +1,8 @@
+.content {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-block-start: 4px;
+  }
+}

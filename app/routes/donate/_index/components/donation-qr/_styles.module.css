@@ -1,0 +1,16 @@
+/* The QR code with the amount, how to use it and the download (15f). */
+.donationQr {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding-block-start: 8px;
+    text-align: center;
+
+    @media (width >= 768px) {
+      gap: 14px;
+      padding-block-start: 0;
+    }
+  }
+}

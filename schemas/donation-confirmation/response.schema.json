@@ -1,0 +1,233 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Envelope": {
+      "additionalProperties": false,
+      "properties": {
+        "payload": {
+          "description": "The request, serialised once and signed as these bytes.",
+          "type": "string"
+        },
+        "signature": {
+          "description": "Lower-case hex HMAC-SHA256 of `${timestamp}.${payload}`.",
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "Unix seconds; at most maxRequestAgeSeconds old.",
+          "type": "integer"
+        }
+      },
+      "required": ["timestamp", "payload", "signature"],
+      "type": "object"
+    },
+    "SendVerificationCodeRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "sendVerificationCode"
+        },
+        "code": {
+          "description": "Eight characters of the app's alphabet, without 0/O and 1/I/L.",
+          "type": "string"
+        },
+        "email": {
+          "description": "The donor's address; the code is mailed here.",
+          "type": "string"
+        }
+      },
+      "required": ["action", "email", "code"],
+      "type": "object"
+    },
+    "SendVerificationCodeResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ok": {
+              "const": true
+            }
+          },
+          "required": ["ok"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "stale_timestamp",
+                "missing_fields",
+                "invalid_email",
+                "mail_send_failed",
+                "server_error"
+              ],
+              "type": "string"
+            },
+            "mailError": {
+              "description": "Alongside mail_send_failed: why the mail service did not send.",
+              "enum": [
+                "unauthorized",
+                "stale_timestamp",
+                "invalid_request",
+                "missing_fields",
+                "invalid_recipient",
+                "too_many_recipients",
+                "attachment_too_large",
+                "server_error",
+                "render_failed",
+                "not_configured",
+                "unreachable",
+                "bad_response"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": false
+            }
+          },
+          "required": ["ok", "error"],
+          "type": "object"
+        }
+      ]
+    },
+    "SubmitRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "accounts": {
+          "description": "Account number(s) the donation came from, comma-separated: each a Czech account number or an IBAN without spaces.",
+          "type": "string"
+        },
+        "action": {
+          "const": "submit"
+        },
+        "city": {
+          "description": "City.",
+          "type": "string"
+        },
+        "companyName": {
+          "description": "Required for entity.",
+          "type": "string"
+        },
+        "dateOfBirth": {
+          "description": "DD.MM.YYYY. Required for individual.",
+          "type": "string"
+        },
+        "email": {
+          "description": "Donor address, confirmed by the code; the acknowledgement goes here.",
+          "type": "string"
+        },
+        "firstName": {
+          "description": "Required for individual / sole_trader.",
+          "type": "string"
+        },
+        "ico": {
+          "description": "Eight digits. Required for sole_trader / entity.",
+          "type": "string"
+        },
+        "lastName": {
+          "description": "Required for individual / sole_trader.",
+          "type": "string"
+        },
+        "note": {
+          "description": "Optional donor note, at most 1000 characters.",
+          "type": "string"
+        },
+        "requestId": {
+          "description": "Reference code YYYY-XXXXXX, the idempotency key. The year prefix picks the tab and is one of the previous four years.",
+          "type": "string"
+        },
+        "street": {
+          "description": "Street and number.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Donor type. Per-type required fields (enforced server-side): \"individual\" → firstName + lastName + dateOfBirth; \"sole_trader\" → firstName + lastName + ico; \"entity\" → companyName + ico.",
+          "enum": ["individual", "sole_trader", "entity"],
+          "type": "string"
+        },
+        "zip": {
+          "description": "Five digits, no space.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "requestId",
+        "type",
+        "email",
+        "accounts",
+        "street",
+        "city",
+        "zip"
+      ],
+      "type": "object"
+    },
+    "SubmitResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "duplicate": {
+              "const": true,
+              "description": "The requestId was already stored by an earlier attempt; nothing was stored or sent this time."
+            },
+            "mailError": {
+              "description": "Present when the request was stored but the best-effort acknowledgement e-mail could not be sent.",
+              "enum": [
+                "unauthorized",
+                "stale_timestamp",
+                "invalid_request",
+                "missing_fields",
+                "invalid_recipient",
+                "too_many_recipients",
+                "attachment_too_large",
+                "server_error",
+                "render_failed",
+                "not_configured",
+                "unreachable",
+                "bad_response"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": true
+            },
+            "requestId": {
+              "type": "string"
+            }
+          },
+          "required": ["ok", "requestId"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "stale_timestamp",
+                "missing_fields",
+                "invalid_email",
+                "busy",
+                "server_error"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": false
+            }
+          },
+          "required": ["ok", "error"],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "description": "Contract for the Vedneměsíčník donation request-confirmation web app. POST an Envelope: { timestamp, payload, signature }, where payload is a SendVerificationCodeRequest or a SubmitRequest serialised once and signature the lower-case hex HMAC-SHA256 of `${timestamp}.${payload}` with OWN_SECRET. The app sends submit only after the donor typed the code. Storing the request is primary; the acknowledgement e-mail is best-effort, so a failed send still answers ok:true with the reason in mailError.",
+  "title": "RequestConfirmation"
+}
