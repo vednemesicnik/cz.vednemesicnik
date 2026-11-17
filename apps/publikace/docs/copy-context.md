@@ -81,9 +81,11 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
 - **Aplikace vyká** a mluví neosobně, bez omluv. Nemá já ani osobnost.
 - **E-maily a stránky z odkazu mluví za redakci** a smějí mít _my_ („Na e-mail jsme poslali
   licence.“). Hlášky aplikace _my_ nemají.
-- **E-maily vykají** jako aplikace a začínají „Dobrý den“: uvítání autorů, žádost o souhlas
-  s díly, e-maily korektorům. Dnešní e-mail s redakční doložkou tyká a začíná „Ahoj“, stejně
-  jako dnešní uvítání autorů. Vzorem není.
+- **E-maily vykají, ale přátelsky.** Čtou je členové redakce, se kterými se známe, a zároveň
+  mluví za časopis: tón je slušný, reprezentativní a trochu formální, ne úřední. Začínají „Dobrý
+  den“ jako e-maily v návrhu: uvítání autorů, žádost o souhlas s díly, e-maily korektorům.
+  Dnešní e-mail s redakční doložkou tyká a začíná „Ahoj“, stejně jako dnešní uvítání autorů.
+  Vzorem není.
 - **Dialog v dokumentu Google mluví hlasem aplikace.** Co se ukáže po kliknutí v menu
   _Publikace_, vrací aplikace, takže dialog vyká a nemá _my_. Čte ho autor nebo redaktor, který
   v aplikaci nic nenastaví: věta mu říká, co udělat sám, ne co má opravit šéfredakce.
