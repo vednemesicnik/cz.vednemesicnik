@@ -21,13 +21,8 @@
     margin-block-start: calc(-1 * var(--app-header-height));
     padding-inline: var(--page-side-padding);
     padding-block: calc(var(--app-header-height) + 1.75rem) 15rem;
-    background-image: linear-gradient(
-      135deg,
-      var(--color-violet-600) 0 25%,
-      var(--color-emerald-700) 75% 100%
-    );
-    background-size: 200% 200%;
-    animation: base-drift 31s ease-in-out infinite;
+    /* Under the base layer, for the moment before it paints. */
+    background-color: var(--color-violet-700);
 
     @media (width >= 768px) {
       padding-block-start: calc(var(--app-header-height) + 5.5rem);
@@ -69,11 +64,34 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      &,
       &::before,
       &::after {
         animation: none;
       }
+    }
+  }
+}
+
+/* The base gradient on a layer twice the band's size, moved by transform: the
+   band is never repainted while it drifts, only composited. Below the blobs. */
+.base {
+  @layer component {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 200%;
+    block-size: 200%;
+    z-index: -2;
+    pointer-events: none;
+    background-image: linear-gradient(
+      135deg,
+      var(--color-violet-600) 0 25%,
+      var(--color-emerald-700) 75% 100%
+    );
+    animation: base-drift 31s ease-in-out infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
     }
   }
 }
@@ -133,20 +151,21 @@
   }
 }
 
-/* The base drifts in 2D, so violet and green leave their corners. */
+/* The base drifts in 2D, so violet and green leave their corners. The layer is
+   twice the band, so moving it by half its size shows its far corner. */
 @keyframes base-drift {
   0%,
   100% {
-    background-position: 0% 100%;
+    transform: translate(0%, -50%);
   }
   25% {
-    background-position: 55% 30%;
+    transform: translate(-27.5%, -15%);
   }
   50% {
-    background-position: 100% 0%;
+    transform: translate(-50%, 0%);
   }
   75% {
-    background-position: 30% 70%;
+    transform: translate(-15%, -35%);
   }
 }
 

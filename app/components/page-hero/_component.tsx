@@ -17,6 +17,7 @@ type Props = {
 export const PageHero = ({ children }: Props) => {
   return (
     <section className={styles.pageHero} data-page-hero>
+      <div aria-hidden={true} className={styles.base} />
       {children}
       <div aria-hidden={true} className={styles.glow} />
     </section>
