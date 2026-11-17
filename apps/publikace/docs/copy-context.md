@@ -29,7 +29,9 @@ Psaní a korektura probíhají v dokumentu Google, mimo aplikaci. Kdo text dopí
 redaktor), **předá ho ke korektuře** v dokumentu, v menu _Publikace › Předat ke korektuře_.
 Šéfredakce může předání nastavit i zrušit v aplikaci. Souhlas s finální verzí textu i
 s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail. Jiná odpověď jde ke kontrole
-šéfredakci.
+šéfredakci. Autor článku tím souhlasí s **redakční doložkou** v e-mailu, tedy nejen s textem
+finální verze: i s jejím zveřejněním, s licencí pro časopis, s jazykovými úpravami a zkrácením
+a s tvarem jména v podpisu.
 
 ## Termíny: co se nesmí přejmenovat
 
@@ -41,11 +43,23 @@ s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail. Ji
 | **obrazové dílo**, **dílo** | Jeden nahraný obrázek. V nadpisech „obrazová díla“, v běžné větě „dílo“.            |
 | **poskytovatel**            | Kdo dílo nahrál a dává souhlas. **Autor díla** je jen jméno do podpisu.             |
 | **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.             |
+| **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                 |
 | **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly.                                     |
 | **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                      |
 | **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                       |
 | **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                   |
 | **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.              |
+
+**Redakční doložka** má dva významy a oba se jmenují stejně:
+
+- **Text v e-mailu**, který dostane každý autor článku s PDF finální verze. Autor jím potvrzuje,
+  že se s verzí seznámil a souhlasí s jejím zveřejněním, že je autorem a nikdo jiný nemá k dílu
+  práva, která by užití bránila, že spolku dává bezúplatnou nevýhradní licenci (tisk, web,
+  archiv, sociální sítě), že souhlasí s jazykovými úpravami a zkrácením a s uvedením jména
+  v daném tvaru. Je to licence. Návrh tenhle e-mail nekreslí, posílá ho úloha na pozadí.
+- **Záznam souhlasu jednoho autora.** Každý autor má k článku svou doložku se stavem (_K
+  odeslání_, _Čeká na odpověď_…). V Evidenci je list _Redakční doložky_ s řádkem za každého
+  autora a rozbalený řádek článku v detailu vydání ukazuje doložky autorů po jednom.
 
 ## Stavy: přesná jména
 
@@ -67,6 +81,9 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
 - **Aplikace vyká** a mluví neosobně, bez omluv. Nemá já ani osobnost.
 - **E-maily a stránky z odkazu mluví za redakci** a smějí mít _my_ („Na e-mail jsme poslali
   licence.“). Hlášky aplikace _my_ nemají.
+- **E-maily vykají** jako aplikace a začínají „Dobrý den“: uvítání autorů, žádost o souhlas
+  s díly, e-maily korektorům. Dnešní e-mail s redakční doložkou tyká a začíná „Ahoj“, stejně
+  jako dnešní uvítání autorů. Vzorem není.
 - **Dialog v dokumentu Google mluví hlasem aplikace.** Co se ukáže po kliknutí v menu
   _Publikace_, vrací aplikace, takže dialog vyká a nemá _my_. Čte ho autor nebo redaktor, který
   v aplikaci nic nenastaví: věta mu říká, co udělat sám, ne co má opravit šéfredakce.
