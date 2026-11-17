@@ -51,8 +51,7 @@ export function openDatabase(path: string = databasePath()): OpenDatabase {
 /**
  * Applies every pending migration in `db/migrations`, in id order, in one batch.
  *
- * Called by `server.ts` before it listens, so no request meets an old schema. The directory
- * is empty until accounts and sessions arrive together with sign-in (#8); the run still
+ * Called by `server.ts` before it listens, so no request meets an old schema. The run also
  * creates the journal, which is what `remix db status` reads.
  */
 export async function migrateDatabase(database: Database): Promise<void> {

@@ -34,6 +34,10 @@
 
 .vdm-btn--sm { padding-block: 6px; padding-inline: 14px; font-size: var(--font-size-sm); }
 .vdm-btn--lg { padding-block: 14px; padding-inline: 30px; font-size: var(--font-size-lg); }
+/* Full width (fullWidth): the button spans its container, also when a form or another wrapper holds it.
+   For the one action that ends a single-column form or page, on every width; the label stays centred
+   and does not wrap. box-sizing keeps a link button (<a>) inside the column. Rozhodnuto 17. 11. 2026 (fvdpd3ps). */
+.vdm-btn--full-width { box-sizing: border-box; width: 100%; }
 
 .vdm-btn--primary { background-color: var(--primary); color: var(--text-on-accent); }
 .vdm-btn--primary:hover:not(:disabled):not(:focus-visible) { background-color: var(--primary-hover); }
@@ -450,6 +454,11 @@
 .vdm-sidebar__row { margin: 0 -8px; padding: 7px 8px; border-radius: var(--radius-lg); transition: background-color var(--transition-fast), color var(--transition-fast); }
 .vdm-sidebar__row:hover { background: var(--bg-tertiary); }
 .vdm-sidebar__row + .vdm-sidebar__row { margin-top: -8px; }
+/* Odhlásit se posts a form, never a link (jc95okgx): the form adds no box and the button inside takes the
+   row's look, so a button row and a link row are one box with one hover and line up the same way. */
+.vdm-sidebar__form { display: contents; }
+button.vdm-sidebar__row { appearance: none; border: 0; background: transparent; font-family: inherit; line-height: inherit; text-align: left; cursor: pointer; }
+.vdm-sidebar__row + .vdm-sidebar__form > .vdm-sidebar__row { margin-top: -8px; }
 /* Nastavení is a page, so it has an active state like an item (u6432mlm); Odhlásit se is an action and has none. */
 .vdm-sidebar__account--active, .vdm-sidebar__account--active:hover { background: var(--primary-light); color: var(--link-strong); font-weight: var(--font-weight-semibold); }
 /* Below 768px: whole screen from Menu in AdminTopBar (tbi5qpq9). */
@@ -775,6 +784,9 @@ a.vdm-pagination__item:hover { background: var(--bg-tertiary); }
 .vdm-signin__note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-secondary); text-align: center; text-wrap: pretty; }
 .vdm-signin__note--quiet { color: var(--text-tertiary); }
 .vdm-signin .vdm-link { align-self: center; font-size: 13px; }
+/* Every button in sign-in content spans the card, also when a form or another wrapper holds it; one in a Callout keeps its width.
+   The heading, the sentences and the notes are centred, and a full-width button is centred with them. Rozhodnuto 17. 11. 2026 (wrwd8vx1). */
+.vdm-signin .vdm-btn:not(.vdm-callout .vdm-btn) { box-sizing: border-box; width: 100%; }
 .vdm-signin--page { max-width: none; padding: 24px 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 @media (max-width: 767.98px) { .vdm-signin:not(.vdm-signin--card) { max-width: none; padding: 24px 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; } }
 /* Standalone links in sign-in content (np5evn40): wherever there is no card, a 44 px touch target with the text in the middle; look unchanged. A link inside a sentence stays text height. */

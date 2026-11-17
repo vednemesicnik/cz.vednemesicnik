@@ -2,8 +2,17 @@ import * as http from 'node:http'
 import { createRequestListener } from 'remix/node-fetch-server'
 
 import { assetServer } from './app/assets.ts'
+import {
+  appOrigin,
+  authorizedDomain,
+  googleCredentials,
+  initialAdminEmail,
+} from './app/auth/environment.server.ts'
+import { createAccessDirectory } from './app/data/access.server.ts'
 import { defaultDatabase, migrateDatabase } from './app/data/database.server.ts'
-import { router } from './app/router.ts'
+import { normalizeEmail } from './app/domain/access.ts'
+import { now } from './app/domain/time.ts'
+import { createAppRouter } from './app/router.ts'
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100
 
@@ -22,6 +31,25 @@ const isHmr = process.env.REMIX_NODE_HMR === '1'
  */
 const database = defaultDatabase()
 await migrateDatabase(database.database)
+
+/*
+ * The first administrator, only while the access list has no named account (`03`, row 26).
+ * Production refuses to start when nobody could ever change the list, and the three reads before
+ * it refuse a missing domain, origin or Google client there, so a deployment that could let
+ * nobody in fails here rather than at somebody's first sign-in.
+ */
+authorizedDomain()
+appOrigin()
+googleCredentials()
+const initialAdmin = normalizeEmail(initialAdminEmail())
+const directory = createAccessDirectory(database.database)
+if (initialAdmin !== '') {
+  await directory.seedInitialAdmin(initialAdmin, now())
+} else if (process.env.NODE_ENV === 'production' && (await directory.listAccounts()).length === 0) {
+  throw new Error('Přístup nemá žádný jmenovaný účet a chybí INITIAL_ADMIN_EMAIL.')
+}
+
+const router = createAppRouter({ database: database.database })
 
 const server = http.createServer(
   createRequestListener(
