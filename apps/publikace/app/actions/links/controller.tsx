@@ -56,8 +56,15 @@ type FormState = {
   formKey: string
   isClosed?: boolean
   message?: SubmitMessage
+  /** Set on an answer to a send, so the island focuses what stands above the form. */
+  messageKey?: string
   name: string
   warning?: PageWarning
+}
+
+/** What an answer to a send carries for the island to focus: something new every time. */
+function answered(state: FormState): FormState {
+  return { ...state, messageKey: crypto.randomUUID() }
 }
 
 function articlesOf(context: LinkContext): ArticlesContext {
@@ -134,6 +141,7 @@ function renderForm(
       isClosed={state.isClosed ?? false}
       issueName={issue.name}
       message={state.message}
+      messageKey={state.messageKey}
       name={state.name}
       preview={previewOf(origin, issue)}
       warning={state.warning}
@@ -217,7 +225,7 @@ export default function createLinksController() {
           return renderForm(
             context,
             issue,
-            { ...form, isClosed: true, message: LINK_GONE_ON_SUBMIT },
+            answered({ ...form, isClosed: true, message: LINK_GONE_ON_SUBMIT }),
             { status: GONE },
           )
         }
@@ -260,45 +268,36 @@ export default function createLinksController() {
             return renderForm(
               context,
               issue,
-              { ...kept, isClosed: true, message: LINK_GONE_ON_SUBMIT },
+              answered({ ...kept, isClosed: true, message: LINK_GONE_ON_SUBMIT }),
               { status: GONE },
             )
           case 'folder-gone':
-            return renderForm(
-              context,
-              issue,
-              { ...kept, warning: 'folder-gone' },
-              { status: IN_THE_WAY },
-            )
+            return renderForm(context, issue, answered({ ...kept, warning: 'folder-gone' }), {
+              status: IN_THE_WAY,
+            })
           case 'limited':
             return renderForm(
               context,
               issue,
-              { ...kept, message: LIMIT_REACHED_ON_SUBMIT },
+              answered({ ...kept, message: LIMIT_REACHED_ON_SUBMIT }),
               { status: IN_THE_WAY },
             )
           case 'daily-cap':
-            return renderForm(
-              context,
-              issue,
-              { ...kept, message: DAILY_CAP_ON_SUBMIT },
-              { status: IN_THE_WAY },
-            )
+            return renderForm(context, issue, answered({ ...kept, message: DAILY_CAP_ON_SUBMIT }), {
+              status: IN_THE_WAY,
+            })
           case 'unavailable':
             return renderForm(
               context,
               issue,
-              { ...kept, message: DRIVE_UNAVAILABLE_ON_SUBMIT },
+              answered({ ...kept, message: DRIVE_UNAVAILABLE_ON_SUBMIT }),
               { status: IN_THE_WAY },
             )
           case 'disconnected':
           case 'not-connected':
-            return renderForm(
-              context,
-              issue,
-              { ...kept, warning: 'disconnected' },
-              { status: IN_THE_WAY },
-            )
+            return renderForm(context, issue, answered({ ...kept, warning: 'disconnected' }), {
+              status: IN_THE_WAY,
+            })
         }
       },
     },

@@ -73,6 +73,21 @@ function formKeyOf(html: string): string {
   return /name="formKey" type="hidden" value="([^"]+)"/.exec(html)?.[1] ?? ''
 }
 
+/** The text of the element the island focuses after a send, or `null` when it is not drawn. */
+function messageOf(html: string): string | null {
+  let match = /<div ([^>]*id="article-message"[^>]*)>([\s\S]*?)<form/.exec(html)
+  if (match === null) return null
+  assert.match(match[1] ?? '', /tabindex="-1"/)
+  return textOf(match[2] ?? '')
+}
+
+/** The page's heading, asserted to be one the island can focus. */
+function focusableHeadingOf(html: string): string {
+  let match = /<h1 ([^>]*)>([\s\S]*?)<\/h1>/.exec(html)
+  assert.match(match?.[1] ?? '', /tabindex="-1"/)
+  return textOf(match?.[2] ?? '').trim()
+}
+
 describe('the page behind the link (20a)', () => {
   it('draws the form for the issue, without a cookie and with noindex', () =>
     withLink(async ({ key, visitor }) => {
@@ -349,5 +364,69 @@ describe('the link and the articles in the detail (12a, 12c, 02d)', () => {
       let refused = await editor.send('/issues/VDM_2026_5/link/renew', new URLSearchParams())
       assert.equal(refused.status, 403)
       assert.equal((await visitor.get(`/l/${key}/article`)).status, 200)
+    }))
+})
+
+describe('where focus goes after a send (20c, 20d)', () => {
+  it('draws the done page’s heading focusable, also for a resend', () =>
+    withLink(async ({ key, visitor }) => {
+      let body = articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA])
+      let created = await (await visitor.send(`/l/${key}/article`, body)).text()
+      assert.equal(focusableHeadingOf(created), 'Článek je založený')
+
+      let again = await (await visitor.send(`/l/${key}/article`, body)).text()
+      assert.equal(focusableHeadingOf(again), 'Článek je založený')
+    }))
+
+  it('marks the refusal above the form, with a new key for every answer', () =>
+    withLink(async ({ app, key, visitor }) => {
+      app.drive.failStep('copy')
+      let body = articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA])
+      let first = await (await visitor.send(`/l/${key}/article`, body)).text()
+      let second = await (await visitor.send(`/l/${key}/article`, body)).text()
+
+      assert.ok(messageOf(first)?.includes('Článek se nevytvořil.'))
+      let keys = [first, second].map((html) => /"messageKey":"([^"]+)"/.exec(html)?.[1])
+      assert.ok(keys[0] !== undefined && keys[1] !== undefined)
+      assert.notEqual(keys[0], keys[1])
+    }))
+
+  it('marks the refusal when the link was replaced and the button is gone', () =>
+    withLink(async ({ editor, key, visitor }) => {
+      await editor.post('/issues/VDM_2026_5/link/renew', {}, '/issues/VDM_2026_5/link/renew')
+      let html = await (
+        await visitor.send(
+          `/l/${key}/article`,
+          articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA]),
+        )
+      ).text()
+      assert.ok(messageOf(html)?.includes('Napište šéfredakci o aktuální odkaz.'))
+    }))
+
+  it('marks the warning when a send meets a disconnected account, and nothing on opening', () =>
+    withLink(
+      async ({ key, visitor }) => {
+        let opened = await (await visitor.get(`/l/${key}/article`)).text()
+        assert.equal(messageOf(opened), null)
+
+        let sent = await (
+          await visitor.send(
+            `/l/${key}/article`,
+            articleForm(formKeyOf(opened), 'Školní jídelna po roce', [TEREZA]),
+          )
+        ).text()
+        assert.ok(
+          messageOf(sent)?.includes('Zkuste článek vytvořit později, nebo dejte vědět šéfredakci.'),
+        )
+      },
+      { isConnected: false },
+    ))
+
+  it('marks nothing above the form for field errors, which the summary takes', () =>
+    withLink(async ({ key, visitor }) => {
+      let html = await (
+        await visitor.send(`/l/${key}/article`, articleForm(crypto.randomUUID(), '', [TEREZA]))
+      ).text()
+      assert.equal(messageOf(html), null)
     }))
 })

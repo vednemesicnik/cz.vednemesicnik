@@ -37,12 +37,17 @@ export type ArticleFormProps = {
   formKey: string
   /** The link stopped working meanwhile: the fields stay to be copied, the button goes (`20c`). */
   isClosed: boolean
+  /** Changes with every answer that put a message above the form, so the island can focus it. */
+  messageKey: string | null
   name: string
 }
 
 /** The names the server reads the cards by, one pair per card in the cards' order. */
 export const AUTHOR_NAME_FIELD = 'author-name'
 export const AUTHOR_EMAIL_FIELD = 'author-email'
+
+/** The id of the Callout above the form, which the island focuses after a refused send. */
+export const MESSAGE_ID = 'article-message'
 
 type Card = AuthorInput & { id: number }
 
@@ -124,6 +129,7 @@ export const ArticleForm = clientEntry(
     let cards: Card[] = handle.props.authors.map((author) => ({ ...author, id: nextId++ }))
     let errors: readonly FieldError[] = handle.props.errors
     let shownErrors = handle.props.errors
+    let shownMessage = handle.props.messageKey
     let isPending = false
     let form: HTMLFormElement | null = null
     let summary: HTMLElement | null = null
@@ -242,6 +248,10 @@ export const ArticleForm = clientEntry(
         shownErrors = handle.props.errors
         errors = handle.props.errors
         if (errors.length > 0) handle.queueTask(() => summary?.focus())
+      }
+      if (handle.props.messageKey !== shownMessage) {
+        shownMessage = handle.props.messageKey
+        if (shownMessage !== null) focusById(MESSAGE_ID)
       }
       let isFull = cards.length >= MAX_AUTHORS
 

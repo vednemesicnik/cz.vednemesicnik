@@ -23,6 +23,7 @@ import {
 import { Callout } from '../../../ui/callout/component.tsx'
 import { LinkPage, type LinkPreview } from '../../../ui/link-page/component.tsx'
 import type { PageWarning } from '../article-page.tsx'
+import { ArrivalHeading } from '../public/arrival-heading.tsx'
 import {
   type ArtworkCard,
   ArtworksForm,
@@ -176,9 +177,7 @@ export function ArtworksSentPage(handle: Handle<ArtworksSentPageProps>) {
               <path d="M20 6 9 17l-5-5" />
             </svg>
           </span>
-          <h1 class="vdm-page-title" style={{ margin: 0 }}>
-            {SENT_TITLE}
-          </h1>
+          <ArrivalHeading text={SENT_TITLE} />
           <p mix={leadStyle}>{sentLead(artworks.length, articleName)}</p>
         </div>
         {isRefused ? (

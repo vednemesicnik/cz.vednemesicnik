@@ -21,7 +21,8 @@ import {
 } from '../../domain/article.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { LinkPage, type LinkPreview } from '../../ui/link-page/component.tsx'
-import { ArticleForm } from './public/article-form.tsx'
+import { ArticleForm, MESSAGE_ID } from './public/article-form.tsx'
+import { ArrivalHeading } from './public/arrival-heading.tsx'
 
 /** Why the page cannot create an article right now, said under the lead when it opens (`20a`). */
 export type PageWarning = 'disconnected' | 'folder-gone'
@@ -35,6 +36,8 @@ export type ArticleFormPageProps = {
   issueName: string
   /** The answer to a send that did not create the article, above the form (`20c`). */
   message?: SubmitMessage
+  /** Set on an answer to a send, so the island focuses what stands above the form. */
+  messageKey?: string
   name: string
   preview: LinkPreview
   warning?: PageWarning
@@ -103,8 +106,19 @@ function warningText(warning: PageWarning): string {
 /** `20a`–`20c`: the form, with what stands in the way above it. */
 export function ArticleFormPage(handle: Handle<ArticleFormPageProps>) {
   return () => {
-    let { action, authors, errors, formKey, isClosed, issueName, message, name, preview, warning } =
-      handle.props
+    let {
+      action,
+      authors,
+      errors,
+      formKey,
+      isClosed,
+      issueName,
+      message,
+      messageKey,
+      name,
+      preview,
+      warning,
+    } = handle.props
 
     return (
       <LinkPage preview={preview} title={ARTICLE_PAGE_TITLE}>
@@ -117,9 +131,16 @@ export function ArticleFormPage(handle: Handle<ArticleFormPageProps>) {
           </h1>
           <p mix={leadStyle}>{ARTICLE_PAGE_LEAD}</p>
         </div>
-        {warning === undefined ? null : <Callout tone="warning">{warningText(warning)}</Callout>}
+        {warning === undefined ? null : message === undefined && messageKey !== undefined ? (
+          /* A send that met the warning has no other message: the warning is what to focus. */
+          <div id={MESSAGE_ID} role="alert" tabIndex={-1}>
+            <Callout tone="warning">{warningText(warning)}</Callout>
+          </div>
+        ) : (
+          <Callout tone="warning">{warningText(warning)}</Callout>
+        )}
         {message === undefined ? null : (
-          <div role="alert">
+          <div id={MESSAGE_ID} role="alert" tabIndex={-1}>
             <Callout tone="error">
               <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
                 {message.title}
@@ -134,6 +155,7 @@ export function ArticleFormPage(handle: Handle<ArticleFormPageProps>) {
           errors={errors}
           formKey={formKey}
           isClosed={isClosed}
+          messageKey={messageKey ?? null}
           name={name}
         />
       </LinkPage>
@@ -171,9 +193,7 @@ export function ArticleCreatedPage(handle: Handle<ArticleCreatedPageProps>) {
               <path d="M20 6 9 17l-5-5" />
             </svg>
           </span>
-          <h1 class="vdm-page-title" style={{ margin: 0 }}>
-            {CREATED_TITLE}
-          </h1>
+          <ArrivalHeading text={CREATED_TITLE} />
           <p mix={leadStyle}>
             {createdLead(articleName, issueName)}
             {isEveryWelcomeSent ? ` ${ALL_WELCOMES_SENT}` : null}
