@@ -4,7 +4,7 @@ import { compression } from 'remix/middleware/compression'
 import { Auth } from 'remix/middleware/auth'
 import { csrf } from 'remix/middleware/csrf'
 import { formData } from 'remix/middleware/form-data'
-import { logger } from 'remix/middleware/logger'
+import type { logger } from 'remix/middleware/logger'
 import { session } from 'remix/middleware/session'
 import { staticFiles } from 'remix/middleware/static'
 import { createRouter, type MiddlewareContext, type RequestContext } from 'remix/router'
@@ -60,7 +60,11 @@ import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
 import { loadIssues } from './middleware/issues.server.ts'
-import { publicLinkHeaders, skipForPublicLinks } from './middleware/public-link.server.ts'
+import {
+  logRequests,
+  publicLinkHeaders,
+  skipForPublicLinks,
+} from './middleware/public-link.server.ts'
 import { render } from './middleware/render.tsx'
 import { takeToasts } from './middleware/toasts.server.ts'
 import { routes } from './routes.ts'
@@ -213,8 +217,8 @@ export function createAppRouter(dependencies: AppDependencies) {
   let router = createRouter({
     /*
      * Ordering matters:
-     *   - `logger()` outermost, so what it reports is the status and duration the browser saw,
-     *     a static file and a refusal included,
+     *   - `logRequests()` outermost, so what it reports is the status and duration the browser
+     *     saw, a static file and a refusal included; a shared link's key stays out of the line,
      *   - `compression()` above the static files, because the stylesheet and the fonts are the
      *     largest things the app sends,
      *   - the fast exits next — `staticFiles()` and `serveAssets()` — so no file request ever
@@ -236,7 +240,7 @@ export function createAppRouter(dependencies: AppDependencies) {
      * `noindex`, and sits right under the logger so that it marks every one of them.
      */
     middleware: [
-      logger(),
+      logRequests(),
       publicLinkHeaders(),
       compression(),
       staticFiles('./public', { index: false }),
