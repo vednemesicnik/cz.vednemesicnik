@@ -7,10 +7,13 @@ import {
   type StoredEditor,
 } from './auth/session.server.ts'
 import { type AccessDirectory, createAccessDirectory } from './data/access.server.ts'
+import { createArticleStore } from './data/articles.server.ts'
 import { createDriveAccountStore, type DriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
+import { createLinkStore } from './data/links.server.ts'
 import { migrateDatabase, type OpenDatabase, openDatabase } from './data/database.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
+import type { Link } from './domain/link.ts'
 import { now } from './domain/time.ts'
 import { createFakeDrive, type FakeDrive } from './drive/fake-drive.server.ts'
 import type { MailMessage } from './mail/mailer.server.ts'
@@ -57,6 +60,8 @@ export type TestBrowser = {
   post(path: string, fields: Record<string, string>, from?: string): Promise<Response>
   /** `POST` of a body as it is, repeated fields included, with no CSRF token: a public form. */
   send(path: string, body: URLSearchParams): Promise<Response>
+  /** `POST` of raw bytes with the headers given, as the artworks page sends a file. */
+  sendBytes(path: string, body: Uint8Array<ArrayBuffer>, headers: HeadersInit): Promise<Response>
   /** Keeps a cookie as a `Set-Cookie` value would give it. */
   setCookie(serialized: string): void
   /** Signs in as somebody already allowed, the way the Google callback would leave it. */
@@ -149,6 +154,17 @@ export async function createTestApp(): Promise<TestApp> {
           await router.fetch(new Request(new URL(path, ORIGIN), { body, headers, method: 'POST' })),
         )
       },
+      async sendBytes(path, body, headers) {
+        let all = new Headers(headers)
+        all.set('Origin', ORIGIN)
+        if (!all.has('Content-Length')) all.set('Content-Length', String(body.byteLength))
+        if (jar.size > 0) all.set('Cookie', cookieHeader())
+        return keep(
+          await router.fetch(
+            new Request(new URL(path, ORIGIN), { body, headers: all, method: 'POST' }),
+          ),
+        )
+      },
       setCookie(serialized) {
         keep(new Response(null, { headers: { 'Set-Cookie': serialized } }))
       },
@@ -221,4 +237,37 @@ export async function seedIssue(
   await issues.setFolder(id, 'print', `f-${name}-print`)
   if (options.isComplete !== false) await issues.complete(id, SEEDED_AT)
   return id
+}
+
+/**
+ * A created article of the issue, with its folder on the fake drive and its link for artworks, as
+ * the article page leaves it.
+ */
+export async function seedArticle(
+  app: TestApp,
+  issueId: number,
+  name = 'Školní jídelna po roce',
+): Promise<{ articleId: number; folderId: string; link: Link }> {
+  let articles = createArticleStore(app.database)
+  let links = createLinkStore(app.database)
+  let articleLink = await links.articleLinkOf(issueId)
+  if (articleLink === null) throw new Error('The issue has no link for articles.')
+  let issue = await createIssueStore(app.database).findById(issueId)
+  let { attempt } = await articles.startAttempt({
+    at: SEEDED_AT,
+    authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
+    formKey: `seeded-${issueId}-${crypto.randomUUID()}`,
+    issueId,
+    linkId: articleLink.id,
+    name,
+  })
+  let folderId = `f-article-${attempt.id}`
+  app.drive.seedFolder(folderId, name, issue?.folderIds.articles ?? '')
+  await articles.setDriveId(attempt.id, 'folder', folderId)
+  await articles.setDriveId(attempt.id, 'doc', `d-article-${attempt.id}`)
+  await articles.setDriveId(attempt.id, 'meta', `m-article-${attempt.id}`)
+  await articles.commit(attempt.id, SEEDED_AT)
+  let link = (await links.artworksLinksOf(issueId)).get(attempt.id)
+  if (link === undefined) throw new Error('The article has no link for artworks.')
+  return { articleId: attempt.id, folderId, link }
 }

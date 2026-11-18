@@ -93,28 +93,38 @@ export function createArticleFiles(options: ArticleFilesOptions): ArticleFiles {
 
     async findTagged(parentId, attempt) {
       let what = 'the attempt files were not looked up'
-      let url = new URL(FILES_ENDPOINT)
-      url.searchParams.set(
-        'q',
-        `'${escapeQuery(parentId)}' in parents and appProperties has { key='${ATTEMPT_PROPERTY}' and value='${escapeQuery(attempt)}' }`,
-      )
-      url.searchParams.set('fields', 'files(id,trashed)')
-      url.searchParams.set('supportsAllDrives', 'true')
-      url.searchParams.set('includeItemsFromAllDrives', 'true')
-      url.searchParams.set('pageSize', '20')
+      let found: string[] = []
+      let pageToken: string | null = null
+      /* Every page: a batch of artworks alone tags forty files, Docs and PDFs. */
+      do {
+        let url = new URL(FILES_ENDPOINT)
+        url.searchParams.set(
+          'q',
+          `'${escapeQuery(parentId)}' in parents and appProperties has { key='${ATTEMPT_PROPERTY}' and value='${escapeQuery(attempt)}' } and trashed = false`,
+        )
+        url.searchParams.set('fields', 'nextPageToken,files(id,trashed)')
+        url.searchParams.set('supportsAllDrives', 'true')
+        url.searchParams.set('includeItemsFromAllDrives', 'true')
+        url.searchParams.set('pageSize', '100')
+        if (pageToken !== null) url.searchParams.set('pageToken', pageToken)
 
-      let response = await call(what, url)
-      if (response === null) return null
-      let body = await readJson(response)
-      let files = body['files']
-      if (!response.ok || !Array.isArray(files)) {
-        logDriveFailure(what, describe(response, body))
-        return null
-      }
-      return files
-        .filter((file) => typeof file === 'object' && file !== null && file.trashed !== true)
-        .map((file) => (file as { id?: unknown }).id)
-        .filter((id): id is string => typeof id === 'string')
+        let response = await call(what, url)
+        if (response === null) return null
+        let body = await readJson(response)
+        let files = body['files']
+        if (!response.ok || !Array.isArray(files)) {
+          logDriveFailure(what, describe(response, body))
+          return null
+        }
+        for (let file of files) {
+          let id = typeof file === 'object' && file !== null ? (file as { id?: unknown }).id : null
+          if (typeof id === 'string' && (file as { trashed?: unknown }).trashed !== true)
+            found.push(id)
+        }
+        let next = body['nextPageToken']
+        pageToken = typeof next === 'string' && next !== '' ? next : null
+      } while (pageToken !== null)
+      return found
     },
 
     async replaceText(docId, placeholder, value) {

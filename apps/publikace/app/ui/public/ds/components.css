@@ -878,6 +878,8 @@ a.vdm-pagination__item:hover { background: var(--bg-tertiary); }
 .vdm-dropzone input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .vdm-dropzone:has(input:focus-visible) { box-shadow: var(--focus-shadow); }
 .vdm-dropzone--over { border-style: solid; border-color: var(--border-accent); background: var(--bg-accent); color: var(--link-strong); }
+/* Výběr teď nejde: vstup má disabled (například dokud neběží skript, který soubory nahrává). Jako zakázané tlačítko; důvod stojí mimo plochu (o9aaif0j). */
+.vdm-dropzone:has(input:disabled) { cursor: not-allowed; opacity: 0.5; }
 .vdm-dropzone__thumb { flex: none; width: 72px; height: 72px; object-fit: contain; border-radius: var(--radius-sm); background: repeating-conic-gradient(var(--bg-tertiary) 0% 25%, var(--bg-primary) 0% 50%) 0 0 / 12px 12px; }
 .vdm-dropzone__actions { display: flex; gap: 8px; margin-left: auto; }
 

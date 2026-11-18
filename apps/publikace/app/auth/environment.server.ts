@@ -150,3 +150,18 @@ export function mailSendEndpoint(): MailSendEndpoint | null {
   let secret = optional('MAIL_SEND_SECRET')
   return url === '' || secret === '' ? null : { secret, url }
 }
+
+/**
+ * The most e-mails the public pages may start in a day, resends included (`02a`, _Ochrana_). A
+ * value that is not a positive whole number throws, in production and outside it alike: a cap
+ * that silently became no cap is the failure this exists against.
+ */
+export function publicMailPerDay(fallback: number): number {
+  let value = optional('PUBLIC_MAIL_PER_DAY')
+  if (value === '') return fallback
+  let parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error('PUBLIC_MAIL_PER_DAY musí být kladné celé číslo.')
+  }
+  return parsed
+}

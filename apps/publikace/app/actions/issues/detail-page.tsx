@@ -1,5 +1,29 @@
 import type { Handle, RemixNode } from 'remix/component'
 import { css } from 'remix/component'
+import { getContext } from 'remix/middleware/async-context'
+import { getCsrfToken } from 'remix/middleware/csrf'
+
+import {
+  ARTWORK_COLUMN,
+  ARTWORK_FILTERS,
+  ARTWORK_STATE_LABELS,
+  type ArtworkFilter,
+  type ArtworkState,
+  ARTWORKS_SECTION_TITLE,
+  artworkMenuLabel,
+  AUTHOR_SOURCE_COLUMN,
+  COPY_ARTWORKS_LINK_LABEL,
+  discardLabel,
+  OPEN_ARTWORK_LABEL,
+  resendLabel,
+  DISCARD_CANCEL_LABEL,
+  DISCARD_CONFIRM_LABEL,
+  discardDialogText,
+  discardDialogTitle,
+  isWaiting,
+  PROVIDER_COLUMN,
+  STATE_COLUMN,
+} from '../../domain/artwork.ts'
 
 import {
   ARTICLES_EMPTY_TEXT,
@@ -36,7 +60,8 @@ import type { PanelPerson } from '../../ui/panel/component.tsx'
 import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
 import { CopyButton } from '../../ui/public/copy-button/component.tsx'
 import { ShareButton } from '../../ui/public/share-button/component.tsx'
-import { StatusTag } from '../../ui/status-tag/component.tsx'
+import { StateFilter } from '../../ui/state-filter/component.tsx'
+import { StatusTag, type StatusTone } from '../../ui/status-tag/component.tsx'
 import { TableRow } from '../../ui/table-row/component.tsx'
 import { TableRowTitle } from '../../ui/table-row-title/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
@@ -59,6 +84,10 @@ export type LinkBlockView = {
 
 /** One row of _Články_ (`12a`), with what exists of an article so far. */
 export type ArticleRowView = {
+  /** The cell _Obrazová díla_: the sent artworks and what waits among them, `—` without any. */
+  artworks: { count: number; line: { isWaiting: boolean; text: string } | null }
+  /** The article's link for artworks, for the `⋯` copy item; `null` once it is revoked. */
+  artworksUrl: string | null
   authors: string
   createdLine: string
   documentUrl: string
@@ -66,8 +95,45 @@ export type ArticleRowView = {
   name: string
 }
 
+/**
+ * One row of _Obrazová díla_ (`12a`): an artwork of a batch, with the batch's state. The
+ * batch's actions stand on each of its rows, and act on all of them (`12o`).
+ */
+export type ArtworkRowView = {
+  articleName: string
+  author: string
+  /** Resend and discard, for a batch in _Chyba_ of an issue still open. */
+  batchActions: { count: number; discardHref: string; resendAction: string } | null
+  driveUrl: string
+  id: number
+  name: string
+  providerEmail: string
+  providerName: string
+  source: { href: string; shown: string } | null
+  state: ArtworkState
+  stateDetail: string
+}
+
+export type ArtworksView = {
+  counts: Readonly<Record<ArtworkFilter, number>>
+  filter: ArtworkFilter
+  hrefOf(filter: ArtworkFilter): string
+  rows: readonly ArtworkRowView[]
+}
+
+/** The question _Zahodit dávku_ over the detail (`12o`). */
+export type DiscardView = {
+  action: string
+  articleName: string
+  cancelHref: string
+  count: number
+  email: string
+}
+
 export type DetailPageProps = {
   articles: readonly ArticleRowView[]
+  artworks: ArtworksView
+  discarding?: DiscardView
   driveAccount: { expectedEmail: string; status: DriveStatus }
   /** _Dokončit vydání_ found the stored issue folder gone, so it created nothing (`12i`). */
   isFolderGone?: boolean
@@ -157,6 +223,44 @@ const ARTICLE_COLUMNS = 'minmax(180px, 3fr) 160px minmax(110px, 1fr) 44px'
 
 const quietStyle = css({ color: 'var(--text-tertiary)' })
 
+const artworksCellStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  fontSize: '14px',
+  gap: '2px',
+  '& small': { color: 'var(--text-secondary)', fontSize: '13px' },
+})
+
+/* What waits on the editors, in the ink of _Čeká na vás_ (`12a`, `11a`). */
+const waitingLineStyle = css({ color: 'var(--state-attention-text)', fontWeight: 600 })
+
+/* The file and its article take most of the row; the tag and `⋯` keep their width (`12a`). */
+const ARTWORK_COLUMNS = 'minmax(160px, 2fr) minmax(150px, 1.5fr) minmax(130px, 1.2fr) 170px 44px'
+
+const providerStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  fontSize: '14px',
+  minWidth: 0,
+  '& small': { color: 'var(--text-secondary)', fontSize: '13px', overflowWrap: 'anywhere' },
+})
+
+const sectionBarStyle = css({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '12px',
+  justifyContent: 'space-between',
+  '& h2': { fontSize: '16px', fontWeight: 600, margin: 0 },
+})
+
+const STATE_TONES: Readonly<Record<ArtworkState, StatusTone>> = {
+  approved: 'done-outline',
+  error: 'problem',
+  provider: 'running',
+  review: 'waiting',
+}
+
 /** A section of the detail with its count: _Články 0_, named by its heading. */
 function Section(handle: Handle<{ children?: RemixNode; count?: number; title: string }>) {
   let headingId = `section-${handle.id}`
@@ -225,12 +329,28 @@ function ArticleRow(handle: Handle<{ article: ArticleRowView; isLast: boolean }>
             Píše se
           </StatusTag>
         </span>
-        <span mix={quietStyle} role="cell">
-          —
-        </span>
+        {article.artworks.count === 0 ? (
+          <span mix={quietStyle} role="cell">
+            —
+          </span>
+        ) : (
+          <span mix={artworksCellStyle} role="cell">
+            <span>{article.artworks.count}</span>
+            {article.artworks.line === null ? null : (
+              <small mix={article.artworks.line.isWaiting ? waitingLineStyle : undefined}>
+                {article.artworks.line.text}
+              </small>
+            )}
+          </span>
+        )}
         <span role="cell">
           <ActionMenu
-            items={[{ href: article.documentUrl, label: 'Otevřít dokument' }]}
+            items={[
+              { href: article.documentUrl, label: 'Otevřít dokument' },
+              ...(article.artworksUrl === null
+                ? []
+                : [{ copyText: article.artworksUrl, label: COPY_ARTWORKS_LINK_LABEL }]),
+            ]}
             label={`Další akce článku ${article.name}`}
           />
         </span>
@@ -266,6 +386,141 @@ function Articles(handle: Handle<{ articles: readonly ArticleRowView[] }>) {
           </div>
         )}
       </Section>
+    )
+  }
+}
+
+function ArtworkRow(
+  handle: Handle<{ artwork: ArtworkRowView; csrfToken: string; isLast: boolean }>,
+) {
+  return () => {
+    let { artwork, csrfToken, isLast } = handle.props
+    let items: ActionMenuItem[] = [{ href: artwork.driveUrl, label: OPEN_ARTWORK_LABEL }]
+    if (artwork.batchActions !== null) {
+      items.push(
+        { isSeparator: true },
+        {
+          action: artwork.batchActions.resendAction,
+          csrfToken,
+          label: resendLabel(artwork.batchActions.count),
+        },
+        {
+          href: artwork.batchActions.discardHref,
+          isSameTab: true,
+          label: discardLabel(artwork.batchActions.count),
+        },
+      )
+    }
+    return (
+      <TableRow columns={ARTWORK_COLUMNS} isLast={isLast}>
+        <TableRowTitle
+          href={artwork.driveUrl}
+          isNewTab
+          sub={artwork.articleName}
+          title={artwork.name}
+        />
+        <span mix={providerStyle} role="cell">
+          <span>{artwork.providerName}</span>
+          <small>{artwork.providerEmail}</small>
+        </span>
+        <span mix={metaStyle} role="cell">
+          {artwork.author} ·{' '}
+          {artwork.source === null ? (
+            'neuveden'
+          ) : (
+            <a href={artwork.source.href} rel="noopener noreferrer" target="_blank">
+              {artwork.source.shown}
+            </a>
+          )}
+        </span>
+        <span role="cell">
+          <StatusTag detail={artwork.stateDetail} tone={STATE_TONES[artwork.state]}>
+            {ARTWORK_STATE_LABELS[artwork.state]}
+          </StatusTag>
+        </span>
+        <span role="cell">
+          <ActionMenu items={items} label={artworkMenuLabel(artwork.name)} />
+        </span>
+      </TableRow>
+    )
+  }
+}
+
+/** _Obrazová díla_ of the issue in one table, the filter in the address (`12a`). */
+function Artworks(handle: Handle<{ artworks: ArtworksView; csrfToken: string }>) {
+  return () => {
+    let { artworks, csrfToken } = handle.props
+    let total = artworks.counts.all
+    return (
+      <section aria-labelledby="artworks-title" mix={sectionStyle}>
+        <div mix={sectionBarStyle}>
+          <h2 id="artworks-title">
+            {ARTWORKS_SECTION_TITLE}
+            <span mix={countStyle}>{total}</span>
+          </h2>
+          {total === 0 ? null : (
+            <StateFilter
+              items={ARTWORK_FILTERS.map((filter) => ({
+                count: artworks.counts[filter.value],
+                href: artworks.hrefOf(filter.value),
+                isActive: filter.value === artworks.filter,
+                isWaiting: filter.value !== 'all' && isWaiting(filter.value),
+                label: filter.label,
+              }))}
+            />
+          )}
+        </div>
+        {total === 0 ? (
+          <p mix={placeholderStyle}>{ARTWORKS_EMPTY_TEXT}</p>
+        ) : artworks.rows.length === 0 ? null : (
+          <div aria-label={ARTWORKS_SECTION_TITLE} class="vdm-table" role="table">
+            <TableRow columns={ARTWORK_COLUMNS} isHead>
+              <span role="columnheader">{ARTWORK_COLUMN}</span>
+              <span role="columnheader">{PROVIDER_COLUMN}</span>
+              <span role="columnheader">{AUTHOR_SOURCE_COLUMN}</span>
+              <span role="columnheader">{STATE_COLUMN}</span>
+              <span role="columnheader">
+                <span class="vdm-sr-only">Akce</span>
+              </span>
+            </TableRow>
+            {artworks.rows.map((artwork, index) => (
+              <ArtworkRow
+                artwork={artwork}
+                csrfToken={csrfToken}
+                isLast={index === artworks.rows.length - 1}
+                key={artwork.id}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    )
+  }
+}
+
+/** `12o`: discarding takes the batch's files to the bin, so it is asked first. */
+function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
+  return () => {
+    let { discarding } = handle.props
+    return (
+      <Dialog maxWidth="360px">
+        <DialogTitle>{discardDialogTitle(discarding.count)}</DialogTitle>
+        <div class="vdm-dialog__body">
+          <p class="vdm-dialog__text">
+            {discardDialogText(discarding.articleName, discarding.email)}
+          </p>
+        </div>
+        <form action={discarding.action} class="vdm-dialog__actions" method="post">
+          <CsrfField />
+          {/* Focus starts on the way back, so Enter on arrival never discards anything. */}
+          <a autofocus class="vdm-btn vdm-btn--ghost vdm-btn--sm" href={discarding.cancelHref}>
+            {DISCARD_CANCEL_LABEL}
+          </a>
+          <button class="vdm-btn vdm-btn--danger vdm-btn--sm" type="submit">
+            {DISCARD_CONFIRM_LABEL}
+          </button>
+        </form>
+      </Dialog>
     )
   }
 }
@@ -316,6 +571,8 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
   return () => {
     let {
       articles,
+      artworks,
+      discarding,
       driveAccount,
       isFolderGone = false,
       isRenewing = false,
@@ -332,7 +589,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
         <Layout
           active="issues"
           driveAccount={driveAccount}
-          isInert={isRenewing}
+          isInert={isRenewing || discarding !== undefined}
           person={person}
           title={issue.name}
           toasts={toasts}
@@ -386,14 +643,13 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
               <>
                 {link === undefined ? null : <LinkBlock link={link} />}
                 <Articles articles={articles} />
-                <Section count={0} title="Obrazová díla">
-                  <p mix={placeholderStyle}>{ARTWORKS_EMPTY_TEXT}</p>
-                </Section>
+                <Artworks artworks={artworks} csrfToken={getCsrfToken(getContext())} />
               </>
             )}
           </div>
         </Layout>
         {isRenewing ? <RenewDialog issue={issue} /> : null}
+        {discarding === undefined ? null : <DiscardDialog discarding={discarding} />}
       </Document>
     )
   }

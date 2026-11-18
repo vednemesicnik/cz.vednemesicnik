@@ -1,6 +1,7 @@
 import type { Article, ArticleRow, ArticleStore } from '../data/articles.server.ts'
 import type { IssueStore } from '../data/issues.server.ts'
 import type { LinkStore } from '../data/links.server.ts'
+import type { PublicMailLog } from '../data/public-mail.server.ts'
 import {
   ARTICLE_NAME_PLACEHOLDER_IN_TEMPLATE,
   articleMeta,
@@ -17,6 +18,7 @@ import type { DriveAccessToken } from './access-token.server.ts'
 import type { ArticleFiles } from './article-files.server.ts'
 import type { DriveFolders } from './folders.server.ts'
 import { logDriveFailure } from './log.server.ts'
+import { reservePublicMail } from './artworks-setup.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
 
 /**
@@ -39,6 +41,9 @@ export type ArticleSetup = {
   folders(accessToken: string): DriveFolders
   issues: IssueStore
   links: LinkStore
+  /** What the cap on e-mails from public pages counts, shared with the artworks (`02a`). */
+  mailLog: PublicMailLog
+  mailPerDay: number
   mailer: Mailer
   now(): Temporal.Instant
   /** Where the links in the welcome e-mail point: `APP_ORIGIN`. */
@@ -68,6 +73,7 @@ export type CreatedArticle = {
 export type CreateArticleOutcome =
   | ({ kind: 'created' } & CreatedArticle)
   | { kind: 'disconnected' | 'not-connected' }
+  | { kind: 'daily-cap' }
   | { kind: 'folder-gone' }
   | { kind: 'limited' }
   | { kind: 'link-gone' }
@@ -119,11 +125,16 @@ async function create(setup: ArticleSetup, input: NewArticle): Promise<CreateArt
     return { kind: 'unavailable' }
   }
 
-  /* The count and the row in one step per link, so sends in parallel cannot all pass the limit. */
+  /* The count and the row in one step per link, so sends in parallel cannot all pass the limit.
+     The welcome e-mails take their places under the cap of the whole app before the article
+     exists: an article whose e-mails could not go is not created. */
   let since = setup.now().subtract({ minutes: 60 })
   let attempt = await lock(`link:${link.id}`, async () => {
     if (!isRetry && (await setup.articles.recentAttempts(link.id, since)) >= SUBMISSIONS_PER_HOUR) {
-      return null
+      return 'limited' as const
+    }
+    if (!isRetry && !(await reservePublicMail(setup, 'welcome', input.authors.length))) {
+      return 'daily-cap' as const
     }
     let started = await setup.articles.startAttempt({
       at: setup.now(),
@@ -135,7 +146,7 @@ async function create(setup: ArticleSetup, input: NewArticle): Promise<CreateArt
     })
     return started.attempt
   })
-  if (attempt === null) return { kind: 'limited' }
+  if (attempt === 'limited' || attempt === 'daily-cap') return { kind: attempt }
 
   let committed: Article | null = null
   try {

@@ -4,6 +4,7 @@ import { shareImageHref } from '../../assets.ts'
 import {
   type AuthorInput,
   checkArticle,
+  DAILY_CAP_ON_SUBMIT,
   DRIVE_UNAVAILABLE_ON_SUBMIT,
   documentUrl,
   type FieldError,
@@ -274,6 +275,13 @@ export default function createLinksController() {
               context,
               issue,
               { ...kept, message: LIMIT_REACHED_ON_SUBMIT },
+              { status: IN_THE_WAY },
+            )
+          case 'daily-cap':
+            return renderForm(
+              context,
+              issue,
+              { ...kept, message: DAILY_CAP_ON_SUBMIT },
               { status: IN_THE_WAY },
             )
           case 'unavailable':

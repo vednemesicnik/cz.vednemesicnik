@@ -59,6 +59,7 @@ export type ArticleStore = {
   /** Removes an attempt whose files are in the bin; its authors go with it. */
   discard(id: number): Promise<void>
   findByFormKey(formKey: string): Promise<ArticleRow | null>
+  findById(id: number): Promise<ArticleRow | null>
   /** The issue's created articles, newest first. */
   listCreated(issueId: number): Promise<Article[]>
   /** An attempt whose cleanup did not get through, to be tried again. */
@@ -194,6 +195,10 @@ export function createArticleStore(database: Database): ArticleStore {
 
     findByFormKey(formKey) {
       return byFormKey(database, formKey)
+    },
+
+    findById(id) {
+      return byId(database, id)
     },
 
     async listCreated(issueId) {

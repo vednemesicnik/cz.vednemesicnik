@@ -16,22 +16,34 @@ const textStyle = css({
   margin: 0,
 })
 
+/** The page's three sentences: the article link's (`02e`) unless the artworks' (`02f`) are given. */
+export type LinkGoneWords = { note: string; text: string; title: string }
+
+const ARTICLE_LINK_GONE: LinkGoneWords = {
+  note: LINK_GONE_NOTE,
+  text: LINK_GONE_TEXT,
+  title: LINK_GONE_TITLE,
+}
+
 /**
- * `02e`: one page for a replaced link, a closed issue and a key nobody issued, so the page
+ * `02e`, `02f`: one page for a replaced link, a closed issue and a key nobody issued, so the page
  * never tells which; no button and no e-mail, because the newsroom writes to the
  * editors-in-chief where the link came from.
  */
-export function LinkGonePage(handle: Handle<{ imageUrl: string }>) {
-  return () => (
-    <LinkPage
-      preview={{ imageUrl: handle.props.imageUrl, title: PREVIEW_GENERIC_TITLE }}
-      title={LINK_GONE_TITLE}
-    >
-      <h1 class="vdm-page-title" style={{ margin: 0 }}>
-        {LINK_GONE_TITLE}
-      </h1>
-      <p mix={textStyle}>{LINK_GONE_TEXT}</p>
-      <p mix={textStyle}>{LINK_GONE_NOTE}</p>
-    </LinkPage>
-  )
+export function LinkGonePage(handle: Handle<{ imageUrl: string; words?: LinkGoneWords }>) {
+  return () => {
+    let words = handle.props.words ?? ARTICLE_LINK_GONE
+    return (
+      <LinkPage
+        preview={{ imageUrl: handle.props.imageUrl, title: PREVIEW_GENERIC_TITLE }}
+        title={words.title}
+      >
+        <h1 class="vdm-page-title" style={{ margin: 0 }}>
+          {words.title}
+        </h1>
+        <p mix={textStyle}>{words.text}</p>
+        <p mix={textStyle}>{words.note}</p>
+      </LinkPage>
+    )
+  }
 }

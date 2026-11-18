@@ -13,6 +13,7 @@ import createAuthController from './actions/auth/controller.tsx'
 import createGoogleController from './actions/auth/google/controller.tsx'
 import createHomeController from './actions/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
+import createArtworksController from './actions/links/artworks/controller.tsx'
 import createLinksController from './actions/links/controller.tsx'
 import createDriveAccountController from './actions/settings/account/controller.tsx'
 import createSettingsController from './actions/settings/controller.tsx'
@@ -27,6 +28,7 @@ import {
   groupMembershipEndpoint,
   issuesFolderId,
   mailSendEndpoint,
+  publicMailPerDay,
 } from './auth/environment.server.ts'
 import {
   createMembershipCheck,
@@ -36,14 +38,19 @@ import {
 import { createSessionCookie, createSignedInUntilCookie } from './auth/session.server.ts'
 import { createAccessDirectory } from './data/access.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
+import { createArtworkStore } from './data/artworks.server.ts'
 import { createDriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
+import { createPublicMailLog } from './data/public-mail.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
+import { DEFAULT_PUBLIC_MAIL_PER_DAY } from './domain/artwork.ts'
 import { now } from './domain/time.ts'
 import { driveAccessToken } from './drive/access-token.server.ts'
 import { createArticleFiles } from './drive/article-files.server.ts'
 import type { ArticleSetup } from './drive/article-setup.server.ts'
+import { createArtworkFiles } from './drive/artwork-files.server.ts'
+import type { ArtworksSetup } from './drive/artworks-setup.server.ts'
 import { createDriveFolders } from './drive/folders.server.ts'
 import type { IssueSetup } from './drive/issue-setup.server.ts'
 import { createMailer, type Mailer, mailerUnavailable } from './mail/mailer.server.ts'
@@ -103,8 +110,10 @@ export type AppDependencies = {
   googleCredentials?: GoogleCredentials | null
   /** The folder that holds every issue. Defaults to `ISSUES_FOLDER_ID`. */
   issuesFolderId?: string
-  /** Sends the welcome e-mails. Defaults to the configured Mailer of `publikace@`. */
+  /** Sends the welcome e-mails and the consent requests. Defaults to the Mailer of `publikace@`. */
   mailer?: Mailer
+  /** The cap on e-mails public pages start in a day. Defaults to `PUBLIC_MAIL_PER_DAY`. */
+  mailPerDay?: number
   /** The Doc every article is copied from. Defaults to `ARTICLE_TEMPLATE_DOCUMENT_ID`. */
   templateId?: string
 }
@@ -134,11 +143,37 @@ export function createArticleSetup(dependencies: AppDependencies): ArticleSetup 
     folders: (accessToken) => createDriveFolders({ accessToken, fetch }),
     issues: createIssueStore(dependencies.database),
     links: createLinkStore(dependencies.database),
+    mailLog: createPublicMailLog(dependencies.database),
+    mailPerDay: dependencies.mailPerDay ?? publicMailPerDay(DEFAULT_PUBLIC_MAIL_PER_DAY),
     mailer: dependencies.mailer ?? defaultMailer(),
     now,
     origin: appOrigin(),
     templateId: dependencies.templateId ?? articleTemplateDocumentId(),
     token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
+  }
+}
+
+/**
+ * How artworks are uploaded and sent, on the app's database, with the same Drive account and
+ * Mailer as an article. `server.ts` builds one too, for the cleanup it runs before listening.
+ */
+export function createArtworksSetup(
+  dependencies: AppDependencies,
+  articleSetup: ArticleSetup = createArticleSetup(dependencies),
+): ArtworksSetup {
+  let fetch = dependencies.fetch ?? globalThis.fetch
+  return {
+    articles: articleSetup.articles,
+    artworks: createArtworkStore(dependencies.database),
+    files: (accessToken) => createArtworkFiles({ accessToken, fetch }),
+    folders: articleSetup.folders,
+    issues: articleSetup.issues,
+    links: articleSetup.links,
+    mailLog: articleSetup.mailLog,
+    mailPerDay: articleSetup.mailPerDay,
+    mailer: articleSetup.mailer,
+    now,
+    token: articleSetup.token,
   }
 }
 
@@ -173,6 +208,7 @@ export function createAppRouter(dependencies: AppDependencies) {
     token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
   }
   let articleSetup = createArticleSetup(dependencies)
+  let artworksSetup = createArtworksSetup(dependencies, articleSetup)
 
   let router = createRouter({
     /*
@@ -221,6 +257,7 @@ export function createAppRouter(dependencies: AppDependencies) {
       loadIssues({ setup: issueSetup, store: issueStore }),
       loadArticles({
         articles: articleSetup.articles,
+        artworks: artworksSetup,
         links: articleSetup.links,
         origin: articleSetup.origin,
         setup: articleSetup,
@@ -245,6 +282,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   router.map(routes, createHomeController(signedInUntil))
   router.map(routes.issues, createIssuesController(signedInUntil))
   router.map(routes.links, createLinksController())
+  router.map(routes.links.artworks, createArtworksController())
   router.map(routes.auth, createAuthController(signedInUntil))
   router.map(routes.auth.google, createGoogleController(signedInUntil))
   router.map(routes.settings, createSettingsController(signedInUntil))

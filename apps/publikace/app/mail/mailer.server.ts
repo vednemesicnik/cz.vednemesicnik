@@ -11,7 +11,11 @@ import type { MailSendEndpoint } from '../auth/environment.server.ts'
  * which itself never leaves the app. The Mailer refuses a request older than five minutes.
  */
 
+/** A file attached as the Mailer's schema takes it: at most 20, 25 MB decoded in all. */
+export type MailAttachment = { data: string; filename: string; mimeType: string }
+
 export type MailMessage = {
+  attachments?: MailAttachment[]
   htmlBody: string
   /** The same on every attempt at one logical send: a repeat mails nobody (`Schema.gs`). */
   idempotencyKey: string
@@ -24,6 +28,23 @@ export type MailMessage = {
 export type MailResult = { ok: true } | { error: string; ok: false }
 
 export type Mailer = (message: MailMessage) => Promise<MailResult>
+
+/*
+ * The Mailer's answers that say the request itself is wrong, so the same request will be refused
+ * again however often it is sent (`schema.gs`). Every other failure, a timeout or `server_error`
+ * among them, may pass on a later try.
+ */
+const PERMANENT_REFUSALS = new Set([
+  'attachment_too_large',
+  'invalid_recipient',
+  'invalid_request',
+  'missing_fields',
+  'too_many_recipients',
+])
+
+export function isPermanentRefusal(result: MailResult): boolean {
+  return !result.ok && PERMANENT_REFUSALS.has(result.error)
+}
 
 export function signEnvelope(
   secret: string,

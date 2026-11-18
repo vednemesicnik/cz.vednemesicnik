@@ -1,4 +1,11 @@
 import { coauthorLine, OPEN_DOCUMENT_LABEL, UPLOAD_ARTWORKS_LABEL } from '../domain/article.ts'
+import {
+  escapeHtml,
+  houseEnding,
+  htmlDocument,
+  PARAGRAPH_STYLE,
+  SENDER_NAME,
+} from './association.server.ts'
 import type { MailMessage } from './mailer.server.ts'
 
 /**
@@ -6,10 +13,11 @@ import type { MailMessage } from './mailer.server.ts'
  * voice, as the copywriter settled it (il3qqrj9).
  *
  * The HTML is written out by hand rather than drawn by the app's components: a mail client reads
- * no stylesheet, so every style is inline, and the colours are the design system's values.
+ * no stylesheet, so every style is inline. Only the primary button has a colour, the design
+ * system's violet with white text.
  */
 
-export const SENDER_NAME = 'Vedneměsíčník – Publikace'
+export { SENDER_NAME }
 
 export type WelcomeDetails = {
   artworksUrl: string
@@ -20,15 +28,6 @@ export type WelcomeDetails = {
   formKey: string
   issueName: string
   to: string
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
 }
 
 export function welcomeSubject(articleName: string, issueName: string): string {
@@ -44,13 +43,18 @@ export function welcomeIdempotencyKey(formKey: string, email: string): string {
   return `article-welcome:${formKey}:${email.toLowerCase()}`
 }
 
-const PARAGRAPH = 'margin:0 0 16px;font-size:15px;line-height:1.6;color:#121418'
-const NOTE = 'margin:0 0 16px;font-size:14px;line-height:1.6;color:#6b7280'
-const FOOT = 'margin:24px 0 0;font-size:13px;line-height:1.6;color:#6b7280'
+const PARAGRAPH = PARAGRAPH_STYLE
+const NOTE = 'margin:0 0 16px;font-size:14px;line-height:1.6'
 const PRIMARY =
   'display:inline-block;padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;background:#7c3aed;color:#ffffff'
 const OUTLINE =
-  'display:inline-block;padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;border:1px solid #cad5e2;color:#121418'
+  'display:inline-block;padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;border:1px solid #cad5e2'
+
+/* `20d`, the ending as the copywriter settled it (`zoy6ixjt`). */
+export const WELCOME_QUESTION_LINE =
+  'Dotazy k textu pište přímo do komentářů v dokumentu. S ostatními dotazy se obraťte na šéfredakci.'
+export const WELCOME_REASON_LINE =
+  'Tento e-mail jste obdrželi na základě adresy uvedené u vašeho jména při založení článku.'
 
 export function welcomeEmail(details: WelcomeDetails): MailMessage {
   let article = escapeHtml(details.articleName)
@@ -64,11 +68,15 @@ export function welcomeEmail(details: WelcomeDetails): MailMessage {
     `<p style="${PARAGRAPH}">Pište přímo v dokumentu Google. Redakce tam může přidávat komentáře. Přehled nových komentářů posíláme e-mailem nejvýš čtyřikrát denně.</p>`,
     `<p style="${PARAGRAPH}"><a href="${escapeHtml(details.documentUrl)}" style="${PRIMARY}">${OPEN_DOCUMENT_LABEL}</a>&nbsp;&nbsp;<a href="${escapeHtml(details.artworksUrl)}" style="${OUTLINE}">${UPLOAD_ARTWORKS_LABEL}</a></p>`,
     `<p style="${NOTE}">Až bude text dopsaný, v dokumentu na počítači vyberte <em>Publikace › Předat ke korektuře</em>. Můžete také dát vědět šéfredakci. Po korektuře vám pošleme finální verzi a redakční doložku. Pokud s doložkou souhlasíte, odpovězte na e-mail přesně „Souhlasím“.</p>`,
-    `<p style="${FOOT}">Vedneměsíčník, studentské nekritické noviny · Tento e-mail posíláme na adresu uvedenou u vašeho jména při založení článku.</p>`,
+    houseEnding({
+      question: WELCOME_QUESTION_LINE,
+      reason: WELCOME_REASON_LINE,
+      signOff: 'S pozdravem',
+    }),
   ].join('')
 
   return {
-    htmlBody: `<!doctype html><html lang="cs"><head><meta charset="utf-8"><title>${escapeHtml(welcomeSubject(details.articleName, details.issueName))}</title></head><body style="margin:0;padding:24px;font-family:Inter,Arial,sans-serif">${body}</body></html>`,
+    htmlBody: htmlDocument(welcomeSubject(details.articleName, details.issueName), body),
     idempotencyKey: welcomeIdempotencyKey(details.formKey, details.to),
     name: SENDER_NAME,
     subject: welcomeSubject(details.articleName, details.issueName),

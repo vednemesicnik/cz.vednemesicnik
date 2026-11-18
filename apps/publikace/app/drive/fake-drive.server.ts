@@ -9,6 +9,8 @@ export type FakeFolder = { id: string; name: string; parentId: string; isTrashed
 /** Any file the fake holds; a folder is one with the folder type. */
 export type FakeFile = FakeFolder & {
   appProperties: Record<string, string>
+  /** What a resumable upload stored, or what an export or a read answers with. */
+  bytes: Uint8Array<ArrayBuffer> | null
   /** The uploaded text, for `_meta.json`. */
   content: string | null
   /** The template a copy came from. */
@@ -18,8 +20,20 @@ export type FakeFile = FakeFolder & {
   replacements: { text: string; with: string }[]
 }
 
-/** One kind of call an article needs, for failing it on purpose. */
-export type FakeStep = 'copy' | 'folder' | 'replace' | 'trash' | 'upload'
+/**
+ * One kind of call, for failing it on purpose: `upload` is a small multipart file, `store` a
+ * resumable one (an artwork, a licence PDF), `import` a Doc made from HTML.
+ */
+export type FakeStep =
+  | 'copy'
+  | 'export'
+  | 'folder'
+  | 'import'
+  | 'preview'
+  | 'replace'
+  | 'store'
+  | 'trash'
+  | 'upload'
 
 export type FakeDrive = {
   /** Every call that reached the fake, as `METHOD path`. */
@@ -38,7 +52,11 @@ export type FakeDrive = {
   loseReplyOnCreate(name: string): void
   /** The next call of this kind does its work but answers 503. */
   loseReplyOnStep(step: FakeStep): void
+  /** Moves a file to another folder, as a person dragging it on Drive would. */
+  move(id: string, parentId: string): void
   remove(id: string): void
+  /** A folder that exists already, as an article's does once the article page made it. */
+  seedFolder(id: string, name: string, parentId: string): void
   /** A file to copy from, as the article template is on the shared drive. */
   seedTemplate(id: string, name: string): void
   trash(id: string): void
@@ -46,6 +64,15 @@ export type FakeDrive = {
 
 const FOLDER_TYPE = 'application/vnd.google-apps.folder'
 const DOC_TYPE = 'application/vnd.google-apps.document'
+const THUMBNAIL_HOST = 'lh3.googleusercontent.test'
+
+/** What the fake exports a Doc as: recognisable, and different for every Doc. */
+export function fakePdfOf(docId: string, html: string): Uint8Array<ArrayBuffer> {
+  return new TextEncoder().encode(`%PDF-fake ${docId} ${html.length}`)
+}
+
+/** What the fake renders as any image's thumbnail. */
+export const FAKE_THUMBNAIL = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3])
 
 function failure(message: string, status = 503): Response {
   return Response.json({ error: { message } }, { status })
@@ -60,13 +87,25 @@ export function createFakeDrive(): FakeDrive {
   let isDown = false
   let next = 1
   let calls: string[] = []
+  let sessions = new Map<
+    string,
+    { appProperties: Record<string, string>; mimeType: string; name: string; parentId: string }
+  >()
 
   function add(
-    file: Omit<FakeFile, 'id' | 'isTrashed' | 'replacements'>,
+    file: Omit<FakeFile, 'bytes' | 'id' | 'isTrashed' | 'replacements'> & {
+      bytes?: Uint8Array<ArrayBuffer>
+    },
     prefix: string,
   ): FakeFile {
     let id = `fake-${prefix}-${next++}`
-    let stored: FakeFile = { ...file, id, isTrashed: false, replacements: [] }
+    let stored: FakeFile = {
+      ...file,
+      bytes: file.bytes ?? null,
+      id,
+      isTrashed: false,
+      replacements: [],
+    }
     files.set(id, stored)
     return stored
   }
@@ -111,11 +150,48 @@ export function createFakeDrive(): FakeDrive {
       return done('replace', doc.id)
     }
 
+    if (url.hostname === THUMBNAIL_HOST) {
+      if (failingSteps.has('preview')) return failure('down')
+      return new Response(FAKE_THUMBNAIL, { headers: { 'Content-Type': 'image/png' } })
+    }
+
+    if (
+      url.pathname === '/upload/drive/v3/files' &&
+      url.searchParams.get('uploadType') === 'resumable'
+    ) {
+      if (method === 'POST') {
+        if (!isOnSharedDrives) return failure('File not found', 404)
+        if (failingSteps.has('store')) return failure('down')
+        let metadata = JSON.parse(String(init?.body)) as {
+          appProperties?: Record<string, string>
+          mimeType: string
+          name: string
+          parents: string[]
+        }
+        let sessionId = `session-${next++}`
+        sessions.set(sessionId, {
+          appProperties: metadata.appProperties ?? {},
+          mimeType: metadata.mimeType,
+          name: metadata.name,
+          parentId: metadata.parents[0] ?? '',
+        })
+        let location = new URL(url)
+        location.searchParams.set('upload_id', sessionId)
+        return new Response(null, { headers: { Location: location.href } })
+      }
+      let session = sessions.get(url.searchParams.get('upload_id') ?? '')
+      if (method !== 'PUT' || session === undefined) return failure('no session', 404)
+      if (failingSteps.has('store')) return failure('down')
+      let body = init?.body
+      let bytes = new Uint8Array(await new Response(body).arrayBuffer())
+      let file = add({ ...session, bytes, content: null, copiedFrom: null }, 'file')
+      return done('store', file.id)
+    }
+
     if (method === 'POST' && url.pathname === '/upload/drive/v3/files') {
       if (!isOnSharedDrives || url.searchParams.get('uploadType') !== 'multipart') {
         return failure('bad upload', 400)
       }
-      if (failingSteps.has('upload')) return failure('down')
       let parts = String(init?.body).split(/\r\n--[^\r\n]+/)
       let metadata = JSON.parse(parts[0]?.split('\r\n\r\n')[1] ?? '{}') as {
         appProperties?: Record<string, string>
@@ -124,6 +200,8 @@ export function createFakeDrive(): FakeDrive {
         parents: string[]
       }
       let content = parts[1]?.split('\r\n\r\n').slice(1).join('\r\n\r\n') ?? ''
+      let step: FakeStep = metadata.mimeType === DOC_TYPE ? 'import' : 'upload'
+      if (failingSteps.has(step)) return failure('down')
       let file = add(
         {
           appProperties: metadata.appProperties ?? {},
@@ -133,9 +211,9 @@ export function createFakeDrive(): FakeDrive {
           name: metadata.name,
           parentId: metadata.parents[0] ?? '',
         },
-        'file',
+        step === 'import' ? 'doc' : 'file',
       )
-      return done('upload', file.id)
+      return done(step, file.id)
     }
 
     if (method === 'POST' && url.pathname === '/drive/v3/files') {
@@ -215,6 +293,17 @@ export function createFakeDrive(): FakeDrive {
       return Response.json({ files: found.map((file) => ({ id: file.id })) })
     }
 
+    let exported = /^\/drive\/v3\/files\/([^/]+)\/export$/.exec(url.pathname)
+    if (method === 'GET' && exported !== null) {
+      let doc = files.get(decodeURIComponent(exported[1] ?? ''))
+      if (doc === undefined || doc.isTrashed) return failure('File not found', 404)
+      if (url.searchParams.get('mimeType') !== 'application/pdf') return failure('bad export', 400)
+      if (failingSteps.has('export')) return failure('down')
+      return new Response(fakePdfOf(doc.id, doc.content ?? ''), {
+        headers: { 'Content-Type': 'application/pdf' },
+      })
+    }
+
     let match = /^\/drive\/v3\/files\/([^/]+)$/.exec(url.pathname)
     if (method === 'PATCH' && match !== null) {
       let file = files.get(decodeURIComponent(match[1] ?? ''))
@@ -228,7 +317,16 @@ export function createFakeDrive(): FakeDrive {
     if (method === 'GET' && match !== null) {
       let file = files.get(decodeURIComponent(match[1] ?? ''))
       if (file === undefined || !isOnSharedDrives) return failure('File not found', 404)
-      return Response.json({ id: file.id, trashed: file.isTrashed })
+      if (url.searchParams.get('alt') === 'media') {
+        return new Response(file.bytes ?? new TextEncoder().encode(file.content ?? ''))
+      }
+      let isImage = file.mimeType.startsWith('image/')
+      return Response.json({
+        id: file.id,
+        parents: [file.parentId],
+        thumbnailLink: isImage ? `https://${THUMBNAIL_HOST}/thumb/${file.id}=s220` : undefined,
+        trashed: file.isTrashed,
+      })
     }
 
     return failure('unexpected call', 400)
@@ -254,10 +352,29 @@ export function createFakeDrive(): FakeDrive {
     },
     loseReplyOnCreate: (name) => void losingNames.add(name),
     loseReplyOnStep: (step) => void losingSteps.add(step),
+    move(id, parentId) {
+      let file = files.get(id)
+      if (file !== undefined) file.parentId = parentId
+    },
     remove: (id) => void files.delete(id),
+    seedFolder(id, name, parentId) {
+      files.set(id, {
+        appProperties: {},
+        bytes: null,
+        content: null,
+        copiedFrom: null,
+        id,
+        isTrashed: false,
+        mimeType: FOLDER_TYPE,
+        name,
+        parentId,
+        replacements: [],
+      })
+    },
     seedTemplate(id, name) {
       files.set(id, {
         appProperties: {},
+        bytes: null,
         content: null,
         copiedFrom: null,
         id,

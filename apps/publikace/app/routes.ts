@@ -25,14 +25,29 @@ export const routes = route({
     /* _Vydat nový odkaz_ asks at an address of its own, as a removal does (`02d`). */
     askRenewLink: get('/issues/:name/link/renew'),
     renewLink: post('/issues/:name/link/renew'),
+    /* A batch of artworks (`12o`): _Poslat žádost znovu_ at once, _Zahodit dávku_ after asking at
+       an address of its own, as a removal does. */
+    resendBatch: post('/issues/:name/artworks/batches/:id/resend'),
+    askDiscardBatch: get('/issues/:name/artworks/batches/:id/discard'),
+    discardBatch: post('/issues/:name/artworks/batches/:id/discard'),
   },
 
   /* The pages behind a shared link, without sign-in or cookies (`02a`). `GET` draws the form,
-     `POST` to the same address creates the article (`20a`–`20d`). The artworks link
-     `/l/:key/artworks` is page `21` and has no route yet. */
+     `POST` to the same address creates the article (`20a`–`20d`). */
   links: {
     article: get('/l/:key/article'),
     createArticle: post('/l/:key/article'),
+
+    /* The artworks behind an article's link (`21`), as public as the article page. Each chosen
+       file is sent at once to `files`, as its raw body (`21a`, _Nahrává se hned po výběru_);
+       `POST` to the page itself sends the batch, or with `intent=another` opens the form again
+       with the provider kept (`21c`, _Nahrát další díla_). */
+    artworks: {
+      show: get('/l/:key/artworks'),
+      submit: post('/l/:key/artworks'),
+      upload: post('/l/:key/artworks/files'),
+      remove: post('/l/:key/artworks/files/:id/remove'),
+    },
   },
 
   auth: {

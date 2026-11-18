@@ -76,6 +76,11 @@ export const LIMIT_REACHED_ON_SUBMIT: SubmitMessage = {
   title: 'Zkuste článek vytvořit později.',
 }
 
+export const DAILY_CAP_ON_SUBMIT: SubmitMessage = {
+  text: 'Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů. Údaje zůstávají ve formuláři.',
+  title: 'Zkuste článek vytvořit později.',
+}
+
 /** Thirty articles in the last sixty minutes from one link (`02a`, `03` row 15). */
 export const SUBMISSIONS_PER_HOUR = 30
 

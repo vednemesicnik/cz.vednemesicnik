@@ -18,8 +18,9 @@ Provází jedno vydání od založení po podklady pro tisk:
   kterým systém nerozuměl.
 - **Redakce** se nepřihlašuje. Dostane od šéfredakce odkaz (obvykle do WhatsAppu) a jím založí
   článek. Otevírá ho většinou na telefonu ve vestavěném prohlížeči messengeru.
-- **Poskytovatel děl** (autor článku, ilustrátor, fotograf) dostane odkaz na nahrání obrazových
-  děl, nahraje je a pak souhlasí s licencí odpovědí na e-mail.
+- **Poskytovatel děl** (autor článku, ilustrátor, fotograf) je ten, koho formulář uvádí jménem
+  a e-mailem: dává souhlas s licencí odpovědí na e-mail. Díla za něj může nahrát i někdo jiný,
+  kdo má odkaz na nahrání obrazových děl, takže věta na stránce nepředpokládá, že nahrává sám.
 - **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Do aplikace se nepřihlašují
   a nevidí ji. Od aplikace dostanou jen e-mail, když je článek předaný ke korektuře, a další,
   když šéfredakce předání zruší. Jejich adresu vyplňuje šéfredakce v Nastavení. Dokud ji
@@ -41,7 +42,7 @@ a s tvarem jména v podpisu.
 | **článek**                  | Text s autory a dokumentem Google.                                                    |
 | **skupina obrazových děl**  | Obrázky bez vlastního článku (obálka, ilustrace k více textům).                       |
 | **obrazové dílo**, **dílo** | Jeden nahraný obrázek. V nadpisech „obrazová díla“, v běžné větě „dílo“.              |
-| **poskytovatel**            | Kdo dílo nahrál a dává souhlas. **Autor díla** je jen jméno do podpisu.               |
+| **poskytovatel**            | Koho formulář uvádí a kdo dává souhlas. **Autor díla** je jen jméno do podpisu.       |
 | **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.               |
 | **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                   |
 | **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly.                                       |
@@ -61,7 +62,8 @@ a s tvarem jména v podpisu.
   že se s verzí seznámil a souhlasí s jejím zveřejněním, že je autorem a nikdo jiný nemá k dílu
   práva, která by užití bránila, že spolku dává bezúplatnou nevýhradní licenci (tisk, web,
   archiv, sociální sítě), že souhlasí s jazykovými úpravami a zkrácením a s uvedením jména
-  v daném tvaru. Je to licence. Návrh tenhle e-mail nekreslí, posílá ho úloha na pozadí.
+  v daném tvaru. Je to licence a její znění zůstává slovo od slova jako ve skriptu; kolem ní se
+  smí měnit jen převod do vykání.
 - **Záznam souhlasu jednoho autora.** Každý autor má k článku svou doložku se stavem (_K
   odeslání_, _Čeká na odpověď_…). V Evidenci je list _Redakční doložky_ s řádkem za každého
   autora a rozbalený řádek článku v detailu vydání ukazuje doložky autorů po jednom.
@@ -84,8 +86,8 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
 ## Hlas
 
 - **Aplikace vyká** a mluví neosobně, bez omluv. Nemá já ani osobnost.
-- **E-maily a stránky z odkazu mluví za redakci** a smějí mít _my_ („Na e-mail jsme poslali
-  licence.“). Hlášky aplikace _my_ nemají.
+- **E-maily a stránky z odkazu mluví za redakci** a smějí mít _my_ („Na ‹e-mail› jsme poslali
+  žádost o souhlas.“). Hlášky aplikace _my_ nemají.
 - **E-maily vykají, ale přátelsky.** Čtou je členové redakce, se kterými se známe, a zároveň
   mluví za časopis: tón je slušný, reprezentativní a trochu formální, ne úřední. Začínají „Dobrý
   den“ jako e-maily v návrhu: uvítání autorů, žádost o souhlas s díly, e-maily korektorům.

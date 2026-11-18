@@ -3,6 +3,8 @@ import { css } from 'remix/component'
 
 export type StateFilterItem = {
   count: number
+  /** The count waits on whoever reads it, in the design system's ink for that (`!`). */
+  isWaiting?: boolean
   href: string
   isActive: boolean
   label: string
@@ -35,7 +37,15 @@ export function StateFilter(handle: Handle<StateFilterProps>) {
           mix={itemStyle}
         >
           {item.label}
-          <span class="vdm-statefilter__count">{item.count}</span>
+          <span
+            class={
+              item.isWaiting === true && item.count > 0
+                ? 'vdm-statefilter__count vdm-statefilter__count--attention'
+                : 'vdm-statefilter__count'
+            }
+          >
+            {item.count}
+          </span>
         </a>
       ))}
     </nav>

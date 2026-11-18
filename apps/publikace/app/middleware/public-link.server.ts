@@ -6,8 +6,10 @@ import type { Middleware } from 'remix/router'
  * not run for them at all; a session middleware that ran would answer with a cookie.
  *
  * What protects the form instead is what an anonymous form can use: the key in the address, the
- * form's one-time key, and the limit of thirty articles an hour from one link. A forged
- * cross-site send gains nothing a direct one would not, because there is no sign-in to ride on.
+ * form's one-time key, and the limit of thirty sends an hour from one link. The artworks' upload
+ * endpoint has the same and its own cap, sixty stored files an hour from one link, counted before
+ * a body is read. A forged cross-site send gains nothing a direct one would not, because there is
+ * no sign-in to ride on.
  */
 
 const PUBLIC_LINK_PREFIX = '/l/'

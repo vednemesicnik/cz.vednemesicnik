@@ -20,6 +20,7 @@ import { type NewIssueDialog, OverviewPage } from './overview-page.tsx'
 export type PageContext = {
   get(key: unknown): unknown
   render: AppContext['render']
+  url: URL
 }
 
 /*
@@ -47,15 +48,18 @@ export async function renderOverview(
   dialog?: NewIssueDialog,
   init?: ResponseInit,
 ): Promise<Response> {
-  let [issues, driveAccount, articleCounts] = await Promise.all([
+  let articles = context.get(Articles) as ArticlesContext
+  let [issues, driveAccount, articleCounts, artworkCounts] = await Promise.all([
     issuesOf(context).store.list(),
     driveView(context),
-    (context.get(Articles) as ArticlesContext).articles.countsByIssue(),
+    articles.articles.countsByIssue(),
+    articles.artworks.artworks.countsByIssue(),
   ])
 
   return context.render(
     <OverviewPage
       articleCounts={articleCounts}
+      artworkCounts={artworkCounts}
       dialog={dialog}
       driveAccount={driveAccount}
       filter={filter}

@@ -14,7 +14,8 @@ import { defaultDatabase, migrateDatabase } from './app/data/database.server.ts'
 import { normalizeEmail } from './app/domain/access.ts'
 import { now } from './app/domain/time.ts'
 import { cleanUpAbandoned } from './app/drive/article-setup.server.ts'
-import { createAppRouter, createArticleSetup } from './app/router.ts'
+import { cleanUpAbandonedArtworks } from './app/drive/artworks-setup.server.ts'
+import { createAppRouter, createArticleSetup, createArtworksSetup } from './app/router.ts'
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100
 
@@ -53,12 +54,15 @@ if (initialAdmin !== '') {
 }
 
 /*
- * Before the port opens, no request is running, so every article attempt left uncommitted is one
- * a crash or a failed cleanup left behind: its files go to the bin now (`11c`). A Drive that does
- * not answer delays it to the next send and does not stop the app.
+ * Before the port opens, no request is running, so every article attempt and artwork batch left
+ * uncommitted is one a crash or a failed cleanup left behind: its files go to the bin now (`11c`),
+ * and so does every upload that waited 24 hours unsent (`21d`). A Drive that does not answer
+ * delays it to the next send and does not stop the app.
  */
 try {
-  await cleanUpAbandoned(createArticleSetup({ database: database.database }))
+  let articleSetup = createArticleSetup({ database: database.database })
+  await cleanUpAbandoned(articleSetup)
+  await cleanUpAbandonedArtworks(createArtworksSetup({ database: database.database }, articleSetup))
 } catch (error) {
   console.error('[drive] the cleanup at startup did not run:', error)
 }

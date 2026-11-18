@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 import { createArticleStore } from '../data/articles.server.ts'
 import { createIssueStore } from '../data/issues.server.ts'
 import { createLinkStore } from '../data/links.server.ts'
+import { createPublicMailLog } from '../data/public-mail.server.ts'
 import { now } from '../domain/time.ts'
 import type { Mailer, MailMessage } from '../mail/mailer.server.ts'
 import { createTestApp, TEST_ISSUES_FOLDER, type TestApp } from '../test-app.server.ts'
@@ -36,7 +37,7 @@ type Harness = {
 
 async function withHarness(
   run: (harness: Harness) => Promise<void>,
-  options: { mailer?: Mailer; token?: DriveAccessToken } = {},
+  options: { mailPerDay?: number; mailer?: Mailer; token?: DriveAccessToken } = {},
 ): Promise<void> {
   let app = await createTestApp()
   try {
@@ -66,6 +67,8 @@ async function withHarness(
       folders: (accessToken) => createDriveFolders({ accessToken, fetch: drive.fetch }),
       issues,
       links,
+      mailLog: createPublicMailLog(app.database),
+      mailPerDay: options.mailPerDay ?? 300,
       mailer:
         options.mailer ??
         (async (message) => {
@@ -333,6 +336,19 @@ describe('creating an article (20c, 20d)', () => {
 
       assert.equal((await createArticle(setup, article(linkKey))).kind, 'limited')
     }))
+
+  it('creates nothing when the welcome e-mails would pass the cap of the day, and counts them', () =>
+    withHarness(
+      async ({ drive, linkKey, sent, setup }) => {
+        assert.equal((await createArticle(setup, article(linkKey))).kind, 'created')
+        assert.equal(sent.length, 2)
+        let next = await createArticle(setup, article(linkKey, { formKey: 'form-2' }))
+        assert.equal(next.kind, 'daily-cap')
+        assert.equal(sent.length, 2)
+        assert.equal(articleFiles(drive).filter((file) => !file.isTrashed).length, 3)
+      },
+      { mailPerDay: 3 },
+    ))
 
   it('says why nothing was attempted while the account is not connected', () =>
     withHarness(

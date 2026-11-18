@@ -60,6 +60,8 @@ export type NewIssueDialog =
 export type OverviewPageProps = {
   /** Created articles by issue ID; an issue missing here has none. */
   articleCounts: ReadonlyMap<number, number>
+  /** The sent artworks by issue ID, and how many of them wait on the editors (`11a`). */
+  artworkCounts: ReadonlyMap<number, ArtworkTotals>
   dialog?: NewIssueDialog
   driveAccount: { expectedEmail: string; status: DriveStatus }
   filter: IssueFilter
@@ -133,10 +135,19 @@ function folderItems(issue: Issue) {
   return folderId === null ? [] : [{ href: folderUrl(folderId), label: 'Otevřít složku na Disku' }]
 }
 
+export type ArtworkTotals = { total: number; waiting: number }
+
+const NO_ARTWORK_TOTALS: ArtworkTotals = { total: 0, waiting: 0 }
+
+/* What waits on the editors, in the ink of _Čeká na vás_ (`01d`). */
+const waitingCountStyle = css({ color: 'var(--state-attention-text)', fontWeight: 600 })
+
 /** One row of `11a`; the unfinished one carries _Dokončit vydání_ where the counts would be. */
-function IssueRow(handle: Handle<{ articles: number; isLast: boolean; issue: Issue }>) {
+function IssueRow(
+  handle: Handle<{ articles: number; artworks: ArtworkTotals; isLast: boolean; issue: Issue }>,
+) {
   return () => {
-    let { articles, isLast, issue } = handle.props
+    let { articles, artworks, isLast, issue } = handle.props
     let state = issueState(issue)
 
     return (
@@ -154,13 +165,19 @@ function IssueRow(handle: Handle<{ articles: number; isLast: boolean; issue: Iss
             <span class="vdm-num" role="cell">
               {articles}
             </span>
-            {/* Artworks arrive with their own issue; until then there are none. */}
             <span class="vdm-num" role="cell">
-              0
+              {artworks.total}
             </span>
-            <span mix={quietStyle} role="cell">
-              —
-            </span>
+            {/* What waits on the editors: so far only artworks in _Chyba_ (`01d`). */}
+            {artworks.waiting === 0 ? (
+              <span mix={quietStyle} role="cell">
+                —
+              </span>
+            ) : (
+              <span class="vdm-num" mix={waitingCountStyle} role="cell">
+                {artworks.waiting}
+              </span>
+            )}
           </>
         )}
         <span role="cell">
@@ -171,9 +188,9 @@ function IssueRow(handle: Handle<{ articles: number; isLast: boolean; issue: Iss
   }
 }
 
-function PhoneRow(handle: Handle<{ articles: number; issue: Issue }>) {
+function PhoneRow(handle: Handle<{ articles: number; artworks: ArtworkTotals; issue: Issue }>) {
   return () => {
-    let { articles, issue } = handle.props
+    let { articles, artworks, issue } = handle.props
     let state = issueState(issue)
 
     return (
@@ -184,7 +201,7 @@ function PhoneRow(handle: Handle<{ articles: number; issue: Issue }>) {
           </a>
           <IssueStateTag state={state} />
         </div>
-        <span mix={phoneLineStyle}>{phoneRowLine(issue, articles, 0)}</span>
+        <span mix={phoneLineStyle}>{phoneRowLine(issue, articles, artworks.total)}</span>
         {state === 'unfinished' ? (
           <div mix={phoneActionStyle}>
             <FinishIssueForm issue={issue} placement="row" returnTo="overview" />
@@ -198,12 +215,13 @@ function PhoneRow(handle: Handle<{ articles: number; issue: Issue }>) {
 function IssueList(
   handle: Handle<{
     articleCounts: ReadonlyMap<number, number>
+    artworkCounts: ReadonlyMap<number, ArtworkTotals>
     filter: IssueFilter
     issues: readonly Issue[]
   }>,
 ) {
   return () => {
-    let { articleCounts, filter, issues } = handle.props
+    let { articleCounts, artworkCounts, filter, issues } = handle.props
     let shown = issues.filter((issue) => isInFilter(issueState(issue), filter))
     let counts: Record<IssueFilter, number> = {
       all: issues.length,
@@ -248,6 +266,7 @@ function IssueList(
                 {shown.map((issue, index) => (
                   <IssueRow
                     articles={articleCounts.get(issue.id) ?? 0}
+                    artworks={artworkCounts.get(issue.id) ?? NO_ARTWORK_TOTALS}
                     isLast={index === shown.length - 1}
                     issue={issue}
                   />
@@ -256,7 +275,11 @@ function IssueList(
             </div>
             <div mix={phoneOnlyStyle}>
               {shown.map((issue) => (
-                <PhoneRow articles={articleCounts.get(issue.id) ?? 0} issue={issue} />
+                <PhoneRow
+                  articles={articleCounts.get(issue.id) ?? 0}
+                  artworks={artworkCounts.get(issue.id) ?? NO_ARTWORK_TOTALS}
+                  issue={issue}
+                />
               ))}
             </div>
           </>
@@ -372,7 +395,8 @@ function NewIssueDialogView(
  */
 export function OverviewPage(handle: Handle<OverviewPageProps>) {
   return () => {
-    let { articleCounts, dialog, driveAccount, filter, issues, person, toasts } = handle.props
+    let { articleCounts, artworkCounts, dialog, driveAccount, filter, issues, person, toasts } =
+      handle.props
 
     return (
       <Document title="Vydání">
@@ -401,7 +425,12 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
               </a>
             </EmptyState>
           ) : (
-            <IssueList articleCounts={articleCounts} filter={filter} issues={issues} />
+            <IssueList
+              artworkCounts={artworkCounts}
+              articleCounts={articleCounts}
+              filter={filter}
+              issues={issues}
+            />
           )}
         </Layout>
         {dialog === undefined ? null : (
