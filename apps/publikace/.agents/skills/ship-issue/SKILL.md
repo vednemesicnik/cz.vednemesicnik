@@ -88,7 +88,7 @@ Read every hunk of `git diff dev...HEAD` yourself and check it against:
   ([docs/migrations.md](../../../docs/migrations.md)); plain `CREATE TABLE` / `ALTER TABLE`
   without `IF NOT EXISTS`, `STRICT` tables.
 - **No real data** — authors, providers, e-mail addresses, Drive IDs and links all
-  fictional, `priklad.cz`.
+  fictional, on `vednemesicnik.test` and `external.test`.
 - **Design conformance** where the issue cites a design document: check the diff against
   the document itself in the design canvas, not against the issue's summary of it —
   the screen the diff touches, read by its id as

@@ -33,7 +33,7 @@ describe('sign-in page', () => {
           html,
         ),
       )
-      assert.ok(html.includes('S účtem @priklad.cz, který má přístup do Publikace.'))
+      assert.ok(html.includes('S účtem @vednemesicnik.test, který má přístup do Publikace.'))
       // The client runtime must leave the way to Google to the browser.
       assert.ok(/<a [^>]*data-rmx-document[^>]*>Přihlásit se přes Google<\/a>/.test(html))
       assert.equal(calloutOf(html), null)
@@ -50,7 +50,7 @@ describe('sign-in page', () => {
       let messages: Record<string, { isError: boolean; text: string }> = {
         domain: {
           isError: true,
-          text: 'Vyberte účet Google s adresou @priklad.cz — jinou adresou se přihlásit nelze.',
+          text: 'Vyberte účet Google s adresou @vednemesicnik.test — jinou adresou se přihlásit nelze.',
         },
         expired: {
           isError: false,
@@ -76,23 +76,23 @@ describe('sign-in page', () => {
   it('sends somebody already signed in where they were going', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
 
       let response = await browser.get('/sign-in?redirectTo=%2Fsettings')
       assert.equal(response.status, 303)
       assert.equal(locationOf(response).pathname, '/settings')
       for (let foreign of [
-        '//jinde.cz',
-        '/\\jinde.cz',
-        '/\\/jinde.cz',
-        '/\tjinde.cz',
-        'https://jinde.cz',
-        '/..//jinde.cz',
-        '/.//jinde.cz',
-        '/a/..//jinde.cz',
-        '/%2e%2e//jinde.cz',
+        '//external.test',
+        '/\\external.test',
+        '/\\/external.test',
+        '/\texternal.test',
+        'https://external.test',
+        '/..//external.test',
+        '/.//external.test',
+        '/a/..//external.test',
+        '/%2e%2e//external.test',
       ]) {
         let response = await browser.get(`/sign-in?redirectTo=${encodeURIComponent(foreign)}`)
         assert.equal(locationOf(response).href, 'http://localhost/', foreign)
@@ -113,7 +113,7 @@ describe('sign-in page', () => {
       assert.equal(response.status, 302)
       assert.equal(location.host, 'accounts.google.com')
       assert.equal(location.searchParams.get('prompt'), 'select_account')
-      assert.equal(location.searchParams.get('hd'), 'priklad.cz')
+      assert.equal(location.searchParams.get('hd'), 'vednemesicnik.test')
       assert.equal(
         location.searchParams.get('redirect_uri'),
         'http://localhost:44100/sign-in/google/callback',
@@ -152,9 +152,9 @@ describe('expiry', () => {
   it('brings a form sent after expiry back to the page it was sent from', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
       let token = /name="_csrf" type="hidden" value="([^"]+)"/.exec(
         await (await browser.get('/settings')).text(),
       )?.[1]
@@ -170,7 +170,7 @@ describe('expiry', () => {
 
       let response = await browser.post(
         '/settings/access',
-        { _csrf: token, email: 'eva@priklad.cz', kind: 'account' },
+        { _csrf: token, email: 'eva@vednemesicnik.test', kind: 'account' },
         '/settings?x=1',
       )
       assert.equal(response.status, 303)
@@ -187,11 +187,15 @@ describe('the ten-minute check', () => {
   it('signs out a member dropped from the group, keeping the address for the message', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
-      await app.directory.addGroup('marie@priklad.cz', 'vybor@priklad.cz', Temporal.Now.instant())
-      app.setMembership('vybor@priklad.cz', () => ({ status: 'not-member' }))
+      await seedAdmin(app, 'marie@vednemesicnik.test')
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        Temporal.Now.instant(),
+      )
+      app.setMembership('vybor@vednemesicnik.test', () => ({ status: 'not-member' }))
       let browser = app.browser()
-      await browser.signInAs('jan@priklad.cz', 'Jan Novák', 0)
+      await browser.signInAs('jan@vednemesicnik.test', 'Jan Novák', 0)
 
       let refused = locationOf(await browser.get('/'))
       assert.equal(refused.searchParams.get('error'), 'notlisted')
@@ -199,9 +203,9 @@ describe('the ten-minute check', () => {
       let html = await (await browser.get(refused.pathname + refused.search)).text()
       assert.equal(
         calloutOf(html)?.text,
-        'Požádejte šéfredakci o kontakt na správce Publikace. Účet jan@priklad.cz nemá přístup.',
+        'Požádejte šéfredakci o kontakt na správce Publikace. Účet jan@vednemesicnik.test nemá přístup.',
       )
-      app.setMembership('vybor@priklad.cz', () => ({ displayName: null, status: 'member' }))
+      app.setMembership('vybor@vednemesicnik.test', () => ({ displayName: null, status: 'member' }))
       assert.equal((await browser.get('/')).status, 303, 'the sign-in is gone, not paused')
     } finally {
       await app.close()
@@ -211,15 +215,22 @@ describe('the ten-minute check', () => {
   it('refuses while the service is down, and remembers nothing', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
-      await app.directory.addGroup('marie@priklad.cz', 'vybor@priklad.cz', Temporal.Now.instant())
-      app.setMembership('vybor@priklad.cz', () => ({ status: 'unavailable' }))
+      await seedAdmin(app, 'marie@vednemesicnik.test')
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        Temporal.Now.instant(),
+      )
+      app.setMembership('vybor@vednemesicnik.test', () => ({ status: 'unavailable' }))
       let browser = app.browser()
-      await browser.signInAs('jan@priklad.cz', 'Jan Novák', 0)
+      await browser.signInAs('jan@vednemesicnik.test', 'Jan Novák', 0)
 
       assert.equal(locationOf(await browser.get('/')).searchParams.get('error'), 'unavailable')
 
-      app.setMembership('vybor@priklad.cz', () => ({ displayName: 'Jan Novák', status: 'member' }))
+      app.setMembership('vybor@vednemesicnik.test', () => ({
+        displayName: 'Jan Novák',
+        status: 'member',
+      }))
       assert.equal((await browser.get('/')).status, 200)
     } finally {
       await app.close()
@@ -229,9 +240,9 @@ describe('the ten-minute check', () => {
   it('lets a named account through without the service', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz', 'Marie Horáková', 0)
+      await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková', 0)
 
       assert.equal((await browser.get('/')).status, 200)
     } finally {
@@ -244,9 +255,9 @@ describe('sign-out', () => {
   it('leaves with POST and lands on 10b with the time', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
       let before = browser.cookie('publikace_session')
 
       let response = await browser.post('/sign-out', {}, '/')
@@ -280,9 +291,9 @@ describe('sign-out', () => {
   it('refuses a form sent without the token', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
 
       let response = await browser.post('/sign-out', { _csrf: 'forged' }, '/')
       assert.equal(response.status, 403)

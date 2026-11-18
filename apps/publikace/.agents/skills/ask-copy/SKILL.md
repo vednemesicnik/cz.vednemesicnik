@@ -166,7 +166,7 @@ happens next.
 Write those from the code, not from the string being replaced — the string may already be
 wrong, which is often why it is being looked at.
 
-**No real data leaves this repository.** Fictional names, `priklad.cz`, no rows from `db/`,
+**No real data leaves this repository.** Fictional names, `vednemesicnik.test` and `external.test`, no rows from `db/`,
 nothing from `.env`. The repository is going public and this is the same rule.
 
 ## 4. Ask for the right shape of answer

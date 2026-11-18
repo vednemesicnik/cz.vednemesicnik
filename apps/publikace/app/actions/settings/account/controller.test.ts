@@ -13,7 +13,7 @@ import {
 } from '../../../test-app.server.ts'
 import { completeDriveConnection } from './controller.tsx'
 
-const EDITOR = { displayName: 'Marie Horáková', email: 'marie@priklad.cz', isAdmin: true }
+const EDITOR = { displayName: 'Marie Horáková', email: 'marie@vednemesicnik.test', isAdmin: true }
 
 /** The context the return from Google sees, with a session that records what it was left. */
 function returnContext(app: TestApp) {
@@ -67,7 +67,7 @@ describe('connecting publikace.app@, the return from Google (14h)', () => {
       await connectDriveAccount(app)
       let { context, flashed } = returnContext(app)
       await completeDriveConnection(context, EDITOR, {
-        claims: { email: 'jan.novak@priklad.cz', email_verified: true },
+        claims: { email: 'jan.novak@vednemesicnik.test', email_verified: true },
         refreshToken: 'someone-elses-token',
         scopes: GOOD_SCOPES,
       })
@@ -78,7 +78,7 @@ describe('connecting publikace.app@, the return from Google (14h)', () => {
       )
       assert.deepEqual(
         [...flashed.values()],
-        [{ email: 'jan.novak@priklad.cz', reason: 'wrong-account' }],
+        [{ email: 'jan.novak@vednemesicnik.test', reason: 'wrong-account' }],
       )
     } finally {
       await app.close()
@@ -126,9 +126,9 @@ describe('connecting publikace.app@, the routes', () => {
   it('refuses a connect form sent without the token', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
       let response = await browser.post('/settings/account/connect', { _csrf: 'forged' })
       assert.equal(response.status, 403)
     } finally {
@@ -139,9 +139,9 @@ describe('connecting publikace.app@, the routes', () => {
   it('without a Google client, comes back to the card with try again, once', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
 
       let response = await browser.post('/settings/account/connect', {})
       assert.equal(response.headers.get('Location'), '/settings#accounts')
@@ -162,15 +162,15 @@ describe('connecting publikace.app@, the way to Google', () => {
     process.env.GOOGLE_CLIENT_ID = 'test-client'
     process.env.GOOGLE_CLIENT_SECRET = 'test-secret'
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
       let response = await browser.post('/settings/account/connect', {})
       let location = new URL(response.headers.get('Location') ?? '')
 
       assert.equal(location.host, 'accounts.google.com')
       assert.equal(location.searchParams.get('login_hint'), TEST_DRIVE_ACCOUNT)
-      assert.equal(location.searchParams.get('hd'), 'priklad.cz')
+      assert.equal(location.searchParams.get('hd'), 'vednemesicnik.test')
       assert.equal(location.searchParams.get('access_type'), 'offline')
       assert.equal(location.searchParams.get('prompt'), 'consent')
       assert.equal(location.searchParams.get('scope'), `openid email ${DRIVE_SCOPE}`)

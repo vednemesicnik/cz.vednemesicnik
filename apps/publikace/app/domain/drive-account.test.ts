@@ -11,7 +11,7 @@ import {
   shortAccount,
 } from './drive-account.ts'
 
-const EXPECTED = 'publikace.app@priklad.cz'
+const EXPECTED = 'publikace.app@vednemesicnik.test'
 
 const GOOD = {
   email: EXPECTED,
@@ -23,15 +23,21 @@ const GOOD = {
 describe('deciding a connection (14h)', () => {
   it('accepts the expected account with Drive and a refresh token, in any case', () => {
     assert.deepEqual(decideConnection(GOOD, EXPECTED), { ok: true })
-    assert.deepEqual(decideConnection({ ...GOOD, email: 'Publikace.App@Priklad.cz' }, EXPECTED), {
-      ok: true,
-    })
+    assert.deepEqual(
+      decideConnection({ ...GOOD, email: 'Publikace.App@Vednemesicnik.test' }, EXPECTED),
+      {
+        ok: true,
+      },
+    )
   })
 
   it('names another account before a missing Drive permission', () => {
     assert.deepEqual(
-      decideConnection({ ...GOOD, email: 'jan.novak@priklad.cz', scopes: ['openid'] }, EXPECTED),
-      { email: 'jan.novak@priklad.cz', ok: false, reason: 'wrong-account' },
+      decideConnection(
+        { ...GOOD, email: 'jan.novak@vednemesicnik.test', scopes: ['openid'] },
+        EXPECTED,
+      ),
+      { email: 'jan.novak@vednemesicnik.test', ok: false, reason: 'wrong-account' },
     )
   })
 
@@ -48,7 +54,10 @@ describe('deciding a connection (14h)', () => {
       reason: 'failed',
     })
     assert.deepEqual(
-      decideConnection({ ...GOOD, email: 'jan@priklad.cz', isEmailVerified: false }, EXPECTED),
+      decideConnection(
+        { ...GOOD, email: 'jan@vednemesicnik.test', isEmailVerified: false },
+        EXPECTED,
+      ),
       { ok: false, reason: 'failed' },
     )
   })
@@ -57,8 +66,12 @@ describe('deciding a connection (14h)', () => {
 describe('the words of 14g, 14h and 14c (fxmhsx1r)', () => {
   it('says each refusal, and only that the account still is connected when it is', () => {
     assert.equal(
-      refusalMessage({ email: 'jan.novak@priklad.cz', reason: 'wrong-account' }, EXPECTED, false),
-      'Vyberte v Googlu účet publikace.app@priklad.cz. Účet jan.novak@priklad.cz připojit nejde.',
+      refusalMessage(
+        { email: 'jan.novak@vednemesicnik.test', reason: 'wrong-account' },
+        EXPECTED,
+        false,
+      ),
+      'Vyberte v Googlu účet publikace.app@vednemesicnik.test. Účet jan.novak@vednemesicnik.test připojit nejde.',
     )
     assert.equal(
       refusalMessage({ reason: 'no-drive-scope' }, EXPECTED, false),

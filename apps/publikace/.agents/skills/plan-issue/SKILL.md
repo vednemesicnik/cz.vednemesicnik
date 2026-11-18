@@ -117,7 +117,8 @@ You are preparing an implementation plan for the GitHub issue shown above.
    - dates are `Temporal`;
    - **a migration that has already run is never edited** — plan a new one
      ([docs/migrations.md](../../../docs/migrations.md));
-   - no real data anywhere, `priklad.cz` is the convention;
+   - no real data anywhere: `vednemesicnik.test` for the newsroom, `external.test` for everybody
+     outside it;
    - Conventional Commits — **the PR title included**, because a squash makes it the subject
      on `dev` ([docs/branching-model.md](../../../docs/branching-model.md)); issue and PR text in
      English.

@@ -11,49 +11,52 @@ import {
 
 describe('checkAddress', () => {
   it('normalises an address on the domain', () => {
-    assert.deepEqual(checkAddress('account', '  Eva@Priklad.cz ', 'priklad.cz'), {
-      email: 'eva@priklad.cz',
+    assert.deepEqual(checkAddress('account', '  Eva@Vednemesicnik.test ', 'vednemesicnik.test'), {
+      email: 'eva@vednemesicnik.test',
       ok: true,
     })
   })
 
   it('says nothing about the domain when the text is not an address at all', () => {
-    assert.deepEqual(checkAddress('account', 'eva', 'priklad.cz'), {
+    assert.deepEqual(checkAddress('account', 'eva', 'vednemesicnik.test'), {
       message: 'Zadejte platnou e-mailovou adresu.',
       ok: false,
     })
   })
 
   it('has a sentence of its own for a group on another domain, where nobody signs in', () => {
-    assert.deepEqual(checkAddress('account', 'eva@jinde.cz', 'priklad.cz'), {
-      message: 'Zadejte adresu @priklad.cz — jinou se přihlásit nelze.',
+    assert.deepEqual(checkAddress('account', 'eva@external.test', 'vednemesicnik.test'), {
+      message: 'Zadejte adresu @vednemesicnik.test — jinou se přihlásit nelze.',
       ok: false,
     })
-    assert.deepEqual(checkAddress('group', 'vybor@jinde.cz', 'priklad.cz'), {
-      message: 'Zadejte adresu skupiny na doméně priklad.cz.',
+    assert.deepEqual(checkAddress('group', 'vybor@external.test', 'vednemesicnik.test'), {
+      message: 'Zadejte adresu skupiny na doméně vednemesicnik.test.',
       ok: false,
     })
   })
 
   it('refuses everything when no domain is configured', () => {
-    assert.equal(checkAddress('account', 'eva@priklad.cz', '').ok, false)
+    assert.equal(checkAddress('account', 'eva@vednemesicnik.test', '').ok, false)
   })
 })
 
 describe('the words of 14b', () => {
   it('names an account and a group in their own grammar', () => {
     assert.equal(
-      duplicateMessage('account', 'eva@priklad.cz'),
-      'Účet eva@priklad.cz už je přidaný.',
+      duplicateMessage('account', 'eva@vednemesicnik.test'),
+      'Účet eva@vednemesicnik.test už je přidaný.',
     )
     assert.equal(
-      duplicateMessage('group', 'vybor@priklad.cz'),
-      'Skupina vybor@priklad.cz už je přidaná.',
+      duplicateMessage('group', 'vybor@vednemesicnik.test'),
+      'Skupina vybor@vednemesicnik.test už je přidaná.',
     )
-    assert.equal(addedMessage('account', 'eva@priklad.cz'), 'eva@priklad.cz má přístup.')
     assert.equal(
-      addedMessage('group', 'vybor@priklad.cz'),
-      'Členové skupiny vybor@priklad.cz mají přístup.',
+      addedMessage('account', 'eva@vednemesicnik.test'),
+      'eva@vednemesicnik.test má přístup.',
+    )
+    assert.equal(
+      addedMessage('group', 'vybor@vednemesicnik.test'),
+      'Členové skupiny vybor@vednemesicnik.test mají přístup.',
     )
   })
 

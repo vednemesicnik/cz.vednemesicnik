@@ -20,8 +20,8 @@ describe('membership check', () => {
   it('sends the address, the group and the secret in a plain-text body', async () => {
     let service = serviceAnswering({ displayName: 'Eva Malá', isMember: true, ok: true })
     let answer = await createMembershipCheck(ENDPOINT, { fetch: service.send })(
-      'eva@priklad.cz',
-      'vybor@priklad.cz',
+      'eva@vednemesicnik.test',
+      'vybor@vednemesicnik.test',
     )
 
     assert.deepEqual(answer, { displayName: 'Eva Malá', status: 'member' })
@@ -30,8 +30,8 @@ describe('membership check', () => {
     assert.equal(request?.init?.method, 'POST')
     assert.equal(request?.init?.redirect, 'follow')
     assert.deepEqual(JSON.parse(String(request?.init?.body)), {
-      email: 'eva@priklad.cz',
-      group: 'vybor@priklad.cz',
+      email: 'eva@vednemesicnik.test',
+      group: 'vybor@vednemesicnik.test',
       secret: 'test-secret',
     })
   })
@@ -40,8 +40,8 @@ describe('membership check', () => {
     t.mock.method(console, 'error', () => {})
     let check = (body: unknown, status?: number) =>
       createMembershipCheck(ENDPOINT, { fetch: serviceAnswering(body, status).send })(
-        'eva@priklad.cz',
-        'vybor@priklad.cz',
+        'eva@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
       )
 
     assert.deepEqual(await check({ isMember: false, ok: true }), { status: 'not-member' })
@@ -58,8 +58,8 @@ describe('membership check', () => {
     }) as typeof fetch
 
     let answer = await createMembershipCheck(ENDPOINT, { fetch: failing })(
-      'eva@priklad.cz',
-      'vybor@priklad.cz',
+      'eva@vednemesicnik.test',
+      'vybor@vednemesicnik.test',
     )
     assert.deepEqual(answer, { status: 'unavailable' })
   })

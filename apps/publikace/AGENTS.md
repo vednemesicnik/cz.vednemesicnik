@@ -202,7 +202,11 @@ with a secret that lives only in the Script Properties of a standalone project.
 
 **This repository is public. No real data belongs in it** — not in fixtures, not in tests, not in
 comments, not in the design. Authors, providers, e-mail addresses, Drive IDs, folder links and
-shared-link keys must be fictional; `priklad.cz` is the convention.
+shared-link keys must be fictional. Addresses are on two reserved `.test` domains, which nobody can
+register and no mail can reach: `vednemesicnik.test` for the newsroom (editors-in-chief, groups, the
+app's accounts in tests) and `external.test` for everybody outside it (authors, providers, a domain
+that is refused). The app's own accounts are the one exception where a screen names them:
+`publikace.app@vednemesicnik.cz` and `publikace@vednemesicnik.cz`.
 
 **Never open `.env`.** It will hold live secrets (the Google OAuth client, the key the token of
 `publikace.app@` is encrypted with, the secrets for the Mailer and the scripts); on Fly.io they are

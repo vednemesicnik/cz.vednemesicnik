@@ -23,9 +23,9 @@ describe('home', () => {
   it('answers with the editors-in-chief layout in Czech', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz', 'Marie Horáková')
+      await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
       let response = await browser.get('/')
       let html = await response.text()
 
@@ -43,9 +43,9 @@ describe('home', () => {
   it('draws the panel with Vydání current, Nastavení, and the signed-in person in the foot', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz', 'Marie Horáková')
+      await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
       let html = await (await browser.get('/')).text()
 
       assert.match(html, /<aside aria-label="Panel aplikace" class="vdm-sidebar">/)
@@ -58,7 +58,7 @@ describe('home', () => {
       assert.doesNotMatch(settings, /aria-current/)
 
       assert.match(html, /<span class="vdm-sidebar__username">Marie Horáková<\/span>/)
-      assert.match(html, /<span class="vdm-sidebar__role">marie@priklad.cz<\/span>/)
+      assert.match(html, /<span class="vdm-sidebar__role">marie@vednemesicnik.test<\/span>/)
       assert.match(html, />MH<\/span>/)
       // Leaving is a form sent with POST, never a link.
       let form = /<form [^>]*class="vdm-sidebar__form"[^>]*>.*?<\/form>/s.exec(html)?.[0] ?? ''
@@ -77,9 +77,9 @@ describe('home, the banner of the Drive account', () => {
   it('warns while publikace.app@ was never connected and leads to the card (14g)', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
       let html = await (await browser.get('/')).text()
 
       assert.ok(html.includes('vdm-callout--warning'))
@@ -98,10 +98,10 @@ describe('home, the banner of the Drive account', () => {
   it('says the account is disconnected, and says nothing once it is connected', async () => {
     let app = await createTestApp()
     try {
-      await seedAdmin(app, 'marie@priklad.cz')
+      await seedAdmin(app, 'marie@vednemesicnik.test')
       await connectDriveAccount(app)
       let browser = app.browser()
-      await browser.signInAs('marie@priklad.cz')
+      await browser.signInAs('marie@vednemesicnik.test')
 
       let connected = await (await browser.get('/')).text()
       assert.ok(!connected.includes('vdm-callout'))

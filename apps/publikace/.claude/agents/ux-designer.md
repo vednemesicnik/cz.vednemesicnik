@@ -76,7 +76,8 @@ Follow what the neighbouring pages do:
   with the decisions;
 - decisions cited as `Rozhodnuto ⟨datum⟩ (<code>)` or `(#n)`, **without a path**, so the question
   can be retired later without leaving a citation that points at nothing; never an invented code;
-- invented data only: made-up authors and providers, mailboxes at `priklad.cz`, no real Drive ID,
+- invented data only: made-up authors and providers, mailboxes at `external.test`, editors-in-chief at
+  `vednemesicnik.test`, no real Drive ID,
   folder link or shared-link key;
 - wording as a draft. The copywriter goes through it after the screen settles, so write the words
   you need and don't polish them.

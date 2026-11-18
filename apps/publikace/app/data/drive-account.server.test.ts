@@ -7,7 +7,7 @@ import { createTestApp, TEST_DRIVE_ACCOUNT } from '../test-app.server.ts'
 import { createDriveAccountStore } from './drive-account.server.ts'
 
 const CONNECTION = {
-  by: 'marie@priklad.cz',
+  by: 'marie@vednemesicnik.test',
   email: TEST_DRIVE_ACCOUNT,
   refreshToken: 'test-refresh-token',
 }

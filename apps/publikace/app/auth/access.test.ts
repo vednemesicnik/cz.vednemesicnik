@@ -31,9 +31,9 @@ describe('decideAccess', () => {
       }
 
       for (let candidate of [
-        profile('eva@jinde.cz', { hostedDomain: 'jinde.cz' }),
-        profile('eva@priklad.cz', { emailVerified: false }),
-        profile('eva@priklad.cz', { hostedDomain: null }),
+        profile('eva@external.test', { hostedDomain: 'external.test' }),
+        profile('eva@vednemesicnik.test', { emailVerified: false }),
+        profile('eva@vednemesicnik.test', { hostedDomain: null }),
       ]) {
         assert.deepEqual(await decideAccess(candidate, context), {
           allowed: false,
@@ -42,7 +42,7 @@ describe('decideAccess', () => {
         })
       }
       assert.equal(
-        (await decideAccess(profile('eva@priklad.cz'), { ...context, domain: '' })).allowed,
+        (await decideAccess(profile('eva@vednemesicnik.test'), { ...context, domain: '' })).allowed,
         false,
       )
     } finally {
@@ -53,10 +53,10 @@ describe('decideAccess', () => {
   it('lets a named account in without asking the service, even when it is down', async () => {
     let app = await createTestApp()
     try {
-      await app.directory.seedInitialAdmin('eva@priklad.cz', now())
+      await app.directory.seedInitialAdmin('eva@vednemesicnik.test', now())
       let down = service({ status: 'unavailable' })
 
-      let decision = await decideAccess(profile('Eva@Priklad.cz'), {
+      let decision = await decideAccess(profile('Eva@Vednemesicnik.test'), {
         checkMembership: down.check,
         directory: app.directory,
         domain: TEST_DOMAIN,
@@ -65,7 +65,7 @@ describe('decideAccess', () => {
       assert.deepEqual(decision, {
         allowed: true,
         displayName: 'Eva Malá',
-        email: 'eva@priklad.cz',
+        email: 'eva@vednemesicnik.test',
       })
       assert.equal(down.calls(), 0)
     } finally {
@@ -76,10 +76,10 @@ describe('decideAccess', () => {
   it('lets a member of a listed group in, under the name the service gives', async () => {
     let app = await createTestApp()
     try {
-      await app.directory.seedInitialAdmin('marie@priklad.cz', now())
-      await app.directory.addGroup('marie@priklad.cz', 'vybor@priklad.cz', now())
+      await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
+      await app.directory.addGroup('marie@vednemesicnik.test', 'vybor@vednemesicnik.test', now())
 
-      let decision = await decideAccess(profile('jan@priklad.cz', { name: null }), {
+      let decision = await decideAccess(profile('jan@vednemesicnik.test', { name: null }), {
         checkMembership: service({ displayName: 'Jan Novák', status: 'member' }).check,
         directory: app.directory,
         domain: TEST_DOMAIN,
@@ -88,7 +88,7 @@ describe('decideAccess', () => {
       assert.deepEqual(decision, {
         allowed: true,
         displayName: 'Jan Novák',
-        email: 'jan@priklad.cz',
+        email: 'jan@vednemesicnik.test',
       })
     } finally {
       await app.close()
@@ -98,24 +98,38 @@ describe('decideAccess', () => {
   it('says notlisted only when every group answered no, and unavailable when one could not', async () => {
     let app = await createTestApp()
     try {
-      await app.directory.seedInitialAdmin('marie@priklad.cz', now())
-      await app.directory.addGroup('marie@priklad.cz', 'vybor@priklad.cz', now())
+      await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
+      await app.directory.addGroup('marie@vednemesicnik.test', 'vybor@vednemesicnik.test', now())
       let context = (answer: MembershipAnswer) => ({
         checkMembership: service(answer).check,
         directory: app.directory,
         domain: TEST_DOMAIN,
       })
 
-      let no = await decideAccess(profile('jan@priklad.cz'), context({ status: 'not-member' }))
-      let down = await decideAccess(profile('jan@priklad.cz'), context({ status: 'unavailable' }))
+      let no = await decideAccess(
+        profile('jan@vednemesicnik.test'),
+        context({ status: 'not-member' }),
+      )
+      let down = await decideAccess(
+        profile('jan@vednemesicnik.test'),
+        context({ status: 'unavailable' }),
+      )
       let unknown = await decideAccess(
-        profile('jan@priklad.cz'),
+        profile('jan@vednemesicnik.test'),
         context({ status: 'unknown-group' }),
       )
 
-      assert.deepEqual(no, { allowed: false, email: 'jan@priklad.cz', reason: 'notlisted' })
-      assert.deepEqual(down, { allowed: false, email: 'jan@priklad.cz', reason: 'unavailable' })
-      assert.deepEqual(unknown, { allowed: false, email: 'jan@priklad.cz', reason: 'unavailable' })
+      assert.deepEqual(no, { allowed: false, email: 'jan@vednemesicnik.test', reason: 'notlisted' })
+      assert.deepEqual(down, {
+        allowed: false,
+        email: 'jan@vednemesicnik.test',
+        reason: 'unavailable',
+      })
+      assert.deepEqual(unknown, {
+        allowed: false,
+        email: 'jan@vednemesicnik.test',
+        reason: 'unavailable',
+      })
     } finally {
       await app.close()
     }

@@ -16,8 +16,8 @@ import { SIGN_IN_ERRORS, type SignInError, SignInPage } from './sign-in-page.tsx
 /**
  * A path of this app, or nothing: `redirectTo` is only ever followed to a place here.
  *
- * Read the way a browser reads a `Location`, before and after normalising, so `/\jinde.cz`,
- * `/..//jinde.cz` and a control character inside the path never pass for a local path.
+ * Read the way a browser reads a `Location`, before and after normalising, so `/\external.test`,
+ * `/..//external.test` and a control character inside the path never pass for a local path.
  */
 export function localPath(value: string | null): string | undefined {
   if (value === null || !value.startsWith('/')) return undefined
@@ -28,7 +28,7 @@ export function localPath(value: string | null): string | undefined {
     let base = new URL('http://publikace.invalid')
     let url = new URL(value, base)
     if (url.origin !== base.origin) return undefined
-    /* Checked again after normalising: `/..//jinde.cz` collapses to `//jinde.cz`, which a
+    /* Checked again after normalising: `/..//external.test` collapses to `//external.test`, which a
        browser reads as another site. */
     let path = url.pathname + url.search + url.hash
     return path.startsWith('/') && !path.startsWith('//') ? path : undefined

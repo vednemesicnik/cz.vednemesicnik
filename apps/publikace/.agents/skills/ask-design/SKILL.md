@@ -131,7 +131,8 @@ Položeno <datum>, k #<issue>.
 The last section is the point of the exercise: a question nobody can act on does not belong in
 the design project. **The designer starts each run with no memory and works from this file** — when
 an issue or an earlier decision matters, carry what it decides into the brief, not just its number.
-The facts in it are fictional like everything else in the design: `priklad.cz`, no real author or provider.
+The facts in it are fictional like everything else in the design: `vednemesicnik.test` for the
+newsroom, `external.test` for authors and providers, no real author or provider.
 
 ## 4. Upload it
 

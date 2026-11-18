@@ -14,10 +14,10 @@ import { now } from './domain/time.ts'
 import { createAppRouter } from './router.ts'
 
 /** The domain every test runs on, fictional like everything else in the suite. */
-export const TEST_DOMAIN = 'priklad.cz'
+export const TEST_DOMAIN = 'vednemesicnik.test'
 
 /** The app's account on Drive in the suite, on the same fictional domain. */
-export const TEST_DRIVE_ACCOUNT = 'publikace.app@priklad.cz'
+export const TEST_DRIVE_ACCOUNT = 'publikace.app@vednemesicnik.test'
 
 /** The key the suite encrypts the Drive token with. */
 export const TEST_DRIVE_TOKEN_KEY = Buffer.alloc(32, 3)
@@ -153,7 +153,7 @@ export async function createTestApp(): Promise<TestApp> {
 export async function connectDriveAccount(app: TestApp): Promise<void> {
   await app.driveAccount.connect({
     at: now(),
-    by: 'marie@priklad.cz',
+    by: 'marie@vednemesicnik.test',
     email: TEST_DRIVE_ACCOUNT,
     refreshToken: 'test-refresh-token',
   })

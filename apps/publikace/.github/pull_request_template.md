@@ -21,7 +21,7 @@
       Evidence sheet, a change reaches them only through the record queue after the database,
       and an API change the Apps Script jobs call is versioned
 - [ ] **No real data.** Authors, providers, e-mail addresses, Drive IDs, folder links and
-      shared-link keys are fictional; `priklad.cz` is the convention. This repository is public
+      shared-link keys are fictional, on `vednemesicnik.test` and `external.test`. This repository is public
 - [ ] Czech in anything a user reads, English in code, identifiers, URL paths and commit messages
 - [ ] `pnpm format` was run if any Markdown changed — `oxfmt` formats it, the pre-commit
       hook does not glob it, and `format:check` fails on push instead

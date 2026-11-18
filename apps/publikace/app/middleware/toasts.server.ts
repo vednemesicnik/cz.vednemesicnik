@@ -5,7 +5,7 @@ const TOAST_SESSION_KEY = 'toast'
 
 /**
  * The one-line report of something the page you land on does not show by itself, like
- * _eva@vednemesicnik.cz má přístup._ after adding (`14b`). Read with `context.get(Toasts)`.
+ * _eva@vednemesicnik.test má přístup._ after adding (`14b`). Read with `context.get(Toasts)`.
  */
 export const Toasts = createContextKey<readonly string[]>([])
 

@@ -42,13 +42,13 @@ describe('session storage', () => {
       session.set(EDITOR_SESSION_KEY, {
         authorizedUntil: 0,
         displayName: 'Eva',
-        email: 'eva@priklad.cz',
+        email: 'eva@vednemesicnik.test',
       })
       let id = await storage.save(session)
       assert.ok(typeof id === 'string')
 
       let inFlight = await storage.read(id)
-      await app.database.exec(sql`DELETE FROM sessions WHERE email = ${'eva@priklad.cz'}`)
+      await app.database.exec(sql`DELETE FROM sessions WHERE email = ${'eva@vednemesicnik.test'}`)
       inFlight.set('_csrf', 'x')
 
       assert.equal(await storage.save(inFlight), '')
@@ -73,12 +73,12 @@ describe('session storage', () => {
       session.set(EDITOR_SESSION_KEY, {
         authorizedUntil: 0,
         displayName: 'Eva',
-        email: 'eva@priklad.cz',
+        email: 'eva@vednemesicnik.test',
       })
       let newId = await storage.save(session)
 
       let rows = await app.database.exec(sql`SELECT id, email FROM sessions`)
-      assert.deepEqual(rows.rows, [{ email: 'eva@priklad.cz', id: newId }])
+      assert.deepEqual(rows.rows, [{ email: 'eva@vednemesicnik.test', id: newId }])
     } finally {
       await app.close()
     }

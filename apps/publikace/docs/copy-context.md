@@ -131,12 +131,17 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
 
 ## Co v otázce nikdy nebude
 
-Žádná skutečná data. Jména autorů a poskytovatelů jsou vymyšlená, e-maily končí na `priklad.cz`,
-odkazy a ID na Disku jsou smyšlené. Repozitář je veřejný.
+Žádná skutečná data. Jména jsou vymyšlená, odkazy a ID na Disku smyšlené. Repozitář je veřejný.
+Adresy stojí na dvou doménách `.test`, které nikdo nezaregistruje a na které žádný e-mail nedojde:
 
-Výjimka je doména šéfredakce: přihlášení pustí jen adresu `@vednemesicnik.cz`, takže ukázky
-šéfredaktorů, účtů a skupin v Přístupu na ní stojí, s vymyšleným jménem. Vlastní účty aplikace
-(`publikace.app@`, `publikace@`) jsou skutečné a smějí se jmenovat.
+- **`vednemesicnik.test`** pro redakci: šéfredaktory, účty a skupiny v Přístupu. Ve skutečnosti
+  přihlášení pustí jen adresu `@vednemesicnik.cz`; ukázka na ni míří, ale nikoho skutečného
+  nejmenuje.
+- **`external.test`** pro všechny zvenku: autory, poskytovatele a adresu, kterou přihlášení
+  odmítne.
+
+Vlastní účty aplikace (`publikace.app@vednemesicnik.cz`, `publikace@vednemesicnik.cz`) jsou
+skutečné a smějí se jmenovat, když je text na obrazovce jmenuje.
 
 Když v otázce uvidíš něco, co vypadá jako skutečný záznam, **je to nález** — řekni to.
 
