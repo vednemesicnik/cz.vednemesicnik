@@ -58,6 +58,8 @@ export type NewIssueDialog =
   | { issue: Issue; kind: 'unfinished' }
 
 export type OverviewPageProps = {
+  /** Created articles by issue ID; an issue missing here has none. */
+  articleCounts: ReadonlyMap<number, number>
   dialog?: NewIssueDialog
   driveAccount: { expectedEmail: string; status: DriveStatus }
   filter: IssueFilter
@@ -132,9 +134,9 @@ function folderItems(issue: Issue) {
 }
 
 /** One row of `11a`; the unfinished one carries _Dokončit vydání_ where the counts would be. */
-function IssueRow(handle: Handle<{ isLast: boolean; issue: Issue }>) {
+function IssueRow(handle: Handle<{ articles: number; isLast: boolean; issue: Issue }>) {
   return () => {
-    let { isLast, issue } = handle.props
+    let { articles, isLast, issue } = handle.props
     let state = issueState(issue)
 
     return (
@@ -149,10 +151,10 @@ function IssueRow(handle: Handle<{ isLast: boolean; issue: Issue }>) {
           </span>
         ) : (
           <>
-            {/* Articles and artworks arrive with their own issues; until then there are none. */}
             <span class="vdm-num" role="cell">
-              0
+              {articles}
             </span>
+            {/* Artworks arrive with their own issue; until then there are none. */}
             <span class="vdm-num" role="cell">
               0
             </span>
@@ -169,9 +171,9 @@ function IssueRow(handle: Handle<{ isLast: boolean; issue: Issue }>) {
   }
 }
 
-function PhoneRow(handle: Handle<{ issue: Issue }>) {
+function PhoneRow(handle: Handle<{ articles: number; issue: Issue }>) {
   return () => {
-    let { issue } = handle.props
+    let { articles, issue } = handle.props
     let state = issueState(issue)
 
     return (
@@ -182,7 +184,7 @@ function PhoneRow(handle: Handle<{ issue: Issue }>) {
           </a>
           <IssueStateTag state={state} />
         </div>
-        <span mix={phoneLineStyle}>{phoneRowLine(issue, 0, 0)}</span>
+        <span mix={phoneLineStyle}>{phoneRowLine(issue, articles, 0)}</span>
         {state === 'unfinished' ? (
           <div mix={phoneActionStyle}>
             <FinishIssueForm issue={issue} placement="row" returnTo="overview" />
@@ -193,9 +195,15 @@ function PhoneRow(handle: Handle<{ issue: Issue }>) {
   }
 }
 
-function IssueList(handle: Handle<{ filter: IssueFilter; issues: readonly Issue[] }>) {
+function IssueList(
+  handle: Handle<{
+    articleCounts: ReadonlyMap<number, number>
+    filter: IssueFilter
+    issues: readonly Issue[]
+  }>,
+) {
   return () => {
-    let { filter, issues } = handle.props
+    let { articleCounts, filter, issues } = handle.props
     let shown = issues.filter((issue) => isInFilter(issueState(issue), filter))
     let counts: Record<IssueFilter, number> = {
       all: issues.length,
@@ -238,13 +246,17 @@ function IssueList(handle: Handle<{ filter: IssueFilter; issues: readonly Issue[
                   </span>
                 </TableRow>
                 {shown.map((issue, index) => (
-                  <IssueRow isLast={index === shown.length - 1} issue={issue} />
+                  <IssueRow
+                    articles={articleCounts.get(issue.id) ?? 0}
+                    isLast={index === shown.length - 1}
+                    issue={issue}
+                  />
                 ))}
               </div>
             </div>
             <div mix={phoneOnlyStyle}>
               {shown.map((issue) => (
-                <PhoneRow issue={issue} />
+                <PhoneRow articles={articleCounts.get(issue.id) ?? 0} issue={issue} />
               ))}
             </div>
           </>
@@ -360,7 +372,7 @@ function NewIssueDialogView(
  */
 export function OverviewPage(handle: Handle<OverviewPageProps>) {
   return () => {
-    let { dialog, driveAccount, filter, issues, person, toasts } = handle.props
+    let { articleCounts, dialog, driveAccount, filter, issues, person, toasts } = handle.props
 
     return (
       <Document title="Vydání">
@@ -389,7 +401,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
               </a>
             </EmptyState>
           ) : (
-            <IssueList filter={filter} issues={issues} />
+            <IssueList articleCounts={articleCounts} filter={filter} issues={issues} />
           )}
         </Layout>
         {dialog === undefined ? null : (

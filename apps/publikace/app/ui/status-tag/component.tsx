@@ -19,6 +19,8 @@ const TONE_CLASSES: Record<StatusTone, string> = {
 
 export type StatusTagProps = {
   children?: RemixNode
+  /** The line under the tag: _založen 10. 11._ (`12a`). */
+  detail?: string
   tone: StatusTone
 }
 
@@ -30,6 +32,9 @@ export function StatusTag(handle: Handle<StatusTagProps>) {
   return () => (
     <span class={`vdm-status vdm-status--${TONE_CLASSES[handle.props.tone]}`}>
       <span class="vdm-status__tag">{handle.props.children}</span>
+      {handle.props.detail === undefined ? null : (
+        <span class="vdm-status__detail">{handle.props.detail}</span>
+      )}
     </span>
   )
 }

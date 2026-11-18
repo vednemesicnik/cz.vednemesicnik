@@ -4,6 +4,7 @@
  */
 
 import type { Editor } from '../../middleware/auth.server.ts'
+import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { DriveAccount, type DriveAccountContext } from '../../middleware/drive-account.server.ts'
 import { Issues, type IssuesContext } from '../../middleware/issues.server.ts'
 import { Toasts } from '../../middleware/toasts.server.ts'
@@ -46,13 +47,15 @@ export async function renderOverview(
   dialog?: NewIssueDialog,
   init?: ResponseInit,
 ): Promise<Response> {
-  let [issues, driveAccount] = await Promise.all([
+  let [issues, driveAccount, articleCounts] = await Promise.all([
     issuesOf(context).store.list(),
     driveView(context),
+    (context.get(Articles) as ArticlesContext).articles.countsByIssue(),
   ])
 
   return context.render(
     <OverviewPage
+      articleCounts={articleCounts}
       dialog={dialog}
       driveAccount={driveAccount}
       filter={filter}

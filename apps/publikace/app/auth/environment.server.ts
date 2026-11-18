@@ -123,3 +123,30 @@ export function driveAccountEmail(): string {
 export function issuesFolderId(): string {
   return isProduction() ? required('ISSUES_FOLDER_ID') : optional('ISSUES_FOLDER_ID')
 }
+
+/**
+ * The Doc every article is copied from, carrying the bound script and `{{NAZEV_CLANKU}}` in its
+ * body. Optional outside production; without it, creating an article answers _Zkuste článek
+ * vytvořit za chvíli znovu._ and logs why.
+ */
+export function articleTemplateDocumentId(): string {
+  return isProduction()
+    ? required('ARTICLE_TEMPLATE_DOCUMENT_ID')
+    : optional('ARTICLE_TEMPLATE_DOCUMENT_ID')
+}
+
+export type MailSendEndpoint = { secret: string; url: string }
+
+/**
+ * The Mailer of the `publikace@` mailbox (`SCRIPT__Mail__Send`), or `null` outside production
+ * when it is not configured: an article is then created and its welcome e-mails are logged as
+ * not sent.
+ */
+export function mailSendEndpoint(): MailSendEndpoint | null {
+  if (isProduction()) {
+    return { secret: required('MAIL_SEND_SECRET'), url: required('MAIL_SEND_URL') }
+  }
+  let url = optional('MAIL_SEND_URL')
+  let secret = optional('MAIL_SEND_SECRET')
+  return url === '' || secret === '' ? null : { secret, url }
+}

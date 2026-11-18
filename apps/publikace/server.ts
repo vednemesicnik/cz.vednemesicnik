@@ -13,7 +13,8 @@ import { createAccessDirectory } from './app/data/access.server.ts'
 import { defaultDatabase, migrateDatabase } from './app/data/database.server.ts'
 import { normalizeEmail } from './app/domain/access.ts'
 import { now } from './app/domain/time.ts'
-import { createAppRouter } from './app/router.ts'
+import { cleanUpAbandoned } from './app/drive/article-setup.server.ts'
+import { createAppRouter, createArticleSetup } from './app/router.ts'
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100
 
@@ -49,6 +50,17 @@ if (initialAdmin !== '') {
   await directory.seedInitialAdmin(initialAdmin, now())
 } else if (process.env.NODE_ENV === 'production' && (await directory.listAccounts()).length === 0) {
   throw new Error('Přístup nemá žádný jmenovaný účet a chybí INITIAL_ADMIN_EMAIL.')
+}
+
+/*
+ * Before the port opens, no request is running, so every article attempt left uncommitted is one
+ * a crash or a failed cleanup left behind: its files go to the bin now (`11c`). A Drive that does
+ * not answer delays it to the next send and does not stop the app.
+ */
+try {
+  await cleanUpAbandoned(createArticleSetup({ database: database.database }))
+} catch (error) {
+  console.error('[drive] the cleanup at startup did not run:', error)
 }
 
 const router = createAppRouter({ database: database.database })

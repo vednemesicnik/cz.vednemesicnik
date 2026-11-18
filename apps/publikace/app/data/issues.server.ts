@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 
 import { type FolderKind, type Issue, issueNameKey } from '../domain/issue.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
+import { ensureArticleLinkIn } from './links.server.ts'
 
 /**
  * The issues in the app's database, the source of truth for them (`w4i6us5r`).
@@ -21,8 +22,12 @@ export type NewIssue = {
 export type InsertResult = { existingName: string; ok: false } | { issue: Issue; ok: true }
 
 export type IssueStore = {
-  /** Marks the issue finished. Refused by the table while a folder is still missing. */
+  /**
+   * Marks the issue finished and gives it its link for new articles. Refused by the table while
+   * a folder is still missing.
+   */
   complete(id: number, when: Temporal.Instant): Promise<void>
+  findById(id: number): Promise<Issue | null>
   /** Every issue by its name, case and surrounding spaces aside. */
   findByName(name: string): Promise<Issue | null>
   /** The row first, before Drive. A name already in the app is refused, never overwritten. */
@@ -68,10 +73,24 @@ export function createIssueStore(database: Database): IssueStore {
   }
 
   return {
+    /* The link for the newsroom comes into being in the same transaction, so a complete issue
+       never stands without one (`12c`), whichever of creating and finishing completed it. */
     async complete(id, when) {
-      await database.exec(
-        sql`UPDATE issues SET completed_at = ${stamp(when)} WHERE id = ${id} AND completed_at IS NULL`,
-      )
+      await database.transaction(async (db) => {
+        await db.exec(
+          sql`UPDATE issues SET completed_at = ${stamp(when)} WHERE id = ${id} AND completed_at IS NULL`,
+        )
+        let result = await db.exec(
+          sql`SELECT completed_at FROM issues WHERE id = ${id} AND closed_at IS NULL`,
+        )
+        if (result.rows?.[0]?.['completed_at'] != null) await ensureArticleLinkIn(db, id, when)
+      })
+    },
+
+    async findById(id) {
+      let result = await database.exec(sql`SELECT * FROM issues WHERE id = ${id}`)
+      let row = result.rows?.[0]
+      return row === undefined ? null : toIssue(row)
     },
 
     findByName(name) {

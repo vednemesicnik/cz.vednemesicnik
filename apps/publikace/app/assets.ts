@@ -21,10 +21,11 @@ export const assetServer = createAssetServer({
   allowPackages: ['remix'],
   denyFiles: ['**/*.server.*', 'app/**/*.test.*'],
   /*
-   * The design system's stylesheet pulls its two font files through `url()`, and a leaf file
-   * is served only when its extension is listed.
+   * The design system's stylesheet pulls its two font files through `url()`, and the pages
+   * behind a shared link name its share image for a messenger's preview (`02c`). A leaf file is
+   * served only when its extension is listed.
    */
-  files: { extensions: ['.woff2'] },
+  files: { extensions: ['.woff2', '.jpg'] },
   sourceMaps: isDevelopment ? 'external' : undefined,
   minify: !isDevelopment,
   fingerprint: isProduction,
@@ -55,3 +56,6 @@ export const scriptEntry = await assetServer.getScriptEntry('app/actions/public/
  * too.
  */
 export const stylesheetHref = await assetServer.getHref('app/ui/public/ds/styles.css')
+
+/** The design system's share image, which a messenger shows under a shared link (`02c`). */
+export const shareImageHref = await assetServer.getHref('app/ui/public/ds/assets/og-share.jpg')

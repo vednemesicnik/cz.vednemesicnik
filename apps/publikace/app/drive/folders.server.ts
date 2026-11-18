@@ -1,7 +1,12 @@
+import {
+  createDriveCall,
+  describe,
+  escapeQuery,
+  FILES_ENDPOINT,
+  FOLDER_TYPE,
+  readJson,
+} from './http.server.ts'
 import { logDriveFailure } from './log.server.ts'
-
-const FILES_ENDPOINT = 'https://www.googleapis.com/drive/v3/files'
-const FOLDER_TYPE = 'application/vnd.google-apps.folder'
 
 export type FolderCreated = { id: string; ok: true } | { ok: false }
 
@@ -30,17 +35,7 @@ export type DriveFoldersOptions = {
 }
 
 export function createDriveFolders(options: DriveFoldersOptions): DriveFolders {
-  let fetch = options.fetch ?? globalThis.fetch
-  let headers = { Authorization: `Bearer ${options.accessToken}` }
-
-  async function call(what: string, url: URL, init: RequestInit = {}): Promise<Response | null> {
-    try {
-      return await fetch(url, { ...init, headers: { ...headers, ...init.headers } })
-    } catch (error) {
-      logDriveFailure(what, error instanceof Error ? error.message : 'unknown error')
-      return null
-    }
-  }
+  let call = createDriveCall(options.accessToken, options.fetch ?? globalThis.fetch)
 
   return {
     async create(parentId, name) {
@@ -105,25 +100,4 @@ export function createDriveFolders(options: DriveFoldersOptions): DriveFolders {
       return 'unavailable'
     },
   }
-}
-
-/** Drive's query language quotes with `'` and escapes it and `\` with a backslash. */
-function escapeQuery(value: string): string {
-  return value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")
-}
-
-async function readJson(response: Response): Promise<Record<string, unknown>> {
-  try {
-    let value: unknown = await response.json()
-    return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
-  } catch {
-    return {}
-  }
-}
-
-function describe(response: Response, body: Record<string, unknown>): string {
-  let error = body['error']
-  let message =
-    typeof error === 'object' && error !== null ? (error as { message?: unknown }).message : null
-  return `HTTP ${response.status} ${typeof message === 'string' ? message : ''}`
 }

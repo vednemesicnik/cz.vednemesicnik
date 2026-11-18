@@ -1,7 +1,12 @@
 import type { Handle } from 'remix/component'
 import { clientEntry, on, ref } from 'remix/component'
 
-export type ActionMenuItem = { href: string; label: string }
+export type ActionMenuItem = {
+  href: string
+  /** An item that stays in the app, like _Vydat nový odkaz…_; the rest open a new tab. */
+  isSameTab?: boolean
+  label: string
+}
 
 export type ActionMenuProps = {
   /** Names the trigger, which shows only `⋯`: _Další akce VDM_2026_5_. */
@@ -11,7 +16,7 @@ export type ActionMenuProps = {
 
 /**
  * The design system's `ActionMenu` on a row (`11a`): `⋯` opens a short list of shortcuts below
- * it. Its items are links to other places, so it is a list that `Tab` walks rather than an
+ * it. Its items are links, most of them to other places, so it is a list that `Tab` walks rather than an
  * arrow-key menu, and it carries no `menu` roles. A click elsewhere or Escape closes it, Escape
  * returning focus to `⋯`.
  *
@@ -87,12 +92,18 @@ export const ActionMenu = clientEntry(
           </button>
           {isOpen ? (
             <div class="vdm-menu vdm-menu--end" id={menuId}>
-              {items.map((item) => (
-                <a class="vdm-menu__item" href={item.href} rel="noopener" target="_blank">
-                  {item.label}
-                  <span class="vdm-sr-only"> (otevře se v nové záložce)</span>
-                </a>
-              ))}
+              {items.map((item) =>
+                item.isSameTab === true ? (
+                  <a class="vdm-menu__item" href={item.href}>
+                    {item.label}
+                  </a>
+                ) : (
+                  <a class="vdm-menu__item" href={item.href} rel="noopener" target="_blank">
+                    {item.label}
+                    <span class="vdm-sr-only"> (otevře se v nové záložce)</span>
+                  </a>
+                ),
+              )}
             </div>
           ) : null}
         </span>

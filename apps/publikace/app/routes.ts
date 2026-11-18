@@ -22,6 +22,17 @@ export const routes = route({
     create: post('/issues/new'),
     show: get('/issues/:name'),
     finish: post('/issues/:name/finish'),
+    /* _Vydat nový odkaz_ asks at an address of its own, as a removal does (`02d`). */
+    askRenewLink: get('/issues/:name/link/renew'),
+    renewLink: post('/issues/:name/link/renew'),
+  },
+
+  /* The pages behind a shared link, without sign-in or cookies (`02a`). `GET` draws the form,
+     `POST` to the same address creates the article (`20a`–`20d`). The artworks link
+     `/l/:key/artworks` is page `21` and has no route yet. */
+  links: {
+    article: get('/l/:key/article'),
+    createArticle: post('/l/:key/article'),
   },
 
   auth: {
