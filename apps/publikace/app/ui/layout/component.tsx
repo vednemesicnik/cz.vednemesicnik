@@ -1,6 +1,7 @@
 import type { Handle, RemixNode } from 'remix/component'
 import { css } from 'remix/component'
 
+import { AccountBanner, type AccountBannerProps } from '../account-banner/component.tsx'
 import { Panel, type PanelPerson, type PanelSection } from '../panel/component.tsx'
 import { Toasts } from '../toast/component.tsx'
 
@@ -8,6 +9,11 @@ export type LayoutProps = {
   /** The panel section this page belongs to. */
   active: PanelSection
   children?: RemixNode
+  /**
+   * The state of the Drive account, for the banner over the page while it is not connected
+   * (`14g`, `14c`). Every screen of the editors-in-chief passes it.
+   */
+  driveAccount: Omit<AccountBannerProps, 'isOnSettings'>
   /**
    * Takes the page out of reach while a question is asked over it, so focus and clicks stay in
    * the question: it is drawn at its own address with no script to open it as a modal.
@@ -47,7 +53,13 @@ export function Layout(handle: Handle<LayoutProps>) {
   return () => (
     <div inert={handle.props.isInert === true ? true : undefined} mix={shellStyle}>
       <Panel active={handle.props.active} person={handle.props.person} />
-      <main mix={mainStyle}>{handle.props.children}</main>
+      <main mix={mainStyle}>
+        <AccountBanner
+          {...handle.props.driveAccount}
+          isOnSettings={handle.props.active === 'settings'}
+        />
+        {handle.props.children}
+      </main>
       <Toasts messages={handle.props.toasts ?? []} />
     </div>
   )

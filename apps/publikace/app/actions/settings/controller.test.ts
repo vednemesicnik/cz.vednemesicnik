@@ -3,7 +3,12 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { now } from '../../domain/time.ts'
-import { createTestApp, seedAdmin, type TestApp } from '../../test-app.server.ts'
+import {
+  connectDriveAccount,
+  createTestApp,
+  seedAdmin,
+  type TestApp,
+} from '../../test-app.server.ts'
 
 /** Marie administers; Jakub and Eva are named accounts, Jakub has signed in. */
 async function editorialBoard(): Promise<TestApp> {
@@ -287,6 +292,93 @@ describe('settings, Přístup', () => {
         `/settings/access/groups/${group}/remove`,
       )
       assert.equal((await app.directory.listGroups()).length, 0)
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('settings, Účty Publikace', () => {
+  it('shows every editor-in-chief the account never connected, with the way to connect (14g)', async () => {
+    let app = await editorialBoard()
+    try {
+      let browser = app.browser()
+      await browser.signInAs('jakub@priklad.cz', 'Jakub Novák')
+      let html = await (await browser.get('/settings')).text()
+      let text = textOf(html)
+
+      assert.ok(html.includes('id="accounts"'))
+      assert.ok(text.includes('Účty Publikace'))
+      assert.ok(html.includes('vdm-status--pending'))
+      assert.ok(text.includes('Nepřipojeno'))
+      assert.ok(
+        text.includes(
+          'Připojte účet, aby aplikace mohla zakládat vydání a pracovat se soubory na Disku.',
+        ),
+      )
+      // A whole page: the answer is a redirect to Google, which a fetch could not follow.
+      assert.ok(
+        /<form [^>]*action="\/settings\/account\/connect"[^>]*data-rmx-document[^>]*method="post"/.test(
+          html,
+        ),
+      )
+      assert.ok(text.includes('Připojit účet'))
+      assert.ok(
+        text.includes(
+          'V Googlu vyberte účet publikace.app@priklad.cz a povolte aplikaci pracovat se soubory na Disku.',
+        ),
+      )
+      assert.ok(text.includes('publikace@ priklad.cz'), 'the mailbox, without a state')
+      // The banner, with the action that jumps to the card on the page it is already on.
+      assert.ok(html.includes('vdm-callout--warning'))
+      assert.ok(text.includes('Přejít k účtu'))
+      assert.ok(html.includes('href="#accounts"'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('shows the connected account without a button and without a banner (14a)', async () => {
+    let app = await editorialBoard()
+    try {
+      await connectDriveAccount(app)
+      let browser = app.browser()
+      await browser.signInAs('marie@priklad.cz', 'Marie Horáková')
+      let html = await (await browser.get('/settings')).text()
+      let text = textOf(html)
+
+      assert.ok(html.includes('vdm-status--published'))
+      assert.ok(text.includes('Připojeno'))
+      assert.ok(text.includes('Pod tímto účtem běží úlohy na pozadí.'))
+      assert.ok(!html.includes('/settings/account/connect'))
+      assert.ok(!text.includes('Přejít k účtu'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('shows the disconnected account with Připojit znovu and the error banner (14c)', async () => {
+    let app = await editorialBoard()
+    try {
+      await connectDriveAccount(app)
+      await app.driveAccount.markDisconnected(now())
+      let browser = app.browser()
+      await browser.signInAs('marie@priklad.cz', 'Marie Horáková')
+      let html = await (await browser.get('/settings')).text()
+      let text = textOf(html)
+
+      assert.ok(html.includes('vdm-status--problem'))
+      assert.ok(text.includes('Odpojeno'))
+      assert.ok(
+        text.includes('Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku.'),
+      )
+      assert.ok(text.includes('Připojit znovu'))
+      assert.ok(html.includes('vdm-callout--error'))
+      assert.ok(
+        text.includes(
+          'Účet publikace.app@ je odpojený. Akce se soubory na Disku teď nejsou dostupné.',
+        ),
+      )
     } finally {
       await app.close()
     }

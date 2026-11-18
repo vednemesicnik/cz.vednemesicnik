@@ -83,3 +83,35 @@ export function groupMembershipEndpoint(): GroupMembershipEndpoint | null {
   let secret = optional('GAS_GROUP_MEMBERSHIP_SECRET')
   return url === '' || secret === '' ? null : { secret, url }
 }
+
+/*
+ * Development only: a fixed key, so a local database keeps working across restarts. Production
+ * refuses to start without its own.
+ */
+const DEVELOPMENT_DRIVE_TOKEN_KEY = Buffer.alloc(32, 7)
+
+/**
+ * The key the refresh token of the Drive account is encrypted with: base64 of 32 bytes.
+ *
+ * A key of another length is refused even outside production, because it would encrypt nothing
+ * the production key could read and hide the mistake until the deployment.
+ */
+export function driveTokenKey(): Buffer {
+  let value = isProduction() ? required('DRIVE_TOKEN_KEY') : optional('DRIVE_TOKEN_KEY')
+  if (value === '') return DEVELOPMENT_DRIVE_TOKEN_KEY
+
+  let key = Buffer.from(value, 'base64')
+  if (key.length !== 32) {
+    throw new Error('Proměnná DRIVE_TOKEN_KEY musí být base64 32 bajtů.')
+  }
+  return key
+}
+
+/**
+ * The only account the app accepts as its account on Drive, `publikace.app@`. Outside
+ * production it is that name on the configured domain.
+ */
+export function driveAccountEmail(): string {
+  if (isProduction()) return required('DRIVE_ACCOUNT_EMAIL').toLowerCase()
+  return optional('DRIVE_ACCOUNT_EMAIL', `publikace.app@${authorizedDomain()}`).toLowerCase()
+}

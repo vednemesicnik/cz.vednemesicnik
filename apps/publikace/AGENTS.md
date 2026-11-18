@@ -204,8 +204,10 @@ with a secret that lives only in the Script Properties of a standalone project.
 comments, not in the design. Authors, providers, e-mail addresses, Drive IDs, folder links and
 shared-link keys must be fictional; `priklad.cz` is the convention.
 
-**Never open `.env`.** It will hold live secrets (the Google OAuth client, the token of
-`publikace.app@`, the secrets for the Mailer and the scripts); on Fly.io they are `fly secrets`.
+**Never open `.env`.** It will hold live secrets (the Google OAuth client, the key the token of
+`publikace.app@` is encrypted with, the secrets for the Mailer and the scripts); on Fly.io they are
+`fly secrets`. The token itself is in the database, encrypted: an editor-in-chief connects the
+account in Settings, so a revoked token is mended there and not by a deployment.
 `.env.example` is the tracked template and documents every variable by name and purpose — read
 that instead. Beware of `grep -r` from
 the repository root, which reads `.env` before you can filter it out.

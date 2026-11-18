@@ -12,8 +12,15 @@ import { createRouter, type MiddlewareContext, type RequestContext } from 'remix
 import createAuthController from './actions/auth/controller.tsx'
 import createGoogleController from './actions/auth/google/controller.tsx'
 import createHomeController from './actions/controller.tsx'
+import createDriveAccountController from './actions/settings/account/controller.tsx'
 import createSettingsController from './actions/settings/controller.tsx'
-import { appOrigin, authorizedDomain, groupMembershipEndpoint } from './auth/environment.server.ts'
+import {
+  appOrigin,
+  authorizedDomain,
+  driveAccountEmail,
+  driveTokenKey,
+  groupMembershipEndpoint,
+} from './auth/environment.server.ts'
 import {
   createMembershipCheck,
   type MembershipCheck,
@@ -21,10 +28,12 @@ import {
 } from './auth/group-membership.server.ts'
 import { createSessionCookie, createSignedInUntilCookie } from './auth/session.server.ts'
 import { createAccessDirectory } from './data/access.server.ts'
+import { createDriveAccountStore } from './data/drive-account.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
 import { loadAccess } from './middleware/access.server.ts'
 import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
+import { loadDriveAccount } from './middleware/drive-account.server.ts'
 import { render } from './middleware/render.tsx'
 import { takeToasts } from './middleware/toasts.server.ts'
 import { routes } from './routes.ts'
@@ -40,6 +49,7 @@ export type AppContext = MiddlewareContext<
     ReturnType<typeof formData>,
     ReturnType<typeof session>,
     ReturnType<typeof loadAccess>,
+    ReturnType<typeof loadDriveAccount>,
     ReturnType<typeof loadAuth>,
     ReturnType<typeof takeToasts>,
   ]
@@ -57,6 +67,10 @@ export type AppDependencies = {
   database: Database
   /** Without the `@`. Defaults to `AUTHORIZED_DOMAIN`. */
   domain?: string
+  /** The only account accepted as the app's account on Drive. Defaults to `DRIVE_ACCOUNT_EMAIL`. */
+  driveAccountEmail?: string
+  /** Encrypts the Drive token. Defaults to `DRIVE_TOKEN_KEY`. */
+  driveTokenKey?: Buffer
 }
 
 function defaultMembershipCheck(): MembershipCheck {
@@ -72,6 +86,10 @@ export function createAppRouter(dependencies: AppDependencies) {
   let sessionCookie = createSessionCookie()
   let signedInUntil = createSignedInUntilCookie()
   let directory = createAccessDirectory(dependencies.database)
+  let driveAccountStore = createDriveAccountStore(
+    dependencies.database,
+    dependencies.driveTokenKey ?? driveTokenKey(),
+  )
 
   let router = createRouter({
     /*
@@ -88,7 +106,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *     reads the person out of it,
      *   - `asyncContext()` before `csrf()`, so `<CsrfField />` can reach the token while the
      *     page is drawn,
-     *   - `loadAccess()` before `loadAuth()`, whose ten-minute check asks the access list,
+     *   - `loadAccess()` before `loadAuth()`, whose ten-minute check asks the access list, and
+     *     `loadDriveAccount()` beside it, for the banner every editor screen draws,
      *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart,
      *   - `takeToasts()` last, so the message is cleared while the session can still be saved.
      */
@@ -105,6 +124,10 @@ export function createAppRouter(dependencies: AppDependencies) {
         checkMembership: dependencies.checkMembership ?? defaultMembershipCheck(),
         directory,
         domain: dependencies.domain ?? authorizedDomain(),
+      }),
+      loadDriveAccount({
+        expectedEmail: (dependencies.driveAccountEmail ?? driveAccountEmail()).toLowerCase(),
+        store: driveAccountStore,
       }),
       loadAuth(),
       csrf({
@@ -125,6 +148,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   router.map(routes.auth, createAuthController(signedInUntil))
   router.map(routes.auth.google, createGoogleController(signedInUntil))
   router.map(routes.settings, createSettingsController(signedInUntil))
+  router.map(routes.settings.account, createDriveAccountController(signedInUntil))
 
   return router
 }

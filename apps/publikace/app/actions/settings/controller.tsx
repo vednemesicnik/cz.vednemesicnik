@@ -1,5 +1,6 @@
 import { redirect } from 'remix/response/redirect'
 import { createController } from 'remix/router'
+import { Session } from 'remix/session'
 
 import type { AccessContext } from '../../auth/access.server.ts'
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
@@ -14,6 +15,11 @@ import {
 import { now } from '../../domain/time.ts'
 import { Access } from '../../middleware/access.server.ts'
 import { type Editor, requireEditor } from '../../middleware/auth.server.ts'
+import {
+  DriveAccount,
+  type DriveAccountContext,
+  takeConnectRefusal,
+} from '../../middleware/drive-account.server.ts'
 import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
 import type { AppContext } from '../../router.ts'
 import { routes } from '../../routes.ts'
@@ -42,9 +48,11 @@ async function renderSettings(
   init?: ResponseInit,
 ): Promise<Response> {
   let access = accessOf(context)
-  let [accounts, groups] = await Promise.all([
+  let driveAccount = context.get(DriveAccount) as DriveAccountContext
+  let [accounts, groups, driveState] = await Promise.all([
     access.directory.listAccounts(),
     access.directory.listGroups(),
+    driveAccount.store.state(),
   ])
 
   return context.render(
@@ -52,6 +60,11 @@ async function renderSettings(
       accounts={accounts}
       addForm={state.addForm}
       domain={access.domain}
+      driveAccount={{
+        expectedEmail: driveAccount.expectedEmail,
+        refusal: takeConnectRefusal(context.get(Session) as Session | undefined),
+        state: driveState,
+      }}
       editor={editor}
       groups={groups}
       isRoleLost={state.isRoleLost}

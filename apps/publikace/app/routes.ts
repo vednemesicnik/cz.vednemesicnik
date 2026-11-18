@@ -33,5 +33,11 @@ export const routes = route({
     removeAccount: post('/settings/access/accounts/:id/remove'),
     askRemoveGroup: get('/settings/access/groups/:id/remove'),
     removeGroup: post('/settings/access/groups/:id/remove'),
+    /* Connecting publikace.app@ (`14g`, `14h`): a form that sends the browser to Google, and the
+       address Google sends it back to. */
+    account: {
+      connect: post('/settings/account/connect'),
+      callback: get('/settings/account/callback'),
+    },
   },
 })

@@ -35,20 +35,25 @@ a s tvarem jména v podpisu.
 
 ## Termíny: co se nesmí přejmenovat
 
-| Termín                      | Význam                                                                              |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| **vydání**                  | Připravované číslo časopisu, `VDM_2026_5`. Ne „číslo“: to je na webu hotový výtisk. |
-| **článek**                  | Text s autory a dokumentem Google.                                                  |
-| **skupina obrazových děl**  | Obrázky bez vlastního článku (obálka, ilustrace k více textům).                     |
-| **obrazové dílo**, **dílo** | Jeden nahraný obrázek. V nadpisech „obrazová díla“, v běžné větě „dílo“.            |
-| **poskytovatel**            | Kdo dílo nahrál a dává souhlas. **Autor díla** je jen jméno do podpisu.             |
-| **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.             |
-| **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                 |
-| **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly.                                     |
-| **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                      |
-| **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                       |
-| **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                   |
-| **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.              |
+| Termín                      | Význam                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------- |
+| **vydání**                  | Připravované číslo časopisu, `VDM_2026_5`. Ne „číslo“: to je na webu hotový výtisk.   |
+| **článek**                  | Text s autory a dokumentem Google.                                                    |
+| **skupina obrazových děl**  | Obrázky bez vlastního článku (obálka, ilustrace k více textům).                       |
+| **obrazové dílo**, **dílo** | Jeden nahraný obrázek. V nadpisech „obrazová díla“, v běžné větě „dílo“.              |
+| **poskytovatel**            | Kdo dílo nahrál a dává souhlas. **Autor díla** je jen jméno do podpisu.               |
+| **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.               |
+| **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                   |
+| **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly.                                       |
+| **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                        |
+| **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                         |
+| **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                     |
+| **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.                |
+| **připojit**, **připojení** | Trvalé spojení aplikace s účtem `publikace.app@`. Ne „přihlásit“: to dělá šéfredakce. |
+
+**Co aplikace smí dělat s Diskem účtu `publikace.app@`** se neříká přístupem ani oprávněním, ale
+činností: _povolit aplikaci pracovat se soubory na Disku_. _Povolení_ pak odkazuje jen na tuto
+činnost. _Přístup_ zůstává jen pro to, kdo se smí přihlásit.
 
 **Redakční doložka** má dva významy a oba se jmenují stejně:
 

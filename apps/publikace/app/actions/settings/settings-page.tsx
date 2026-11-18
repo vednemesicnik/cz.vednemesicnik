@@ -2,7 +2,19 @@ import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
 
 import type { AccessAccount, AccessGroup } from '../../data/access.server.ts'
+import type { DriveAccountState } from '../../data/drive-account.server.ts'
 import { type AccessKind, administratorsSentence, roleLostMessage } from '../../domain/access.ts'
+import {
+  accountDomain,
+  CONNECTED_CARD_TEXT,
+  type ConnectionRefusal,
+  connectHint,
+  DISCONNECTED_CARD_TEXT,
+  MAILBOX_CARD_TEXT,
+  NOT_CONNECTED_CARD_TEXT,
+  refusalMessage,
+  shortAccount,
+} from '../../domain/drive-account.ts'
 import { formatDate, formatDay } from '../../domain/time.ts'
 import type { Editor } from '../../middleware/auth.server.ts'
 import { routes } from '../../routes.ts'
@@ -10,6 +22,7 @@ import { Avatar } from '../../ui/avatar/component.tsx'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
+import { StatusTag } from '../../ui/status-tag/component.tsx'
 import { Document } from '../document.tsx'
 
 /** What the add form was sent with, drawn again when it was refused. */
@@ -24,11 +37,19 @@ export type RemovalQuestion =
   | { account: AccessAccount; kind: 'account' }
   | { group: AccessGroup; kind: 'group' }
 
+/** The account the app acts as on Drive, and why the last return from Google was refused. */
+export type DriveAccountView = {
+  expectedEmail: string
+  refusal: ConnectionRefusal | null
+  state: DriveAccountState
+}
+
 export type SettingsPageProps = {
   accounts: readonly AccessAccount[]
   addForm?: AddForm
   /** Without the `@`. */
   domain: string
+  driveAccount: DriveAccountView
   editor: Editor
   groups: readonly AccessGroup[]
   /** `14b`: a change was sent from a page opened before the role was taken away. */
@@ -90,6 +111,45 @@ const whoTextStyle = css({
 })
 
 const nameStyle = css({ fontSize: '14px', fontWeight: 500 })
+
+/* The cards of Účty Publikace: `.acct` and `.hintline` in `14-Nastaveni-ucet.dc.html`. */
+const cardsStyle = css({
+  display: 'grid',
+  gap: '16px',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+})
+
+const cardStyle = css({
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-lg)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  minWidth: 0,
+  padding: '16px',
+})
+
+const cardHeadStyle = css({
+  alignItems: 'flex-start',
+  display: 'flex',
+  gap: '12px',
+  justifyContent: 'space-between',
+})
+
+const cardNameStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+  '& strong': { fontSize: '15px', fontWeight: 600 },
+})
+
+const hintStyle = css({
+  color: 'var(--text-secondary)',
+  fontSize: '13px',
+  lineHeight: 1.5,
+  margin: 0,
+  overflowWrap: 'anywhere',
+})
 
 const endStyle = css({ alignItems: 'center', display: 'flex', flex: 'none', gap: '6px' })
 
@@ -501,11 +561,93 @@ function RemovalDialog(handle: Handle<{ question: RemovalQuestion }>) {
   }
 }
 
+function CardName(handle: Handle<{ email: string }>) {
+  return () => (
+    <span mix={cardNameStyle}>
+      <strong>{shortAccount(handle.props.email)}</strong>
+      <span mix={metaStyle}>{accountDomain(handle.props.email)}</span>
+    </span>
+  )
+}
+
+const TAGS = {
+  connected: { label: 'Připojeno', tone: 'done' },
+  disconnected: { label: 'Odpojeno', tone: 'problem' },
+  'not-connected': { label: 'Nepřipojeno', tone: 'waiting' },
+} as const
+
 /**
- * `/settings`: Nastavení with its one part so far, Přístup (`14a`, `14b`).
+ * The card of `publikace.app@` in its three states: _Nepřipojeno_ (`14g`), _Připojeno_ (`14a`)
+ * and _Odpojeno_ (`14c`). A refused return from Google stands above the button (`14h`); while
+ * the account is connected — somebody connected it meanwhile — under the head, as the card has
+ * no button then.
+ */
+function DriveAccountCard(handle: Handle<{ view: DriveAccountView }>) {
+  return () => {
+    let { expectedEmail, refusal, state } = handle.props.view
+    let tag = TAGS[state.status]
+    let isConnected = state.status === 'connected'
+    let message = refusal === null ? null : refusalMessage(refusal, expectedEmail, isConnected)
+
+    return (
+      <div mix={cardStyle}>
+        <div mix={cardHeadStyle}>
+          <CardName email={expectedEmail} />
+          <StatusTag tone={tag.tone}>{tag.label}</StatusTag>
+        </div>
+        {isConnected ? (
+          <>
+            {message === null ? null : (
+              <Callout tone="info">
+                <p style={{ margin: 0 }}>{message}</p>
+              </Callout>
+            )}
+            <p mix={metaStyle}>{CONNECTED_CARD_TEXT}</p>
+          </>
+        ) : (
+          <>
+            <p mix={metaStyle}>
+              {state.status === 'not-connected' ? NOT_CONNECTED_CARD_TEXT : DISCONNECTED_CARD_TEXT}
+            </p>
+            {message === null ? null : (
+              <Callout tone="error">
+                <p style={{ margin: 0 }}>{message}</p>
+              </Callout>
+            )}
+            {/* A whole-page navigation, like the sign-in: the answer sends the browser to
+                accounts.google.com, which the client runtime's fetch could not follow. */}
+            <form action={routes.settings.account.connect.href()} data-rmx-document method="post">
+              <CsrfField />
+              <button class="vdm-btn vdm-btn--primary vdm-btn--sm" type="submit">
+                {state.status === 'not-connected' ? 'Připojit účet' : 'Připojit znovu'}
+              </button>
+            </form>
+            <p mix={hintStyle}>{connectHint(expectedEmail)}</p>
+          </>
+        )}
+      </div>
+    )
+  }
+}
+
+/** The mailbox `publikace@`: the app never connects it, so it has no state (`14a`). */
+function MailboxCard(handle: Handle<{ email: string }>) {
+  return () => (
+    <div mix={cardStyle}>
+      <div mix={cardHeadStyle}>
+        <CardName email={handle.props.email} />
+      </div>
+      <p mix={metaStyle}>{MAILBOX_CARD_TEXT}</p>
+    </div>
+  )
+}
+
+/**
+ * `/settings`: Nastavení with Přístup (`14a`, `14b`) and Účty Publikace (`14a`, `14g`, `14h`,
+ * `14c`).
  *
- * The lead sentence under the title waits for the parts it names — files, accounts and
- * proofreading arrive with their own issues.
+ * The lead sentence under the title waits for the parts it names — files and proofreading arrive
+ * with their own issues.
  */
 export function SettingsPage(handle: Handle<SettingsPageProps>) {
   return () => {
@@ -513,6 +655,7 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
       accounts,
       addForm,
       domain,
+      driveAccount,
       editor,
       groups,
       isRoleLost = false,
@@ -524,7 +667,16 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
 
     return (
       <Document title="Nastavení">
-        <Layout active="settings" isInert={question !== undefined} person={editor} toasts={toasts}>
+        <Layout
+          active="settings"
+          driveAccount={{
+            expectedEmail: driveAccount.expectedEmail,
+            status: driveAccount.state.status,
+          }}
+          isInert={question !== undefined}
+          person={editor}
+          toasts={toasts}
+        >
           <div mix={columnStyle}>
             <h1 class="vdm-page-title" style={{ margin: 0 }}>
               Nastavení
@@ -565,6 +717,14 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
               ) : (
                 <ReadOnlyAccess accounts={accounts} groups={groups} isRoleLost={isRoleLost} />
               )}
+            </section>
+
+            <section aria-labelledby="accounts-title" id="accounts" mix={partStyle}>
+              <h2 id="accounts-title">Účty Publikace</h2>
+              <div mix={cardsStyle}>
+                <DriveAccountCard view={driveAccount} />
+                <MailboxCard email={`publikace@${accountDomain(driveAccount.expectedEmail)}`} />
+              </div>
             </section>
           </div>
         </Layout>

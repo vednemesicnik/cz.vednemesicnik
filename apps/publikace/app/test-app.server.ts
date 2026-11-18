@@ -7,6 +7,7 @@ import {
   type StoredEditor,
 } from './auth/session.server.ts'
 import { type AccessDirectory, createAccessDirectory } from './data/access.server.ts'
+import { createDriveAccountStore, type DriveAccountStore } from './data/drive-account.server.ts'
 import { migrateDatabase, type OpenDatabase, openDatabase } from './data/database.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
 import { now } from './domain/time.ts'
@@ -14,6 +15,12 @@ import { createAppRouter } from './router.ts'
 
 /** The domain every test runs on, fictional like everything else in the suite. */
 export const TEST_DOMAIN = 'priklad.cz'
+
+/** The app's account on Drive in the suite, on the same fictional domain. */
+export const TEST_DRIVE_ACCOUNT = 'publikace.app@priklad.cz'
+
+/** The key the suite encrypts the Drive token with. */
+export const TEST_DRIVE_TOKEN_KEY = Buffer.alloc(32, 3)
 
 const ORIGIN = 'http://localhost:44100'
 
@@ -23,6 +30,8 @@ export type TestApp = {
   close(): Promise<void>
   database: OpenDatabase['database']
   directory: AccessDirectory
+  /** The store of the app's account on Drive, on the same database. */
+  driveAccount: DriveAccountStore
   /** Sets what the fake membership service answers for a group. */
   setMembership(group: string, answer: (email: string) => MembershipAnswer): void
 }
@@ -51,7 +60,13 @@ export async function createTestApp(): Promise<TestApp> {
   let checkMembership: MembershipCheck = async (email, group) =>
     answers.get(group)?.(email) ?? { status: 'unknown-group' }
 
-  let router = createAppRouter({ checkMembership, database: opened.database, domain: TEST_DOMAIN })
+  let router = createAppRouter({
+    checkMembership,
+    database: opened.database,
+    domain: TEST_DOMAIN,
+    driveAccountEmail: TEST_DRIVE_ACCOUNT,
+    driveTokenKey: TEST_DRIVE_TOKEN_KEY,
+  })
   let storage = createSqliteSessionStorage(opened.database)
   let sessionCookie = createSessionCookie()
 
@@ -127,10 +142,21 @@ export async function createTestApp(): Promise<TestApp> {
     close: opened.close,
     database: opened.database,
     directory: createAccessDirectory(opened.database),
+    driveAccount: createDriveAccountStore(opened.database, TEST_DRIVE_TOKEN_KEY),
     setMembership(group, answer) {
       answers.set(group, answer)
     },
   }
+}
+
+/** Connects the Drive account straight in the database, as a return from Google would. */
+export async function connectDriveAccount(app: TestApp): Promise<void> {
+  await app.driveAccount.connect({
+    at: now(),
+    by: 'marie@priklad.cz',
+    email: TEST_DRIVE_ACCOUNT,
+    refreshToken: 'test-refresh-token',
+  })
 }
 
 /** Adds an administrator straight to the list, as `INITIAL_ADMIN_EMAIL` does at startup. */

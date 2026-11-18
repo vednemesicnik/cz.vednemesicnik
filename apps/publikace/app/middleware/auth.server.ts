@@ -123,8 +123,9 @@ function returnPath(context: RequestContext): string {
 export async function signInRedirect(
   context: RequestContext,
   signedInUntil: SignedInUntilCookie,
+  returnTo?: string,
 ): Promise<Response> {
-  let params = new URLSearchParams({ redirectTo: returnPath(context) })
+  let params = new URLSearchParams({ redirectTo: returnTo ?? returnPath(context) })
   let headers = new Headers()
 
   let loss = context.get(AccessLoss)
@@ -146,9 +147,14 @@ export async function signInRedirect(
   return response
 }
 
-/** Protects a controller: an anonymous request goes to the sign-in page. */
-export function requireEditor(signedInUntil: SignedInUntilCookie) {
+/**
+ * Protects a controller: an anonymous request goes to the sign-in page.
+ *
+ * `returnTo` replaces the address it would come back to, for a route that cannot be visited
+ * twice: the return from Google carries a code that is spent once used.
+ */
+export function requireEditor(signedInUntil: SignedInUntilCookie, returnTo?: string) {
   return requireAuth<Editor>({
-    onFailure: (context) => signInRedirect(context, signedInUntil),
+    onFailure: (context) => signInRedirect(context, signedInUntil, returnTo),
   })
 }
