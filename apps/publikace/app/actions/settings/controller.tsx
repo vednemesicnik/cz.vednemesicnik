@@ -23,6 +23,7 @@ import {
 import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
 import type { AppContext } from '../../router.ts'
 import { routes } from '../../routes.ts'
+import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { type AddForm, type RemovalQuestion, SettingsPage } from './settings-page.tsx'
 
 /**
@@ -69,7 +70,7 @@ async function renderSettings(
       groups={groups}
       isRoleLost={state.isRoleLost}
       question={state.question}
-      toasts={context.get(Toasts) as readonly string[]}
+      toasts={context.get(Toasts) as readonly ToastMessage[]}
       today={now()}
     />,
     init,

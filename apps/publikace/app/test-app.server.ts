@@ -11,6 +11,7 @@ import { createDriveAccountStore, type DriveAccountStore } from './data/drive-ac
 import { migrateDatabase, type OpenDatabase, openDatabase } from './data/database.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
 import { now } from './domain/time.ts'
+import { createFakeDrive, type FakeDrive } from './drive/fake-drive.server.ts'
 import { createAppRouter } from './router.ts'
 
 /** The domain every test runs on, fictional like everything else in the suite. */
@@ -22,6 +23,9 @@ export const TEST_DRIVE_ACCOUNT = 'publikace.app@vednemesicnik.test'
 /** The key the suite encrypts the Drive token with. */
 export const TEST_DRIVE_TOKEN_KEY = Buffer.alloc(32, 3)
 
+/** The folder on the fake shared drive that holds every issue. */
+export const TEST_ISSUES_FOLDER = 'fake-issues-folder'
+
 const ORIGIN = 'http://localhost:44100'
 
 export type TestApp = {
@@ -30,6 +34,8 @@ export type TestApp = {
   close(): Promise<void>
   database: OpenDatabase['database']
   directory: AccessDirectory
+  /** Google as the app sees it in the suite: the token endpoint and Drive's folders. */
+  drive: FakeDrive
   /** The store of the app's account on Drive, on the same database. */
   driveAccount: DriveAccountStore
   /** Sets what the fake membership service answers for a group. */
@@ -60,12 +66,16 @@ export async function createTestApp(): Promise<TestApp> {
   let checkMembership: MembershipCheck = async (email, group) =>
     answers.get(group)?.(email) ?? { status: 'unknown-group' }
 
+  let drive = createFakeDrive()
   let router = createAppRouter({
     checkMembership,
     database: opened.database,
     domain: TEST_DOMAIN,
     driveAccountEmail: TEST_DRIVE_ACCOUNT,
     driveTokenKey: TEST_DRIVE_TOKEN_KEY,
+    fetch: drive.fetch,
+    googleCredentials: { clientId: 'test-client', clientSecret: 'test-secret' },
+    issuesFolderId: TEST_ISSUES_FOLDER,
   })
   let storage = createSqliteSessionStorage(opened.database)
   let sessionCookie = createSessionCookie()
@@ -142,6 +152,7 @@ export async function createTestApp(): Promise<TestApp> {
     close: opened.close,
     database: opened.database,
     directory: createAccessDirectory(opened.database),
+    drive,
     driveAccount: createDriveAccountStore(opened.database, TEST_DRIVE_TOKEN_KEY),
     setMembership(group, answer) {
       answers.set(group, answer)

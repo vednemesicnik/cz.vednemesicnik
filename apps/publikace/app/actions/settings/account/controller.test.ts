@@ -55,7 +55,10 @@ describe('connecting publikace.app@, the return from Google (14h)', () => {
         await app.driveAccount.refreshToken(Temporal.Now.instant()),
         'test-refresh-token',
       )
-      assert.ok([...flashed.values()].includes('Účet publikace.app@ je připojený.'))
+      assert.deepEqual(flashed.get('toast'), {
+        message: 'Účet publikace.app@ je připojený.',
+        tone: 'neutral',
+      })
     } finally {
       await app.close()
     }

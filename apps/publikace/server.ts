@@ -7,6 +7,7 @@ import {
   authorizedDomain,
   googleCredentials,
   initialAdminEmail,
+  issuesFolderId,
 } from './app/auth/environment.server.ts'
 import { createAccessDirectory } from './app/data/access.server.ts'
 import { defaultDatabase, migrateDatabase } from './app/data/database.server.ts'
@@ -34,13 +35,14 @@ await migrateDatabase(database.database)
 
 /*
  * The first administrator, only while the access list has no named account (`03`, row 26).
- * Production refuses to start when nobody could ever change the list, and the three reads before
- * it refuse a missing domain, origin or Google client there, so a deployment that could let
- * nobody in fails here rather than at somebody's first sign-in.
+ * Production refuses to start when nobody could ever change the list, and the reads before it
+ * refuse a missing domain, origin, Google client or issues folder there, so a deployment that
+ * could let nobody in, or create no issue, fails here rather than at somebody's first click.
  */
 authorizedDomain()
 appOrigin()
 googleCredentials()
+issuesFolderId()
 const initialAdmin = normalizeEmail(initialAdminEmail())
 const directory = createAccessDirectory(database.database)
 if (initialAdmin !== '') {

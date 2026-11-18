@@ -246,7 +246,7 @@ describe('settings, Přístup', () => {
       assert.ok(/<h2 [^>]*class="vdm-dialog__title"[^>]*>Odebrat účet\?<\/h2>/.test(question))
       assert.ok(textOf(question).includes('Účet bude odhlášen ze všech zařízení.'))
       // Nothing behind the question can be reached while it is asked.
-      assert.ok(/<div inert[^>]*>\s*<aside aria-label="Panel aplikace"/.test(question))
+      assert.ok(/<div inert[^>]*>\s*<div [^>]*>\s*<header class="vdm-topbar"/.test(question))
       assert.ok(!/<div inert/.test(await (await browser.get('/settings')).text()))
 
       let marie = await idOf(app, 'marie@vednemesicnik.test')

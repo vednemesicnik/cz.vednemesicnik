@@ -12,6 +12,7 @@ import { createRouter, type MiddlewareContext, type RequestContext } from 'remix
 import createAuthController from './actions/auth/controller.tsx'
 import createGoogleController from './actions/auth/google/controller.tsx'
 import createHomeController from './actions/controller.tsx'
+import createIssuesController from './actions/issues/controller.tsx'
 import createDriveAccountController from './actions/settings/account/controller.tsx'
 import createSettingsController from './actions/settings/controller.tsx'
 import {
@@ -19,7 +20,10 @@ import {
   authorizedDomain,
   driveAccountEmail,
   driveTokenKey,
+  googleCredentials,
+  type GoogleCredentials,
   groupMembershipEndpoint,
+  issuesFolderId,
 } from './auth/environment.server.ts'
 import {
   createMembershipCheck,
@@ -29,11 +33,17 @@ import {
 import { createSessionCookie, createSignedInUntilCookie } from './auth/session.server.ts'
 import { createAccessDirectory } from './data/access.server.ts'
 import { createDriveAccountStore } from './data/drive-account.server.ts'
+import { createIssueStore } from './data/issues.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
+import { now } from './domain/time.ts'
+import { driveAccessToken } from './drive/access-token.server.ts'
+import { createDriveFolders } from './drive/folders.server.ts'
+import type { IssueSetup } from './drive/issue-setup.server.ts'
 import { loadAccess } from './middleware/access.server.ts'
 import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
+import { loadIssues } from './middleware/issues.server.ts'
 import { render } from './middleware/render.tsx'
 import { takeToasts } from './middleware/toasts.server.ts'
 import { routes } from './routes.ts'
@@ -50,6 +60,7 @@ export type AppContext = MiddlewareContext<
     ReturnType<typeof session>,
     ReturnType<typeof loadAccess>,
     ReturnType<typeof loadDriveAccount>,
+    ReturnType<typeof loadIssues>,
     ReturnType<typeof loadAuth>,
     ReturnType<typeof takeToasts>,
   ]
@@ -71,6 +82,12 @@ export type AppDependencies = {
   driveAccountEmail?: string
   /** Encrypts the Drive token. Defaults to `DRIVE_TOKEN_KEY`. */
   driveTokenKey?: Buffer
+  /** Every call to Google's token endpoint and to Drive. Defaults to the global `fetch`. */
+  fetch?: typeof globalThis.fetch
+  /** The OAuth client the Drive token is exchanged with. Defaults to `GOOGLE_CLIENT_ID`/`_SECRET`. */
+  googleCredentials?: GoogleCredentials | null
+  /** The folder that holds every issue. Defaults to `ISSUES_FOLDER_ID`. */
+  issuesFolderId?: string
 }
 
 function defaultMembershipCheck(): MembershipCheck {
@@ -90,6 +107,19 @@ export function createAppRouter(dependencies: AppDependencies) {
     dependencies.database,
     dependencies.driveTokenKey ?? driveTokenKey(),
   )
+  let fetch = dependencies.fetch ?? globalThis.fetch
+  let credentials =
+    dependencies.googleCredentials === undefined
+      ? googleCredentials()
+      : dependencies.googleCredentials
+  let issueStore = createIssueStore(dependencies.database)
+  let issueSetup: IssueSetup = {
+    folders: (accessToken) => createDriveFolders({ accessToken, fetch }),
+    issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(),
+    now,
+    store: issueStore,
+    token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
+  }
 
   let router = createRouter({
     /*
@@ -107,7 +137,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `asyncContext()` before `csrf()`, so `<CsrfField />` can reach the token while the
      *     page is drawn,
      *   - `loadAccess()` before `loadAuth()`, whose ten-minute check asks the access list, and
-     *     `loadDriveAccount()` beside it, for the banner every editor screen draws,
+     *     `loadDriveAccount()` beside it, for the banner every editor screen draws, and
+     *     `loadIssues()` beside that,
      *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart,
      *   - `takeToasts()` last, so the message is cleared while the session can still be saved.
      */
@@ -129,6 +160,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         expectedEmail: (dependencies.driveAccountEmail ?? driveAccountEmail()).toLowerCase(),
         store: driveAccountStore,
       }),
+      loadIssues({ setup: issueSetup, store: issueStore }),
       loadAuth(),
       csrf({
         // Behind a TLS-terminating proxy the request's own URL says `http:`.
@@ -145,6 +177,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   })
 
   router.map(routes, createHomeController(signedInUntil))
+  router.map(routes.issues, createIssuesController(signedInUntil))
   router.map(routes.auth, createAuthController(signedInUntil))
   router.map(routes.auth.google, createGoogleController(signedInUntil))
   router.map(routes.settings, createSettingsController(signedInUntil))

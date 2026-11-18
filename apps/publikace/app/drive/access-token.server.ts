@@ -1,6 +1,7 @@
 import type { GoogleCredentials } from '../auth/environment.server.ts'
 import type { DriveAccountStore } from '../data/drive-account.server.ts'
 import { now } from '../domain/time.ts'
+import { logDriveFailure } from './log.server.ts'
 
 const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 
@@ -81,14 +82,6 @@ async function readJson(response: Response): Promise<Record<string, unknown>> {
   }
 }
 
-/** One bounded line: the text can come from Google, and no token is ever in it. */
 function logFailure(message: string): void {
-  let line = [...message]
-    .map((char) => {
-      let code = char.codePointAt(0) ?? 0
-      return code < 0x20 || (code >= 0x7f && code <= 0x9f) ? ' ' : char
-    })
-    .join('')
-    .slice(0, 200)
-  console.error(`[drive] the access token was not refreshed: ${line}`)
+  logDriveFailure('the access token was not refreshed', message)
 }

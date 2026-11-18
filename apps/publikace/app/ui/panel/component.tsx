@@ -16,6 +16,11 @@ export type PanelPerson = {
 export type PanelProps = {
   /** The section the page belongs to, drawn as the active item. */
   active: PanelSection
+  /**
+   * The panel as the phone's menu over the whole screen (`11e`), inside the `<dialog>` the top
+   * bar opens: rows of 44 px and _Zavřít_ in the row of the mark.
+   */
+  isMenu?: boolean
   /** The signed-in editor-in-chief, drawn in the foot. */
   person: PanelPerson
 }
@@ -36,17 +41,29 @@ function itemClass(isActive: boolean): string {
  */
 export function Panel(handle: Handle<PanelProps>) {
   return () => {
-    let { active, person } = handle.props
+    let { active, isMenu = false, person } = handle.props
 
     return (
-      <aside aria-label="Panel aplikace" class="vdm-sidebar">
+      <aside
+        aria-label="Panel aplikace"
+        class={isMenu ? 'vdm-sidebar vdm-sidebar--menu' : 'vdm-sidebar'}
+      >
         <div class="vdm-sidebar__head">
           <div class="vdm-sidebar__brand">
-            <VdmLogo size={30} />
+            <VdmLogo size={isMenu ? 28 : 30} />
             <div class="vdm-sidebar__brandtext">
               <Wordmark />
               <span class="vdm-sidebar__product">Publikace</span>
             </div>
+            {/* `method="dialog"` closes the dialog it is in with no script, and the browser
+                runtime leaves such a form alone. */}
+            {isMenu ? (
+              <form class="vdm-sidebar__close" method="dialog">
+                <button class="vdm-btn vdm-btn--ghost vdm-btn--sm" type="submit">
+                  Zavřít
+                </button>
+              </form>
+            ) : null}
           </div>
         </div>
         <nav aria-label="Sekce aplikace" class="vdm-sidebar__nav">

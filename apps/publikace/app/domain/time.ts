@@ -49,6 +49,17 @@ export function formatDate(instant: Temporal.Instant): string {
   return `${date.day}. ${date.month}. ${date.year}`
 }
 
+/** `14. 9.`: the date without its year, where a short line has no room for it (`11e`). */
+export function formatDayMonth(instant: Temporal.Instant): string {
+  let date = inPrague(instant)
+  return `${date.day}. ${date.month}.`
+}
+
+/** The year in Prague, which is the year an issue is numbered in. */
+export function pragueYear(instant: Temporal.Instant): number {
+  return inPrague(instant).year
+}
+
 /** _dnes_, _včera_, or the date, as the access list says when somebody last signed in. */
 export function formatDay(instant: Temporal.Instant, today: Temporal.Instant): string {
   let day = inPrague(instant).toPlainDate()

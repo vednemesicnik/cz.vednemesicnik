@@ -21,7 +21,10 @@ import { routes } from '../../routes.ts'
 import { Avatar } from '../../ui/avatar/component.tsx'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
+import { Dialog } from '../../ui/dialog/component.tsx'
+import { DialogTitle } from '../../ui/dialog-title/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
+import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { StatusTag } from '../../ui/status-tag/component.tsx'
 import { Document } from '../document.tsx'
 
@@ -55,7 +58,7 @@ export type SettingsPageProps = {
   /** `14b`: a change was sent from a page opened before the role was taken away. */
   isRoleLost?: boolean
   question?: RemovalQuestion
-  toasts?: readonly string[]
+  toasts?: readonly ToastMessage[]
   today: Temporal.Instant
 }
 
@@ -500,63 +503,55 @@ function RemovalDialog(handle: Handle<{ question: RemovalQuestion }>) {
         : routes.settings.removeGroup.href({ id: String(question.group.id) })
 
     return (
-      <div class="vdm-dialog-backdrop">
-        <div
-          aria-labelledby="removal-title"
-          aria-modal="true"
-          class="vdm-dialog"
-          role="dialog"
-          style={{ maxWidth: '360px' }}
-        >
-          <h2 class="vdm-dialog__title" id="removal-title">
-            {question.kind === 'account' ? 'Odebrat účet?' : 'Odebrat skupinu?'}
-          </h2>
-          <div class="vdm-dialog__body">
-            {question.kind === 'account' ? (
-              <>
-                <p class="vdm-dialog__text" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                    {accountName(question.account)}
-                  </strong>
-                  {question.account.displayName === null ? null : (
-                    <span>{question.account.email}</span>
-                  )}
-                </p>
-                <p class="vdm-dialog__text">
-                  Účet bude odhlášen ze všech zařízení. Znovu se s ním lze přihlásit jen přes
-                  skupinu s přístupem. Vydání založená tímto účtem zůstanou.
-                </p>
-              </>
-            ) : (
-              <>
-                <p class="vdm-dialog__text" style={{ overflowWrap: 'anywhere' }}>
-                  <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                    {question.group.email}
-                  </strong>
-                </p>
-                <p class="vdm-dialog__text">
-                  Členové skupiny přijdou o přístup nejpozději za 10 minut, pokud tu nejsou
-                  jmenovitě nebo v jiné skupině s přístupem. Skupina v Google Workspace zůstane.
-                </p>
-              </>
-            )}
-          </div>
-          <form action={action} class="vdm-dialog__actions" method="post">
-            <CsrfField />
-            {/* Focus starts on the way back, so Enter on arrival never removes anybody. */}
-            <a
-              autofocus
-              class="vdm-btn vdm-btn--ghost vdm-btn--sm"
-              href={routes.settings.index.href()}
-            >
-              Zrušit
-            </a>
-            <button class="vdm-btn vdm-btn--danger vdm-btn--sm" type="submit">
-              Odebrat
-            </button>
-          </form>
+      <Dialog maxWidth="360px">
+        <DialogTitle>
+          {question.kind === 'account' ? 'Odebrat účet?' : 'Odebrat skupinu?'}
+        </DialogTitle>
+        <div class="vdm-dialog__body">
+          {question.kind === 'account' ? (
+            <>
+              <p class="vdm-dialog__text" style={{ display: 'flex', flexDirection: 'column' }}>
+                <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                  {accountName(question.account)}
+                </strong>
+                {question.account.displayName === null ? null : (
+                  <span>{question.account.email}</span>
+                )}
+              </p>
+              <p class="vdm-dialog__text">
+                Účet bude odhlášen ze všech zařízení. Znovu se s ním lze přihlásit jen přes skupinu
+                s přístupem. Vydání založená tímto účtem zůstanou.
+              </p>
+            </>
+          ) : (
+            <>
+              <p class="vdm-dialog__text" style={{ overflowWrap: 'anywhere' }}>
+                <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                  {question.group.email}
+                </strong>
+              </p>
+              <p class="vdm-dialog__text">
+                Členové skupiny přijdou o přístup nejpozději za 10 minut, pokud tu nejsou jmenovitě
+                nebo v jiné skupině s přístupem. Skupina v Google Workspace zůstane.
+              </p>
+            </>
+          )}
         </div>
-      </div>
+        <form action={action} class="vdm-dialog__actions" method="post">
+          <CsrfField />
+          {/* Focus starts on the way back, so Enter on arrival never removes anybody. */}
+          <a
+            autofocus
+            class="vdm-btn vdm-btn--ghost vdm-btn--sm"
+            href={routes.settings.index.href()}
+          >
+            Zrušit
+          </a>
+          <button class="vdm-btn vdm-btn--danger vdm-btn--sm" type="submit">
+            Odebrat
+          </button>
+        </form>
+      </Dialog>
     )
   }
 }
@@ -675,6 +670,7 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
           }}
           isInert={question !== undefined}
           person={editor}
+          title="Nastavení"
           toasts={toasts}
         >
           <div mix={columnStyle}>

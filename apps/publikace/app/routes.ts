@@ -14,6 +14,16 @@ import { get, post, route } from 'remix/routes'
 export const routes = route({
   home: '/',
 
+  /* The dialog _Nové vydání_ stands at its own address over the overview, as a removal does in
+     Settings: `GET` draws it, `POST` to the same address creates the issue (`11d`). `/issues/new`
+     is matched before `/issues/:name`. */
+  issues: {
+    new: get('/issues/new'),
+    create: post('/issues/new'),
+    show: get('/issues/:name'),
+    finish: post('/issues/:name/finish'),
+  },
+
   auth: {
     signIn: get('/sign-in'),
     /* `POST` only: a link could be followed from somebody else's page or by a browser fetching

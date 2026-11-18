@@ -1,20 +1,23 @@
 import { createContextKey, type Middleware } from 'remix/router'
 import { Session } from 'remix/session'
 
+import type { ToastMessage, ToastTone } from '../ui/toast/component.tsx'
+
 const TOAST_SESSION_KEY = 'toast'
 
 /**
  * The one-line report of something the page you land on does not show by itself, like
  * _eva@vednemesicnik.test má přístup._ after adding (`14b`). Read with `context.get(Toasts)`.
  */
-export const Toasts = createContextKey<readonly string[]>([])
+export const Toasts = createContextKey<readonly ToastMessage[]>([])
 
 /** Leaves a message for the page the browser is about to be sent to. */
 export function flashToast(
   context: { get(key: typeof Session): Session | undefined },
   message: string,
+  tone: ToastTone = 'neutral',
 ): void {
-  context.get(Session)?.flash(TOAST_SESSION_KEY, message)
+  context.get(Session)?.flash(TOAST_SESSION_KEY, { message, tone } satisfies ToastMessage)
 }
 
 /**
@@ -27,14 +30,22 @@ export function flashToast(
 export function takeToasts(): Middleware<{
   key: typeof Toasts
   property: 'toasts'
-  value: readonly string[]
+  value: readonly ToastMessage[]
 }> {
   return (context, next) => {
     let session = context.get(Session)
     let message = session?.get(TOAST_SESSION_KEY)
     if (message !== undefined) session?.unset(TOAST_SESSION_KEY)
 
-    context.set(Toasts, typeof message === 'string' && message !== '' ? [message] : [])
+    let toast = readToast(message)
+    context.set(Toasts, toast === null ? [] : [toast])
     return next()
   }
+}
+
+function readToast(value: unknown): ToastMessage | null {
+  if (typeof value !== 'object' || value === null) return null
+  let { message, tone } = value as { message?: unknown; tone?: unknown }
+  if (typeof message !== 'string' || message === '') return null
+  return { message, tone: tone === 'error' ? 'error' : 'neutral' }
 }
