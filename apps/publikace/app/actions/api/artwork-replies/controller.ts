@@ -15,8 +15,9 @@ import {
 import { routes } from '../../../routes.ts'
 
 /**
- * The API the reply check of artworks calls (#31), a standalone Apps Script project running as
- * `publikace.app@` on its own trigger. A run makes two calls:
+ * The API the reply check of artworks calls (#31): `SCRIPT__Publication__Artwork_Replies`, a
+ * standalone Apps Script project running as `publikace.app@` on its own trigger. A run makes two
+ * calls:
  *
  * 1. `claim` with the trigger's interval opens the run and takes the batches to ask about, each
  *    with what Reply_Check needs to find its thread and what the archived PDF says;

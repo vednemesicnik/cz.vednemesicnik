@@ -107,7 +107,8 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   account. Everybody else arrives through a shared link that can do one thing in one issue
   (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
 - **The background jobs stay in Apps Script and talk to the app.** `SCRIPT__Publication__Approval_Send`,
-  `…__Comment_Digest`, `…__Designer_Handoff` and the artwork reply check run as `publikace.app@`
+  `…__Comment_Digest`, `…__Designer_Handoff` and the artwork reply check
+  (`SCRIPT__Publication__Artwork_Replies`, the first of them) run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report
   every run to the app with the interval of their trigger, and the app shows the last one and can
   start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a
