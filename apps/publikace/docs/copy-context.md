@@ -27,12 +27,22 @@ Provází jedno vydání od založení po podklady pro tisk:
   nevyplní, předání projde, jen e-mail neodejde.
 
 Psaní a korektura probíhají v dokumentu Google, mimo aplikaci. Kdo text dopíše (autor nebo
-redaktor), **předá ho ke korektuře** v dokumentu, v menu _Publikace › Předat ke korektuře_.
-Šéfredakce může předání nastavit i zrušit v aplikaci. Souhlas s finální verzí textu i
-s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail. Jiná odpověď jde ke kontrole
-šéfredakci. Autor článku tím souhlasí s **redakční doložkou** v e-mailu, tedy nejen s textem
-finální verze: i s jejím zveřejněním, s licencí pro časopis, s jazykovými úpravami a zkrácením
-a s tvarem jména v podpisu.
+redaktor), **předá ho ke korektuře**. Návrh na to dává dokumentu položku _Publikace › Předat ke
+korektuře_ a šéfredakci totéž v aplikaci, kde předání umí i zrušit. Ani jedno zatím neexistuje:
+dnes autor **dá vědět šéfredakci** a menu dokumentu _✦ Publikace_ má jen položky korektorů
+_Označit probíhající korekturu_ a _Označit finální verzi_ a dvě položky k metadatům. Text, který
+autor čte dnes, proto žádnou položku k předání nejmenuje.
+
+Souhlas s finální verzí textu i s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail.
+Jiná odpověď jde ke kontrole šéfredakci. Autor článku tím souhlasí s **redakční doložkou**
+v e-mailu, tedy nejen s textem finální verze: i s jejím zveřejněním, s licencí pro časopis,
+s jazykovými úpravami a zkrácením a s tvarem jména v podpisu.
+
+**Komentáře a návrhy úprav** v dokumentu píše kdokoli, kdo ho má otevřený, nejčastěji při
+korektuře, až je text dopsaný. Autorům o nich chodí e-mail nejvýš čtyřikrát denně, a jen když
+v některém jejich článku přibylo něco nového. E-mail říká, _že_ v článku přibyly komentáře,
+odpovědi nebo návrhy úprav, ne _co_ v nich je: u každého článku má odkaz do dokumentu. Komentáře
+autorů článku do něj nejdou.
 
 ## Termíny: co se nesmí přejmenovat
 

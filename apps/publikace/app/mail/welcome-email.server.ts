@@ -10,7 +10,7 @@ import type { MailMessage } from './mailer.server.ts'
 
 /**
  * The welcome e-mail every author of a new article gets (`20d`), formal and in the newsroom's
- * voice, as the copywriter settled it (il3qqrj9).
+ * voice, as the copywriter settled it (il3qqrj9; the comments and the hand-over sn7j5h2m).
  *
  * The HTML is written out by hand rather than drawn by the app's components: a mail client reads
  * no stylesheet, so every style is inline. Only the primary button has a colour, the design
@@ -65,9 +65,9 @@ export function welcomeEmail(details: WelcomeDetails): MailMessage {
     `<p style="${PARAGRAPH}">Dobrý den,</p>`,
     `<p style="${PARAGRAPH}">článek „${article}“ je zařazený do vydání ${issue}.</p>`,
     coauthors === null ? '' : `<p style="${PARAGRAPH}">${escapeHtml(coauthors)}</p>`,
-    `<p style="${PARAGRAPH}">Pište přímo v dokumentu Google. Redakce tam může přidávat komentáře. Přehled nových komentářů posíláme e-mailem nejvýš čtyřikrát denně.</p>`,
+    `<p style="${PARAGRAPH}">Pište přímo v dokumentu Google. Kdo má dokument otevřený, může v něm komentovat, odpovídat i navrhovat úpravy. Nejčastěji se tak děje při korektuře. Když přibude něco nového, pošleme vám e-mailem odkaz do dokumentu, nejvýš čtyřikrát denně. Komentáře autorů článku při tom vynecháváme.</p>`,
     `<p style="${PARAGRAPH}"><a href="${escapeHtml(details.documentUrl)}" style="${PRIMARY}">${OPEN_DOCUMENT_LABEL}</a>&nbsp;&nbsp;<a href="${escapeHtml(details.artworksUrl)}" style="${OUTLINE}">${UPLOAD_ARTWORKS_LABEL}</a></p>`,
-    `<p style="${NOTE}">Až bude text dopsaný, v dokumentu na počítači vyberte <em>Publikace › Předat ke korektuře</em>. Můžete také dát vědět šéfredakci. Po korektuře vám pošleme finální verzi a redakční doložku. Pokud s doložkou souhlasíte, odpovězte na e-mail přesně „Souhlasím“.</p>`,
+    `<p style="${NOTE}">Až bude text připravený ke korektuře, dejte prosím vědět šéfredakci. Po korektuře vám pošleme finální verzi a redakční doložku. Pokud s doložkou souhlasíte, odpovězte na e-mail přesně „Souhlasím“.</p>`,
     houseEnding({
       question: WELCOME_QUESTION_LINE,
       reason: WELCOME_REASON_LINE,
