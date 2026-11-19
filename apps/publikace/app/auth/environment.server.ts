@@ -185,3 +185,24 @@ export function docMenuTokenAudiences(): TokenAudiences {
     .map((audience) => audience.trim())
     .filter((audience) => audience !== '')
 }
+
+/**
+ * The audiences an identity token from a background job may carry: the OAuth client of the Cloud
+ * project the standalone scripts run in. Required in production; any outside it.
+ */
+export function scriptTokenAudiences(): TokenAudiences {
+  if (!isProduction() && optional('SCRIPT_TOKEN_AUDIENCE') === '') return 'any'
+  return required('SCRIPT_TOKEN_AUDIENCE')
+    .split(',')
+    .map((audience) => audience.trim())
+    .filter((audience) => audience !== '')
+}
+
+/**
+ * The account the background jobs run as, the only one whose token the job's API accepts. Outside
+ * production the app's account on Drive, which is the same account.
+ */
+export function scriptJobAccount(): string {
+  if (isProduction()) return required('SCRIPT_JOB_ACCOUNT').toLowerCase()
+  return optional('SCRIPT_JOB_ACCOUNT', driveAccountEmail()).toLowerCase()
+}

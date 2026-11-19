@@ -1,12 +1,14 @@
 import type { Handle } from 'remix/component'
+import { getContext } from 'remix/middleware/async-context'
 
+import { ReviewCount } from '../../middleware/review-count.server.ts'
 import { routes } from '../../routes.ts'
 import { Avatar } from '../avatar/component.tsx'
 import { CsrfField } from '../csrf-field/component.tsx'
 import { VdmLogo } from '../vdm-logo/component.tsx'
 import { Wordmark } from '../wordmark/component.tsx'
 
-export type PanelSection = 'issues' | 'settings'
+export type PanelSection = 'issues' | 'review' | 'settings'
 
 export type PanelPerson = {
   displayName: string
@@ -25,6 +27,20 @@ export type PanelProps = {
   person: PanelPerson
 }
 
+/* Inline, as `Panel.dc.html` writes them: `css()` would lose to `.vdm-sidebar__item`. */
+const ITEM_WITH_COUNT = {
+  alignItems: 'center',
+  display: 'flex',
+  gap: '8px',
+  justifyContent: 'space-between',
+} as const
+const COUNT_STYLE = {
+  color: 'var(--state-attention-text)',
+  fontSize: '13px',
+  fontVariantNumeric: 'tabular-nums',
+  fontWeight: 600,
+} as const
+
 function itemClass(isActive: boolean): string {
   return isActive ? 'vdm-sidebar__item vdm-sidebar__item--active' : 'vdm-sidebar__item'
 }
@@ -37,11 +53,13 @@ function itemClass(isActive: boolean): string {
  * Markup and class names are the design system's `AdminSidebar`, so its `components.css`
  * styles it unchanged. _Odhlásit se_ is a button in a form, `POST /sign-out`, never a link
  * (`03`, rozhodnuto 17. 11. 2026); `.vdm-sidebar__form` gives it the row's look. _Ke kontrole_
- * joins the list with its route: a link to a page that does not exist would be a 404.
+ * carries the number of its cards, read from the request the panel is drawn in, and none when
+ * the queue is empty.
  */
 export function Panel(handle: Handle<PanelProps>) {
   return () => {
     let { active, isMenu = false, person } = handle.props
+    let reviewCount = getContext().get(ReviewCount)
 
     return (
       <aside
@@ -73,6 +91,15 @@ export function Panel(handle: Handle<PanelProps>) {
             href={routes.home.href()}
           >
             Vydání
+          </a>
+          <a
+            aria-current={active === 'review' ? 'page' : undefined}
+            class={itemClass(active === 'review')}
+            href={routes.review.index.href()}
+            style={ITEM_WITH_COUNT}
+          >
+            Ke kontrole
+            {reviewCount > 0 ? <span style={COUNT_STYLE}>{String(reviewCount)}</span> : null}
           </a>
           <span class="vdm-sidebar__sep" role="separator"></span>
           <a

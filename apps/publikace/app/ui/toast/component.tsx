@@ -1,9 +1,17 @@
 import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
 
+import { CsrfField } from '../csrf-field/component.tsx'
+
 export type ToastTone = 'error' | 'neutral'
 
-export type ToastMessage = { message: string; tone: ToastTone }
+/**
+ * An action the toast offers, such as _Vrátit_ after _Je to souhlas_ (`13b`): a form posting to
+ * `action`, so it works with no script, as the same button on the card does.
+ */
+export type ToastAction = { action: string; label: string }
+
+export type ToastMessage = { action?: ToastAction; message: string; tone: ToastTone }
 
 export type ToastsProps = {
   messages: readonly ToastMessage[]
@@ -32,6 +40,10 @@ const stackStyle = css({
 })
 
 const regionStyle = css({ display: 'flex', flexDirection: 'column', gap: '8px' })
+
+/* The stack lets clicks through to the page; an action takes them back. `contents` keeps the
+   button a flex item of the toast, as the design system lays it out. */
+const actionFormStyle = css({ display: 'contents', pointerEvents: 'auto' })
 
 const leavingStyle = css({
   animation: 'publikace-toast-leave 300ms ease-in-out 5s forwards',
@@ -77,9 +89,19 @@ export function Toasts(handle: Handle<ToastsProps>) {
           ))}
         </div>
         <div mix={regionStyle} role="status">
+          {/* A toast with an action stays until the next load: the action must not leave before a
+              keyboard reaches it. */}
           {confirmations.map((toast) => (
-            <div class="vdm-toast" mix={leavingStyle}>
+            <div class="vdm-toast" mix={toast.action === undefined ? leavingStyle : undefined}>
               <span class="vdm-toast__text">{toast.message}</span>
+              {toast.action === undefined ? null : (
+                <form action={toast.action.action} method="post" mix={actionFormStyle}>
+                  <CsrfField />
+                  <button class="vdm-toast__action" type="submit">
+                    {toast.action.label}
+                  </button>
+                </form>
+              )}
             </div>
           ))}
         </div>

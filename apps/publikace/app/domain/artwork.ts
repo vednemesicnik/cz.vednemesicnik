@@ -85,21 +85,60 @@ export function consentIdempotencyKey(formKey: string): string {
   return `artwork-consent:${formKey}`
 }
 
-/**
- * The states of `01b` an artwork of the app can be in. `review` and `approved` come with the
- * reply check moving to the app's API, so nothing sets them yet.
- */
+/** The states of `01b` an artwork of the app can be in. */
 export type ArtworkState = 'approved' | 'error' | 'provider' | 'review'
 
-/** A committed batch, as far as its state goes. */
-export type BatchMail = {
+/** A committed batch, as far as its state goes: its request, the reply and what came of it. */
+export type BatchStatus = {
+  approvedAt: Temporal.Instant | null
+  archiveFailedAt: Temporal.Instant | null
+  consentVerifiedAt: Temporal.Instant | null
+  discardedAt: Temporal.Instant | null
+  /** The latest reply is exactly „Souhlasím“. */
+  isExactConsent: boolean
   mailRefusedAt: Temporal.Instant | null
   mailSentAt: Temporal.Instant | null
+  replyMessageId: string | null
+  replyText: string | null
 }
 
-/** _U poskytovatele_ once the Mailer accepted the request, _Chyba_ until it does (`01b`). */
-export function batchState(batch: BatchMail): ArtworkState {
+/**
+ * Whether the reply check may archive the conversation without a person: an exact „Souhlasím“,
+ * except on a discarded batch, whose every reply goes to _Ke kontrole_ (`01b`), or a decision of
+ * the editors-in-chief.
+ */
+export function mayArchive(batch: BatchStatus): boolean {
+  return batch.consentVerifiedAt !== null || (batch.isExactConsent && batch.discardedAt === null)
+}
+
+/**
+ * The state of `01b`, by who is on the move.
+ *
+ * - _Schváleno_ once the conversation is in `Licence`; never before, since the job archives first
+ *   and reports both at once.
+ * - _Chyba_ when the archive failed, or while no reply came and the Mailer never confirmed the
+ *   request. A reply beats the unconfirmed request: a copy that arrived after all was read
+ *   (`viipe3q8`).
+ * - _U poskytovatele_ after _Je to souhlas_ (stored as _Souhlas k archivaci_), after an exact
+ *   „Souhlasím“ the job is about to archive, and while the request waits for an answer.
+ * - _Ke kontrole_ for any other reply.
+ */
+export function batchState(batch: BatchStatus): ArtworkState {
+  if (batch.approvedAt !== null) return 'approved'
+  if (batch.archiveFailedAt !== null) return 'error'
+  if (batch.replyMessageId !== null) return mayArchive(batch) ? 'provider' : 'review'
   return batch.mailSentAt === null ? 'error' : 'provider'
+}
+
+/** _Chyba_ because the request never went, where _Poslat žádost znovu_ and _Zahodit_ belong. */
+export function isMailError(batch: BatchStatus): boolean {
+  return batchState(batch) === 'error' && batch.archiveFailedAt === null
+}
+
+/** The first line of a reply, cut to fit under a tag: _odpověď „ok, souhlas“_ (`01b`). */
+export function replyExcerpt(text: string): string {
+  let line = text.trim().split('\n')[0]?.trim() ?? ''
+  return line.length > 40 ? `${line.slice(0, 39).trimEnd()}…` : line
 }
 
 export const ARTWORK_STATE_LABELS: Readonly<Record<ArtworkState, string>> = {
@@ -109,8 +148,17 @@ export const ARTWORK_STATE_LABELS: Readonly<Record<ArtworkState, string>> = {
   review: 'Ke kontrole',
 }
 
-/** The line under the tag (`12a`). */
-export function batchStateDetail(batch: BatchMail): string {
+/** The line under the tag (`12a`, `01b`, `13c`). */
+export function batchStateDetail(batch: BatchStatus): string {
+  if (batch.approvedAt !== null) return 'konverzace v Licencích'
+  if (batch.archiveFailedAt !== null) return 'konverzace se neuložila'
+  if (batch.consentVerifiedAt !== null) {
+    return `souhlas zaznamenán ${formatDayMonth(batch.consentVerifiedAt)}`
+  }
+  if (batch.replyMessageId !== null && batchState(batch) === 'review') {
+    if (batch.discardedAt !== null) return `dávka zahozena ${formatDayMonth(batch.discardedAt)}`
+    return `odpověď „${replyExcerpt(batch.replyText ?? '')}“`
+  }
   if (batch.mailSentAt !== null) return `žádost odeslána ${formatDayMonth(batch.mailSentAt)}`
   if (batch.mailRefusedAt !== null) return 'pošta žádost trvale odmítla'
   return 'chybí potvrzení o odeslání žádosti'

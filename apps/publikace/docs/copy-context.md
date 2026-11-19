@@ -1,7 +1,7 @@
 # Kontext pro copywriting
 
 Tenhle text je jediná věc, kterou copywriter o aplikaci ví, aniž by se ho někdo ptal. Je **jen ke
-čtení** — je to popis toho, co aplikace dělá (zatím podle návrhu, kód ještě nevznikl), a přepsat
+čtení** — je to popis toho, co aplikace dělá (podle návrhu; část z toho už aplikace umí), a přepsat
 ho znamená přepsat aplikaci, ne text.
 
 Vede se v repozitáři jako `docs/copy-context.md` a copywriter ho dostává **celý v otevíracím tahu

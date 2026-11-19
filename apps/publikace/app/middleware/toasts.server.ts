@@ -1,7 +1,7 @@
 import { createContextKey, type Middleware } from 'remix/router'
 import { Session } from 'remix/session'
 
-import type { ToastMessage, ToastTone } from '../ui/toast/component.tsx'
+import type { ToastAction, ToastMessage, ToastTone } from '../ui/toast/component.tsx'
 
 const TOAST_SESSION_KEY = 'toast'
 
@@ -16,8 +16,10 @@ export function flashToast(
   context: { get(key: typeof Session): Session | undefined },
   message: string,
   tone: ToastTone = 'neutral',
+  action?: ToastAction,
 ): void {
-  context.get(Session)?.flash(TOAST_SESSION_KEY, { message, tone } satisfies ToastMessage)
+  let toast: ToastMessage = action === undefined ? { message, tone } : { action, message, tone }
+  context.get(Session)?.flash(TOAST_SESSION_KEY, toast)
 }
 
 /**
@@ -45,7 +47,20 @@ export function takeToasts(): Middleware<{
 
 function readToast(value: unknown): ToastMessage | null {
   if (typeof value !== 'object' || value === null) return null
-  let { message, tone } = value as { message?: unknown; tone?: unknown }
+  let { action, message, tone } = value as { action?: unknown; message?: unknown; tone?: unknown }
   if (typeof message !== 'string' || message === '') return null
-  return { message, tone: tone === 'error' ? 'error' : 'neutral' }
+  let toast: ToastMessage = { message, tone: tone === 'error' ? 'error' : 'neutral' }
+  let read = readAction(action)
+  return read === null ? toast : { ...toast, action: read }
+}
+
+/*
+ * Only a path of this app: the action is a form the page draws, with the CSRF token in it. A
+ * second slash or a backslash after the first would make the browser read another host.
+ */
+function readAction(value: unknown): ToastAction | null {
+  if (typeof value !== 'object' || value === null) return null
+  let { action, label } = value as { action?: unknown; label?: unknown }
+  if (typeof action !== 'string' || !/^\/(?![/\\])/.test(action)) return null
+  return typeof label === 'string' && label !== '' ? { action, label } : null
 }

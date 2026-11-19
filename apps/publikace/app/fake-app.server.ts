@@ -1,8 +1,11 @@
+import { sql } from 'remix/data-table'
 import { html, type SafeHtml } from 'remix/html-template'
 
 import { appOrigin } from './auth/environment.server.ts'
 import { createSessionCookie } from './auth/session.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
+import { batchState } from './domain/artwork.ts'
+import { createArtworkStore } from './data/artworks.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { now } from './domain/time.ts'
@@ -12,7 +15,9 @@ import {
   connectDriveAccount,
   createTestApp,
   fakeIdentityToken,
+  JOB_TOKEN,
   seedAdmin,
+  seedBatch,
   type TestApp,
 } from './test-app.server.ts'
 
@@ -108,6 +113,7 @@ export async function createFakeApp(): Promise<FakeApp> {
   let issues = createIssueStore(app.database)
   let links = createLinkStore(app.database)
   let articles = createArticleStore(app.database)
+  let batchStore = createArtworkStore(app.database)
   let origin = appOrigin()
   let sessionCookieName = createSessionCookie().name
 
@@ -205,6 +211,31 @@ export async function createFakeApp(): Promise<FakeApp> {
         </td>
       </tr>`
     })
+    /* Every live batch of the issue, with what a run of the reply check could find for it. */
+    let batchRows = (await batchStore.listByIssue(issueId)).map(
+      (batch) =>
+        html`<tr>
+          <td>${batch.articleName}</td>
+          <td>${batch.providerName}</td>
+          <td>${batchState(batch)}</td>
+          <td>
+            ${button('/replies', 'Reply “ok, souhlas”', { id: String(batch.id), kind: 'other' })}
+            ${button('/replies', 'Reply “Souhlasím”', { id: String(batch.id), kind: 'exact' })}
+            ${button('/replies', '“Souhlasím”, archive fails', {
+              id: String(batch.id),
+              kind: 'exact-fail',
+            })}
+            ${
+              batch.consentVerifiedAt === null
+                ? ''
+                : button('/replies', 'Archive the decided consent', {
+                    id: String(batch.id),
+                    kind: 'archive',
+                  })
+            }
+          </td>
+        </tr>`,
+    )
     let mailRows = app.mail.map(
       (message) =>
         html`<tr>
@@ -265,6 +296,16 @@ export async function createFakeApp(): Promise<FakeApp> {
         }
       </p>
 
+      <h2>Reply check</h2>
+      <p>
+        One run of the job through the app's API: it claims the open batches and reports the chosen
+        one; <a href="${routes.review.index.href()}">Ke kontrole</a> shows the rest.
+      </p>
+      <table>
+        ${batchRows}
+      </table>
+      <p>${button('/batch', 'Seed a sent batch of two artworks for the first article')}</p>
+
       <h2>Mailer</h2>
       <p>
         ${isMailFailing ? 'Failing.' : 'Sending.'}
@@ -276,6 +317,60 @@ export async function createFakeApp(): Promise<FakeApp> {
         ${mailRows}
       </table>
     `)
+  }
+
+  function job(path: string, body: unknown): Promise<Response> {
+    return app.fetch(
+      new Request(new URL(path, origin), {
+        body: JSON.stringify(body),
+        headers: { Authorization: `Bearer ${JOB_TOKEN}`, 'Content-Type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+  }
+
+  /**
+   * One run of the reply check as the job makes it: claim, then report. The chosen batch gets the
+   * reply asked for; the others claimed with it are reported as Reply_Check failing, which
+   * changes nothing. A lease left by an earlier run is cleared first, as ten minutes would.
+   */
+  async function runReplyCheck(
+    batch: { consentVerifiedAt: Temporal.Instant | null; id: number; replyText: string | null },
+    kind: FormDataEntryValue | null,
+  ): Promise<Response> {
+    await app.database.exec(sql`UPDATE artwork_batches SET claimed_at = NULL`)
+    let claimed = await job(routes.api.artworkReplies.claim.href(), { intervalMinutes: 30 })
+    if (claimed.status !== 200) return claimed
+    let { batches, runKey } = (await claimed.json()) as {
+      batches: { batchId: number }[]
+      runKey: string
+    }
+    let text =
+      kind === 'other' ? 'ok, souhlas' : kind === 'archive' ? (batch.replyText ?? '') : 'Souhlasím'
+    let reply = {
+      messageId:
+        kind === 'archive' ? 'fake-message-decided' : `fake-message-${crypto.randomUUID()}`,
+      receivedAt: now().toString(),
+      text,
+      threadId: `fake-thread-${batch.id}`,
+    }
+    let archive =
+      kind === 'exact' || kind === 'archive'
+        ? { fileId: `fake-consent-${batch.id}` }
+        : kind === 'exact-fail'
+          ? { error: 'The fake Drive refused the conversation PDF.' }
+          : null
+    let results = batches.map((item) =>
+      item.batchId !== batch.id
+        ? { batchId: item.batchId, state: 'failed' }
+        : {
+            archive,
+            batchId: item.batchId,
+            reply,
+            state: kind === 'other' || kind === 'archive' ? 'other_reply' : 'reply_matches',
+          },
+    )
+    return job(routes.api.artworkReplies.report.href(), { outcome: 'ok', results, runKey })
   }
 
   async function control(request: Request, path: string): Promise<Response> {
@@ -351,6 +446,29 @@ export async function createFakeApp(): Promise<FakeApp> {
             method: 'POST',
           }),
         )
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
+        return backToControls()
+      }
+      case '/batch': {
+        /* A batch as the artworks page leaves it once the Mailer took the request, without
+           uploading files by hand. */
+        let first = (await articles.listCreated(issueId)).at(-1)
+        let link =
+          first === undefined ? undefined : (await links.artworksLinksOf(issueId)).get(first.id)
+        if (first === undefined || link === undefined)
+          return new Response('No article', { status: 400 })
+        await seedBatch(app, { articleId: first.id, link }, issueId, { at: now() })
+        return backToControls()
+      }
+      case '/replies': {
+        let id = Number(fileId)
+        let kind = form?.get('kind') ?? null
+        if (kind !== 'other' && kind !== 'exact' && kind !== 'exact-fail' && kind !== 'archive') {
+          return new Response('Unknown kind', { status: 400 })
+        }
+        let batch = await batchStore.findBatch(id)
+        if (batch === null) return new Response('No batch', { status: 400 })
+        let answer = await runReplyCheck(batch, kind)
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()
       }

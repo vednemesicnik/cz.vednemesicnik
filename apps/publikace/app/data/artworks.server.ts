@@ -1,8 +1,16 @@
 import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
-import type { ArtworkCounts, ArtworkState } from '../domain/artwork.ts'
-import { batchState, batchTag, NO_ARTWORKS } from '../domain/artwork.ts'
+import type { ArtworkCounts, ArtworkState, BatchStatus } from '../domain/artwork.ts'
+import { batchState, batchTag, isWaiting, NO_ARTWORKS } from '../domain/artwork.ts'
+import {
+  type BatchPatch,
+  type BatchReport,
+  CLAIM_LIMIT,
+  CLAIM_MINUTES,
+  decideReport,
+  REPLY_TEXT_LIMIT,
+} from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 
 /**
@@ -37,28 +45,46 @@ export type ArtworkRow = {
   uploadedAt: Temporal.Instant
 }
 
-export type BatchRow = {
+export type BatchRow = BatchStatus & {
   articleId: number
+  archiveError: string | null
   /** The batch's artworks in their order. */
   artworks: ArtworkRow[]
+  checkedAt: Temporal.Instant | null
+  claimedAt: Temporal.Instant | null
+  claimKey: string | null
   cleanupAt: Temporal.Instant | null
+  consentFileId: string | null
+  consentVerifiedByEmail: string | null
+  consentVerifiedByName: string | null
   createdAt: Temporal.Instant | null
-  discardedAt: Temporal.Instant | null
   formKey: string
   id: number
   issueId: number
   linkId: number
   mailFailedAt: Temporal.Instant | null
-  mailRefusedAt: Temporal.Instant | null
-  mailSentAt: Temporal.Instant | null
   providerEmail: string
   providerName: string
+  replyReceivedAt: Temporal.Instant | null
+  replyThreadId: string | null
   startedAt: Temporal.Instant
   tag: string
 }
 
 /** A batch as the issue's detail lists it, with the article it belongs to. */
 export type ListedBatch = BatchRow & { articleName: string; createdAt: Temporal.Instant }
+
+/** A batch handed to a run of the reply check, with what the archived PDF says and where it goes. */
+export type ClaimedBatch = ListedBatch & {
+  issueName: string
+  /** `null` when the article's `Licence` was found missing: the job then reports a failed archive. */
+  licencesFolderId: string | null
+}
+
+/** A card of _Ke kontrole_: a batch with the article and issue it belongs to. */
+export type QueuedBatch = ListedBatch & { issueName: string }
+
+export type ReportAnswer = 'accepted' | 'superseded' | 'unknown'
 
 export type NewUpload = {
   articleId: number
@@ -135,6 +161,42 @@ export type ArtworkStore = {
   unsentByForm(formKey: string): Promise<ArtworkRow[]>
   /** Every upload stored through a link since a moment: what the cap of sixty counts. */
   uploadsSince(linkId: number, since: Temporal.Instant): Promise<number>
+
+  /**
+   * Takes the batches a run of the reply check asks about, under the run's key: committed, not
+   * yet approved, in an issue that is not closed, _Chyba_ and discarded ones included (`01b`),
+   * and not claimed by another run in the last `CLAIM_MINUTES`. The least recently checked first.
+   */
+  claimForReplyCheck(runKey: string, at: Temporal.Instant): Promise<ClaimedBatch[]>
+  /** What one report does to a batch the run claimed; `unknown` for one it did not. */
+  recordReport(
+    runKey: string,
+    batchId: number,
+    report: BatchReport,
+    at: Temporal.Instant,
+  ): Promise<ReportAnswer>
+  /**
+   * _Je to souhlas_ on the reply the card showed, `replyMessageId`; `false` when the batch is not
+   * in _Ke kontrole_ any more, its issue was closed, or a newer reply arrived meanwhile.
+   */
+  verifyConsent(
+    id: number,
+    replyMessageId: string,
+    editor: { displayName: string; email: string },
+    at: Temporal.Instant,
+  ): Promise<boolean>
+  /**
+   * _Vrátit_ until the job archives (`13b`); `false` once it has or failed to, or with nothing to
+   * take back. Any editor-in-chief may, as any may decide.
+   */
+  undoVerification(id: number): Promise<boolean>
+  /**
+   * The cards of _Ke kontrole_, the oldest reply first, and the batch `including` names where it
+   * stands, decided or not: the card just decided keeps its place until the next load (`13b`).
+   */
+  reviewQueue(including?: number): Promise<QueuedBatch[]>
+  /** How many cards _Ke kontrole_ has, for the panel. */
+  reviewCount(): Promise<number>
 }
 
 type Row = Record<string, unknown>
@@ -174,13 +236,24 @@ function toArtwork(row: Row): ArtworkRow {
 
 function toBatch(row: Row, artworks: ArtworkRow[]): BatchRow {
   return {
+    approvedAt: parseStamp(row['approved_at']),
+    archiveError: text(row['archive_error']),
+    archiveFailedAt: parseStamp(row['archive_failed_at']),
     articleId: Number(row['article_id']),
     artworks,
+    checkedAt: parseStamp(row['checked_at']),
+    claimedAt: parseStamp(row['claimed_at']),
+    claimKey: text(row['claim_key']),
     cleanupAt: parseStamp(row['cleanup_at']),
+    consentFileId: text(row['consent_file_id']),
+    consentVerifiedAt: parseStamp(row['consent_verified_at']),
+    consentVerifiedByEmail: text(row['consent_verified_by_email']),
+    consentVerifiedByName: text(row['consent_verified_by_name']),
     createdAt: parseStamp(row['created_at']),
     discardedAt: parseStamp(row['discarded_at']),
     formKey: String(row['form_key']),
     id: Number(row['id']),
+    isExactConsent: Number(row['is_exact_consent']) === 1,
     issueId: Number(row['issue_id']),
     linkId: Number(row['link_id']),
     mailFailedAt: parseStamp(row['mail_failed_at']),
@@ -188,8 +261,84 @@ function toBatch(row: Row, artworks: ArtworkRow[]): BatchRow {
     mailSentAt: parseStamp(row['mail_sent_at']),
     providerEmail: String(row['provider_email']),
     providerName: String(row['provider_name']),
+    replyMessageId: text(row['reply_message_id']),
+    replyReceivedAt: parseStamp(row['reply_received_at']),
+    replyText: text(row['reply_text']),
+    replyThreadId: text(row['reply_thread_id']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
     tag: String(row['tag']),
+  }
+}
+
+/** The batches as `listByIssue` and the queue give them, with their article's and issue's names. */
+async function listed(db: Database, rows: readonly Row[]): Promise<QueuedBatch[]> {
+  let batches = await withArtworks(db, rows)
+  return batches.map((batch, index) => ({
+    ...batch,
+    articleName: String(rows[index]?.['article_name'] ?? ''),
+    createdAt: batch.createdAt ?? EPOCH,
+    issueName: String(rows[index]?.['issue_name'] ?? ''),
+  }))
+}
+
+/**
+ * What _Ke kontrole_ holds: a reply that waits on the editors-in-chief, and a consent whose
+ * archive failed (`13c`). Chosen by `batchState`, so the queue, the panel and `12a` agree.
+ */
+function isQueued(batch: BatchRow): boolean {
+  let state = batchState(batch)
+  return state === 'review' || (state === 'error' && batch.archiveFailedAt !== null)
+}
+
+/* The batches that could be in the queue; `isQueued` decides. */
+const QUEUE_CANDIDATES = sql`SELECT b.*, ar.name AS article_name, i.name AS issue_name
+  FROM artwork_batches b
+  JOIN articles ar ON ar.id = b.article_id
+  JOIN issues i ON i.id = b.issue_id
+  WHERE b.created_at IS NOT NULL AND b.approved_at IS NULL AND i.closed_at IS NULL
+    AND (b.reply_message_id IS NOT NULL OR b.archive_failed_at IS NOT NULL)
+  ORDER BY coalesce(b.reply_received_at, b.archive_failed_at), b.id`
+
+/** A report's patch. The caller's transaction keeps a batch from ever showing half of it. */
+async function applyPatch(db: Database, id: number, patch: BatchPatch): Promise<void> {
+  if (patch.isDecisionReset === true) {
+    await db.exec(
+      sql`UPDATE artwork_batches SET consent_verified_at = NULL,
+            consent_verified_by_email = NULL, consent_verified_by_name = NULL,
+            archive_failed_at = NULL, archive_error = NULL
+          WHERE id = ${id}`,
+    )
+  }
+  if (patch.reply !== undefined) {
+    let reply = patch.reply
+    await db.exec(
+      sql`UPDATE artwork_batches SET reply_thread_id = ${reply.threadId},
+            reply_message_id = ${reply.messageId}, reply_received_at = ${stamp(reply.receivedAt)},
+            reply_text = ${reply.text.slice(0, REPLY_TEXT_LIMIT)},
+            is_exact_consent = ${reply.isExactConsent ? 1 : 0}
+          WHERE id = ${id}`,
+    )
+  }
+  if (patch.checkedAt !== undefined) {
+    await db.exec(
+      sql`UPDATE artwork_batches SET checked_at = ${stamp(patch.checkedAt)} WHERE id = ${id}`,
+    )
+  }
+  if (patch.archiveFailed !== undefined) {
+    await db.exec(
+      sql`UPDATE artwork_batches SET archive_failed_at = ${stamp(patch.archiveFailed.at)},
+            archive_error = ${patch.archiveFailed.error.slice(0, 2000)}
+          WHERE id = ${id}`,
+    )
+  }
+  /* The PDF in `Licence` is the proof from here on, so the reply's text goes. */
+  if (patch.approved !== undefined) {
+    await db.exec(
+      sql`UPDATE artwork_batches SET approved_at = ${stamp(patch.approved.at)},
+            consent_file_id = ${patch.approved.fileId}, reply_text = NULL,
+            archive_failed_at = NULL, archive_error = NULL
+          WHERE id = ${id}`,
+    )
   }
 }
 
@@ -280,7 +429,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
 
     async countsByArticle(issueId) {
       let result = await database.exec(
-        sql`SELECT b.article_id, b.mail_sent_at, count(a.id) AS count
+        sql`SELECT b.*, count(a.id) AS count
             FROM artwork_batches b JOIN artworks a ON a.batch_id = b.id
             WHERE b.issue_id = ${issueId} AND b.created_at IS NOT NULL AND b.discarded_at IS NULL
             GROUP BY b.id`,
@@ -288,10 +437,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
       let counts = new Map<number, ArtworkCounts>()
       for (let row of result.rows ?? []) {
         let articleId = Number(row['article_id'])
-        let state: ArtworkState = batchState({
-          mailRefusedAt: null,
-          mailSentAt: parseStamp(row['mail_sent_at']),
-        })
+        let state: ArtworkState = batchState(toBatch(row, []))
         let current = counts.get(articleId) ?? NO_ARTWORKS
         counts.set(articleId, { ...current, [state]: current[state] + Number(row['count']) })
       }
@@ -300,17 +446,19 @@ export function createArtworkStore(database: Database): ArtworkStore {
 
     async countsByIssue() {
       let result = await database.exec(
-        sql`SELECT b.issue_id, count(a.id) AS total,
-              sum(CASE WHEN b.mail_sent_at IS NULL THEN 1 ELSE 0 END) AS waiting
+        sql`SELECT b.*, count(a.id) AS count
             FROM artwork_batches b JOIN artworks a ON a.batch_id = b.id
             WHERE b.created_at IS NOT NULL AND b.discarded_at IS NULL
-            GROUP BY b.issue_id`,
+            GROUP BY b.id`,
       )
       let counts = new Map<number, { total: number; waiting: number }>()
       for (let row of result.rows ?? []) {
-        counts.set(Number(row['issue_id']), {
-          total: Number(row['total']),
-          waiting: Number(row['waiting']),
+        let issueId = Number(row['issue_id'])
+        let count = Number(row['count'])
+        let current = counts.get(issueId) ?? { total: 0, waiting: 0 }
+        counts.set(issueId, {
+          total: current.total + count,
+          waiting: current.waiting + (isWaiting(batchState(toBatch(row, []))) ? count : 0),
         })
       }
       return counts
@@ -371,13 +519,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
             WHERE b.issue_id = ${issueId} AND b.created_at IS NOT NULL AND b.discarded_at IS NULL
             ORDER BY b.created_at DESC, b.id DESC`,
       )
-      let rows = result.rows ?? []
-      let batches = await withArtworks(database, rows)
-      return batches.map((batch, index) => ({
-        ...batch,
-        articleName: String(rows[index]?.['article_name'] ?? ''),
-        createdAt: batch.createdAt ?? EPOCH,
-      }))
+      return listed(database, result.rows ?? [])
     },
 
     async markForCleanup(id, at) {
@@ -497,6 +639,98 @@ export function createArtworkStore(database: Database): ArtworkStore {
             WHERE link_id = ${linkId} AND uploaded_at >= ${stamp(since)}`,
       )
       return Number(result.rows?.[0]?.['count'] ?? 0)
+    },
+
+    claimForReplyCheck(runKey, at) {
+      let lease = stamp(at.subtract({ minutes: CLAIM_MINUTES }))
+      return database.transaction(async (db) => {
+        let result = await db.exec(
+          sql`SELECT b.id FROM artwork_batches b JOIN issues i ON i.id = b.issue_id
+              WHERE b.created_at IS NOT NULL AND b.approved_at IS NULL AND i.closed_at IS NULL
+                AND (b.claimed_at IS NULL OR b.claimed_at < ${lease})
+              ORDER BY coalesce(b.checked_at, ''), b.id
+              LIMIT ${CLAIM_LIMIT}`,
+        )
+        let ids = (result.rows ?? []).map((row) => Number(row['id']))
+        if (ids.length === 0) return []
+        let idList = JSON.stringify(ids)
+        await db.exec(
+          sql`UPDATE artwork_batches SET claim_key = ${runKey}, claimed_at = ${stamp(at)}
+              WHERE id IN (SELECT value FROM json_each(${idList}))`,
+        )
+        let claimed = await db.exec(
+          sql`SELECT b.*, ar.name AS article_name, i.name AS issue_name,
+                CASE WHEN ar.licences_folder_missing_at IS NULL THEN ar.licences_folder_id END
+                  AS licences_folder_id
+              FROM artwork_batches b
+              JOIN articles ar ON ar.id = b.article_id
+              JOIN issues i ON i.id = b.issue_id
+              WHERE b.id IN (SELECT value FROM json_each(${idList}))
+              ORDER BY coalesce(b.checked_at, ''), b.id`,
+        )
+        let rows = claimed.rows ?? []
+        let batches = await listed(db, rows)
+        return batches.map((batch, index) => ({
+          ...batch,
+          licencesFolderId: text(rows[index]?.['licences_folder_id']),
+        }))
+      })
+    },
+
+    recordReport(runKey, batchId, report, at) {
+      return database.transaction(async (db) => {
+        let batch = await batchById(db, batchId)
+        if (batch === null || batch.claimKey !== runKey) return 'unknown'
+        let decision = decideReport(batch, report, at)
+        await applyPatch(db, batchId, decision.patch)
+        /* Reported, so the next run may take it; the key stays for a repeat of this report. */
+        await db.exec(sql`UPDATE artwork_batches SET claimed_at = NULL WHERE id = ${batchId}`)
+        return decision.answer
+      })
+    },
+
+    async verifyConsent(id, replyMessageId, editor, at) {
+      return database.transaction(async (db) => {
+        let batch = await batchById(db, id)
+        if (batch === null || batch.createdAt === null || batchState(batch) !== 'review') {
+          return false
+        }
+        /* The reply the editor read, not one that arrived after the page was drawn. */
+        if (batch.replyMessageId !== replyMessageId) return false
+        let issue = await db.exec(sql`SELECT closed_at FROM issues WHERE id = ${batch.issueId}`)
+        if (issue.rows?.[0]?.['closed_at'] !== null) return false
+        await db.exec(
+          sql`UPDATE artwork_batches SET consent_verified_at = ${stamp(at)},
+                consent_verified_by_email = ${editor.email},
+                consent_verified_by_name = ${editor.displayName}
+              WHERE id = ${id}`,
+        )
+        return true
+      })
+    },
+
+    async undoVerification(id) {
+      /* Only in the window `13b` gives it: once the archive failed, the decision stands (`13c`). */
+      let result = await database.exec(
+        sql`UPDATE artwork_batches SET consent_verified_at = NULL,
+              consent_verified_by_email = NULL, consent_verified_by_name = NULL
+            WHERE id = ${id} AND approved_at IS NULL AND archive_failed_at IS NULL
+              AND consent_verified_at IS NOT NULL`,
+      )
+      return (result.affectedRows ?? 0) === 1
+    },
+
+    async reviewQueue(including) {
+      let result = await database.exec(QUEUE_CANDIDATES)
+      let rows = (result.rows ?? []).filter(
+        (row) => Number(row['id']) === including || isQueued(toBatch(row, [])),
+      )
+      return listed(database, rows)
+    },
+
+    async reviewCount() {
+      let result = await database.exec(QUEUE_CANDIDATES)
+      return (result.rows ?? []).filter((row) => isQueued(toBatch(row, []))).length
     },
   }
 }

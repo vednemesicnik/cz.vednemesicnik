@@ -239,6 +239,30 @@ the tunnel's address in the test copy only:
    the article.
 6. With the app stopped, the menu shows _Zkuste to za chvíli znovu_.
 
+## The reply check's API
+
+The reply check of artworks is a standalone Apps Script project under `publikace.app@` (#31).
+Each run claims batches (`/api/v1/artwork-replies/claim`) and reports what Reply_Check answered
+and what it archived (`/api/v1/artwork-replies/report`), with the job's Google identity token.
+The suite covers what the app does with a report, but not how Google issues the token. The
+project's own code is not written yet, so the calls are made by hand from a throwaway function in
+it, behind the same tunnel:
+
+- [ ] log the payload of `ScriptApp.getIdentityToken()` from the project with `openid` and
+      `https://www.googleapis.com/auth/userinfo.email` among its `oauthScopes`: its `aud` goes into
+      `SCRIPT_TOKEN_AUDIENCE`, and its `email` must be `publikace.app@vednemesicnik.cz`, the value
+      of `SCRIPT_JOB_ACCOUNT`. Production does not start without either;
+- [ ] `claim` with `{ "intervalMinutes": 30 }` after a consent request was sent from an artworks
+      page: the answer names the batch with its `subjectTag`, the article and the article's
+      `licencesFolderId`. A second `claim` at once leaves it out;
+- [ ] answer that batch's e-mail from the provider's mailbox with _ok, souhlas_, then `report` it
+      as `other_reply` with the reply's own text. `/review` shows the card, the panel counts one,
+      and the issue's page shows _Ke kontrole_ with _odpověď „ok, souhlas“_;
+- [ ] _Je to souhlas_, then `claim` again ten minutes later: the batch comes with
+      `isVerified: true`. `report` it with `archive: { fileId }` of a PDF made in `Licence` by
+      hand, and the issue's page shows _Schváleno_ with _konverzace v Licencích_;
+- [ ] a token of another account answers 401, and nothing changes.
+
 ## After the run
 
 - [ ] remove `publikace.app@` from the test shared drive: _Publikace_ is the only shared drive

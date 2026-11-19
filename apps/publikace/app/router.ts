@@ -13,9 +13,11 @@ import createAuthController from './actions/auth/controller.tsx'
 import createGoogleController from './actions/auth/google/controller.tsx'
 import createHomeController from './actions/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
+import createArtworkRepliesController from './actions/api/artwork-replies/controller.ts'
 import createDocMenuController from './actions/api/doc-menu/controller.ts'
 import createArtworksController from './actions/links/artworks/controller.tsx'
 import createLinksController from './actions/links/controller.tsx'
+import createReviewController from './actions/review/controller.tsx'
 import createDriveAccountController from './actions/settings/account/controller.tsx'
 import createSettingsController from './actions/settings/controller.tsx'
 import {
@@ -31,6 +33,8 @@ import {
   issuesFolderId,
   mailSendEndpoint,
   publicMailPerDay,
+  scriptJobAccount,
+  scriptTokenAudiences,
 } from './auth/environment.server.ts'
 import {
   createMembershipCheck,
@@ -47,6 +51,7 @@ import { createArticleStore } from './data/articles.server.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { createDriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
+import { createJobRunStore } from './data/job-runs.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { createPublicMailLog } from './data/public-mail.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
@@ -66,6 +71,7 @@ import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
 import { loadIssues } from './middleware/issues.server.ts'
+import { loadReviewCount } from './middleware/review-count.server.ts'
 import { publicLinkHeaders, skipWithoutSession } from './middleware/public-link.server.ts'
 import { render } from './middleware/render.tsx'
 import { logRequests } from './middleware/request-log.server.ts'
@@ -91,6 +97,7 @@ export type AppContext = MiddlewareContext<
     ReturnType<typeof loadIssues>,
     ReturnType<typeof loadArticles>,
     ReturnType<typeof loadAuth>,
+    ReturnType<typeof loadReviewCount>,
     ReturnType<typeof takeToasts>,
   ]
 >
@@ -123,8 +130,12 @@ export type AppDependencies = {
   mailPerDay?: number
   /** The Doc every article is copied from. Defaults to `ARTICLE_TEMPLATE_DOCUMENT_ID`. */
   templateId?: string
+  /** The account the background jobs run as. Defaults to `SCRIPT_JOB_ACCOUNT`. */
+  jobAccount?: string
   /** Checks a click from the article Doc's menu. Defaults to Google's keys on `fetch`. */
   verifyIdentityToken?: IdentityTokenVerifier
+  /** Checks a call from a background job. Defaults to Google's keys on `fetch`. */
+  verifyJobToken?: IdentityTokenVerifier
 }
 
 function defaultMailer(): Mailer {
@@ -239,7 +250,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `loadAccess()` before `loadAuth()`, whose ten-minute check asks the access list, and
      *     `loadDriveAccount()` beside it, for the banner every editor screen draws, and
      *     `loadIssues()` beside that,
-     *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart,
+     *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart, and
+     *     `loadReviewCount()` after it, for the number beside _Ke kontrole_ in the panel,
      *   - `takeToasts()` last, so the message is cleared while the session can still be saved.
      *
      * The session, the sign-in, CSRF and the toasts are skipped for a shared link's page and for
@@ -275,6 +287,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         setup: articleSetup,
       }),
       skipWithoutSession(loadAuth()),
+      skipWithoutSession(loadReviewCount(artworksSetup.artworks)),
       skipWithoutSession(
         csrf({
           // Behind a TLS-terminating proxy the request's own URL says `http:`.
@@ -307,6 +320,25 @@ export function createAppRouter(dependencies: AppDependencies) {
       verifyIdentityToken:
         dependencies.verifyIdentityToken ??
         createIdentityTokenVerifier({ audiences: docMenuTokenAudiences(), fetch }),
+    }),
+  )
+  router.map(
+    routes.api.artworkReplies,
+    createArtworkRepliesController({
+      artworks: artworksSetup.artworks,
+      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      now,
+      runs: createJobRunStore(dependencies.database),
+      verifyIdentityToken:
+        dependencies.verifyJobToken ??
+        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+    }),
+  )
+  router.map(
+    routes.review,
+    createReviewController(signedInUntil, {
+      artworks: artworksSetup.artworks,
+      runs: createJobRunStore(dependencies.database),
     }),
   )
   router.map(routes.auth, createAuthController(signedInUntil))

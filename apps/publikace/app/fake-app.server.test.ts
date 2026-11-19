@@ -2,7 +2,12 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import { appOrigin } from './auth/environment.server.ts'
+import { createArticleStore } from './data/articles.server.ts'
+import { createArtworkStore } from './data/artworks.server.ts'
+import { createIssueStore } from './data/issues.server.ts'
+import { createLinkStore } from './data/links.server.ts'
 import { createFakeApp, type FakeApp } from './fake-app.server.ts'
+import { seedBatch } from './test-app.server.ts'
 
 function textOf(html: string): string {
   return html
@@ -122,6 +127,28 @@ describe('the fake app (pnpm app:fake)', () => {
       let overview = await get(fake, '/', { Cookie: cookie })
       assert.equal(overview.status, 200)
       assert.ok((await overview.text()).includes('VDM_2026_6'))
+    }))
+
+  it('plays a run of the reply check through the API, one batch at a time', () =>
+    withFakeApp(async (fake) => {
+      let issueId = (await createIssueStore(fake.app.database).findByName('VDM_2026_6'))?.id ?? 0
+      let [created] = await createArticleStore(fake.app.database).listCreated(issueId)
+      let link = (await createLinkStore(fake.app.database).artworksLinksOf(issueId)).get(
+        created?.id ?? 0,
+      )
+      if (created === undefined || link === undefined) throw new Error('No seeded article.')
+      let batch = await seedBatch(fake.app, { articleId: created.id, link }, issueId)
+      let store = createArtworkStore(fake.app.database)
+
+      assert.equal(
+        (await control(fake, '/replies', { id: String(batch.id), kind: 'other' })).status,
+        303,
+      )
+      assert.equal(await store.reviewCount(), 1)
+      assert.match(textOf(await (await get(fake, '/_fake')).text()), /review/)
+
+      await control(fake, '/replies', { id: String(batch.id), kind: 'exact' })
+      assert.equal((await store.findBatch(batch.id))?.consentFileId, `fake-consent-${batch.id}`)
     }))
 
   it('refuses a step it does not know and never hands /_fake to the app', () =>

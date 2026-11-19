@@ -27,6 +27,7 @@ import {
   compareArtworks,
   discardedToast,
   driveFileUrl,
+  isMailError,
   NO_ARTWORKS,
   RESEND_DAILY_CAP_TOAST,
   RESEND_DISCONNECTED_TOAST,
@@ -144,7 +145,7 @@ function subfolderUrls(
 
 /** A batch in _Chyba_ that _Poslat žádost znovu_ would send, were its folders there. */
 function isResendable(batch: BatchRow): boolean {
-  return batchState(batch) === 'error' && batch.mailRefusedAt === null
+  return isMailError(batch) && batch.mailRefusedAt === null
 }
 
 /** The Callout under the article's row, or `null` while all three folders are there (`12j`). */
@@ -264,7 +265,7 @@ async function artworksOf(
     let query = filter === 'all' ? '' : `?artworks=${filter}`
     let ids = { id: String(batch.id), name: issue.name }
     let actions =
-      state === 'error' && isOpen
+      isMailError(batch) && isOpen
         ? {
             count: batch.artworks.length,
             discardHref: canDiscard(missing)

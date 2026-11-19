@@ -6,12 +6,15 @@ import {
   authorAndSource,
   batchState,
   batchStateDetail,
+  type BatchStatus,
   batchTag,
   compareArtworks,
   consentSubject,
   discardDialogTitle,
   imageTypeOf,
+  isMailError,
   NO_ARTWORKS,
+  replyExcerpt,
   resendLabel,
   sentArtworkLine,
   sentLead,
@@ -69,23 +72,70 @@ describe('consentSubject', () => {
 
 describe('batchState', () => {
   let at = Temporal.Instant.from('2026-11-18T12:45:00Z')
+  let sent: BatchStatus = {
+    approvedAt: null,
+    archiveFailedAt: null,
+    consentVerifiedAt: null,
+    discardedAt: null,
+    isExactConsent: false,
+    mailRefusedAt: null,
+    mailSentAt: at,
+    replyMessageId: null,
+    replyText: null,
+  }
+  let replied: BatchStatus = { ...sent, replyMessageId: 'm-1', replyText: 'ok, souhlas\nKlára' }
 
   it('is with the provider once the Mailer accepted the request', () => {
-    let batch = { mailRefusedAt: null, mailSentAt: at }
-    assert.equal(batchState(batch), 'provider')
-    assert.equal(batchStateDetail(batch), 'žádost odeslána 18. 11.')
+    assert.equal(batchState(sent), 'provider')
+    assert.equal(batchStateDetail(sent), 'žádost odeslána 18. 11.')
   })
 
   it('is an error until then, and says whether the Mailer refused it for good', () => {
-    assert.equal(batchState({ mailRefusedAt: null, mailSentAt: null }), 'error')
-    assert.equal(
-      batchStateDetail({ mailRefusedAt: null, mailSentAt: null }),
-      'chybí potvrzení o odeslání žádosti',
-    )
-    assert.equal(
-      batchStateDetail({ mailRefusedAt: at, mailSentAt: null }),
-      'pošta žádost trvale odmítla',
-    )
+    let unsent = { ...sent, mailSentAt: null }
+    assert.equal(batchState(unsent), 'error')
+    assert.equal(isMailError(unsent), true)
+    assert.equal(batchStateDetail(unsent), 'chybí potvrzení o odeslání žádosti')
+    assert.equal(batchStateDetail({ ...unsent, mailRefusedAt: at }), 'pošta žádost trvale odmítla')
+  })
+
+  it('waits on the editors for a reply that is not exactly „Souhlasím“, quoting its first line', () => {
+    assert.equal(batchState(replied), 'review')
+    assert.equal(batchStateDetail(replied), 'odpověď „ok, souhlas“')
+  })
+
+  it('takes a reply over a request the Mailer never confirmed', () => {
+    assert.equal(batchState({ ...replied, mailSentAt: null }), 'review')
+  })
+
+  it('leaves an exact „Souhlasím“ to the job, but not on a discarded batch', () => {
+    let exact = { ...replied, isExactConsent: true, replyText: 'Souhlasím' }
+    assert.equal(batchState(exact), 'provider')
+    let discarded = { ...exact, discardedAt: at }
+    assert.equal(batchState(discarded), 'review')
+    assert.equal(batchStateDetail(discarded), 'dávka zahozena 18. 11.')
+  })
+
+  it('is with the provider after Je to souhlas, then an error when the archive fails', () => {
+    let verified = { ...replied, consentVerifiedAt: at }
+    assert.equal(batchState(verified), 'provider')
+    assert.equal(batchStateDetail(verified), 'souhlas zaznamenán 18. 11.')
+    let failed = { ...verified, archiveFailedAt: at }
+    assert.equal(batchState(failed), 'error')
+    assert.equal(isMailError(failed), false)
+    assert.equal(batchStateDetail(failed), 'konverzace se neuložila')
+  })
+
+  it('is approved once the conversation is in Licence', () => {
+    let approved = { ...replied, approvedAt: at, replyText: null }
+    assert.equal(batchState(approved), 'approved')
+    assert.equal(batchStateDetail(approved), 'konverzace v Licencích')
+  })
+})
+
+describe('replyExcerpt', () => {
+  it('keeps the first line and cuts a long one', () => {
+    assert.equal(replyExcerpt('  ok, souhlas  \ndíky'), 'ok, souhlas')
+    assert.equal(replyExcerpt('a'.repeat(60)), `${'a'.repeat(39)}…`)
   })
 })
 

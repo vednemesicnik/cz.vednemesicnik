@@ -60,6 +60,20 @@ export const routes = route({
       previewProofreading: post('/api/v1/doc-menu/proofreading/preview'),
       markProofreading: post('/api/v1/doc-menu/proofreading'),
     },
+    /* The reply check of artworks, a job under `publikace.app@` with its own trigger (#31): it
+       claims the batches to ask about, then reports what Reply_Check said and what it archived. */
+    artworkReplies: {
+      claim: post('/api/v1/artwork-replies/claim'),
+      report: post('/api/v1/artwork-replies/report'),
+    },
+  },
+
+  /* _Ke kontrole_ (`13a`): the replies the reply check did not recognise as a consent.
+     _Je to souhlas_ and _Vrátit_ answer at once, with no dialog (`13b`). */
+  review: {
+    index: get('/review'),
+    verify: post('/review/batches/:id/consent'),
+    undo: post('/review/batches/:id/consent/undo'),
   },
 
   auth: {

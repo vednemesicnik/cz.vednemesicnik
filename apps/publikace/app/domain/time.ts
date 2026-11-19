@@ -37,10 +37,22 @@ function inPrague(instant: Temporal.Instant): Temporal.ZonedDateTime {
  * (`docs/copy-context.md`), not a rule of Czech.
  */
 export function atTime(instant: Temporal.Instant): string {
-  let time = inPrague(instant)
-  let hour = time.hour
+  let hour = inPrague(instant).hour
   let preposition = [2, 3, 4, 12, 13, 14, 20, 21, 22, 23].includes(hour) ? 've' : 'v'
-  return `${preposition} ${hour}:${String(time.minute).padStart(2, '0')}`
+  return `${preposition} ${clockTime(instant)}`
+}
+
+/** `9:30`, as after _kolem_. */
+export function clockTime(instant: Temporal.Instant): string {
+  let time = inPrague(instant)
+  return `${time.hour}:${String(time.minute).padStart(2, '0')}`
+}
+
+/** `14. 11. v 8:30` in the year of `today`, `14. 11. 2025 v 8:30` in another (`00e`). */
+export function formatMoment(instant: Temporal.Instant, today: Temporal.Instant): string {
+  let date =
+    pragueYear(instant) === pragueYear(today) ? formatDayMonth(instant) : formatDate(instant)
+  return `${date} ${atTime(instant)}`
 }
 
 /** `17. 11. 2026`. */

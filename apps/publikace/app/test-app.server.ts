@@ -9,6 +9,7 @@ import {
 } from './auth/session.server.ts'
 import { type AccessDirectory, createAccessDirectory } from './data/access.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
+import { type BatchRow, createArtworkStore } from './data/artworks.server.ts'
 import { createDriveAccountStore, type DriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
@@ -131,8 +132,10 @@ export async function createTestApp(): Promise<TestApp> {
       mail.push(message)
       return isMailFailing ? { error: 'the fake Mailer is failing', ok: false } : { ok: true }
     },
+    jobAccount: TEST_DRIVE_ACCOUNT,
     templateId: TEST_TEMPLATE,
     verifyIdentityToken: fakeIdentityVerifier,
+    verifyJobToken: fakeIdentityVerifier,
   })
   let storage = createSqliteSessionStorage(opened.database)
   let sessionCookie = createSessionCookie()
@@ -325,4 +328,58 @@ export async function seedArticle(
   let link = (await links.artworksLinksOf(issueId)).get(attempt.id)
   if (link === undefined) throw new Error('The article has no link for artworks.')
   return { articleId: attempt.id, artworksFolderId, docId, folderId, licencesFolderId, link }
+}
+
+/** The job account's token, as `ScriptApp.getIdentityToken()` gives it to the reply check. */
+export const JOB_TOKEN = fakeIdentityToken({ email: TEST_DRIVE_ACCOUNT, name: null })
+
+/**
+ * A committed batch of the article whose request the Mailer accepted, with as many artworks as
+ * asked, as the artworks page leaves it.
+ */
+export async function seedBatch(
+  app: TestApp,
+  article: { articleId: number; link: Link },
+  issueId: number,
+  options: {
+    at?: Temporal.Instant
+    count?: number
+    isSent?: boolean
+    provider?: { email: string; name: string }
+  } = {},
+): Promise<BatchRow> {
+  let artworks = createArtworkStore(app.database)
+  let at = options.at ?? SEEDED_AT
+  let formKey = `seeded-batch-${crypto.randomUUID()}`
+  let ids: number[] = []
+  for (let index = 0; index < (options.count ?? 2); index += 1) {
+    let upload = await artworks.addUpload({
+      articleId: article.articleId,
+      at,
+      driveFileId: `img-${formKey}-${index}`,
+      formKey,
+      isReadable: true,
+      linkId: article.link.id,
+      mimeType: 'image/jpeg',
+      originalName: `ilustrace-${index + 1}.jpg`,
+      size: 1000,
+      storedName: `${String(index).padStart(64, 'a')}.jpg`,
+      uploadKey: `upload-${formKey}-${index}`,
+    })
+    ids.push(upload.id)
+  }
+  let { batch } = await artworks.startBatch({
+    articleId: article.articleId,
+    artworks: ids.map((id) => ({ author: '', id, source: '' })),
+    at,
+    formKey,
+    issueId,
+    linkId: article.link.id,
+    provider: options.provider ?? { email: 'klara.simkova@external.test', name: 'Klára Šimková' },
+  })
+  await artworks.commitBatch(batch.id, at)
+  if (options.isSent !== false) await artworks.markMail(batch.id, 'sent', at)
+  let committed = await artworks.findBatch(batch.id)
+  if (committed === null) throw new Error('The batch was not seeded.')
+  return committed
 }
