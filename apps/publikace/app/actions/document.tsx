@@ -15,13 +15,16 @@ const APP_NAME = 'Publikace'
 
 /*
  * The design system sets the colours and the face on its tokens but leaves `body` alone, so
- * the page ground and the type are said here once.
+ * the page ground and the type are said here once. The smoothing is the one the design canvas
+ * draws with: on macOS the default renders Inter a step heavier than the drawings.
  */
 const bodyStyle = css({
   background: 'var(--bg-primary)',
   color: 'var(--text-primary)',
   fontFamily: 'var(--font-family)',
   margin: 0,
+  MozOsxFontSmoothing: 'grayscale',
+  WebkitFontSmoothing: 'antialiased',
 })
 
 /**
