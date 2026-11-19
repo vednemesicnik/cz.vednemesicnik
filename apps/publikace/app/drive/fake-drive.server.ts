@@ -24,16 +24,19 @@ export type FakeFile = FakeFolder & {
  * One kind of call, for failing it on purpose: `upload` is a small multipart file, `store` a
  * resumable one (an artwork, a licence PDF), `import` a Doc made from HTML.
  */
-export type FakeStep =
-  | 'copy'
-  | 'export'
-  | 'folder'
-  | 'import'
-  | 'preview'
-  | 'replace'
-  | 'store'
-  | 'trash'
-  | 'upload'
+export const FAKE_STEPS = [
+  'copy',
+  'export',
+  'folder',
+  'import',
+  'preview',
+  'replace',
+  'store',
+  'trash',
+  'upload',
+] as const
+
+export type FakeStep = (typeof FAKE_STEPS)[number]
 
 export type FakeDrive = {
   /** Every call that reached the fake, as `METHOD path`. */
@@ -55,6 +58,8 @@ export type FakeDrive = {
   /** Moves a file to another folder, as a person dragging it on Drive would. */
   move(id: string, parentId: string): void
   remove(id: string): void
+  /** Takes a file out of the bin, as a person restoring it on Drive would. */
+  restore(id: string): void
   /** A folder that exists already, as an article's does once the article page made it. */
   seedFolder(id: string, name: string, parentId: string): void
   /** A file to copy from, as the article template is on the shared drive. */
@@ -357,6 +362,10 @@ export function createFakeDrive(): FakeDrive {
       if (file !== undefined) file.parentId = parentId
     },
     remove: (id) => void files.delete(id),
+    restore(id) {
+      let file = files.get(id)
+      if (file !== undefined) file.isTrashed = false
+    },
     seedFolder(id, name, parentId) {
       files.set(id, {
         appProperties: {},

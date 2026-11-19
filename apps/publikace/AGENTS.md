@@ -22,6 +22,7 @@ pnpm install
 pnpm dev:setup-claude # the .claude/skills symlinks, the Remix skill, and a CLAUDE.md importing this file
 pnpm app:dev          # http://localhost:44100, restarts on change
 pnpm app:start        # the same server with NODE_ENV=production
+pnpm app:fake         # the app on a fake Drive, Mailer and database, http://127.0.0.1:44110/_fake
 pnpm typecheck        # tsc --noEmit
 pnpm test             # remix test --type server
 pnpm app:doctor       # remix doctor, strict: a warning fails it

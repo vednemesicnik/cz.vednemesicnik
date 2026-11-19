@@ -1,5 +1,6 @@
 import { createSession } from 'remix/session'
 
+import { appOrigin } from './auth/environment.server.ts'
 import type { MembershipAnswer, MembershipCheck } from './auth/group-membership.server.ts'
 import {
   createSessionCookie,
@@ -34,8 +35,6 @@ export const TEST_ISSUES_FOLDER = 'fake-issues-folder'
 /** The article template on the fake shared drive. */
 export const TEST_TEMPLATE = 'fake-article-template'
 
-const ORIGIN = 'http://localhost:44100'
-
 export type TestApp = {
   /** A browser with its own cookies; it starts signed out. */
   browser(): TestBrowser
@@ -44,7 +43,11 @@ export type TestApp = {
   directory: AccessDirectory
   /** Google as the app sees it in the suite: the token endpoint and Drive's files. */
   drive: FakeDrive
-  /** Every message the app handed the Mailer, in order. */
+  /** While set, the Mailer keeps every message but answers that it was not sent. */
+  failMail(isFailing: boolean): void
+  /** The router itself, for a request that is not a browser's: `pnpm app:fake` serves it. */
+  fetch(request: Request): Promise<Response>
+  /** Every message the app handed the Mailer, in order, sent or not. */
   mail: MailMessage[]
   /** The store of the app's account on Drive, on the same database. */
   driveAccount: DriveAccountStore
@@ -71,8 +74,12 @@ export type TestBrowser = {
 /**
  * The whole app on an empty `:memory:` database and a fake membership service, with a
  * browser that keeps cookies. Nothing leaves the process.
+ *
+ * The browser's requests come from `appOrigin()`, the origin CSRF checks them against, so the
+ * same harness works on another port when `APP_ORIGIN` names it.
  */
 export async function createTestApp(): Promise<TestApp> {
+  let origin = appOrigin()
   let opened = openDatabase(':memory:')
   await migrateDatabase(opened.database)
 
@@ -83,6 +90,7 @@ export async function createTestApp(): Promise<TestApp> {
   let drive = createFakeDrive()
   drive.seedTemplate(TEST_TEMPLATE, 'Šablona článku')
   let mail: MailMessage[] = []
+  let isMailFailing = false
   let router = createAppRouter({
     checkMembership,
     database: opened.database,
@@ -94,7 +102,7 @@ export async function createTestApp(): Promise<TestApp> {
     issuesFolderId: TEST_ISSUES_FOLDER,
     mailer: async (message) => {
       mail.push(message)
-      return { ok: true }
+      return isMailFailing ? { error: 'the fake Mailer is failing', ok: false } : { ok: true }
     },
     templateId: TEST_TEMPLATE,
   })
@@ -125,7 +133,7 @@ export async function createTestApp(): Promise<TestApp> {
     async function get(path: string, headers?: HeadersInit): Promise<Response> {
       let all = new Headers(headers)
       if (jar.size > 0) all.set('Cookie', cookieHeader())
-      return keep(await router.fetch(new Request(new URL(path, ORIGIN), { headers: all })))
+      return keep(await router.fetch(new Request(new URL(path, origin), { headers: all })))
     }
 
     async function csrfToken(from: string): Promise<string> {
@@ -140,28 +148,28 @@ export async function createTestApp(): Promise<TestApp> {
         // A token given in the fields is sent as it is, without visiting the page first.
         let token = fields._csrf ?? (await csrfToken(from))
         let body = new URLSearchParams({ ...fields, _csrf: token })
-        let request = new Request(new URL(path, ORIGIN), {
+        let request = new Request(new URL(path, origin), {
           body,
-          headers: { Cookie: cookieHeader(), Origin: ORIGIN, Referer: new URL(from, ORIGIN).href },
+          headers: { Cookie: cookieHeader(), Origin: origin, Referer: new URL(from, origin).href },
           method: 'POST',
         })
         return keep(await router.fetch(request))
       },
       async send(path, body) {
-        let headers = new Headers({ Origin: ORIGIN })
+        let headers = new Headers({ Origin: origin })
         if (jar.size > 0) headers.set('Cookie', cookieHeader())
         return keep(
-          await router.fetch(new Request(new URL(path, ORIGIN), { body, headers, method: 'POST' })),
+          await router.fetch(new Request(new URL(path, origin), { body, headers, method: 'POST' })),
         )
       },
       async sendBytes(path, body, headers) {
         let all = new Headers(headers)
-        all.set('Origin', ORIGIN)
+        all.set('Origin', origin)
         if (!all.has('Content-Length')) all.set('Content-Length', String(body.byteLength))
         if (jar.size > 0) all.set('Cookie', cookieHeader())
         return keep(
           await router.fetch(
-            new Request(new URL(path, ORIGIN), { body, headers: all, method: 'POST' }),
+            new Request(new URL(path, origin), { body, headers: all, method: 'POST' }),
           ),
         )
       },
@@ -193,6 +201,10 @@ export async function createTestApp(): Promise<TestApp> {
     directory: createAccessDirectory(opened.database),
     drive,
     driveAccount: createDriveAccountStore(opened.database, TEST_DRIVE_TOKEN_KEY),
+    failMail(isFailing) {
+      isMailFailing = isFailing
+    },
+    fetch: (request) => router.fetch(request),
     mail,
     setMembership(group, answer) {
       answers.set(group, answer)

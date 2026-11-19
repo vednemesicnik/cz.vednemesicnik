@@ -6,6 +6,7 @@
   "scripts": {
     "postinstall": "case \"$CI\" in ''|0|false) lefthook install || echo \"lefthook install failed; run pnpm exec lefthook install by hand\";; esac",
     "app:dev": "NODE_ENV=development node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts",
+    "app:fake": "NODE_ENV=development node --watch --import remix/node-tsx scripts/fake-app.ts",
     "app:start": "NODE_ENV=production node --env-file-if-exists=.env --import remix/node-tsx server.ts",
     "app:doctor": "remix doctor",
     "test": "remix test --type server",

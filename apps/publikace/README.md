@@ -37,6 +37,7 @@ and has its database, and the screens arrive one issue at a time.
 ```sh
 pnpm install
 pnpm app:dev            # http://localhost:44100
+pnpm app:fake           # a fake Drive and Mailer, no Google: http://127.0.0.1:44110/_fake
 pnpm typecheck
 pnpm test
 pnpm app:doctor
