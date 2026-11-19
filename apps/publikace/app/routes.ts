@@ -52,6 +52,16 @@ export const routes = route({
     },
   },
 
+  /* What the article Doc's bound script calls, with the clicker's Google identity token and no
+     cookie. Every Doc keeps the script it was copied with, so a path here and a field in what it
+     sends or gets back are never renamed in place: a change is a new version. */
+  api: {
+    docMenu: {
+      previewProofreading: post('/api/v1/doc-menu/proofreading/preview'),
+      markProofreading: post('/api/v1/doc-menu/proofreading'),
+    },
+  },
+
   auth: {
     signIn: get('/sign-in'),
     /* `POST` only: a link could be followed from somebody else's page or by a browser fetching

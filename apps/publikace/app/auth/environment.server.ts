@@ -1,3 +1,5 @@
+import type { TokenAudiences } from './identity-token.server.ts'
+
 /**
  * The sign-in configuration, read from the environment.
  *
@@ -164,4 +166,22 @@ export function publicMailPerDay(fallback: number): number {
     throw new Error('PUBLIC_MAIL_PER_DAY musí být kladné celé číslo.')
   }
   return parsed
+}
+
+/**
+ * The audiences an identity token from the article Doc's menu may carry, comma-separated, or `*`
+ * for any. Production names one of the two on purpose and does not start without it: every Doc
+ * carries its own copy of the bound script, and when those copies share no Cloud project, only
+ * `*` lets them in. What `*` leaves open is said in `identity-token.server.ts` (#50).
+ * Outside production an empty value is `*`, so the fake app and the suite need nothing.
+ */
+export function docMenuTokenAudiences(): TokenAudiences {
+  let value = isProduction()
+    ? required('DOC_MENU_TOKEN_AUDIENCES')
+    : optional('DOC_MENU_TOKEN_AUDIENCES', '*')
+  if (value.trim() === '*') return 'any'
+  return value
+    .split(',')
+    .map((audience) => audience.trim())
+    .filter((audience) => audience !== '')
 }

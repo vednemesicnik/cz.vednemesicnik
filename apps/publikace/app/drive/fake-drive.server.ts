@@ -29,6 +29,7 @@ export const FAKE_STEPS = [
   'export',
   'folder',
   'import',
+  'permissions',
   'preview',
   'replace',
   'store',
@@ -37,6 +38,14 @@ export const FAKE_STEPS = [
 ] as const
 
 export type FakeStep = (typeof FAKE_STEPS)[number]
+
+/** One grant on a file, in the fields `permissions.list` answers with. */
+export type FakePermission = {
+  domain?: string
+  emailAddress?: string
+  role: 'commenter' | 'fileOrganizer' | 'organizer' | 'owner' | 'reader' | 'writer'
+  type: 'anyone' | 'domain' | 'group' | 'user'
+}
 
 export type FakeDrive = {
   /** Every call that reached the fake, as `METHOD path`. */
@@ -66,8 +75,12 @@ export type FakeDrive = {
   restore(id: string): void
   /** A folder that exists already, as an article's does once the article page made it. */
   seedFolder(id: string, name: string, parentId: string): void
+  /** A Doc that exists already, as a copy somebody made of an article's Doc. */
+  seedDoc(id: string, name: string, parentId: string): void
   /** A file to copy from, as the article template is on the shared drive. */
   seedTemplate(id: string, name: string): void
+  /** Adds a grant to a file, as somebody sharing it would; a file starts with none. */
+  share(id: string, permission: FakePermission): void
   trash(id: string): void
 }
 
@@ -98,6 +111,7 @@ export function createFakeDrive(): FakeDrive {
   let isDown = false
   let next = 1
   let calls: string[] = []
+  let permissions = new Map<string, FakePermission[]>()
   let sessions = new Map<
     string,
     { appProperties: Record<string, string>; mimeType: string; name: string; parentId: string }
@@ -330,6 +344,14 @@ export function createFakeDrive(): FakeDrive {
       })
     }
 
+    let listed = /^\/drive\/v3\/files\/([^/]+)\/permissions$/.exec(url.pathname)
+    if (method === 'GET' && listed !== null) {
+      let id = decodeURIComponent(listed[1] ?? '')
+      if (!files.has(id) || !isOnSharedDrives) return failure('File not found', 404)
+      if (failingSteps.has('permissions')) return failure('down')
+      return Response.json({ permissions: permissions.get(id) ?? [] })
+    }
+
     let match = /^\/drive\/v3\/files\/([^/]+)$/.exec(url.pathname)
     if (method === 'PATCH' && match !== null) {
       let file = files.get(decodeURIComponent(match[1] ?? ''))
@@ -417,6 +439,20 @@ export function createFakeDrive(): FakeDrive {
         replacements: [],
       })
     },
+    seedDoc(id, name, parentId) {
+      files.set(id, {
+        appProperties: {},
+        bytes: null,
+        content: null,
+        copiedFrom: null,
+        id,
+        isTrashed: false,
+        mimeType: DOC_TYPE,
+        name,
+        parentId,
+        replacements: [],
+      })
+    },
     seedTemplate(id, name) {
       files.set(id, {
         appProperties: {},
@@ -430,6 +466,9 @@ export function createFakeDrive(): FakeDrive {
         parentId: 'fake-templates',
         replacements: [],
       })
+    },
+    share(id, permission) {
+      permissions.set(id, [...(permissions.get(id) ?? []), permission])
     },
     trash(id) {
       let file = files.get(id)

@@ -13,6 +13,7 @@ import createAuthController from './actions/auth/controller.tsx'
 import createGoogleController from './actions/auth/google/controller.tsx'
 import createHomeController from './actions/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
+import createDocMenuController from './actions/api/doc-menu/controller.ts'
 import createArtworksController from './actions/links/artworks/controller.tsx'
 import createLinksController from './actions/links/controller.tsx'
 import createDriveAccountController from './actions/settings/account/controller.tsx'
@@ -21,6 +22,7 @@ import {
   appOrigin,
   articleTemplateDocumentId,
   authorizedDomain,
+  docMenuTokenAudiences,
   driveAccountEmail,
   driveTokenKey,
   googleCredentials,
@@ -35,6 +37,10 @@ import {
   type MembershipCheck,
   membershipUnavailable,
 } from './auth/group-membership.server.ts'
+import {
+  createIdentityTokenVerifier,
+  type IdentityTokenVerifier,
+} from './auth/identity-token.server.ts'
 import { createSessionCookie, createSignedInUntilCookie } from './auth/session.server.ts'
 import { createAccessDirectory } from './data/access.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
@@ -60,7 +66,7 @@ import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
 import { loadIssues } from './middleware/issues.server.ts'
-import { publicLinkHeaders, skipForPublicLinks } from './middleware/public-link.server.ts'
+import { publicLinkHeaders, skipWithoutSession } from './middleware/public-link.server.ts'
 import { render } from './middleware/render.tsx'
 import { logRequests } from './middleware/request-log.server.ts'
 import { takeToasts } from './middleware/toasts.server.ts'
@@ -70,9 +76,9 @@ import { routes } from './routes.ts'
  * The context every controller sees. Exported for the type alone: building a router opens
  * nothing by itself, but `server.ts` and the tests are the ones that decide on which database.
  *
- * Under `/l/` the session, the sign-in and the toasts are not there, though the type says they
- * are: `skipForPublicLinks()` takes their middlewares out at runtime. A controller for those pages
- * reads only what it loads itself, as the links controller does.
+ * Under `/l/` and `/api/` the session, the sign-in and the toasts are not there, though the type
+ * says they are: `skipWithoutSession()` takes their middlewares out at runtime. A controller for
+ * those addresses reads only what it loads itself, as the links controller does.
  */
 export type AppContext = MiddlewareContext<
   [
@@ -117,6 +123,8 @@ export type AppDependencies = {
   mailPerDay?: number
   /** The Doc every article is copied from. Defaults to `ARTICLE_TEMPLATE_DOCUMENT_ID`. */
   templateId?: string
+  /** Checks a click from the article Doc's menu. Defaults to Google's keys on `fetch`. */
+  verifyIdentityToken?: IdentityTokenVerifier
 }
 
 function defaultMailer(): Mailer {
@@ -210,6 +218,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   }
   let articleSetup = createArticleSetup(dependencies)
   let artworksSetup = createArtworksSetup(dependencies, articleSetup)
+  let checkMembership = dependencies.checkMembership ?? defaultMembershipCheck()
 
   let router = createRouter({
     /*
@@ -233,9 +242,10 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart,
      *   - `takeToasts()` last, so the message is cleared while the session can still be saved.
      *
-     * The session, the sign-in, CSRF and the toasts are skipped for a shared link's page, which
-     * sets no cookie (`public-link.server.ts`); `publicLinkHeaders()` marks those answers
-     * `noindex`, and sits right under the logger so that it marks every one of them.
+     * The session, the sign-in, CSRF and the toasts are skipped for a shared link's page and for
+     * the API, neither of which sets a cookie (`public-link.server.ts`); `publicLinkHeaders()`
+     * marks a shared link's answers `noindex`, and sits right under the logger so that it marks
+     * every one of them.
      */
     middleware: [
       logRequests(),
@@ -245,10 +255,10 @@ export function createAppRouter(dependencies: AppDependencies) {
       serveAssets(),
       render(),
       formData(),
-      skipForPublicLinks(session(sessionCookie, createSqliteSessionStorage(dependencies.database))),
+      skipWithoutSession(session(sessionCookie, createSqliteSessionStorage(dependencies.database))),
       asyncContext(),
       loadAccess({
-        checkMembership: dependencies.checkMembership ?? defaultMembershipCheck(),
+        checkMembership,
         directory,
         domain: dependencies.domain ?? authorizedDomain(),
       }),
@@ -264,8 +274,8 @@ export function createAppRouter(dependencies: AppDependencies) {
         origin: articleSetup.origin,
         setup: articleSetup,
       }),
-      skipForPublicLinks(loadAuth()),
-      skipForPublicLinks(
+      skipWithoutSession(loadAuth()),
+      skipWithoutSession(
         csrf({
           // Behind a TLS-terminating proxy the request's own URL says `http:`.
           origin: appOrigin(),
@@ -277,7 +287,7 @@ export function createAppRouter(dependencies: AppDependencies) {
               : signInRedirect(context as RequestContext, signedInUntil),
         }),
       ),
-      skipForPublicLinks(takeToasts()),
+      skipWithoutSession(takeToasts()),
     ],
   })
 
@@ -285,6 +295,20 @@ export function createAppRouter(dependencies: AppDependencies) {
   router.map(routes.issues, createIssuesController(signedInUntil))
   router.map(routes.links, createLinksController())
   router.map(routes.links.artworks, createArtworksController())
+  router.map(
+    routes.api.docMenu,
+    createDocMenuController({
+      articles: articleSetup.articles,
+      checkMembership,
+      fetch,
+      issues: issueStore,
+      now,
+      token: articleSetup.token,
+      verifyIdentityToken:
+        dependencies.verifyIdentityToken ??
+        createIdentityTokenVerifier({ audiences: docMenuTokenAudiences(), fetch }),
+    }),
+  )
   router.map(routes.auth, createAuthController(signedInUntil))
   router.map(routes.auth.google, createGoogleController(signedInUntil))
   router.map(routes.settings, createSettingsController(signedInUntil))

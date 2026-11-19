@@ -17,6 +17,13 @@ import type { Middleware } from 'remix/router'
 
 const PUBLIC_LINK_PREFIX = '/l/'
 
+/**
+ * The API the article Doc's menu calls (`/api/v1/…`) is sessionless too: a bound script carries
+ * no cookie. What proves the call is the Google identity token in it and Drive's answer about
+ * who may edit the Doc, never a session (`doc-menu/controller.ts`).
+ */
+const API_PREFIX = '/api/'
+
 export function isPublicLinkPath(pathname: string): boolean {
   return pathname.startsWith(PUBLIC_LINK_PREFIX)
 }
@@ -29,10 +36,15 @@ export function withoutLinkKey(pathname: string): string {
   return `${PUBLIC_LINK_PREFIX}…${slash === -1 ? '' : rest.slice(slash)}`
 }
 
-/** Runs `middleware` for every request except those to a shared link. */
-export function skipForPublicLinks<T extends Middleware<any>>(middleware: T): T {
+/** A shared link's page or the API: answered without a session, a sign-in or CSRF. */
+export function isSessionlessPath(pathname: string): boolean {
+  return isPublicLinkPath(pathname) || pathname.startsWith(API_PREFIX)
+}
+
+/** Runs `middleware` for every request except those to a shared link or the API. */
+export function skipWithoutSession<T extends Middleware<any>>(middleware: T): T {
   let skipping: Middleware<any> = (context, next) =>
-    isPublicLinkPath(context.url.pathname) ? next() : middleware(context, next)
+    isSessionlessPath(context.url.pathname) ? next() : middleware(context, next)
   return skipping as T
 }
 

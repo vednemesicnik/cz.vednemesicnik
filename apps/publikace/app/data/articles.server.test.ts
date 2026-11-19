@@ -206,4 +206,68 @@ describe('the article store', () => {
       await app.close()
     }
   })
+
+  it('records proofreading once, finds the article by its Doc, and keeps the first record', async () => {
+    let app = await createTestApp()
+    try {
+      let { articles, issueId, link } = await setup(app)
+      let { attempt } = await articles.startAttempt({
+        at: AT,
+        authors: [TEREZA],
+        formKey: 'k',
+        issueId,
+        linkId: link.id,
+        name: 'Článek',
+      })
+      assert.equal(
+        await articles.markProofread(
+          attempt.id,
+          { email: 'jakub@vednemesicnik.test', name: null },
+          AT,
+        ),
+        false,
+      )
+      await articles.setDriveId(attempt.id, 'folder', 'f-a')
+      await articles.setDriveId(attempt.id, 'artworks-folder', 'f-a-artworks')
+      await articles.setDriveId(attempt.id, 'licences-folder', 'f-a-licences')
+      await articles.setDriveId(attempt.id, 'doc', 'd-a')
+      await articles.setDriveId(attempt.id, 'meta', 'm-a')
+      await articles.commit(attempt.id, AT)
+      assert.equal((await articles.findCreatedByDocId('d-a'))?.proofreading, null)
+
+      let later = AT.add({ hours: 1 })
+      let jakub = { email: 'jakub.novak@vednemesicnik.test', name: 'Jakub Novák' }
+      assert.equal(await articles.markProofread(attempt.id, jakub, AT), true)
+      assert.equal(
+        await articles.markProofread(
+          attempt.id,
+          { email: 'eva@vednemesicnik.test', name: null },
+          later,
+        ),
+        false,
+      )
+
+      let article = await articles.findCreatedByDocId('d-a')
+      assert.deepEqual(article?.proofreading, { at: AT, ...jakub })
+      assert.equal(await articles.findCreatedByDocId('d-unknown'), null)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses a proofreading time without the address that marked it', async () => {
+    let app = await createTestApp()
+    try {
+      let { issueId, link } = await setup(app)
+      await assert.rejects(() =>
+        app.database.exec(
+          sql`INSERT INTO articles (issue_id, link_id, form_key, name, started_at, proofread_at)
+              VALUES (${issueId}, ${link.id}, 'k', 'Článek', '2026-11-18T09:00:00.000Z',
+                      '2026-11-18T09:00:00.000Z')`,
+        ),
+      )
+    } finally {
+      await app.close()
+    }
+  })
 })

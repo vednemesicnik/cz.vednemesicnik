@@ -41,8 +41,12 @@ export type ArticleRow = {
   metaFileId: string | null
   missing: MissingFolders
   name: string
+  proofreading: Proofreading | null
   startedAt: Temporal.Instant
 }
+
+/** Who marked the article as in proofreading in its Doc, and when (`01a`). Set once, for good. */
+export type Proofreading = { at: Temporal.Instant; email: string; name: string | null }
 
 /** A committed article: its files exist. */
 export type Article = ArticleRow & { createdAt: Temporal.Instant; docId: string; folderId: string }
@@ -67,6 +71,8 @@ export type ArticleStore = {
   discard(id: number): Promise<void>
   findByFormKey(formKey: string): Promise<ArticleRow | null>
   findById(id: number): Promise<ArticleRow | null>
+  /** The created article whose Doc this is, for the Doc's menu. */
+  findCreatedByDocId(docId: string): Promise<Article | null>
   /** The issue's created articles, newest first. */
   listCreated(issueId: number): Promise<Article[]>
   /** The folders the app reached again: their records go. */
@@ -75,6 +81,15 @@ export type ArticleStore = {
   markForCleanup(id: number, at: Temporal.Instant): Promise<void>
   /** The folders the app found missing; one already recorded keeps the time it was found. */
   markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
+  /**
+   * Records proofreading while nothing is recorded yet. `false` when the article had it already:
+   * a second click, or two proofreaders at once, writes nothing.
+   */
+  markProofread(
+    id: number,
+    by: { email: string; name: string | null },
+    at: Temporal.Instant,
+  ): Promise<boolean>
   markWelcome(
     articleId: number,
     position: number,
@@ -134,8 +149,16 @@ function toRow(row: Row, authors: ArticleAuthor[]): ArticleRow {
       licences: parseStamp(row['licences_folder_missing_at']),
     },
     name: String(row['name']),
+    proofreading: toProofreading(row),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
   }
+}
+
+function toProofreading(row: Row): Proofreading | null {
+  let at = parseStamp(row['proofread_at'])
+  let email = text(row['proofread_by_email'])
+  if (at === null || email === null) return null
+  return { at, email, name: text(row['proofread_by_name']) }
 }
 
 function asArticle(row: ArticleRow): Article {
@@ -241,6 +264,14 @@ export function createArticleStore(database: Database): ArticleStore {
       return byId(database, id)
     },
 
+    async findCreatedByDocId(docId) {
+      let result = await database.exec(
+        sql`SELECT * FROM articles WHERE doc_id = ${docId} AND created_at IS NOT NULL`,
+      )
+      let [row] = await withAuthors(database, result.rows ?? [])
+      return row === undefined ? null : asArticle(row)
+    },
+
     async listCreated(issueId) {
       let result = await database.exec(
         sql`SELECT * FROM articles WHERE issue_id = ${issueId} AND created_at IS NOT NULL
@@ -277,6 +308,16 @@ export function createArticleStore(database: Database): ArticleStore {
               WHERE id = ${id}`,
         )
       }
+    },
+
+    async markProofread(id, by, at) {
+      let result = await database.exec(
+        sql`UPDATE articles
+            SET proofread_at = ${stamp(at)}, proofread_by_email = ${by.email},
+                proofread_by_name = ${by.name}
+            WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL`,
+      )
+      return (result.affectedRows ?? 0) > 0
     },
 
     async markWelcome(articleId, position, outcome, at) {

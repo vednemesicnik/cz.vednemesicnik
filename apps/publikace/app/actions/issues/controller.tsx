@@ -16,7 +16,7 @@ import {
   parseIssueFilter,
   suggestNextName,
 } from '../../domain/issue.ts'
-import { authorsLine, documentUrl } from '../../domain/article.ts'
+import { articleStateTag, authorsLine, documentUrl } from '../../domain/article.ts'
 import {
   articleArtworksLine,
   type ArtworkFilter,
@@ -58,7 +58,7 @@ import {
   shownUrl,
   usageLine,
 } from '../../domain/link.ts'
-import { formatDayMonth, now } from '../../domain/time.ts'
+import { now } from '../../domain/time.ts'
 import type { Article, ArticleRow } from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
@@ -210,11 +210,11 @@ async function linkAndArticles(
       artworksUrl:
         artworksLink === undefined ? null : absoluteUrl(origin, artworksLinkPath(artworksLink.key)),
       authors: authorsLine(article.authors),
-      createdLine: `založen ${formatDayMonth(article.createdAt)}`,
       documentUrl: documentUrl(article.docId),
       id: article.id,
       missing: missingView(issue, article, batches),
       name: article.name,
+      state: articleStateTag(article),
     }
   })
   /* An article with something waiting, among its artworks or a missing folder, stands with what

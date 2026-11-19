@@ -109,11 +109,12 @@ export type ArticleRowView = {
   /** The article's link for artworks, for the `⋯` copy item; `null` once it is revoked. */
   artworksUrl: string | null
   authors: string
-  createdLine: string
   documentUrl: string
   id: number
   missing: MissingFoldersView | null
   name: string
+  /** The article's one tag and the fact under it (`01a`). */
+  state: { detail: string; label: string; tone: StatusTone }
 }
 
 /**
@@ -440,8 +441,8 @@ function ArticleRow(handle: Handle<{ article: ArticleRowView; isLast: boolean }>
             title={article.name}
           />
           <span role="cell">
-            <StatusTag detail={article.createdLine} tone="neutral">
-              Píše se
+            <StatusTag detail={article.state.detail} tone={article.state.tone}>
+              {article.state.label}
             </StatusTag>
           </span>
           {article.artworks.count === 0 ? (

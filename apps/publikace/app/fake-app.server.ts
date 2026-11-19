@@ -8,7 +8,13 @@ import { createLinkStore } from './data/links.server.ts'
 import { now } from './domain/time.ts'
 import { FAKE_STEPS, type FakeStep } from './drive/fake-drive.server.ts'
 import { routes } from './routes.ts'
-import { connectDriveAccount, createTestApp, seedAdmin, type TestApp } from './test-app.server.ts'
+import {
+  connectDriveAccount,
+  createTestApp,
+  fakeIdentityToken,
+  seedAdmin,
+  type TestApp,
+} from './test-app.server.ts'
 
 /*
  * The app on the fake Drive, the fake Mailer and a `:memory:` database, for trying the pages in a
@@ -22,6 +28,7 @@ import { connectDriveAccount, createTestApp, seedAdmin, type TestApp } from './t
 
 const MARIE = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
 const TEREZA = { email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }
+const JAKUB = { email: 'jakub.novak@vednemesicnik.test', name: 'Jakub Novák' }
 const ISSUE_NAME = 'VDM_2026_6'
 const ARTICLE_NAME = 'Školní jídelna po roce'
 
@@ -189,6 +196,13 @@ export async function createFakeApp(): Promise<FakeApp> {
         <td>${path === null ? '—' : html`<a href="${path}">${path}</a>`}</td>
         ${folderCell('Obrazová díla', each.artworksFolderId)}
         ${folderCell('Licence', each.licencesFolderId)}
+        <td>
+          ${
+            each.proofreading === null
+              ? button('/proofread', `Mark proofreading as ${JAKUB.name}`, { id: each.docId })
+              : `Proofreading by ${each.proofreading.name ?? each.proofreading.email}`
+          }
+        </td>
       </tr>`
     })
     let mailRows = app.mail.map(
@@ -322,6 +336,24 @@ export async function createFakeApp(): Promise<FakeApp> {
         app.failMail(false)
         isMailFailing = false
         return backToControls()
+      case '/proofread': {
+        /* The click in the Doc's menu, as the bound script sends it: the Doc made editable for
+           anyone with its link, so the Drive check lets the fake proofreader through. */
+        if (typeof fileId !== 'string') return new Response('No file', { status: 400 })
+        app.drive.share(fileId, { role: 'writer', type: 'anyone' })
+        let answer = await app.fetch(
+          new Request(new URL(routes.api.docMenu.markProofreading.href(), origin), {
+            body: JSON.stringify({ documentId: fileId, metaDocumentId: fileId }),
+            headers: {
+              Authorization: `Bearer ${fakeIdentityToken(JAKUB)}`,
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+          }),
+        )
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
+        return backToControls()
+      }
       case '/link/renew':
         await links.renew(issueId, now())
         return backToControls()

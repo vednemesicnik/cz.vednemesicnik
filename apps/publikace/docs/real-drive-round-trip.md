@@ -187,6 +187,58 @@ In order: each check uses what the one before it made.
     - Restore it, then _Zkontrolovat znovu_: _Složka je zpátky na sdíleném disku Publikace._, and
       the Callout is gone. Nothing was created on Drive in between.
 
+## The article Doc's menu
+
+_Označit probíhající korekturu_ in a Doc of an app issue calls the app's API
+(`/api/v1/doc-menu/proofreading`) with the clicker's Google identity token, and the app asks
+Drive whether that account may edit the Doc (#50). The suite can only assume how Google issues
+the token and how Drive lists who may edit, so both are checked here.
+
+**First, without the app.** As `publikace.app@`, make two copies of the app's template with
+_Vytvořit kopii_, as the app copies it for every article. In each copy's bound script (_Rozšíření
+› Apps Script_):
+
+- [ ] set `oauthScopes` in `appsscript.json` to `openid`,
+      `https://www.googleapis.com/auth/userinfo.email`, `profile` and the scopes the script uses
+      already, then run a throwaway function that logs the decoded payload of
+      `ScriptApp.getIdentityToken()`;
+- [ ] compare `aud` between the two copies. The same value in both, and in every later copy, goes
+      into `DOC_MENU_TOKEN_AUDIENCES`. Different values make it `*`, the weaker choice: the Drive
+      check asks about the account, not the token, so an editor's identity token that another
+      Google client received could be replayed until it expires, about an hour. Production does
+      not start without one of the two;
+- [ ] note whether `name` is in the payload with `profile`. Without it the app records and shows
+      the address (`12a`, `12p`);
+- [ ] open a `showModalDialog` whose button calls `google.script.run`, in a browser where two Google
+      accounts are signed in, and note whether the call fails. That is the case the script's own
+      dialog _Zkuste to za chvíli znovu_ covers.
+
+**Who may edit an article's Doc.** Nothing in the app shares a Doc with its authors, so:
+
+- [ ] list the permissions of an article's Doc as `publikace.app@` (`permissions.list` with
+      `supportsAllDrives`), and write down how an author and a proofreader get the right to edit:
+      a grant to them, a group, the domain, anyone with the link, or the shared drive's members;
+- [ ] when it is a group, check that the group is in the membership service's `allowedGroups`:
+      a group the service does not know leaves the app's answer a "don't know", and the menu
+      shows its own dialog instead of recording.
+
+**Then end to end.** Apps Script has to reach the app, so it runs behind a tunnel to
+`http://localhost:44100` until the app is on Fly.io, with the script's `CONFIG.appOrigin` set to
+the tunnel's address in the test copy only:
+
+1. Create an article through the app and open its Doc as an account that may edit it.
+   _Publikace › Označit probíhající korekturu_ asks _Označit probíhající korekturu?_ with the
+   article, _VDM_… · Ke korektuře zatím nepředáno_ and _Účet pro korekturu: ‹jméno›_. _Zrušit_
+   records nothing.
+2. _Označit_ answers _Korektura označena_, and the issue's page shows _Korektura_ with _od ‹dnes›
+   · ‹jméno›_.
+3. A second click answers _Korektura už je označená_ with the same name and time.
+4. _Soubor › Vytvořit kopii_ in the same folder, then the menu in the copy: _Toto je kopie
+   dokumentu článku_, and _Otevřít původní_ opens the article's Doc.
+5. An account that may only comment answers _Publikace váš účet nepřijala_, with nothing about
+   the article.
+6. With the app stopped, the menu shows _Zkuste to za chvíli znovu_.
+
 ## After the run
 
 - [ ] remove `publikace.app@` from the test shared drive: _Publikace_ is the only shared drive

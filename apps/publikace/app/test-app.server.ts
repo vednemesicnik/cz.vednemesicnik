@@ -18,8 +18,34 @@ import { ARTWORKS_FOLDER_NAME, LICENCES_FOLDER_NAME } from './domain/article-fol
 import type { Link } from './domain/link.ts'
 import { now } from './domain/time.ts'
 import { createFakeDrive, type FakeDrive } from './drive/fake-drive.server.ts'
+import type { IdentityTokenVerifier, VerifiedIdentity } from './auth/identity-token.server.ts'
 import type { MailMessage } from './mail/mailer.server.ts'
 import { createAppRouter } from './router.ts'
+
+const FAKE_IDENTITY_PREFIX = 'fake-identity.'
+
+/** The token the fake verifier answers with Google's keys out of reach. */
+export const UNREACHABLE_IDENTITY_TOKEN = 'fake-identity-unreachable'
+
+/**
+ * A token the suite's verifier vouches for, as Google's would be for the account that clicked in
+ * the article Doc's menu. Any other string is refused.
+ */
+export function fakeIdentityToken(
+  identity: Omit<VerifiedIdentity, 'hostedDomain'> & { hostedDomain?: string | null },
+): string {
+  let full: VerifiedIdentity = { hostedDomain: null, ...identity }
+  return `${FAKE_IDENTITY_PREFIX}${Buffer.from(JSON.stringify(full)).toString('base64url')}`
+}
+
+const fakeIdentityVerifier: IdentityTokenVerifier = async (token) => {
+  if (token === UNREACHABLE_IDENTITY_TOKEN) return { status: 'unavailable' }
+  if (!token.startsWith(FAKE_IDENTITY_PREFIX)) return { status: 'refused' }
+  let identity = JSON.parse(
+    Buffer.from(token.slice(FAKE_IDENTITY_PREFIX.length), 'base64url').toString('utf8'),
+  ) as VerifiedIdentity
+  return { identity, status: 'verified' }
+}
 
 /** The domain every test runs on, fictional like everything else in the suite. */
 export const TEST_DOMAIN = 'vednemesicnik.test'
@@ -106,6 +132,7 @@ export async function createTestApp(): Promise<TestApp> {
       return isMailFailing ? { error: 'the fake Mailer is failing', ok: false } : { ok: true }
     },
     templateId: TEST_TEMPLATE,
+    verifyIdentityToken: fakeIdentityVerifier,
   })
   let storage = createSqliteSessionStorage(opened.database)
   let sessionCookie = createSessionCookie()
@@ -263,6 +290,7 @@ export async function seedArticle(
 ): Promise<{
   articleId: number
   artworksFolderId: string
+  docId: string
   folderId: string
   licencesFolderId: string
   link: Link
@@ -289,10 +317,12 @@ export async function seedArticle(
   app.drive.seedFolder(licencesFolderId, LICENCES_FOLDER_NAME, folderId)
   await articles.setDriveId(attempt.id, 'artworks-folder', artworksFolderId)
   await articles.setDriveId(attempt.id, 'licences-folder', licencesFolderId)
-  await articles.setDriveId(attempt.id, 'doc', `d-article-${attempt.id}`)
+  let docId = `d-article-${attempt.id}`
+  app.drive.seedDoc(docId, name, folderId)
+  await articles.setDriveId(attempt.id, 'doc', docId)
   await articles.setDriveId(attempt.id, 'meta', `m-article-${attempt.id}`)
   await articles.commit(attempt.id, SEEDED_AT)
   let link = (await links.artworksLinksOf(issueId)).get(attempt.id)
   if (link === undefined) throw new Error('The article has no link for artworks.')
-  return { articleId: attempt.id, artworksFolderId, folderId, licencesFolderId, link }
+  return { articleId: attempt.id, artworksFolderId, docId, folderId, licencesFolderId, link }
 }

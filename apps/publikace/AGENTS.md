@@ -207,11 +207,14 @@ so a run that dies between sending an e-mail and reporting it does not send it t
 Moving a script to `publikace.app@` means running its `setupTriggers()` as `publikace.app@` and
 deleting the old trigger under `publikace@` the same day; two live copies send every e-mail twice.
 
-**A shared link's pages run without the session, the sign-in and CSRF.** `/l/{key}/…` sets no
-cookie (`02a`), so `skipForPublicLinks()` in `app/router.ts` takes those middlewares out for it,
-and the session-backed CSRF token with them. What protects the form is the key in the address,
-the form's one-time key and the limit of thirty articles an hour; a page under `/l/` that needs a
-session is a sign that it belongs behind `requireEditor()` instead.
+**A shared link's pages and the API run without the session, the sign-in and CSRF.** `/l/{key}/…`
+sets no cookie (`02a`) and a bound script sends none to `/api/…`, so `skipWithoutSession()` in
+`app/router.ts` takes those middlewares out for both, and the session-backed CSRF token with them.
+What protects a link's form is the key in the address, the form's one-time key and the limit of
+thirty articles an hour. What protects the Doc menu's API is the clicker's Google identity token
+and Drive's answer that the account may edit the Doc, asked before anything is recorded. A page
+under `/l/` or `/api/` that needs a session is a sign that it belongs behind `requireEditor()`
+instead.
 
 **`css()` loses to a `vdm-*` class on the same element.** The mixes sit in the cascade layer
 `rmx`, and the design system's classes are unlayered, so on one element the class wins whatever

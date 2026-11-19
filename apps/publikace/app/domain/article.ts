@@ -5,6 +5,7 @@
  */
 
 import type { Author } from './public/article-form.ts'
+import { formatDayMonth } from './time.ts'
 
 export {
   REQUIRED_LEGEND,
@@ -118,6 +119,46 @@ export function coauthorLine(coauthors: readonly string[]): string | null {
   if (coauthors.length === 0) return null
   let verb = coauthors.length === 1 ? 'podílí' : 'podílejí'
   return `Na článku se také ${verb} ${joinNames(coauthors)}.`
+}
+
+/**
+ * Where an article is, as far as the app records it (`01a`). _Korektura_ wins once somebody marked
+ * it in the Doc; nothing records a step back (`01d`).
+ */
+export type ArticleState = 'proofreading' | 'writing'
+
+export type ArticleProgress = {
+  createdAt: Temporal.Instant
+  proofreading: { at: Temporal.Instant; email: string; name: string | null } | null
+}
+
+export function articleState(article: Pick<ArticleProgress, 'proofreading'>): ArticleState {
+  return article.proofreading === null ? 'writing' : 'proofreading'
+}
+
+/** The tones of `01a` this state can take: grey nobody waits, blue in progress. */
+export type ArticleStateTone = 'neutral' | 'running'
+
+/** The article's tag in the detail (`12a`) and the one fact under it (`01a`). */
+export function articleStateTag(article: ArticleProgress): {
+  detail: string
+  label: string
+  tone: ArticleStateTone
+} {
+  if (article.proofreading === null) {
+    return {
+      detail: `založen ${formatDayMonth(article.createdAt)}`,
+      label: 'Píše se',
+      tone: 'neutral',
+    }
+  }
+  /* The address where Google gave no name: the app knows nothing else of the person. */
+  let who = article.proofreading.name ?? article.proofreading.email
+  return {
+    detail: `od ${formatDayMonth(article.proofreading.at)} · ${who}`,
+    label: 'Korektura',
+    tone: 'running',
+  }
 }
 
 /** The line under an article's name in the detail (`12a`): its authors. */
