@@ -57,6 +57,14 @@ export function parseIssueFilter(value: string | null): IssueFilter {
   return value === 'open' || value === 'closed' ? value : 'all'
 }
 
+/**
+ * The filter as the query of an address that leads back to the overview: nothing for `all`,
+ * the default filter (`11a`), so the address of an unfiltered overview stays `/`.
+ */
+export function issueFilterSearch(filter: IssueFilter): string {
+  return filter === 'all' ? '' : `?state=${filter}`
+}
+
 export function isInFilter(state: IssueState, filter: IssueFilter): boolean {
   if (filter === 'all') return true
   return filter === 'closed' ? state === 'closed' : state !== 'closed'

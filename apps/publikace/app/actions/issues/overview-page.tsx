@@ -13,6 +13,7 @@ import {
   type Issue,
   type IssueFilter,
   isInFilter,
+  issueFilterSearch,
   issueState,
   NAME_HINT,
   NEW_ISSUE_TEXT,
@@ -144,10 +145,16 @@ const waitingCountStyle = css({ color: 'var(--state-attention-text)', fontWeight
 
 /** One row of `11a`; the unfinished one carries _Dokončit vydání_ where the counts would be. */
 function IssueRow(
-  handle: Handle<{ articles: number; artworks: ArtworkTotals; isLast: boolean; issue: Issue }>,
+  handle: Handle<{
+    articles: number
+    artworks: ArtworkTotals
+    filter: IssueFilter
+    isLast: boolean
+    issue: Issue
+  }>,
 ) {
   return () => {
-    let { articles, artworks, isLast, issue } = handle.props
+    let { articles, artworks, filter, isLast, issue } = handle.props
     let state = issueState(issue)
 
     return (
@@ -158,7 +165,7 @@ function IssueRow(
         </span>
         {state === 'unfinished' ? (
           <span aria-colspan={3} mix={spanCountsStyle} role="cell">
-            <FinishIssueForm issue={issue} placement="row" returnTo="overview" />
+            <FinishIssueForm filter={filter} issue={issue} placement="row" returnTo="overview" />
           </span>
         ) : (
           <>
@@ -188,9 +195,11 @@ function IssueRow(
   }
 }
 
-function PhoneRow(handle: Handle<{ articles: number; artworks: ArtworkTotals; issue: Issue }>) {
+function PhoneRow(
+  handle: Handle<{ articles: number; artworks: ArtworkTotals; filter: IssueFilter; issue: Issue }>,
+) {
   return () => {
-    let { articles, artworks, issue } = handle.props
+    let { articles, artworks, filter, issue } = handle.props
     let state = issueState(issue)
 
     return (
@@ -204,7 +213,7 @@ function PhoneRow(handle: Handle<{ articles: number; artworks: ArtworkTotals; is
         <span mix={phoneLineStyle}>{phoneRowLine(issue, articles, artworks.total)}</span>
         {state === 'unfinished' ? (
           <div mix={phoneActionStyle}>
-            <FinishIssueForm issue={issue} placement="row" returnTo="overview" />
+            <FinishIssueForm filter={filter} issue={issue} placement="row" returnTo="overview" />
           </div>
         ) : null}
       </div>
@@ -267,6 +276,7 @@ function IssueList(
                   <IssueRow
                     articles={articleCounts.get(issue.id) ?? 0}
                     artworks={artworkCounts.get(issue.id) ?? NO_ARTWORK_TOTALS}
+                    filter={filter}
                     isLast={index === shown.length - 1}
                     issue={issue}
                   />
@@ -278,6 +288,7 @@ function IssueList(
                 <PhoneRow
                   articles={articleCounts.get(issue.id) ?? 0}
                   artworks={artworkCounts.get(issue.id) ?? NO_ARTWORK_TOTALS}
+                  filter={filter}
                   issue={issue}
                 />
               ))}
@@ -330,10 +341,15 @@ function DialogCallout(
 
 /** `11d`, at `/issues/new` over the overview. */
 function NewIssueDialogView(
-  handle: Handle<{ dialog: NewIssueDialog; driveAccount: OverviewPageProps['driveAccount'] }>,
+  handle: Handle<{
+    dialog: NewIssueDialog
+    driveAccount: OverviewPageProps['driveAccount']
+    filter: IssueFilter
+  }>,
 ) {
   return () => {
-    let { dialog, driveAccount } = handle.props
+    let { dialog, driveAccount, filter } = handle.props
+    let search = issueFilterSearch(filter)
 
     if (dialog.kind === 'unfinished') {
       return (
@@ -347,7 +363,12 @@ function NewIssueDialogView(
               <p style={{ margin: 0 }}>{unfinishedText(missingFolders(dialog.issue))}</p>
             </Callout>
           </div>
-          <FinishIssueForm issue={dialog.issue} placement="dialog" returnTo="detail" />
+          <FinishIssueForm
+            filter={filter}
+            issue={dialog.issue}
+            placement="dialog"
+            returnTo="detail"
+          />
         </Dialog>
       )
     }
@@ -356,7 +377,12 @@ function NewIssueDialogView(
     return (
       <Dialog maxWidth="460px">
         <DialogTitle>Nové vydání</DialogTitle>
-        <form action={routes.issues.create.href()} method="post" mix={dialogFormStyle} noValidate>
+        <form
+          action={`${routes.issues.create.href()}${search}`}
+          method="post"
+          mix={dialogFormStyle}
+          noValidate
+        >
           <CsrfField />
           <div class="vdm-dialog__body">
             <DialogCallout
@@ -376,7 +402,7 @@ function NewIssueDialogView(
           </div>
           <div class="vdm-dialog__actions">
             <PendingActions
-              cancel={{ href: routes.home.href(), label: 'Zrušit' }}
+              cancel={{ href: `${routes.home.href()}${search}`, label: 'Zrušit' }}
               emphasis="primary"
               label="Vytvořit vydání"
               pendingLabel="Vydání se vytváří…"
@@ -397,6 +423,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
   return () => {
     let { articleCounts, artworkCounts, dialog, driveAccount, filter, issues, person, toasts } =
       handle.props
+    let newIssueHref = `${routes.issues.new.href()}${issueFilterSearch(filter)}`
 
     return (
       <Document title="Vydání">
@@ -411,7 +438,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
           <ListHeader>
             <ListHeaderTitle>Vydání</ListHeaderTitle>
             <ListHeaderAction>
-              <a class="vdm-btn vdm-btn--primary" href={routes.issues.new.href()}>
+              <a class="vdm-btn vdm-btn--primary" href={newIssueHref}>
                 Nové vydání
               </a>
             </ListHeaderAction>
@@ -420,7 +447,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
             <EmptyState>
               <EmptyStateTitle>{EMPTY_TITLE}</EmptyStateTitle>
               <EmptyStateText>{EMPTY_TEXT}</EmptyStateText>
-              <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={routes.issues.new.href()}>
+              <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={newIssueHref}>
                 Nové vydání
               </a>
             </EmptyState>
@@ -434,7 +461,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
           )}
         </Layout>
         {dialog === undefined ? null : (
-          <NewIssueDialogView dialog={dialog} driveAccount={driveAccount} />
+          <NewIssueDialogView dialog={dialog} driveAccount={driveAccount} filter={filter} />
         )}
       </Document>
     )

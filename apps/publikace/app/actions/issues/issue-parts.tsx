@@ -1,6 +1,12 @@
 import type { Handle } from 'remix/component'
 
-import { type Issue, type IssueState, STATE_LABELS } from '../../domain/issue.ts'
+import {
+  type Issue,
+  type IssueFilter,
+  issueFilterSearch,
+  type IssueState,
+  STATE_LABELS,
+} from '../../domain/issue.ts'
 import { routes } from '../../routes.ts'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
@@ -36,13 +42,19 @@ const PLACEMENT_CLASSES: Record<FinishPlacement, string | undefined> = {
 /**
  * _Dokončit vydání_ as a form of its own, wherever it stands. It acts at once, without a
  * question, because it takes nothing and creates nothing twice (`11d`, `12i`). `returnTo` says
- * which page the answer goes back to.
+ * which page the answer goes back to, and `filter` is the overview's, which an answer back to
+ * the overview and _Zavřít_ in the dialog keep (`11a`); the detail has none to keep.
  */
 export function FinishIssueForm(
-  handle: Handle<{ issue: Issue; placement: FinishPlacement; returnTo: ReturnTo }>,
+  handle: Handle<{
+    filter?: IssueFilter
+    issue: Issue
+    placement: FinishPlacement
+    returnTo: ReturnTo
+  }>,
 ) {
   return () => {
-    let { issue, placement, returnTo } = handle.props
+    let { filter = 'all', issue, placement, returnTo } = handle.props
     let isDialog = placement === 'dialog'
 
     return (
@@ -53,8 +65,15 @@ export function FinishIssueForm(
       >
         <CsrfField />
         <input name="returnTo" type="hidden" value={returnTo} />
+        {returnTo === 'overview' && filter !== 'all' ? (
+          <input name="state" type="hidden" value={filter} />
+        ) : null}
         <PendingActions
-          cancel={isDialog ? { href: routes.home.href(), label: 'Zavřít' } : undefined}
+          cancel={
+            isDialog
+              ? { href: `${routes.home.href()}${issueFilterSearch(filter)}`, label: 'Zavřít' }
+              : undefined
+          }
           emphasis={isDialog ? 'primary' : 'outline'}
           label="Dokončit vydání"
           pendingLabel="Vydání se dokončuje…"

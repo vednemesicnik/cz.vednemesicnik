@@ -42,8 +42,20 @@ function alertText(html: string): string {
   return textOf(inside).trim()
 }
 
-function create(browser: TestBrowser, name: string): Promise<Response> {
-  return browser.post('/issues/new', { name }, '/issues/new')
+function create(browser: TestBrowser, name: string, search = ''): Promise<Response> {
+  return browser.post(`/issues/new${search}`, { name }, `/issues/new${search}`)
+}
+
+/** Where every link with these words leads, in the order of the page. */
+function hrefsOf(html: string, label: string): string[] {
+  let links = html.matchAll(/<a [^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/g)
+  return [...links].filter((link) => link[2]?.trim() === label).map((link) => link[1] ?? '')
+}
+
+/** The words of the filter item the page marks current. */
+function activeFilter(html: string): string {
+  let item = /<a [^>]*aria-current="true"[^>]*class="vdm-statefilter__item[^>]*>([^<]*)</.exec(html)
+  return item?.[1]?.trim() ?? ''
 }
 
 describe('home, the shell', () => {
@@ -332,6 +344,62 @@ describe('the dialog Nové vydání (11d, 14g)', () => {
       await app.close()
     }
   })
+
+  it('keeps the filter of the overview behind it, in Zrušit and in a refusal', async () => {
+    let { app, browser } = await newsroom()
+    try {
+      await create(browser, `VDM_${YEAR}_5`)
+      assert.deepEqual(hrefsOf(await (await browser.get('/?state=open')).text(), 'Nové vydání'), [
+        '/issues/new?state=open',
+      ])
+
+      let opened = await (await browser.get('/issues/new?state=open')).text()
+      assert.equal(activeFilter(opened), 'Neuzavřené')
+      assert.deepEqual(hrefsOf(opened, 'Zrušit'), ['/?state=open'])
+      assert.ok(opened.includes('action="/issues/new?state=open"'))
+
+      let refused = await create(browser, '   ', '?state=closed')
+      let html = await refused.text()
+      assert.equal(refused.status, 400)
+      assert.equal(activeFilter(html), 'Uzavřené')
+      assert.deepEqual(hrefsOf(html, 'Zrušit'), ['/?state=closed'])
+      assert.ok(html.includes('action="/issues/new?state=closed"'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('takes an unknown filter as Vše, and writes Vše as no filter at all', async () => {
+    let { app, browser } = await newsroom()
+    try {
+      await create(browser, `VDM_${YEAR}_5`)
+      assert.deepEqual(hrefsOf(await (await browser.get('/?state=all')).text(), 'Nové vydání'), [
+        '/issues/new',
+      ])
+
+      let opened = await (await browser.get('/issues/new?state=active')).text()
+      assert.equal(activeFilter(opened), 'Vše')
+      assert.deepEqual(hrefsOf(opened, 'Zrušit'), ['/'])
+      assert.ok(opened.includes('action="/issues/new"'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps the filter in Zavřít of an issue Drive left unfinished', async () => {
+    let { app, browser } = await newsroom()
+    try {
+      app.drive.failCreate('Články')
+      let response = await create(browser, `VDM_${YEAR}_6`, '?state=open')
+      let html = await response.text()
+
+      assert.equal(response.status, 409)
+      assert.equal(activeFilter(html), 'Neuzavřené')
+      assert.deepEqual(hrefsOf(html, 'Zavřít'), ['/?state=open'])
+    } finally {
+      await app.close()
+    }
+  })
 })
 
 describe('finishing an issue (12i)', () => {
@@ -362,6 +430,29 @@ describe('finishing an issue (12i)', () => {
         app.drive.folders().filter((folder) => folder.name === '_Podklady_pro_tisk').length,
         1,
       )
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('sends the filter from the row and comes back to it, whatever the answer', async () => {
+    let { app, browser } = await unfinished()
+    try {
+      let row = await (await browser.get('/?state=open')).text()
+      assert.equal(row.match(/<input name="state" type="hidden" value="open"/g)?.length, 2)
+      assert.ok(!(await (await browser.get('/')).text()).includes('name="state"'))
+
+      let finish = (state: string) =>
+        browser.post(`/issues/VDM_${YEAR}_6/finish`, { returnTo: 'overview', state }, '/')
+
+      app.drive.goDown()
+      assert.equal((await finish('open')).headers.get('Location'), '/?state=open')
+      assert.equal((await finish('active')).headers.get('Location'), '/')
+
+      app.drive.heal()
+      let finished = await finish('closed')
+      assert.equal(finished.status, 303)
+      assert.equal(finished.headers.get('Location'), '/?state=closed')
     } finally {
       await app.close()
     }

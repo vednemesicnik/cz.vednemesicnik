@@ -10,7 +10,10 @@ import {
   duplicateNameMessage,
   FINISH_UNAVAILABLE_TOAST,
   finishedToast,
+  type IssueFilter,
+  issueFilterSearch,
   notConnectedToast,
+  parseIssueFilter,
   suggestNextName,
 } from '../../domain/issue.ts'
 import { authorsLine, documentUrl } from '../../domain/article.ts'
@@ -225,6 +228,11 @@ function filterOf(context: PageContext): ArtworkFilter {
   return artworkFilterOf(context.url.searchParams.get('artworks'))
 }
 
+/** The overview's filter, which `/issues/new` carries in its address as `/` does (`11a`). */
+function overviewFilterOf(context: PageContext): IssueFilter {
+  return parseIssueFilter(context.url.searchParams.get('state'))
+}
+
 async function renderDetail(
   context: PageContext & { auth: { identity: Editor } },
   issue: Issue,
@@ -275,7 +283,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
     actions: {
       async new(context) {
         let names = (await issuesOf(context).store.list()).map((issue) => issue.name)
-        return renderOverview(context, context.auth.identity, 'all', {
+        return renderOverview(context, context.auth.identity, overviewFilterOf(context), {
           kind: 'form',
           name: suggestNextName(names, now()),
         })
@@ -283,13 +291,14 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
 
       async create(context) {
         let editor = context.auth.identity
+        let filter = overviewFilterOf(context)
         let typed = formText(context, 'name')
         let form = (extra: Partial<Extract<NewIssueDialog, { kind: 'form' }>>) =>
           ({ kind: 'form', name: typed, ...extra }) as const
 
         let checked = checkIssueName(typed)
         if (!checked.ok) {
-          return renderOverview(context, editor, 'all', form({ fieldError: checked.message }), {
+          return renderOverview(context, editor, filter, form({ fieldError: checked.message }), {
             status: REFUSED,
           })
         }
@@ -304,7 +313,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
             return renderOverview(
               context,
               editor,
-              'all',
+              filter,
               form({ fieldError: duplicateNameMessage(outcome.existingName) }),
               { status: REFUSED },
             )
@@ -312,19 +321,19 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
             return renderOverview(
               context,
               editor,
-              'all',
+              filter,
               { issue: outcome.issue, kind: 'unfinished' },
               { status: IN_THE_WAY },
             )
           case 'unavailable':
-            return renderOverview(context, editor, 'all', form({ isDriveUnavailable: true }), {
+            return renderOverview(context, editor, filter, form({ isDriveUnavailable: true }), {
               status: IN_THE_WAY,
             })
           /* The dialog already says it from the moment it opens; the answer says it again with
              the field kept (`14g`). */
           case 'not-connected':
           case 'disconnected':
-            return renderOverview(context, editor, 'all', form({}), { status: IN_THE_WAY })
+            return renderOverview(context, editor, filter, form({}), { status: IN_THE_WAY })
         }
       },
 
@@ -450,9 +459,12 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         if (issue === null) return notFound()
 
         let isFromOverview = formText(context, 'returnTo') === 'overview'
+        let filter = parseIssueFilter(formText(context, 'state'))
         let back = () =>
           redirect(
-            isFromOverview ? routes.home.href() : routes.issues.show.href({ name: issue.name }),
+            isFromOverview
+              ? `${routes.home.href()}${issueFilterSearch(filter)}`
+              : routes.issues.show.href({ name: issue.name }),
             303,
           )
         let { expectedEmail } = context.get(DriveAccount)

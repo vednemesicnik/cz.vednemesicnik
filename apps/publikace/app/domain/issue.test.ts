@@ -6,6 +6,7 @@ import {
   EMPTY_NAME_MESSAGE,
   type Issue,
   isInFilter,
+  issueFilterSearch,
   issueNameKey,
   issueState,
   LONG_NAME_MESSAGE,
@@ -98,6 +99,12 @@ describe('the state and the filter (01c, 11a)', () => {
     assert.equal(parseIssueFilter('active'), 'all')
     assert.equal(parseIssueFilter('open'), 'open')
     assert.equal(parseIssueFilter('closed'), 'closed')
+  })
+
+  it('writes the filter into an address back to the overview, and all as nothing', () => {
+    assert.equal(issueFilterSearch('all'), '')
+    assert.equal(issueFilterSearch('open'), '?state=open')
+    assert.equal(issueFilterSearch('closed'), '?state=closed')
   })
 })
 
