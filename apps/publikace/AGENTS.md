@@ -11,7 +11,10 @@ what it does; this file is about working in it without breaking something expens
 Google sign-in and Přístup in `/settings` with the `publikace.app@` account, the issues (`/`,
 `/issues/new`, `/issues/{name}`) with their folders on Drive, and the newsroom's link, whose
 public page `/l/{key}/article` creates an article with its Doc and mails its authors. Nothing
-runs on Fly.io yet, and the background jobs still read the sheets. Beside it sits the setup shared with `cz.vednemesicnik` and
+runs on Fly.io yet, and the background jobs still read the sheets. What the app does on Drive
+and through the Mailer is tried against the real services by hand, as
+[docs/real-drive-round-trip.md](docs/real-drive-round-trip.md) lays out, before the scripts are
+switched off. Beside it sits the setup shared with `cz.vednemesicnik` and
 `cz.vednemesicnik.billing`: the workflow skills, the agent rules, the designer agent, the PR and
 issue templates, CI and the hooks.
 
@@ -90,6 +93,10 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   `publikace.app@vednemesicnik.cz` runs everything else and is a Content manager of the shared
   drive _Publikace_, where every new issue lives, and a member of no other shared drive, because
   it holds the full `drive` scope. Files on a shared drive belong to the drive, not to an account.
+  The article template is the one exception and lives in `publikace.app@`'s own _Můj disk →
+  Šablony_: on the shared drive every member who writes could change or bin it and its bound
+  script, while there only that account edits it and the app copies it as its owner. The
+  scripts' template stays in `publikace@`'s drive until the switch.
 - **Two kinds of visitor.** Editors-in-chief sign in with Google, for seven days from the sign-in:
   an account on the domain `AUTHORIZED_DOMAIN` names, listed by name in Settings or a member of
   a Google group listed there. A group is shown by its address, because the service never names
