@@ -311,7 +311,10 @@ export const FILE_NAME_HEADER = 'X-File-Name'
 export const ARTWORKS_DISCONNECTED_WARNING =
   'Zkuste díla nahrát později, nebo dejte vědět šéfredakci.'
 export const ARTWORKS_FOLDER_GONE_WARNING =
-  'Z tohoto odkazu teď nejde odeslat díla. Šéfredakce vidí problém v aplikaci.'
+  'Zkuste to později. Z tohoto odkazu teď nejde díla nahrát ani odeslat.'
+/** The card of a file chosen while a folder is missing: the server refused it (`21a`). */
+export const UPLOAD_FOLDER_GONE_TEXT =
+  'Zkuste to později. Soubor se nenahrál a díla teď nejde odeslat.'
 
 /* The design system's `UploadStatus`, in its own words (`bxy8xxqs`). */
 export const UPLOADING_LABEL = 'Nahrává se'

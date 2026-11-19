@@ -115,6 +115,21 @@ export function createFakeDrive(): FakeDrive {
     return stored
   }
 
+  /**
+   * In the bin itself or under a folder that is, as Drive answers `trashed` for both and
+   * `explicitlyTrashed` only for the one somebody put there.
+   */
+  function isBinned(file: FakeFile): boolean {
+    let seen = new Set<string>()
+    let current: FakeFile | undefined = file
+    while (current !== undefined && !seen.has(current.id)) {
+      if (current.isTrashed) return true
+      seen.add(current.id)
+      current = files.get(current.parentId)
+    }
+    return false
+  }
+
   /** The answer for a call that did its work: lost on purpose, or the file's ID. */
   function done(step: FakeStep, id: string): Response {
     if (losingSteps.has(step)) {
@@ -284,7 +299,7 @@ export function createFakeDrive(): FakeDrive {
           (file) => file.parentId === parent && file.appProperties[key] === value,
         )
         return Response.json({
-          files: found.map((file) => ({ id: file.id, trashed: file.isTrashed })),
+          files: found.map((file) => ({ id: file.id, trashed: isBinned(file) })),
         })
       }
       let name = /name = '((?:[^'\\]|\\.)*)'/.exec(query)?.[1]?.replace(/\\(.)/g, '$1')
@@ -293,7 +308,7 @@ export function createFakeDrive(): FakeDrive {
           file.mimeType === FOLDER_TYPE &&
           file.parentId === parent &&
           file.name === name &&
-          !file.isTrashed,
+          !isBinned(file),
       )
       return Response.json({ files: found.map((file) => ({ id: file.id })) })
     }
@@ -301,7 +316,7 @@ export function createFakeDrive(): FakeDrive {
     let exported = /^\/drive\/v3\/files\/([^/]+)\/export$/.exec(url.pathname)
     if (method === 'GET' && exported !== null) {
       let doc = files.get(decodeURIComponent(exported[1] ?? ''))
-      if (doc === undefined || doc.isTrashed) return failure('File not found', 404)
+      if (doc === undefined || isBinned(doc)) return failure('File not found', 404)
       if (url.searchParams.get('mimeType') !== 'application/pdf') return failure('bad export', 400)
       if (failingSteps.has('export')) return failure('down')
       return new Response(fakePdfOf(doc.id, doc.content ?? ''), {
@@ -330,7 +345,8 @@ export function createFakeDrive(): FakeDrive {
         id: file.id,
         parents: [file.parentId],
         thumbnailLink: isImage ? `https://${THUMBNAIL_HOST}/thumb/${file.id}=s220` : undefined,
-        trashed: file.isTrashed,
+        explicitlyTrashed: file.isTrashed,
+        trashed: isBinned(file),
       })
     }
 

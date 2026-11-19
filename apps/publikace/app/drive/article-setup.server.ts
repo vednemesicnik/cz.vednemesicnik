@@ -10,6 +10,7 @@ import {
   META_FILE_NAME,
   SUBMISSIONS_PER_HOUR,
 } from '../domain/article.ts'
+import { ARTWORKS_FOLDER_NAME, LICENCES_FOLDER_NAME } from '../domain/article-folders.ts'
 import type { Issue } from '../domain/issue.ts'
 import { absoluteUrl, artworksLinkPath, linkState } from '../domain/link.ts'
 import type { Mailer } from '../mail/mailer.server.ts'
@@ -193,7 +194,10 @@ async function replayOf(
   return createdOutcome(setup, existing)
 }
 
-/** The folder, the Doc with the article's name in it, and `_meta.json`, each ID stored at once. */
+/**
+ * The folder with `Obrazová díla` and `Licence` in it, the Doc with the article's name in it, and
+ * `_meta.json`, each ID stored at once.
+ */
 async function makeFiles(
   setup: ArticleSetup,
   files: ArticleFiles,
@@ -204,6 +208,14 @@ async function makeFiles(
   let folder = await files.createFolder(articlesFolderId, attempt.name, attempt.formKey)
   if (!folder.ok) return false
   await setup.articles.setDriveId(attempt.id, 'folder', folder.id)
+
+  let artworksFolder = await files.createFolder(folder.id, ARTWORKS_FOLDER_NAME, attempt.formKey)
+  if (!artworksFolder.ok) return false
+  await setup.articles.setDriveId(attempt.id, 'artworks-folder', artworksFolder.id)
+
+  let licencesFolder = await files.createFolder(folder.id, LICENCES_FOLDER_NAME, attempt.formKey)
+  if (!licencesFolder.ok) return false
+  await setup.articles.setDriveId(attempt.id, 'licences-folder', licencesFolder.id)
 
   let doc = await files.copyFile(setup.templateId, folder.id, attempt.name, attempt.formKey)
   if (!doc.ok) return false
@@ -239,7 +251,13 @@ async function cleanUp(
 ): Promise<boolean> {
   let current = (await setup.articles.findByFormKey(attempt.formKey)) ?? attempt
   let ids = new Set(
-    [current.metaFileId, current.docId, current.folderId].filter((id): id is string => id !== null),
+    [
+      current.metaFileId,
+      current.docId,
+      current.licencesFolderId,
+      current.artworksFolderId,
+      current.folderId,
+    ].filter((id): id is string => id !== null),
   )
   let isComplete = true
 

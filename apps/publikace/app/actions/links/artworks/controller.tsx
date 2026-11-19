@@ -25,6 +25,7 @@ import {
   MAX_FILE_BYTES,
   type UploadReply,
 } from '../../../domain/public/artwork-form.ts'
+import { checkArticleFolders } from '../../../drive/article-folders.server.ts'
 import type { Bytes } from '../../../drive/artwork-files.server.ts'
 import {
   type ArtworksTarget,
@@ -121,7 +122,8 @@ async function targetOf(context: LinkContext): Promise<ArtworksTarget | null> {
 
 /**
  * What the page says under the lead when it opens (`21a`): the account first, because without it
- * nothing can be checked on Drive; then whether the article folder is still there (`1jv85zum`).
+ * nothing can be checked on Drive; then whether the article's three folders are still there
+ * (`1jv85zum`, `2kig3d8m`), which also records what is missing for the issue detail.
  */
 async function warningOnOpen(
   context: LinkContext,
@@ -133,8 +135,15 @@ async function warningOnOpen(
   let { artworks } = articlesOf(context)
   let token = await artworks.token()
   if (!token.ok) return token.reason === 'unavailable' ? undefined : 'disconnected'
-  let presence = await artworks.folders(token.accessToken).presence(target.article.folderId)
-  return presence === 'gone' ? 'folder-gone' : undefined
+  let check = await checkArticleFolders(
+    {
+      articles: artworks.articles,
+      folders: artworks.folders(token.accessToken),
+      now: artworks.now,
+    },
+    target.article,
+  )
+  return check !== 'unavailable' && check.missing.length > 0 ? 'folder-gone' : undefined
 }
 
 function renderForm(

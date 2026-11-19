@@ -257,8 +257,8 @@ export const UNAVAILABLE_ON_SEND = {
   title: 'Zkuste díla odeslat za chvíli znovu.',
 }
 export const FOLDER_GONE_ON_SEND = {
-  text: 'Šéfredakce vidí problém v aplikaci.',
-  title: 'Z tohoto odkazu teď nejde odeslat díla.',
+  text: 'Díla se neodeslala. Teď nejde nahrát ani další soubor.',
+  title: 'Zkuste díla odeslat později.',
 }
 export const SUBMIT_LIMIT_ON_SEND = {
   text: 'Z tohoto odkazu už za poslední hodinu proběhlo 30 odeslání. Nechte stránku otevřenou, abyste mohli odeslání zkusit znovu. Pokud díla potřebujete poslat hned, napište šéfredakci.',

@@ -24,6 +24,12 @@ import {
   PROVIDER_COLUMN,
   STATE_COLUMN,
 } from '../../domain/artwork.ts'
+import {
+  CHECK_AGAIN_LABEL,
+  DISCARD_KEPT_TEXT,
+  type HeadingPart,
+  type SubfolderKind,
+} from '../../domain/article-folders.ts'
 
 import {
   ARTICLES_EMPTY_TEXT,
@@ -82,6 +88,17 @@ export type LinkBlockView = {
   usage: string
 }
 
+/** The Callout under an article's row whose folder, or a folder in it, is missing (`12j`). */
+export type MissingFoldersView = {
+  /** Where _Zkontrolovat znovu_ posts. */
+  checkAction: string
+  /** The step, the subfolders' names in it linking to the very folder on Drive. */
+  heading: readonly HeadingPart[]
+  /** What the row cannot do and when the app found it, in one paragraph. */
+  text: string
+  urls: Readonly<Partial<Record<SubfolderKind, string>>>
+}
+
 /** One row of _Články_ (`12a`), with what exists of an article so far. */
 export type ArticleRowView = {
   /** The cell _Obrazová díla_: the sent artworks and what waits among them, `—` without any. */
@@ -92,6 +109,7 @@ export type ArticleRowView = {
   createdLine: string
   documentUrl: string
   id: number
+  missing: MissingFoldersView | null
   name: string
 }
 
@@ -102,8 +120,11 @@ export type ArticleRowView = {
 export type ArtworkRowView = {
   articleName: string
   author: string
-  /** Resend and discard, for a batch in _Chyba_ of an issue still open. */
-  batchActions: { count: number; discardHref: string; resendAction: string } | null
+  /**
+   * Resend and discard, for a batch in _Chyba_ of an issue still open; each `null` while a folder
+   * it needs is missing (`12o`).
+   */
+  batchActions: { count: number; discardHref: string | null; resendAction: string | null } | null
   driveUrl: string
   id: number
   name: string
@@ -128,6 +149,8 @@ export type DiscardView = {
   cancelHref: string
   count: number
   email: string
+  /** The confirm met a folder gone meanwhile: nothing went to the bin (`12o`). */
+  folderGone?: { heading: readonly HeadingPart[]; urls: MissingFoldersView['urls'] }
 }
 
 export type DetailPageProps = {
@@ -231,6 +254,14 @@ const artworksCellStyle = css({
   '& small': { color: 'var(--text-secondary)', fontSize: '13px' },
 })
 
+/* The Callout of a missing folder belongs to the row above it, inside the same table (`12j`). */
+const bandStyle = css({ padding: '0 20px 16px' })
+const bandRuleStyle = css({ borderBottom: '1px solid var(--border)' })
+
+/* A folder's name and its icon never part at a line break. */
+const folderLinkStyle = css({ fontWeight: 'inherit', whiteSpace: 'nowrap' })
+const newTabIconStyle = css({ marginLeft: '2px', verticalAlign: '-0.125em' })
+
 /* What waits on the editors, in the ink of _Čeká na vás_ (`12a`, `11a`). */
 const waitingLineStyle = css({ color: 'var(--state-attention-text)', fontWeight: 600 })
 
@@ -313,48 +344,115 @@ function LinkBlock(handle: Handle<{ link: LinkBlockView }>) {
   }
 }
 
+/** A step whose subfolder names link to the folder on Drive, in a new tab (`12j`). */
+function FolderHeading(
+  handle: Handle<{ heading: readonly HeadingPart[]; urls: MissingFoldersView['urls'] }>,
+) {
+  return () => {
+    let { heading, urls } = handle.props
+    return (
+      <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+        {heading.map((part) => {
+          if (typeof part === 'string') return part
+          let url = urls[part.folder]
+          if (url === undefined) return part.name
+          return (
+            <a class="vdm-link" href={url} mix={folderLinkStyle} rel="noopener" target="_blank">
+              {part.name}
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="1em"
+                mix={newTabIconStyle}
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="1em"
+              >
+                <path d="M15 3h6v6" />
+                <path d="M10 14 21 3" />
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              </svg>
+              <span class="vdm-sr-only"> (otevře se v nové záložce)</span>
+            </a>
+          )
+        })}
+      </p>
+    )
+  }
+}
+
+function MissingFoldersBand(handle: Handle<{ isLast: boolean; missing: MissingFoldersView }>) {
+  return () => {
+    let { isLast, missing } = handle.props
+    return (
+      <div mix={isLast ? bandStyle : [bandStyle, bandRuleStyle]} role="row">
+        <div role="cell">
+          <Callout tone="error">
+            <FolderHeading heading={missing.heading} urls={missing.urls} />
+            <p style={{ margin: '0 0 8px' }}>{missing.text}</p>
+            <form action={missing.checkAction} class="vdm-callout__actions" method="post">
+              <CsrfField />
+              <button class="vdm-btn vdm-btn--outline vdm-btn--sm" type="submit">
+                {CHECK_AGAIN_LABEL}
+              </button>
+            </form>
+          </Callout>
+        </div>
+      </div>
+    )
+  }
+}
+
 function ArticleRow(handle: Handle<{ article: ArticleRowView; isLast: boolean }>) {
   return () => {
     let { article, isLast } = handle.props
     return (
-      <TableRow columns={ARTICLE_COLUMNS} isLast={isLast}>
-        <TableRowTitle
-          href={article.documentUrl}
-          isNewTab
-          sub={article.authors}
-          title={article.name}
-        />
-        <span role="cell">
-          <StatusTag detail={article.createdLine} tone="neutral">
-            Píše se
-          </StatusTag>
-        </span>
-        {article.artworks.count === 0 ? (
-          <span mix={quietStyle} role="cell">
-            —
-          </span>
-        ) : (
-          <span mix={artworksCellStyle} role="cell">
-            <span>{article.artworks.count}</span>
-            {article.artworks.line === null ? null : (
-              <small mix={article.artworks.line.isWaiting ? waitingLineStyle : undefined}>
-                {article.artworks.line.text}
-              </small>
-            )}
-          </span>
-        )}
-        <span role="cell">
-          <ActionMenu
-            items={[
-              { href: article.documentUrl, label: 'Otevřít dokument' },
-              ...(article.artworksUrl === null
-                ? []
-                : [{ copyText: article.artworksUrl, label: COPY_ARTWORKS_LINK_LABEL }]),
-            ]}
-            label={`Další akce článku ${article.name}`}
+      <>
+        <TableRow columns={ARTICLE_COLUMNS} isLast={isLast || article.missing !== null}>
+          <TableRowTitle
+            href={article.documentUrl}
+            isNewTab
+            sub={article.authors}
+            title={article.name}
           />
-        </span>
-      </TableRow>
+          <span role="cell">
+            <StatusTag detail={article.createdLine} tone="neutral">
+              Píše se
+            </StatusTag>
+          </span>
+          {article.artworks.count === 0 ? (
+            <span mix={quietStyle} role="cell">
+              —
+            </span>
+          ) : (
+            <span mix={artworksCellStyle} role="cell">
+              <span>{article.artworks.count}</span>
+              {article.artworks.line === null ? null : (
+                <small mix={article.artworks.line.isWaiting ? waitingLineStyle : undefined}>
+                  {article.artworks.line.text}
+                </small>
+              )}
+            </span>
+          )}
+          <span role="cell">
+            <ActionMenu
+              items={[
+                { href: article.documentUrl, label: 'Otevřít dokument' },
+                ...(article.artworksUrl === null
+                  ? []
+                  : [{ copyText: article.artworksUrl, label: COPY_ARTWORKS_LINK_LABEL }]),
+              ]}
+              label={`Další akce článku ${article.name}`}
+            />
+          </span>
+        </TableRow>
+        {article.missing === null ? null : (
+          <MissingFoldersBand isLast={isLast} missing={article.missing} />
+        )}
+      </>
     )
   }
 }
@@ -396,20 +494,19 @@ function ArtworkRow(
   return () => {
     let { artwork, csrfToken, isLast } = handle.props
     let items: ActionMenuItem[] = [{ href: artwork.driveUrl, label: OPEN_ARTWORK_LABEL }]
-    if (artwork.batchActions !== null) {
-      items.push(
-        { isSeparator: true },
-        {
-          action: artwork.batchActions.resendAction,
-          csrfToken,
-          label: resendLabel(artwork.batchActions.count),
-        },
-        {
-          href: artwork.batchActions.discardHref,
+    let actions = artwork.batchActions
+    if (actions !== null && (actions.resendAction !== null || actions.discardHref !== null)) {
+      items.push({ isSeparator: true })
+      if (actions.resendAction !== null) {
+        items.push({ action: actions.resendAction, csrfToken, label: resendLabel(actions.count) })
+      }
+      if (actions.discardHref !== null) {
+        items.push({
+          href: actions.discardHref,
           isSameTab: true,
-          label: discardLabel(artwork.batchActions.count),
-        },
-      )
+          label: discardLabel(actions.count),
+        })
+      }
     }
     return (
       <TableRow columns={ARTWORK_COLUMNS} isLast={isLast}>
@@ -506,6 +603,17 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
       <Dialog maxWidth="360px">
         <DialogTitle>{discardDialogTitle(discarding.count)}</DialogTitle>
         <div class="vdm-dialog__body">
+          {discarding.folderGone === undefined ? null : (
+            <div role="alert">
+              <Callout tone="error">
+                <FolderHeading
+                  heading={discarding.folderGone.heading}
+                  urls={discarding.folderGone.urls}
+                />
+                <p style={{ margin: 0 }}>{DISCARD_KEPT_TEXT}</p>
+              </Callout>
+            </div>
+          )}
           <p class="vdm-dialog__text">
             {discardDialogText(discarding.articleName, discarding.email)}
           </p>

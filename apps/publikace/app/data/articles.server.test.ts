@@ -55,6 +55,8 @@ describe('the article store', () => {
       assert.equal((await articles.countsByIssue()).get(issueId), undefined)
 
       await articles.setDriveId(attempt.id, 'folder', 'f-a')
+      await articles.setDriveId(attempt.id, 'artworks-folder', 'f-a-artworks')
+      await articles.setDriveId(attempt.id, 'licences-folder', 'f-a-licences')
       await articles.setDriveId(attempt.id, 'doc', 'd-a')
       await articles.setDriveId(attempt.id, 'meta', 'm-a')
       await articles.commit(attempt.id, AT)
@@ -82,6 +84,8 @@ describe('the article store', () => {
         name: 'Článek',
       })
       await articles.setDriveId(attempt.id, 'folder', 'f-a')
+      await articles.setDriveId(attempt.id, 'artworks-folder', 'f-a-artworks')
+      await articles.setDriveId(attempt.id, 'licences-folder', 'f-a-licences')
 
       await assert.rejects(() => articles.commit(attempt.id, AT))
     } finally {
@@ -130,6 +134,74 @@ describe('the article store', () => {
       }
 
       assert.equal(await articles.recentAttempts(link.id, AT.add({ minutes: 1 })), 2)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses to commit an article without its two folders', async () => {
+    let app = await createTestApp()
+    try {
+      let { articles, issueId, link } = await setup(app)
+      let { attempt } = await articles.startAttempt({
+        at: AT,
+        authors: [TEREZA],
+        formKey: 'k',
+        issueId,
+        linkId: link.id,
+        name: 'Článek',
+      })
+      await articles.setDriveId(attempt.id, 'folder', 'f-a')
+      await articles.setDriveId(attempt.id, 'doc', 'd-a')
+      await articles.setDriveId(attempt.id, 'meta', 'm-a')
+
+      await assert.rejects(() => articles.commit(attempt.id, AT))
+      assert.equal((await articles.findById(attempt.id))?.createdAt, null)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('records a missing folder once, keeps the time it was found, and counts the article once', async () => {
+    let app = await createTestApp()
+    try {
+      let { articles, issueId, link } = await setup(app)
+      let { attempt } = await articles.startAttempt({
+        at: AT,
+        authors: [TEREZA],
+        formKey: 'k',
+        issueId,
+        linkId: link.id,
+        name: 'Článek',
+      })
+      for (let [kind, id] of [
+        ['folder', 'f-a'],
+        ['artworks-folder', 'f-a-artworks'],
+        ['licences-folder', 'f-a-licences'],
+        ['doc', 'd-a'],
+        ['meta', 'm-a'],
+      ] as const) {
+        await articles.setDriveId(attempt.id, kind, id)
+      }
+      await articles.commit(attempt.id, AT)
+
+      let later = AT.add({ hours: 1 })
+      await articles.markMissing(attempt.id, ['licences'], AT)
+      await articles.markMissing(attempt.id, ['artworks', 'licences'], later)
+      assert.deepEqual((await articles.findById(attempt.id))?.missing, {
+        article: null,
+        artworks: later,
+        licences: AT,
+      })
+      assert.equal((await articles.missingCountsByIssue()).get(issueId), 1)
+
+      await articles.clearMissing(attempt.id, ['artworks', 'licences'])
+      assert.deepEqual((await articles.findById(attempt.id))?.missing, {
+        article: null,
+        artworks: null,
+        licences: null,
+      })
+      assert.equal((await articles.missingCountsByIssue()).get(issueId), undefined)
     } finally {
       await app.close()
     }

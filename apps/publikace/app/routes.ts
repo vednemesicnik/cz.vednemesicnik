@@ -30,6 +30,8 @@ export const routes = route({
     resendBatch: post('/issues/:name/artworks/batches/:id/resend'),
     askDiscardBatch: get('/issues/:name/artworks/batches/:id/discard'),
     discardBatch: post('/issues/:name/artworks/batches/:id/discard'),
+    /* `12j`: _Zkontrolovat znovu_ under an article whose folder was found missing. */
+    checkArticleFolders: post('/issues/:name/articles/:id/folders/check'),
   },
 
   /* The pages behind a shared link, without sign-in or cookies (`02a`). `GET` draws the form,

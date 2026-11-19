@@ -175,7 +175,7 @@ function IssueRow(
             <span class="vdm-num" role="cell">
               {artworks.total}
             </span>
-            {/* What waits on the editors: so far only artworks in _Chyba_ (`01d`). */}
+            {/* What waits on the editors: artworks in _Chyba_ and missing folders (`01d`, `12j`). */}
             {artworks.waiting === 0 ? (
               <span mix={quietStyle} role="cell">
                 —

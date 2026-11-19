@@ -87,9 +87,10 @@ In order: each check uses what the one before it made.
    - with `_Podklady_pro_tisk` moved to the bin in Drive first, _Dokončit vydání_ makes a new one
      beside `Články`, and the one in the bin stays there.
 
-2. **An article makes its folder, its Doc and `_meta.json`.** Open the newsroom's link from the
-   issue's page and send the form with one or two authors on testers' addresses. In
-   `Články` there is a folder named after the article holding:
+2. **An article makes its folder, its two folders, its Doc and `_meta.json`.** Open the
+   newsroom's link from the issue's page and send the form with one or two authors on testers'
+   addresses. In `Články` there is a folder named after the article holding:
+   - the folders `Obrazová díla` and `Licence`, both empty;
    - the Doc, a copy of the template with the article's name where `{{NAZEV_CLANKU}}` was;
    - `_meta.json` with `docId`, `articleName`, `issue`, `articleFolderId`, `issueFolderId`,
      `sheetId` (`null`) and `authors`.
@@ -133,19 +134,19 @@ In order: each check uses what the one before it made.
    folders the scripts use show no change since the run began: check the _Poslední úprava_
    column in Drive and the sheets' version history.
 
-6. **An upload goes to the article folder.** From the article page's link to the artworks, upload
-   a JPEG, a PNG, a HEIC and a TIFF. Each is in the article folder, named by its hash with its
+6. **An upload goes to `Obrazová díla`.** From the article page's link to the artworks, upload
+   a JPEG, a PNG, a HEIC and a TIFF. Each is in the article's `Obrazová díla`, named by its hash with its
    extension, at its full size. Every upload is resumable. Include one close to the page's limit
    of 15 MB, the size that resumable uploads are for.
 
 7. **The licence carries its preview.** Fill in author and source for each and send with _Odeslat
-   díla_. The article folder now has a PDF per artwork, `<hash>.pdf`. Open each:
+   díla_. The article's `Licence` now has a PDF per artwork, `<hash>.pdf`. Open each:
    - the preview image is in it, from the artwork's thumbnail;
    - for a format Drive makes no thumbnail of, the PDF says _[Náhled není k dispozici]_, and the
      batch was still sent.
 
    Note which formats got a preview: HEIC and TIFF are the open question. Temporary Docs named
-   `_tmp_licence_…` are all in the bin.
+   `_tmp_licence_…` are all in the bin, and nothing new is in the article folder itself.
 
 8. **The consent request arrives once, with every PDF.** The provider's address has one e-mail
    whose subject begins _Žádost o potvrzení souhlasu s užitím obrazových děl_ and ends with a
@@ -167,13 +168,24 @@ In order: each check uses what the one before it made.
       licence takes about ten seconds, so twenty seconds in, some exist and nothing is
       committed. Start it again. The licences and temporary Docs that batch made are in the bin,
       the artworks are back on their page, and nobody got an e-mail.
-    - Upload two artworks and send neither. In Drive, move one of them out of the article folder.
+    - Upload two artworks and send neither. In Drive, move one of them out of `Obrazová díla`.
       Open it by its `drive_file_id`, because the same image uploaded twice gets the same name.
       Stop the app, run
       `UPDATE artworks SET uploaded_at = '2000-01-01T00:00:00.000Z' WHERE batch_id IS NULL AND removed_at IS NULL`,
-      and start it: the sweep runs at startup. The one still in the article folder is in the
+      and start it: the sweep runs at startup. The one still in `Obrazová díla` is in the
       bin. The one that was moved is where it was moved to. Both have `removed_at` and leave the
       page.
+
+11. **A folder somebody binned stays binned until a person brings it back.** Put the article's
+    `Licence` in the bin from Drive.
+    - Open the article's link to the artworks: the page says _Zkuste to později. Z tohoto odkazu
+      teď nejde díla nahrát ani odeslat._, and a chosen file is refused on its card.
+    - Open the issue's page: under the article's row stands _Obnovte složku Licence z koše…_ with
+      _Zkontrolovat znovu_, and the issue counts one in _Čeká na vás_ on the overview.
+    - Follow the link on _Licence_ in that sentence. Note what Drive shows for a folder in the
+      bin, and whether it offers to restore it there: the link stays only if it does.
+    - Restore it, then _Zkontrolovat znovu_: _Složka je zpátky na sdíleném disku Publikace._, and
+      the Callout is gone. Nothing was created on Drive in between.
 
 ## After the run
 

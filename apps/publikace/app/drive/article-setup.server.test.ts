@@ -112,7 +112,7 @@ function articleFiles(drive: FakeDrive) {
 }
 
 describe('creating an article (20c, 20d)', () => {
-  it('makes the folder, the Doc with its name and _meta.json, then mails every author', () =>
+  it('makes the folder with its two folders, the Doc with its name and _meta.json, then mails every author', () =>
     withHarness(async ({ articlesFolder, drive, linkKey, sent, setup }) => {
       let outcome = await createArticle(setup, article(linkKey))
 
@@ -130,6 +130,18 @@ describe('creating an article (20c, 20d)', () => {
       ])
       assert.equal(meta?.parentId, folder?.id)
       assert.equal(JSON.parse(meta?.content ?? '{}').docId, doc?.id)
+      let artworksFolder = drive
+        .files()
+        .find((file) => file.id === outcome.article.artworksFolderId)
+      let licencesFolder = drive
+        .files()
+        .find((file) => file.id === outcome.article.licencesFolderId)
+      assert.equal(artworksFolder?.name, 'Obrazová díla')
+      assert.equal(artworksFolder?.parentId, folder?.id)
+      assert.equal(artworksFolder?.appProperties['publikaceAttempt'], 'form-1')
+      assert.equal(licencesFolder?.name, 'Licence')
+      assert.equal(licencesFolder?.parentId, folder?.id)
+      assert.equal(licencesFolder?.appProperties['publikaceAttempt'], 'form-1')
 
       assert.deepEqual(
         sent.map((message) => message.to),
@@ -151,7 +163,7 @@ describe('creating an article (20c, 20d)', () => {
       assert.equal(second.kind, 'created')
       if (first.kind !== 'created' || second.kind !== 'created') return
       assert.equal(second.article.id, first.article.id)
-      assert.equal(articleFiles(drive).length, 3)
+      assert.equal(articleFiles(drive).length, 5)
       assert.equal(sent.length, 2)
     }))
 
@@ -179,6 +191,8 @@ describe('creating an article (20c, 20d)', () => {
       assert.equal(outcome.kind, 'unavailable')
       let files = articleFiles(drive)
       assert.deepEqual(files.map((file) => file.name).sort(), [
+        'Licence',
+        'Obrazová díla',
         'Školní jídelna po roce',
         'Školní jídelna po roce',
       ])
@@ -199,7 +213,7 @@ describe('creating an article (20c, 20d)', () => {
       let next = await createArticle(setup, article(linkKey, { formKey: 'form-2' }))
       assert.equal(next.kind, 'created')
       assert.equal((await setup.articles.pendingCleanups()).length, 0)
-      assert.equal(articleFiles(drive).filter((file) => file.isTrashed).length, 2)
+      assert.equal(articleFiles(drive).filter((file) => file.isTrashed).length, 4)
     }))
 
   it('cleans up at startup whatever a crash left uncommitted', () =>
@@ -345,7 +359,7 @@ describe('creating an article (20c, 20d)', () => {
         let next = await createArticle(setup, article(linkKey, { formKey: 'form-2' }))
         assert.equal(next.kind, 'daily-cap')
         assert.equal(sent.length, 2)
-        assert.equal(articleFiles(drive).filter((file) => !file.isTrashed).length, 3)
+        assert.equal(articleFiles(drive).filter((file) => !file.isTrashed).length, 5)
       },
       { mailPerDay: 3 },
     ))

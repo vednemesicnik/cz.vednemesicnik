@@ -37,7 +37,18 @@ import {
   shownSource,
   totalOf,
 } from '../../domain/artwork.ts'
-import type { Issue } from '../../domain/issue.ts'
+import {
+  type ArticleFolderKind,
+  canDiscard,
+  canResend,
+  CHECK_UNAVAILABLE_TOAST,
+  checkedToast,
+  missingFoldersHeading,
+  missingFoldersLines,
+  RESEND_FOLDER_GONE_TOAST,
+  type SubfolderKind,
+} from '../../domain/article-folders.ts'
+import { folderUrl, type Issue } from '../../domain/issue.ts'
 import {
   absoluteUrl,
   articleLinkPath,
@@ -48,6 +59,9 @@ import {
   usageLine,
 } from '../../domain/link.ts'
 import { formatDayMonth, now } from '../../domain/time.ts'
+import type { Article, ArticleRow } from '../../data/articles.server.ts'
+import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
+import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
 import { discardBatch, resendBatch } from '../../drive/artworks-setup.server.ts'
 import { createIssue, finishIssue } from '../../drive/issue-setup.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
@@ -63,6 +77,7 @@ import {
   DetailPage,
   type DiscardView,
   type LinkBlockView,
+  type MissingFoldersView,
 } from './detail-page.tsx'
 import type { NewIssueDialog } from './overview-page.tsx'
 import {
@@ -117,6 +132,64 @@ function articlesOf(context: PageContext): ArticlesContext {
   return context.get(Articles) as ArticlesContext
 }
 
+/** The subfolders' addresses on Drive, for the names in a missing folder's step (`12j`). */
+function subfolderUrls(
+  article: Pick<ArticleRow, 'artworksFolderId' | 'licencesFolderId'>,
+): MissingFoldersView['urls'] {
+  let urls: Partial<Record<SubfolderKind, string>> = {}
+  if (article.artworksFolderId !== null) urls.artworks = folderUrl(article.artworksFolderId)
+  if (article.licencesFolderId !== null) urls.licences = folderUrl(article.licencesFolderId)
+  return urls
+}
+
+/** A batch in _Chyba_ that _Poslat žádost znovu_ would send, were its folders there. */
+function isResendable(batch: BatchRow): boolean {
+  return batchState(batch) === 'error' && batch.mailRefusedAt === null
+}
+
+/** The Callout under the article's row, or `null` while all three folders are there (`12j`). */
+function missingView(
+  issue: Issue,
+  article: Article,
+  batches: readonly BatchRow[],
+): MissingFoldersView | null {
+  let missing = recordedMissing(article)
+  if (missing.length === 0) return null
+  let foundAt = missing
+    .map((kind) => article.missing[kind])
+    .filter((at): at is Temporal.Instant => at !== null)
+    .reduce((first, at) => (Temporal.Instant.compare(at, first) < 0 ? at : first))
+  let hasBatchToResend = batches.some(
+    (batch) => batch.articleId === article.id && isResendable(batch),
+  )
+  return {
+    checkAction: routes.issues.checkArticleFolders.href({
+      id: String(article.id),
+      name: issue.name,
+    }),
+    heading: missingFoldersHeading(missing),
+    text: missingFoldersLines({ foundAt, hasBatchToResend, missing }).join(' '),
+    urls: subfolderUrls(article),
+  }
+}
+
+/**
+ * The articles of the issue that have a folder on record as missing, asked again: the record goes
+ * for a folder that is back (`12j`). Without an account or an answer from Drive, the records
+ * stand as they are.
+ */
+async function recheckMissing(context: PageContext, issue: Issue): Promise<void> {
+  let { articles, artworks } = articlesOf(context)
+  let marked = (await articles.listCreated(issue.id)).filter(
+    (article) => recordedMissing(article).length > 0,
+  )
+  if (marked.length === 0) return
+  let token = await artworks.token()
+  if (!token.ok) return
+  let deps = { articles, folders: artworks.folders(token.accessToken), now }
+  for (let article of marked) await checkArticleFolders(deps, article)
+}
+
 /** The block for the link and the rows of _Články_, from what the database has (`12a`). */
 async function linkAndArticles(
   context: PageContext,
@@ -128,6 +201,7 @@ async function linkAndArticles(
   let created = await articles.listCreated(issue.id)
   let counts = await artworks.artworks.countsByArticle(issue.id)
   let artworksLinks = await links.artworksLinksOf(issue.id)
+  let batches = await artworks.artworks.listByIssue(issue.id)
   let rows = created.map((article) => {
     let articleCounts = counts.get(article.id) ?? NO_ARTWORKS
     let artworksLink = artworksLinks.get(article.id)
@@ -139,14 +213,15 @@ async function linkAndArticles(
       createdLine: `založen ${formatDayMonth(article.createdAt)}`,
       documentUrl: documentUrl(article.docId),
       id: article.id,
+      missing: missingView(issue, article, batches),
       name: article.name,
     }
   })
-  /* An article with something waiting among its artworks stands with what waits (`12a`). */
-  rows.sort(
-    (a, b) =>
-      Number(b.artworks.line?.isWaiting ?? false) - Number(a.artworks.line?.isWaiting ?? false),
-  )
+  /* An article with something waiting, among its artworks or a missing folder, stands with what
+     waits (`12a`, `12j`). */
+  let isWaitingRow = (row: ArticleRowView) =>
+    Number((row.artworks.line?.isWaiting ?? false) || row.missing !== null)
+  rows.sort((a, b) => isWaitingRow(b) - isWaitingRow(a))
 
   let link = issue.completedAt === null ? null : await links.articleLinkOf(issue.id)
   if (link === null) return { articles: rows, link: undefined }
@@ -177,16 +252,27 @@ async function artworksOf(
   issue: Issue,
   filter: ArtworkFilter,
 ): Promise<ArtworksView> {
-  let batches = await articlesOf(context).artworks.artworks.listByIssue(issue.id)
+  let { articles, artworks } = articlesOf(context)
+  let batches = await artworks.artworks.listByIssue(issue.id)
+  let missingOf = new Map<number, ArticleFolderKind[]>(
+    (await articles.listCreated(issue.id)).map((article) => [article.id, recordedMissing(article)]),
+  )
   let isOpen = issue.closedAt === null
   let all: (ArtworkRowView & { uploadedAt: Temporal.Instant })[] = batches.flatMap((batch) => {
     let state: ArtworkState = batchState(batch)
+    let missing = missingOf.get(batch.articleId) ?? []
+    let query = filter === 'all' ? '' : `?artworks=${filter}`
+    let ids = { id: String(batch.id), name: issue.name }
     let actions =
       state === 'error' && isOpen
         ? {
             count: batch.artworks.length,
-            discardHref: `${routes.issues.askDiscardBatch.href({ id: String(batch.id), name: issue.name })}${filter === 'all' ? '' : `?artworks=${filter}`}`,
-            resendAction: `${routes.issues.resendBatch.href({ id: String(batch.id), name: issue.name })}${filter === 'all' ? '' : `?artworks=${filter}`}`,
+            discardHref: canDiscard(missing)
+              ? `${routes.issues.askDiscardBatch.href(ids)}${query}`
+              : null,
+            resendAction: canResend(missing)
+              ? `${routes.issues.resendBatch.href(ids)}${query}`
+              : null,
           }
         : null
     return batch.artworks.map((artwork) => ({
@@ -236,7 +322,12 @@ function overviewFilterOf(context: PageContext): IssueFilter {
 async function renderDetail(
   context: PageContext & { auth: { identity: Editor } },
   issue: Issue,
-  options: { discarding?: DiscardView; isFolderGone?: boolean; isRenewing?: boolean } = {},
+  options: {
+    discarding?: DiscardView
+    isFolderGone?: boolean
+    isRenewing?: boolean
+    status?: number
+  } = {},
 ): Promise<Response> {
   let session = context.get(Session) as Session | undefined
   let { articles, link } = await linkAndArticles(
@@ -257,12 +348,25 @@ async function renderDetail(
       person={context.auth.identity}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
     />,
+    options.status === undefined ? undefined : { status: options.status },
   )
 }
 
 /* Not drawn: the discard's own failure, in the shape of _Zkuste dokončit vydání za chvíli znovu._,
    not yet through the copywriter. */
 const DISCARD_UNAVAILABLE_TOAST = 'Zkuste dávku zahodit za chvíli znovu.'
+
+/** The question _Zahodit dávku_ over the detail, keeping the artworks' filter (`12o`). */
+function discardingView(context: PageContext, issue: Issue, batch: ListedBatch): DiscardView {
+  let filter = filterOf(context)
+  return {
+    action: `${routes.issues.discardBatch.href({ id: String(batch.id), name: issue.name })}${filter === 'all' ? '' : `?artworks=${filter}`}`,
+    articleName: batch.articleName,
+    cancelHref: detailHref(issue, filter),
+    count: batch.artworks.length,
+    email: batch.providerEmail,
+  }
+}
 
 /** A live batch of this issue, or `null`: an ID from another issue answers as unknown. */
 async function batchOf(context: PageContext, issue: Issue, id: string) {
@@ -341,9 +445,47 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
 
+        await recheckMissing(context, issue)
         return renderDetail(context, issue, {
           isFolderGone: takeFolderGone(context.get(Session), issue.name),
         })
+      },
+
+      /* `12j`: every folder of the article asked again, then back to the detail with what came
+         of it. */
+      async checkArticleFolders(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let { articles, artworks } = articlesOf(context)
+        let articleId = Number(context.params.id)
+        let article = Number.isSafeInteger(articleId)
+          ? ((await articles.listCreated(issue.id)).find((each) => each.id === articleId) ?? null)
+          : null
+        if (article === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        let { expectedEmail } = context.get(DriveAccount)
+
+        let token = await artworks.token()
+        if (!token.ok) {
+          if (token.reason === 'not-connected')
+            flashToast(context, notConnectedToast(expectedEmail), 'error')
+          else if (token.reason === 'disconnected')
+            flashToast(context, disconnectedBanner(expectedEmail), 'error')
+          else flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
+          return back()
+        }
+        let checked = recordedMissing(article)
+        let check = await checkArticleFolders(
+          { articles, folders: artworks.folders(token.accessToken), now },
+          article,
+        )
+        if (check === 'unavailable') {
+          flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
+          return back()
+        }
+        let toast = checkedToast(checked, check.missing)
+        flashToast(context, toast.text, toast.tone === 'error' ? 'error' : undefined)
+        return back()
       },
 
       async askRenewLink(context) {
@@ -382,6 +524,9 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           case 'pdf-gone':
             flashToast(context, RESEND_PDF_GONE_TOAST, 'error')
             return back()
+          case 'folder-gone':
+            flashToast(context, RESEND_FOLDER_GONE_TOAST, 'error')
+            return back()
           case 'daily-cap':
             flashToast(context, RESEND_DAILY_CAP_TOAST, 'error')
             return back()
@@ -404,16 +549,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         if (issue === null || batch === null || issue.closedAt !== null) return notFound()
         /* Only a batch in _Chyba_ is discarded; a sent one goes back to the table. */
         if (batch.mailSentAt !== null) return redirect(detailHref(issue, filterOf(context)), 303)
-        let filter = filterOf(context)
-        return renderDetail(context, issue, {
-          discarding: {
-            action: `${routes.issues.discardBatch.href({ id: String(batch.id), name: issue.name })}${filter === 'all' ? '' : `?artworks=${filter}`}`,
-            articleName: batch.articleName,
-            cancelHref: detailHref(issue, filter),
-            count: batch.artworks.length,
-            email: batch.providerEmail,
-          },
-        })
+        return renderDetail(context, issue, { discarding: discardingView(context, issue, batch) })
       },
 
       async discardBatch(context) {
@@ -427,6 +563,18 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           case 'discarded':
             flashToast(context, discardedToast(outcome.batch.artworks.length))
             return back()
+          /* A folder went missing while the dialog was open: it stays open and says which. */
+          case 'folder-gone': {
+            let article = await articlesOf(context).articles.findById(batch.articleId)
+            let urls = article === null ? {} : subfolderUrls(article)
+            return renderDetail(context, issue, {
+              discarding: {
+                ...discardingView(context, issue, batch),
+                folderGone: { heading: missingFoldersHeading(outcome.missing), urls },
+              },
+              status: IN_THE_WAY,
+            })
+          }
           case 'unavailable':
             flashToast(context, DISCARD_UNAVAILABLE_TOAST, 'error')
             return back()

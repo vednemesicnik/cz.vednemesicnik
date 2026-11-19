@@ -13,6 +13,7 @@ import {
   artworkFieldLabel,
   ARTWORKS_DISCONNECTED_WARNING,
   ARTWORKS_FOLDER_GONE_WARNING,
+  UPLOAD_FOLDER_GONE_TEXT,
   ARTWORKS_HINT,
   ARTWORKS_LEGEND,
   cancelUploadName,
@@ -67,6 +68,11 @@ export type ArtworksFormProps = {
   formKey: string
   /** Nothing more can be sent from this page: the fields stay to be copied, the button goes. */
   isClosed: boolean
+  /**
+   * The server last found one of the article's folders missing. The page stays open: every
+   * upload asks Drive again, and the warning goes once one gets through (`21a`).
+   */
+  isFolderGone: boolean
   /** Changes with every answer that put a message above the form, so the island can focus it. */
   messageKey: string | null
   provider: { email: string; name: string }
@@ -96,6 +102,11 @@ type Card = {
   /** The upload's row on the server, once it has one. */
   id: number | null
   key: number
+  /**
+   * A file the server refused because a folder is missing: nothing of it is on Drive, so the card
+   * carries no fields to fill in, only _Odebrat_ (`21a`).
+   */
+  isRefused: boolean
   /** Why the upload did not go, said on the card: the account, the folder. */
   message: string | null
   name: string
@@ -263,6 +274,8 @@ export const ArtworksForm = clientEntry(
     let isReady = false
     let isPending = false
     let isClosedHere = false
+    let isFolderGone = handle.props.isFolderGone
+    let shownFolderGone = handle.props.isFolderGone
     let linkGone = false
     let isOver = false
     let overCount = 0
@@ -285,6 +298,7 @@ export const ArtworksForm = clientEntry(
         controller: null,
         file: null,
         key: nextKey++,
+        isRefused: false,
         message: null,
         sourceError: null,
         state: 'uploaded' as const,
@@ -348,6 +362,7 @@ export const ArtworksForm = clientEntry(
           file,
           id: null,
           key: nextKey++,
+          isRefused: false,
           message: null,
           name: file.name,
           size: file.size,
@@ -417,10 +432,12 @@ export const ArtworksForm = clientEntry(
         case 'uploaded':
           card.id = answer.artwork.id
           card.state = 'uploaded'
+          isFolderGone = false
           break
         case 'unreadable':
           card.id = answer.artwork.id
           card.state = 'unreadable'
+          isFolderGone = false
           break
         case 'limited':
           /* The cap stops the whole choice: what waits behind it goes too (`21b`). */
@@ -441,7 +458,11 @@ export const ArtworksForm = clientEntry(
           break
         case 'folder-gone':
           card.state = 'failed'
-          card.message = ARTWORKS_FOLDER_GONE_WARNING
+          card.message = UPLOAD_FOLDER_GONE_TEXT
+          /* No _Zkusit znovu_: the file is chosen again once the folder is back (`21a`). */
+          card.file = null
+          card.isRefused = true
+          isFolderGone = true
           break
         case 'too-large':
         case 'not-image':
@@ -709,27 +730,33 @@ export const ArtworksForm = clientEntry(
           {isUploaded ? (
             <input name={ARTWORK_ID_FIELD} type="hidden" value={String(card.id)} />
           ) : null}
-          {field({
-            error:
-              uploadedNumber === null ? undefined : errorFor(`artwork-${uploadedNumber}-author`),
-            hint: ARTWORK_AUTHOR_HINT,
-            id: `artwork-${card.key}-author`,
-            isRequired: false,
-            label: ARTWORK_AUTHOR_LABEL,
-            name: isUploaded ? ARTWORK_AUTHOR_FIELD : undefined,
-            type: 'text',
-            value: card.author,
-          })}
-          {field({
-            error: sourceError ?? undefined,
-            id: `artwork-${card.key}-source`,
-            isRequired: false,
-            label: ARTWORK_SOURCE_LABEL,
-            name: isUploaded ? ARTWORK_SOURCE_FIELD : undefined,
-            onBlur: (value) => checkSourceOf(card, value),
-            type: 'url',
-            value: card.source,
-          })}
+          {card.isRefused
+            ? null
+            : field({
+                error:
+                  uploadedNumber === null
+                    ? undefined
+                    : errorFor(`artwork-${uploadedNumber}-author`),
+                hint: ARTWORK_AUTHOR_HINT,
+                id: `artwork-${card.key}-author`,
+                isRequired: false,
+                label: ARTWORK_AUTHOR_LABEL,
+                name: isUploaded ? ARTWORK_AUTHOR_FIELD : undefined,
+                type: 'text',
+                value: card.author,
+              })}
+          {card.isRefused
+            ? null
+            : field({
+                error: sourceError ?? undefined,
+                id: `artwork-${card.key}-source`,
+                isRequired: false,
+                label: ARTWORK_SOURCE_LABEL,
+                name: isUploaded ? ARTWORK_SOURCE_FIELD : undefined,
+                onBlur: (value) => checkSourceOf(card, value),
+                type: 'url',
+                value: card.source,
+              })}
         </div>
       )
     }
@@ -757,6 +784,10 @@ export const ArtworksForm = clientEntry(
         shownErrors = handle.props.errors
         errors = handle.props.errors
         if (errors.length > 0) handle.queueTask(() => summary?.focus())
+      }
+      if (handle.props.isFolderGone !== shownFolderGone) {
+        shownFolderGone = handle.props.isFolderGone
+        isFolderGone = shownFolderGone
       }
       if (handle.props.messageKey !== shownMessage) {
         shownMessage = handle.props.messageKey
@@ -790,6 +821,8 @@ export const ArtworksForm = clientEntry(
             type="submit"
           />
           <input name="formKey" type="hidden" value={formKey} />
+          {/* Gone without a word to a screen reader: only a limit stops applying (`21a`). */}
+          {isFolderGone ? <WarningCallout text={ARTWORKS_FOLDER_GONE_WARNING} /> : null}
           {isReady ? null : (
             <>
               <noscript>

@@ -1,6 +1,8 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { createArticleStore } from '../../../data/articles.server.ts'
+import { createArtworkStore } from '../../../data/artworks.server.ts'
 import { createLinkStore } from '../../../data/links.server.ts'
 import { now } from '../../../domain/time.ts'
 import {
@@ -294,5 +296,145 @@ describe('the artworks in the issue detail', () => {
       assert.equal(context.app.mail.length, sentBefore + 1)
       let after = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
       assert.ok(after.includes(`Žádost o souhlas odešla na ${ONDREJ.email}.`))
+    }))
+})
+
+describe('a missing folder of the article (12j, 21a, 12o)', () => {
+  async function foldersOf(context: Context) {
+    let article = await createArticleStore(context.app.database).findById(1)
+    assert.ok(article?.artworksFolderId != null && article.licencesFolderId != null)
+    return { artworks: article.artworksFolderId, licences: article.licencesFolderId }
+  }
+
+  /** A sent batch put in _Chyba_ by hand, as the suite's Mailer always answers. */
+  async function batchInError(context: Context): Promise<void> {
+    let id = await uploadedId(context)
+    await context.visitor.send(`/l/${context.key}/artworks`, sendForm([id]))
+    await context.app.database.exec({
+      text: 'UPDATE artwork_batches SET mail_sent_at = NULL',
+      values: [],
+    } as never)
+  }
+
+  it('warns on the page, refuses an upload, and shows the step under the article with its link', () =>
+    withArtworksLink(async (context) => {
+      let folders = await foldersOf(context)
+      context.app.drive.trash(folders.licences)
+
+      let page = textOf(await (await context.visitor.get(`/l/${context.key}/artworks`)).text())
+      assert.ok(
+        page.includes('Zkuste to později. Z tohoto odkazu teď nejde díla nahrát ani odeslat.'),
+      )
+      assert.ok(!page.includes('Šéfredakce vidí problém v aplikaci.'))
+      let refused = await upload(context)
+      assert.equal(((await refused.json()) as { outcome: string }).outcome, 'folder-gone')
+
+      let html = await (await context.editor.get('/issues/VDM_2026_5')).text()
+      let text = textOf(html)
+      assert.ok(
+        text.includes(
+          'Obnovte složku Licence (otevře se v nové záložce) z koše, nebo ji vraťte na sdílený disk Publikace.',
+        ),
+      )
+      assert.match(
+        text,
+        /Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat\. Zjištěno \d+\. \d+\. v{1,2}e? ?\d+:\d{2}\./,
+      )
+      assert.ok(!text.includes('Žádost o souhlas nejde poslat znovu.'))
+      assert.ok(html.includes(`href="https://drive.google.com/drive/folders/${folders.licences}"`))
+      assert.ok(html.includes('/issues/VDM_2026_5/articles/1/folders/check'))
+
+      let overview = textOf(await (await context.editor.get('/')).text())
+      assert.match(overview, /Aktivní 1 0 1/)
+    }))
+
+  it('says what Zkontrolovat znovu found, and the step goes once the folder is back', () =>
+    withArtworksLink(async (context) => {
+      let folders = await foldersOf(context)
+      context.app.drive.trash(folders.licences)
+      context.app.drive.trash(folders.artworks)
+      await context.visitor.get(`/l/${context.key}/artworks`)
+      /* The token from the overview: a click comes from a detail loaded before the folders came
+         back, and loading the detail again would find them itself. */
+      let check = () => context.editor.post('/issues/VDM_2026_5/articles/1/folders/check', {}, '/')
+
+      let detail = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.ok(
+        detail.includes(
+          'Obnovte složky Obrazová díla (otevře se v nové záložce) a Licence (otevře se v nové záložce) z koše, nebo je vraťte na sdílený disk Publikace.',
+        ),
+      )
+
+      assert.equal((await check()).status, 303)
+      let still = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.ok(
+        still.includes(
+          'Obnovte složky z koše, nebo je vraťte na sdílený disk Publikace. Stále nejsou dostupné.',
+        ),
+      )
+
+      context.app.drive.restore(folders.licences)
+      context.app.drive.restore(folders.artworks)
+      await check()
+      let back = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.ok(back.includes('Obě složky jsou zpátky na sdíleném disku Publikace.'))
+      assert.ok(!back.includes('Zkontrolovat znovu'))
+    }))
+
+  it('drops the record when the detail finds the folder back, without a toast', () =>
+    withArtworksLink(async (context) => {
+      let folders = await foldersOf(context)
+      context.app.drive.trash(folders.artworks)
+      await context.visitor.get(`/l/${context.key}/artworks`)
+      context.app.drive.restore(folders.artworks)
+
+      let text = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.ok(!text.includes('Zkontrolovat znovu'))
+      assert.ok(!text.includes('Složka je zpátky'))
+    }))
+
+  it('hides the batch actions a missing folder stops, and names the request in the step', () =>
+    withArtworksLink(async (context) => {
+      await batchInError(context)
+      let folders = await foldersOf(context)
+
+      context.app.drive.trash(folders.artworks)
+      await context.visitor.get(`/l/${context.key}/artworks`)
+      let html = await (await context.editor.get('/issues/VDM_2026_5')).text()
+      assert.ok(html.includes('/issues/VDM_2026_5/artworks/batches/1/resend'))
+      assert.ok(!html.includes('/issues/VDM_2026_5/artworks/batches/1/discard'))
+      assert.ok(!textOf(html).includes('Žádost o souhlas nejde poslat znovu.'))
+
+      context.app.drive.restore(folders.artworks)
+      context.app.drive.trash(folders.licences)
+      await context.visitor.get(`/l/${context.key}/artworks`)
+      let stopped = await (await context.editor.get('/issues/VDM_2026_5')).text()
+      assert.ok(!stopped.includes('/issues/VDM_2026_5/artworks/batches/1/resend'))
+      assert.ok(!stopped.includes('/issues/VDM_2026_5/artworks/batches/1/discard'))
+      assert.ok(
+        textOf(stopped).includes(
+          'Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat. Žádost o souhlas nejde poslat znovu.',
+        ),
+      )
+    }))
+
+  it('keeps the dialog Zahodit dávku open when a folder went missing meanwhile', () =>
+    withArtworksLink(async (context) => {
+      await batchInError(context)
+      let folders = await foldersOf(context)
+      let dialog = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      await context.editor.get(dialog)
+      context.app.drive.trash(folders.artworks)
+
+      let refused = await context.editor.post(dialog, {}, dialog)
+      assert.equal(refused.status, 409)
+      let text = textOf(await refused.text())
+      assert.ok(
+        text.includes(
+          'Obnovte složku Obrazová díla (otevře se v nové záložce) z koše, nebo ji vraťte na sdílený disk Publikace. Dávka zůstala, jak byla.',
+        ),
+      )
+      let batch = await createArtworkStore(context.app.database).findBatch(1)
+      assert.equal(batch?.discardedAt, null)
     }))
 })

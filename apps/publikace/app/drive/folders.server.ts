@@ -13,6 +13,13 @@ export type FolderCreated = { id: string; ok: true } | { ok: false }
 /** `gone` covers a folder deleted for good and one in the bin alike: neither is usable. */
 export type FolderPresence = 'exists' | 'gone' | 'unavailable'
 
+/**
+ * Where a folder stands, for an article's folders (`12j`): `gone` is deleted, off the shared
+ * drive, or put in the bin itself; `in-binned-parent` is in the bin only because a folder above
+ * it is, so it comes back with that one and is not named on its own.
+ */
+export type FolderStanding = 'exists' | 'gone' | 'in-binned-parent' | 'unavailable'
+
 export type FoundFolder = { id: string | null; ok: true } | { ok: false }
 
 /**
@@ -27,6 +34,7 @@ export type DriveFolders = {
   /** A folder of that name directly in the parent, not in the bin; the first if several. */
   findChild(parentId: string, name: string): Promise<FoundFolder>
   presence(folderId: string): Promise<FolderPresence>
+  standing(folderId: string): Promise<FolderStanding>
 }
 
 export type DriveFoldersOptions = {
@@ -98,6 +106,24 @@ export function createDriveFolders(options: DriveFoldersOptions): DriveFolders {
 
       logDriveFailure('a folder was not checked', describe(response, body))
       return 'unavailable'
+    },
+
+    async standing(folderId) {
+      let url = new URL(`${FILES_ENDPOINT}/${encodeURIComponent(folderId)}`)
+      url.searchParams.set('fields', 'id,trashed,explicitlyTrashed')
+      url.searchParams.set('supportsAllDrives', 'true')
+
+      let response = await call('a folder was not checked', url)
+      if (response === null) return 'unavailable'
+      if (response.status === 404) return 'gone'
+
+      let body = await readJson(response)
+      if (!response.ok) {
+        logDriveFailure('a folder was not checked', describe(response, body))
+        return 'unavailable'
+      }
+      if (body['trashed'] !== true) return 'exists'
+      return body['explicitlyTrashed'] === true ? 'gone' : 'in-binned-parent'
     },
   }
 }

@@ -15,7 +15,6 @@ import {
 import {
   articleBadge,
   ARTWORKS_DISCONNECTED_WARNING,
-  ARTWORKS_FOLDER_GONE_WARNING,
   type ArtworkFieldError,
   ARTWORKS_PAGE_LEAD,
   ARTWORKS_PAGE_TITLE,
@@ -93,10 +92,6 @@ const listStyle = css({
   '& small': { color: 'var(--text-secondary)', display: 'block', fontSize: '13px' },
 })
 
-function warningText(warning: PageWarning): string {
-  return warning === 'disconnected' ? ARTWORKS_DISCONNECTED_WARNING : ARTWORKS_FOLDER_GONE_WARNING
-}
-
 function Heading(handle: Handle<{ articleName: string }>) {
   return () => (
     <div mix={titleStyle}>
@@ -118,14 +113,16 @@ export function ArtworksFormPage(handle: Handle<ArtworksFormPageProps>) {
     return (
       <LinkPage preview={props.preview} title={ARTWORKS_PAGE_TITLE}>
         <Heading articleName={props.articleName} />
-        {props.warning === undefined ? null : props.message === undefined &&
+        {/* A missing folder's warning is the island's, which takes it away once an upload gets
+            through; the disconnected account's stays as the server drew it. */}
+        {props.warning !== 'disconnected' ? null : props.message === undefined &&
           props.messageKey !== undefined ? (
           /* A send that met the warning has no other message: the warning is what to focus. */
           <div id={MESSAGE_ID} role="alert" tabIndex={-1}>
-            <Callout tone="warning">{warningText(props.warning)}</Callout>
+            <Callout tone="warning">{ARTWORKS_DISCONNECTED_WARNING}</Callout>
           </div>
         ) : (
-          <Callout tone="warning">{warningText(props.warning)}</Callout>
+          <Callout tone="warning">{ARTWORKS_DISCONNECTED_WARNING}</Callout>
         )}
         {props.message === undefined ? null : (
           <div id={MESSAGE_ID} role="alert" tabIndex={-1}>
@@ -142,7 +139,8 @@ export function ArtworksFormPage(handle: Handle<ArtworksFormPageProps>) {
           cards={props.cards}
           errors={props.errors}
           formKey={props.formKey}
-          isClosed={props.isClosed || props.warning !== undefined}
+          isClosed={props.isClosed || props.warning === 'disconnected'}
+          isFolderGone={props.warning === 'folder-gone'}
           messageKey={props.messageKey ?? null}
           provider={props.provider}
           uploadAction={props.uploadAction}

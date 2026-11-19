@@ -14,6 +14,7 @@ import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { migrateDatabase, type OpenDatabase, openDatabase } from './data/database.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
+import { ARTWORKS_FOLDER_NAME, LICENCES_FOLDER_NAME } from './domain/article-folders.ts'
 import type { Link } from './domain/link.ts'
 import { now } from './domain/time.ts'
 import { createFakeDrive, type FakeDrive } from './drive/fake-drive.server.ts'
@@ -252,14 +253,20 @@ export async function seedIssue(
 }
 
 /**
- * A created article of the issue, with its folder on the fake drive and its link for artworks, as
- * the article page leaves it.
+ * A created article of the issue, with its folder and the two inside it on the fake drive and its
+ * link for artworks, as the article page leaves it.
  */
 export async function seedArticle(
   app: TestApp,
   issueId: number,
   name = 'Školní jídelna po roce',
-): Promise<{ articleId: number; folderId: string; link: Link }> {
+): Promise<{
+  articleId: number
+  artworksFolderId: string
+  folderId: string
+  licencesFolderId: string
+  link: Link
+}> {
   let articles = createArticleStore(app.database)
   let links = createLinkStore(app.database)
   let articleLink = await links.articleLinkOf(issueId)
@@ -276,10 +283,16 @@ export async function seedArticle(
   let folderId = `f-article-${attempt.id}`
   app.drive.seedFolder(folderId, name, issue?.folderIds.articles ?? '')
   await articles.setDriveId(attempt.id, 'folder', folderId)
+  let artworksFolderId = `f-artworks-${attempt.id}`
+  let licencesFolderId = `f-licences-${attempt.id}`
+  app.drive.seedFolder(artworksFolderId, ARTWORKS_FOLDER_NAME, folderId)
+  app.drive.seedFolder(licencesFolderId, LICENCES_FOLDER_NAME, folderId)
+  await articles.setDriveId(attempt.id, 'artworks-folder', artworksFolderId)
+  await articles.setDriveId(attempt.id, 'licences-folder', licencesFolderId)
   await articles.setDriveId(attempt.id, 'doc', `d-article-${attempt.id}`)
   await articles.setDriveId(attempt.id, 'meta', `m-article-${attempt.id}`)
   await articles.commit(attempt.id, SEEDED_AT)
   let link = (await links.artworksLinksOf(issueId)).get(attempt.id)
   if (link === undefined) throw new Error('The article has no link for artworks.')
-  return { articleId: attempt.id, folderId, link }
+  return { articleId: attempt.id, artworksFolderId, folderId, licencesFolderId, link }
 }

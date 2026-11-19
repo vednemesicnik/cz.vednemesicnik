@@ -76,6 +76,28 @@ describe('the Drive folder calls', () => {
     assert.equal(await check(answering(500, {})), 'unavailable')
   })
 
+  it('tells a folder put in the bin from one that is there only with its parent', async () => {
+    let fields = ''
+    let check = (fetch: typeof globalThis.fetch) =>
+      createDriveFolders({
+        accessToken: 'test',
+        fetch: async (url, init) => {
+          fields = new URL(String(url)).searchParams.get('fields') ?? ''
+          return fetch(url, init)
+        },
+      }).standing('fake-folder-1')
+
+    assert.equal(await check(answering(200, { trashed: false })), 'exists')
+    assert.equal(await check(answering(200, { explicitlyTrashed: true, trashed: true })), 'gone')
+    assert.equal(
+      await check(answering(200, { explicitlyTrashed: false, trashed: true })),
+      'in-binned-parent',
+    )
+    assert.equal(await check(answering(404, { error: { message: 'File not found' } })), 'gone')
+    assert.equal(await check(answering(500, {})), 'unavailable')
+    assert.equal(fields, 'id,trashed,explicitlyTrashed')
+  })
+
   it('looks a child up by its name, quoting what Drive needs quoted', async () => {
     let query = ''
     let folders = createDriveFolders({

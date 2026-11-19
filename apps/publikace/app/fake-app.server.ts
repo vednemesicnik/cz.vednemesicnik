@@ -165,12 +165,30 @@ export async function createFakeApp(): Promise<FakeApp> {
     let created = await articles.listCreated(issueId)
     let article = await articlePath()
 
+    let driveFiles = app.drive.files()
+    /* Each of the article's two folders with what is in it and a way to bin or restore it, as a
+       person would on Drive (`12j`). */
+    let folderCell = (label: string, id: string | null) => {
+      let folder = id === null ? undefined : driveFiles.find((file) => file.id === id)
+      if (id === null || folder === undefined) return html`<td>${label}: —</td>`
+      let inside = driveFiles.filter((file) => file.parentId === id && !file.isTrashed).length
+      return html`<td>
+        ${label}: ${inside} ${folder.isTrashed ? '(in the bin)' : ''}
+        ${
+          folder.isTrashed
+            ? button('/file/restore', `Restore ${label}`, { id })
+            : button('/file/trash', `Trash ${label}`, { id })
+        }
+      </td>`
+    }
     let artworksRows = created.map((each) => {
       let link = artworks.get(each.id)
       let path = link === undefined ? null : routes.links.artworks.show.href({ key: link.key })
       return html`<tr>
         <td>${each.name}</td>
         <td>${path === null ? '—' : html`<a href="${path}">${path}</a>`}</td>
+        ${folderCell('Obrazová díla', each.artworksFolderId)}
+        ${folderCell('Licence', each.licencesFolderId)}
       </tr>`
     })
     let mailRows = app.mail.map(
@@ -256,7 +274,9 @@ export async function createFakeApp(): Promise<FakeApp> {
     if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
 
     /* A control without a field takes a bare `POST` as well, as `curl -X POST` sends it. */
-    let step = request.headers.has('Content-Type') ? (await request.formData()).get('step') : null
+    let form = request.headers.has('Content-Type') ? await request.formData() : null
+    let step = form?.get('step') ?? null
+    let fileId = form?.get('id') ?? null
     switch (path) {
       case '/drive/fail':
         if (!isFakeStep(step)) return new Response('Unknown step', { status: 400 })
@@ -281,6 +301,12 @@ export async function createFakeApp(): Promise<FakeApp> {
         return backToControls()
       case '/folder/restore':
         app.drive.restore(await articlesFolderId())
+        return backToControls()
+      case '/file/trash':
+      case '/file/restore':
+        if (typeof fileId !== 'string') return new Response('No file', { status: 400 })
+        if (path === '/file/trash') app.drive.trash(fileId)
+        else app.drive.restore(fileId)
         return backToControls()
       case '/account/disconnect':
         await app.driveAccount.markDisconnected(now())

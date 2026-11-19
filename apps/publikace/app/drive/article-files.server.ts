@@ -77,7 +77,7 @@ export function createArticleFiles(options: ArticleFilesOptions): ArticleFiles {
     },
 
     async createFolder(parentId, name, attempt) {
-      let what = 'the article folder was not created'
+      let what = 'a folder of an article was not created'
       let response = await call(what, filesUrl(), {
         body: JSON.stringify({
           appProperties: { [ATTEMPT_PROPERTY]: attempt },

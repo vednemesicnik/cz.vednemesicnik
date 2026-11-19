@@ -2,6 +2,7 @@ import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
 import type { Author } from '../domain/article.ts'
+import type { ArticleFolderKind } from '../domain/article-folders.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import { insertLink } from './links.server.ts'
 
@@ -20,9 +21,13 @@ export type ArticleAuthor = Author & {
   welcomeSentAt: Temporal.Instant | null
 }
 
-export type DriveFileKind = 'doc' | 'folder' | 'meta'
+export type DriveFileKind = 'artworks-folder' | 'doc' | 'folder' | 'licences-folder' | 'meta'
+
+/** When the app found each of the article's three folders missing, `null` while it is not. */
+export type MissingFolders = Readonly<Record<ArticleFolderKind, Temporal.Instant | null>>
 
 export type ArticleRow = {
+  artworksFolderId: string | null
   authors: ArticleAuthor[]
   cleanupAt: Temporal.Instant | null
   createdAt: Temporal.Instant | null
@@ -31,8 +36,10 @@ export type ArticleRow = {
   formKey: string
   id: number
   issueId: number
+  licencesFolderId: string | null
   linkId: number
   metaFileId: string | null
+  missing: MissingFolders
   name: string
   startedAt: Temporal.Instant
 }
@@ -62,14 +69,20 @@ export type ArticleStore = {
   findById(id: number): Promise<ArticleRow | null>
   /** The issue's created articles, newest first. */
   listCreated(issueId: number): Promise<Article[]>
+  /** The folders the app reached again: their records go. */
+  clearMissing(id: number, kinds: readonly ArticleFolderKind[]): Promise<void>
   /** An attempt whose cleanup did not get through, to be tried again. */
   markForCleanup(id: number, at: Temporal.Instant): Promise<void>
+  /** The folders the app found missing; one already recorded keeps the time it was found. */
+  markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
   markWelcome(
     articleId: number,
     position: number,
     outcome: 'failed' | 'sent',
     at: Temporal.Instant,
   ): Promise<void>
+  /** Created articles with a missing folder per issue: each is one item of _Čeká na vás_. */
+  missingCountsByIssue(): Promise<Map<number, number>>
   /** Attempts whose cleanup failed, safe to take while other requests run. */
   pendingCleanups(): Promise<ArticleRow[]>
   /**
@@ -103,6 +116,7 @@ function toAuthor(row: Row): ArticleAuthor {
 
 function toRow(row: Row, authors: ArticleAuthor[]): ArticleRow {
   return {
+    artworksFolderId: text(row['artworks_folder_id']),
     authors,
     cleanupAt: parseStamp(row['cleanup_at']),
     createdAt: parseStamp(row['created_at']),
@@ -111,8 +125,14 @@ function toRow(row: Row, authors: ArticleAuthor[]): ArticleRow {
     formKey: String(row['form_key']),
     id: Number(row['id']),
     issueId: Number(row['issue_id']),
+    licencesFolderId: text(row['licences_folder_id']),
     linkId: Number(row['link_id']),
     metaFileId: text(row['meta_file_id']),
+    missing: {
+      article: parseStamp(row['folder_missing_at']),
+      artworks: parseStamp(row['artworks_folder_missing_at']),
+      licences: parseStamp(row['licences_folder_missing_at']),
+    },
     name: String(row['name']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
   }
@@ -169,6 +189,9 @@ export function createArticleStore(database: Database): ArticleStore {
         )
         let row = await byId(db, id)
         if (row === null) throw new Error('The article was not written.')
+        if (row.artworksFolderId === null || row.licencesFolderId === null) {
+          throw new Error('An article was committed without its two folders.')
+        }
         let existing = await db.exec(
           sql`SELECT id FROM links WHERE article_id = ${id} AND kind = 'artworks'`,
         )
@@ -177,6 +200,23 @@ export function createArticleStore(database: Database): ArticleStore {
         }
         return asArticle(row)
       })
+    },
+
+    async clearMissing(id, kinds) {
+      /* One statement per column, which a template cannot bind as a name. */
+      if (kinds.includes('article')) {
+        await database.exec(sql`UPDATE articles SET folder_missing_at = NULL WHERE id = ${id}`)
+      }
+      if (kinds.includes('artworks')) {
+        await database.exec(
+          sql`UPDATE articles SET artworks_folder_missing_at = NULL WHERE id = ${id}`,
+        )
+      }
+      if (kinds.includes('licences')) {
+        await database.exec(
+          sql`UPDATE articles SET licences_folder_missing_at = NULL WHERE id = ${id}`,
+        )
+      }
     },
 
     async countsByIssue() {
@@ -215,6 +255,30 @@ export function createArticleStore(database: Database): ArticleStore {
       )
     },
 
+    async markMissing(id, kinds, at) {
+      let when = stamp(at)
+      if (kinds.includes('article')) {
+        await database.exec(
+          sql`UPDATE articles SET folder_missing_at = coalesce(folder_missing_at, ${when})
+              WHERE id = ${id}`,
+        )
+      }
+      if (kinds.includes('artworks')) {
+        await database.exec(
+          sql`UPDATE articles
+              SET artworks_folder_missing_at = coalesce(artworks_folder_missing_at, ${when})
+              WHERE id = ${id}`,
+        )
+      }
+      if (kinds.includes('licences')) {
+        await database.exec(
+          sql`UPDATE articles
+              SET licences_folder_missing_at = coalesce(licences_folder_missing_at, ${when})
+              WHERE id = ${id}`,
+        )
+      }
+    },
+
     async markWelcome(articleId, position, outcome, at) {
       if (outcome === 'sent') {
         await database.exec(
@@ -227,6 +291,21 @@ export function createArticleStore(database: Database): ArticleStore {
               WHERE article_id = ${articleId} AND position = ${position} AND welcome_sent_at IS NULL`,
         )
       }
+    },
+
+    async missingCountsByIssue() {
+      let result = await database.exec(
+        sql`SELECT issue_id, count(*) AS count FROM articles
+            WHERE created_at IS NOT NULL AND (
+              folder_missing_at IS NOT NULL
+              OR artworks_folder_missing_at IS NOT NULL
+              OR licences_folder_missing_at IS NOT NULL
+            )
+            GROUP BY issue_id`,
+      )
+      let counts = new Map<number, number>()
+      for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
+      return counts
     },
 
     async pendingCleanups() {
@@ -249,6 +328,16 @@ export function createArticleStore(database: Database): ArticleStore {
       if (kind === 'folder') {
         await database.exec(
           sql`UPDATE articles SET folder_id = ${fileId} WHERE id = ${id} AND folder_id IS NULL`,
+        )
+      } else if (kind === 'artworks-folder') {
+        await database.exec(
+          sql`UPDATE articles SET artworks_folder_id = ${fileId}
+              WHERE id = ${id} AND artworks_folder_id IS NULL`,
+        )
+      } else if (kind === 'licences-folder') {
+        await database.exec(
+          sql`UPDATE articles SET licences_folder_id = ${fileId}
+              WHERE id = ${id} AND licences_folder_id IS NULL`,
         )
       } else if (kind === 'doc') {
         await database.exec(

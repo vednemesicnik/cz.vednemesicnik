@@ -1,4 +1,5 @@
 import * as assert from 'remix/assert'
+import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { createArticleStore } from '../data/articles.server.ts'
@@ -18,6 +19,7 @@ import {
   type NewBatch,
   removeArtwork,
   resendBatch,
+  resolveArtworksLink,
   submitArtworks,
   uploadArtwork,
 } from './artworks-setup.server.ts'
@@ -33,8 +35,10 @@ const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46, 1, 2])
 type Harness = {
   app: TestApp
   clock: { at: Temporal.Instant }
+  artworksFolderId: string
   drive: FakeDrive
   folderId: string
+  licencesFolderId: string
   linkKey: string
   mail: MailMessage[]
   /** Whether the Mailer answers `server_error`, for a test that switches it. */
@@ -50,7 +54,7 @@ async function withHarness(
   let app = await createTestApp()
   try {
     let issueId = await seedIssue(app, 'VDM_2026_5')
-    let { folderId, link } = await seedArticle(app, issueId)
+    let { artworksFolderId, folderId, licencesFolderId, link } = await seedArticle(app, issueId)
     let clock = { at: START }
     let mail: MailMessage[] = []
     let mailer = { isFailing: options.isMailFailing ?? false }
@@ -81,9 +85,11 @@ async function withHarness(
       })
     await run({
       app,
+      artworksFolderId,
       clock,
       drive: app.drive,
       folderId,
+      licencesFolderId,
       linkKey: link.key,
       mail,
       mailer,
@@ -124,12 +130,12 @@ function live(drive: FakeDrive) {
 }
 
 describe('uploading an artwork', () => {
-  it('stores the file at once in the article folder, named by its fingerprint and tagged', () =>
+  it('stores the file at once in Obrazová díla, named by its fingerprint and tagged', () =>
     withHarness(async (harness) => {
       let outcome = await harness.upload(FORM)
       assert.equal(outcome.kind, 'uploaded')
       let [file] = live(harness.drive)
-      assert.equal(file?.parentId, harness.folderId)
+      assert.equal(file?.parentId, harness.artworksFolderId)
       assert.match(file?.name ?? '', /^[0-9a-f]{64}\.jpg$/)
       assert.equal(file?.mimeType, 'image/jpeg')
       assert.deepEqual([...(file?.bytes ?? [])], [...JPEG])
@@ -231,7 +237,7 @@ describe('uploading an artwork', () => {
           .files()
           .filter((file) => file.isTrashed)
           .map((file) => file.parentId),
-        [harness.folderId],
+        [harness.artworksFolderId],
       )
       assert.deepEqual(await harness.setup.artworks.unsentByForm(FORM), [])
     }))
@@ -265,8 +271,10 @@ describe('sending a batch', () => {
       let pdfs = live(harness.drive).filter((file) => file.mimeType === 'application/pdf')
       assert.equal(pdfs.length, 2)
       assert.ok(pdfs.every((file) => /^[0-9a-f]{64}\.pdf$/.test(file.name)))
+      assert.ok(pdfs.every((file) => file.parentId === harness.licencesFolderId))
       let docs = harness.drive.files().filter((file) => file.name.startsWith('_tmp_licence_'))
       assert.ok(docs.length === 2 && docs.every((file) => file.isTrashed))
+      assert.ok(docs.every((file) => file.parentId === harness.licencesFolderId))
 
       let [message] = harness.mail
       assert.equal(harness.mail.length, 1)
@@ -497,7 +505,7 @@ describe('the cleanup at startup', () => {
       })
       let files = createArtworkFiles({ accessToken: 'x', fetch: harness.drive.fetch })
       let pdf = await files.upload(
-        harness.folderId,
+        harness.licencesFolderId,
         'x.pdf',
         'application/pdf',
         new Uint8Array(PDF_BYTES),
@@ -514,5 +522,110 @@ describe('the cleanup at startup', () => {
         0,
       )
       assert.equal((await harness.setup.artworks.unsentByForm(FORM)).length, 1)
+    }))
+})
+
+describe('a missing folder of the article (12j)', () => {
+  async function missingOf(harness: Harness) {
+    let link = await harness.setup.links.findByKey(harness.linkKey)
+    let article = await harness.setup.articles.findById(link?.articleId ?? 0)
+    return article?.missing
+  }
+
+  it('refuses an upload while Licence is in the bin, records it, and lets one through once it is back', () =>
+    withHarness(async (harness) => {
+      harness.drive.trash(harness.licencesFolderId)
+      assert.equal((await harness.upload(FORM)).kind, 'folder-gone')
+      assert.deepEqual(await missingOf(harness), {
+        article: null,
+        artworks: null,
+        licences: START,
+      })
+
+      harness.drive.restore(harness.licencesFolderId)
+      assert.equal((await harness.upload(FORM)).kind, 'uploaded')
+      assert.equal((await missingOf(harness))?.licences, null)
+    }))
+
+  it('names only the article folder when its folders are in the bin with it', () =>
+    withHarness(async (harness) => {
+      harness.drive.trash(harness.folderId)
+      assert.equal((await harness.upload(FORM)).kind, 'folder-gone')
+      assert.deepEqual(await missingOf(harness), {
+        article: START,
+        artworks: null,
+        licences: null,
+      })
+    }))
+
+  it('names Licence beside the article folder when somebody put it in the bin on its own', () =>
+    withHarness(async (harness) => {
+      harness.drive.trash(harness.licencesFolderId)
+      harness.drive.trash(harness.folderId)
+      assert.equal((await harness.upload(FORM)).kind, 'folder-gone')
+      assert.deepEqual(await missingOf(harness), {
+        article: START,
+        artworks: null,
+        licences: START,
+      })
+    }))
+
+  it('refuses a send while Obrazová díla is missing, and creates nothing', () =>
+    withHarness(async (harness) => {
+      let ids = [await uploaded(harness)]
+      harness.drive.remove(harness.artworksFolderId)
+      let outcome = await submitArtworks(harness.setup, batch(harness.linkKey, ids))
+      assert.equal(outcome.kind, 'folder-gone')
+      assert.equal(harness.mail.length, 0)
+      assert.equal(await harness.setup.artworks.findBatchByFormKey(FORM), null)
+      assert.notEqual((await missingOf(harness))?.artworks, null)
+    }))
+
+  it('resends without Obrazová díla, but not without Licence', () =>
+    withHarness(
+      async (harness) => {
+        let ids = [await uploaded(harness)]
+        await submitArtworks(harness.setup, batch(harness.linkKey, ids))
+        let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
+
+        harness.drive.trash(harness.licencesFolderId)
+        assert.equal((await resendBatch(harness.setup, stored?.id ?? 0)).kind, 'folder-gone')
+        assert.notEqual((await missingOf(harness))?.licences, null)
+        harness.drive.restore(harness.licencesFolderId)
+
+        harness.drive.trash(harness.artworksFolderId)
+        harness.mailer.isFailing = false
+        assert.equal((await resendBatch(harness.setup, stored?.id ?? 0)).kind, 'sent')
+      },
+      { isMailFailing: true },
+    ))
+
+  it('discards nothing while a folder of the batch is missing, and says which', () =>
+    withHarness(
+      async (harness) => {
+        let ids = [await uploaded(harness)]
+        await submitArtworks(harness.setup, batch(harness.linkKey, ids))
+        let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
+        harness.drive.trash(harness.artworksFolderId)
+
+        let outcome = await discardBatch(harness.setup, stored?.id ?? 0)
+        assert.deepEqual(outcome, { kind: 'folder-gone', missing: ['artworks'] })
+        let artwork = stored?.artworks[0]
+        let kept = harness.drive
+          .files()
+          .filter((file) => file.id === artwork?.driveFileId || file.id === artwork?.licenceFileId)
+        assert.ok(kept.length === 2 && kept.every((file) => !file.isTrashed))
+        assert.equal((await harness.setup.artworks.findBatch(stored?.id ?? 0))?.discardedAt, null)
+      },
+      { isMailFailing: true },
+    ))
+
+  it('treats an article without its two folders as no target of its link', () =>
+    withHarness(async (harness) => {
+      await harness.app.database.exec(
+        sql`UPDATE articles SET artworks_folder_id = NULL, licences_folder_id = NULL`,
+      )
+      assert.equal(await resolveArtworksLink(harness.setup, harness.linkKey), null)
+      assert.equal((await harness.upload(FORM)).kind, 'link-gone')
     }))
 })

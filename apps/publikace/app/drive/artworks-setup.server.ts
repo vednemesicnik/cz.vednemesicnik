@@ -12,6 +12,7 @@ import {
   UNSENT_UPLOAD_HOURS,
   UPLOADS_PER_HOUR_PER_LINK,
 } from '../domain/artwork.ts'
+import type { ArticleFolderKind } from '../domain/article-folders.ts'
 import type { Issue } from '../domain/issue.ts'
 import type { Link } from '../domain/link.ts'
 import { linkState } from '../domain/link.ts'
@@ -19,6 +20,7 @@ import { ARTWORK_TYPES, claimedType, MAX_FILE_BYTES } from '../domain/public/art
 import { consentEmail, licenceAttachment } from '../mail/consent-email.server.ts'
 import { isPermanentRefusal, type MailAttachment, type Mailer } from '../mail/mailer.server.ts'
 import type { DriveAccessToken } from './access-token.server.ts'
+import { type ArticleFoldersDeps, checkArticleFolders } from './article-folders.server.ts'
 import type { ArtworkFiles, Bytes } from './artwork-files.server.ts'
 import type { DriveFolders } from './folders.server.ts'
 import { licenceDocName, licenceHtml, PREVIEW_SIZE } from './licence.server.ts'
@@ -29,12 +31,15 @@ import { createLock } from './one-at-a-time.server.ts'
  * The artworks sent through an article's link (`21a`–`21d`), and what the editors-in-chief do with
  * a batch (`12a`, `12o`).
  *
- * A file is stored on Drive the moment it is chosen, tagged with its own upload key, and belongs
- * to the page that uploaded it until a batch takes it; one never sent goes to the bin 24 hours
- * later. _Odeslat díla_ is all or nothing, as every action but the issue is (`11c`): the batch's
- * row comes first, each licence's IDs are stored the moment Drive returns them, and when a step
- * fails every licence and temporary Doc of the attempt goes to the bin, found by the stored IDs
- * and by the form key on each, and the artworks go back to their page.
+ * A file is stored on Drive the moment it is chosen, in the article's `Obrazová díla`, tagged with
+ * its own upload key, and belongs to the page that uploaded it until a batch takes it; one never
+ * sent goes to the bin 24 hours later. A batch's licences and their temporary Docs go to
+ * `Licence`. Nothing happens while one of the article's three folders is missing (`12j`).
+ *
+ * _Odeslat díla_ is all or nothing, as every action but the issue is (`11c`): the batch's row
+ * comes first, each licence's IDs are stored the moment Drive returns them, and when a step fails
+ * every licence and temporary Doc of the attempt goes to the bin, found by the stored IDs and by
+ * the form key on each, and the artworks go back to their page.
  *
  * The consent request goes after the batch is committed. A batch whose request the Mailer did not
  * confirm stays committed and is _Chyba_ (`01b`): the page and the editors resend it with the same
@@ -56,19 +61,42 @@ export type ArtworksSetup = {
   token(): Promise<DriveAccessToken>
 }
 
+/** A committed article with its folder and the two inside it. */
+export type ArtworksArticle = ArticleRow & {
+  artworksFolderId: string
+  folderId: string
+  licencesFolderId: string
+}
+
 /** What a link of artworks answers through: the link, its issue and its committed article. */
 export type ArtworksTarget = {
-  article: ArticleRow & { folderId: string }
+  article: ArtworksArticle
   issue: Issue
   link: Link
+}
+
+function folderDeps(setup: ArtworksSetup, accessToken: string): ArticleFoldersDeps {
+  return { articles: setup.articles, folders: setup.folders(accessToken), now: setup.now }
+}
+
+/** `folder-gone` when any of the three is missing, which the check records on the article. */
+async function foldersOf(
+  setup: ArtworksSetup,
+  accessToken: string,
+  article: ArtworksArticle,
+  which?: readonly ArticleFolderKind[],
+): Promise<'folder-gone' | 'present' | 'unavailable'> {
+  let check = await checkArticleFolders(folderDeps(setup, accessToken), article, which)
+  if (check === 'unavailable') return 'unavailable'
+  return check.missing.length > 0 ? 'folder-gone' : 'present'
 }
 
 const lock = createLock()
 
 /**
  * The key a batch's licences and temporary Docs carry on Drive. Its own namespace, never the form
- * key as the page sent it: the article's Doc and `_meta.json` in the same folder carry the article
- * page's form key, and a cleanup by a key somebody chose must not be able to reach them.
+ * key as the page sent it: the article's own files carry the article page's form key, and a
+ * cleanup by a key somebody chose must not be able to reach them.
  */
 function licenceKey(formKey: string): string {
   return `artworks:${formKey}`
@@ -98,7 +126,11 @@ async function withBodySlot<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-/** The link, when it is a valid link of artworks to a committed article; `null` otherwise. */
+/**
+ * The link, when it is a valid link of artworks to a committed article with its two folders;
+ * `null` otherwise. An article without them exists only in databases from before the folders,
+ * and is no target.
+ */
 export async function resolveArtworksLink(
   setup: Pick<ArtworksSetup, 'articles' | 'issues' | 'links'>,
   key: string,
@@ -108,8 +140,25 @@ export async function resolveArtworksLink(
   let issue = await setup.issues.findById(link.issueId)
   if (linkState(link, issue) !== 'valid' || issue === null) return null
   let article = await setup.articles.findById(link.articleId)
-  if (article === null || article.createdAt === null || article.folderId === null) return null
-  return { article: { ...article, folderId: article.folderId }, issue, link }
+  if (
+    article === null ||
+    article.createdAt === null ||
+    article.folderId === null ||
+    article.artworksFolderId === null ||
+    article.licencesFolderId === null
+  ) {
+    return null
+  }
+  return {
+    article: {
+      ...article,
+      artworksFolderId: article.artworksFolderId,
+      folderId: article.folderId,
+      licencesFolderId: article.licencesFolderId,
+    },
+    issue,
+    link,
+  }
 }
 
 /* ─── The upload ─────────────────────────────────────────────────────────────────────────── */
@@ -146,9 +195,8 @@ export async function uploadArtwork(
   let files = setup.files(token.accessToken)
   await sweepExpired(setup, files)
 
-  let presence = await setup.folders(token.accessToken).presence(article.folderId)
-  if (presence === 'gone') return { kind: 'folder-gone' }
-  if (presence === 'unavailable') return { kind: 'unavailable' }
+  let folders = await foldersOf(setup, token.accessToken, article)
+  if (folders !== 'present') return { kind: folders }
 
   /* The count and the reservation in one step per link, before the body is read, so uploads in
      parallel cannot all pass the cap and a refused one costs nothing. */
@@ -191,10 +239,10 @@ async function store(
   let storedName = `${createHash('sha256').update(bytes).digest('hex')}${extension}`
   let uploadKey = randomUUID()
 
-  let stored = await files.upload(article.folderId, storedName, mimeType, bytes, uploadKey)
+  let stored = await files.upload(article.artworksFolderId, storedName, mimeType, bytes, uploadKey)
   if (!stored.ok) {
     /* A reply lost on the way back leaves a file only its key finds. */
-    let lost = await files.findTagged(article.folderId, uploadKey)
+    let lost = await files.findTagged(article.artworksFolderId, uploadKey)
     if (lost === null) logDriveFailure('an upload whose reply was lost was not found', uploadKey)
     for (let id of lost ?? []) await files.trash(id)
     return { kind: 'unavailable' }
@@ -230,7 +278,7 @@ async function store(
 
 /**
  * Takes an unsent upload off its page and puts its file in the bin, but only while the file is
- * still in the article folder: a file somebody moved is theirs. When Drive does not answer, the
+ * still in `Obrazová díla`: a file somebody moved is theirs. When Drive does not answer, the
  * row stays unsent, so the 24-hour sweep tries again.
  */
 export async function removeArtwork(
@@ -255,7 +303,7 @@ export async function removeArtwork(
     let isGone = await trashIfInFolder(
       setup.files(token.accessToken),
       artwork.driveFileId,
-      target.article.folderId,
+      target.article.artworksFolderId,
     )
     if (!isGone) return 'unavailable'
     await setup.artworks.markRemoved(artwork.id, setup.now())
@@ -286,9 +334,9 @@ async function sweepExpired(setup: ArtworksSetup, files: ArtworkFiles): Promise<
         let current = await setup.artworks.findUpload(artwork.id)
         if (current === null || current.batchId !== null || current.removedAt !== null) return
         let isGone =
-          article?.folderId == null
+          article?.artworksFolderId == null
             ? true
-            : await trashIfInFolder(files, artwork.driveFileId, article.folderId)
+            : await trashIfInFolder(files, artwork.driveFileId, article.artworksFolderId)
         if (isGone) await setup.artworks.markRemoved(artwork.id, setup.now())
       })
     }
@@ -352,9 +400,8 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
   )
   if (!input.artworks.every((artwork) => unsent.has(artwork.id))) return { kind: 'stale' }
 
-  let presence = await setup.folders(token.accessToken).presence(article.folderId)
-  if (presence === 'gone') return { kind: 'folder-gone' }
-  if (presence === 'unavailable') return { kind: 'unavailable' }
+  let folders = await foldersOf(setup, token.accessToken, article)
+  if (folders !== 'present') return { kind: folders }
 
   /* The limits and the row in one step per link, so sends in parallel cannot all pass them. */
   let started = await lock(`link:${target.link.id}`, async () => {
@@ -398,7 +445,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
   let pdfs: Map<number, Bytes> | null = null
   let committed: BatchRow | null = null
   try {
-    pdfs = await makeLicences(setup, files, started.batch, article.folderId)
+    pdfs = await makeLicences(setup, files, started.batch, article.licencesFolderId)
     if (pdfs !== null) committed = await setup.artworks.commitBatch(started.batch.id, setup.now())
   } catch (error) {
     logDriveFailure(
@@ -407,9 +454,9 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
     )
   }
   if (committed === null || pdfs === null) {
-    await cleanUp(setup, files, started.batch, article.folderId)
-    let after = await setup.folders(token.accessToken).presence(article.folderId)
-    return { kind: after === 'gone' ? 'folder-gone' : 'unavailable' }
+    await cleanUp(setup, files, started.batch, article.licencesFolderId)
+    let after = await foldersOf(setup, token.accessToken, article)
+    return { kind: after === 'folder-gone' ? 'folder-gone' : 'unavailable' }
   }
 
   let attachments = committed.artworks.map((artwork) =>
@@ -545,7 +592,7 @@ async function cleanUpMarked(
     return
   }
   let article = await setup.articles.findById(current.articleId)
-  await cleanUp(setup, files, current, article?.folderId ?? null)
+  await cleanUp(setup, files, current, article?.licencesFolderId ?? null)
 }
 
 /**
@@ -618,7 +665,16 @@ async function sendRequest(
 
 export type ResendOutcome =
   | { batch: BatchRow; kind: 'refused' | 'sent' }
-  | { kind: 'already-sent' | 'closed' | 'daily-cap' | 'gone' | 'pdf-gone' | 'unavailable' }
+  | {
+      kind:
+        | 'already-sent'
+        | 'closed'
+        | 'daily-cap'
+        | 'folder-gone'
+        | 'gone'
+        | 'pdf-gone'
+        | 'unavailable'
+    }
   | { kind: 'disconnected' | 'not-connected' }
 
 /**
@@ -637,6 +693,14 @@ async function resendRequest(setup: ArtworksSetup, batch: BatchRow): Promise<Res
 
   let token = await setup.token()
   if (!token.ok) return { kind: token.reason }
+  /* The PDFs are in `Licence`: the folders come first, so a missing one is named as a folder
+     and not as a PDF of the batch (`12o`). */
+  let check = await checkArticleFolders(folderDeps(setup, token.accessToken), article, [
+    'article',
+    'licences',
+  ])
+  if (check === 'unavailable') return { kind: 'unavailable' }
+  if (check.missing.length > 0) return { kind: 'folder-gone' }
   let files = setup.files(token.accessToken)
   let attachments: MailAttachment[] = []
   for (let artwork of current.artworks) {
@@ -668,10 +732,11 @@ export type DiscardOutcome =
   | { batch: BatchRow; kind: 'discarded' }
   | { kind: 'already-sent' | 'closed' | 'gone' | 'unavailable' }
   | { kind: 'disconnected' | 'not-connected' }
+  | { kind: 'folder-gone'; missing: ArticleFolderKind[] }
 
 /**
  * _Zahodit dávku_ (`12o`): the batch's artworks and PDFs to the shared drive's bin, a file a
- * person moved out of the article folder left alone, and the batch kept as a record. Nothing is
+ * person moved out of `Obrazová díla` or `Licence` left alone, and the batch kept as a record. Nothing is
  * deleted for good. When Drive does not answer for a file, nothing is marked and the editors try
  * again.
  */
@@ -691,14 +756,23 @@ export async function discardBatch(setup: ArtworksSetup, batchId: number): Promi
 
     let token = await setup.token()
     if (!token.ok) return { kind: token.reason }
+    /* A file in a folder that is in the bin would come back with the folder, as a file of a
+       batch the app holds discarded: nothing goes while one of the three is missing (`12o`). */
+    let check = await checkArticleFolders(folderDeps(setup, token.accessToken), article)
+    if (check === 'unavailable') return { kind: 'unavailable' }
+    if (check.missing.length > 0) return { kind: 'folder-gone', missing: check.missing }
+    let { artworksFolderId, licencesFolderId } = article
+    if (artworksFolderId === null || licencesFolderId === null) return { kind: 'gone' }
     let files = setup.files(token.accessToken)
-    let ids = current.artworks.flatMap((artwork) =>
-      [artwork.driveFileId, artwork.licenceFileId, artwork.licenceDocId].filter(
-        (id): id is string => id !== null,
-      ),
+    let placed = current.artworks.flatMap((artwork) =>
+      [
+        { folderId: artworksFolderId, id: artwork.driveFileId },
+        { folderId: licencesFolderId, id: artwork.licenceFileId },
+        { folderId: licencesFolderId, id: artwork.licenceDocId },
+      ].filter((file): file is { folderId: string; id: string } => file.id !== null),
     )
-    for (let id of ids) {
-      if (!(await trashIfInFolder(files, id, article.folderId))) return { kind: 'unavailable' }
+    for (let file of placed) {
+      if (!(await trashIfInFolder(files, file.id, file.folderId))) return { kind: 'unavailable' }
     }
     await setup.artworks.discardBatch(current.id, setup.now())
     return { batch: current, kind: 'discarded' }

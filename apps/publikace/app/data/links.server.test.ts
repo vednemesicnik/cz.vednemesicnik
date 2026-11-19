@@ -66,6 +66,8 @@ describe('the link store', () => {
         name: 'Školní jídelna po roce',
       })
       await articles.setDriveId(attempt.id, 'folder', 'f-a')
+      await articles.setDriveId(attempt.id, 'artworks-folder', 'f-a-artworks')
+      await articles.setDriveId(attempt.id, 'licences-folder', 'f-a-licences')
       await articles.setDriveId(attempt.id, 'doc', 'd-a')
       await articles.setDriveId(attempt.id, 'meta', 'm-a')
       await articles.commit(attempt.id, AT)

@@ -49,12 +49,20 @@ export async function renderOverview(
   init?: ResponseInit,
 ): Promise<Response> {
   let articles = context.get(Articles) as ArticlesContext
-  let [issues, driveAccount, articleCounts, artworkCounts] = await Promise.all([
+  let [issues, driveAccount, articleCounts, artworkTotals, missingCounts] = await Promise.all([
     issuesOf(context).store.list(),
     driveView(context),
     articles.articles.countsByIssue(),
     articles.artworks.artworks.countsByIssue(),
+    articles.articles.missingCountsByIssue(),
   ])
+  /* _Čeká na vás_ is the artworks in _Chyba_ and one for each article with a missing folder
+     (`11a`, `12j`). */
+  let artworkCounts = new Map(artworkTotals)
+  for (let [issueId, missing] of missingCounts) {
+    let totals = artworkCounts.get(issueId) ?? { total: 0, waiting: 0 }
+    artworkCounts.set(issueId, { ...totals, waiting: totals.waiting + missing })
+  }
 
   return context.render(
     <OverviewPage
