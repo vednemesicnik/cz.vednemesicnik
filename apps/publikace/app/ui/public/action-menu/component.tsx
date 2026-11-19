@@ -32,10 +32,23 @@ export type ActionMenuProps = {
  * an arrow-key menu, and it carries no `menu` roles. A click elsewhere or Escape closes it, Escape
  * returning focus to `⋯`.
  *
- * Positioned by the design system's own `.vdm-actionmenu` and `.vdm-menu`, below its trigger,
- * rather than as a popover in the top layer: the floor of `.browserslistrc` has no anchor
- * positioning to tie one to its row.
+ * Drawn by the design system's own `.vdm-actionmenu` and `.vdm-menu`, but placed `fixed` from
+ * where its trigger is, so a card that rounds its corners with `overflow: hidden` or a table that
+ * scrolls sideways cannot cut it off. Not a popover in the top layer: the floor of
+ * `.browserslistrc` has neither popovers (Firefox 125) nor anchor positioning to tie one to its
+ * row. It opens below `⋯`, above it where the window has no room below, and closes when the page
+ * scrolls or resizes, which would leave it behind its row.
  */
+
+/** The gap between `⋯` and the menu, as `.vdm-menu` puts it below its trigger. */
+const GAP = 6
+
+/**
+ * Where the open menu stands, in the trigger's own coordinates: the trigger's right edge, which
+ * the menu's right edge meets, and the menu's top. Nothing is measured against the window, whose
+ * width and height a page wider than a phone's screen would make wrong.
+ */
+type Place = { right: number; top: number }
 export const ActionMenu = clientEntry(
   import.meta.url,
   function ActionMenu(handle: Handle<ActionMenuProps>) {
@@ -43,12 +56,15 @@ export const ActionMenu = clientEntry(
     let announced = ''
     let root: HTMLElement | null = null
     let trigger: HTMLButtonElement | null = null
+    let menu: HTMLElement | null = null
+    let place: Place | null = null
     let outside: AbortController | null = null
     let menuId = `action-menu-${handle.id}`
     handle.signal.addEventListener('abort', () => outside?.abort(), { once: true })
 
     function close(shouldFocusTrigger: boolean): void {
       isOpen = false
+      place = null
       outside?.abort()
       outside = null
       handle.update()
@@ -56,7 +72,10 @@ export const ActionMenu = clientEntry(
     }
 
     function open(): void {
+      if (trigger === null) return
+      let box = trigger.getBoundingClientRect()
       isOpen = true
+      place = { right: box.right, top: box.bottom + GAP }
       outside = new AbortController()
       document.addEventListener(
         'pointerdown',
@@ -65,7 +84,27 @@ export const ActionMenu = clientEntry(
         },
         { signal: outside.signal },
       )
+      /* Captured, so a table that scrolls sideways closes it too. */
+      window.addEventListener('scroll', () => close(false), {
+        capture: true,
+        signal: outside.signal,
+      })
+      window.addEventListener('resize', () => close(false), { signal: outside.signal })
       handle.update()
+      /* Measured once drawn: above `⋯` only where it fits there and not below. The visible part
+         of the page is the visual viewport, which a zoomed-out phone makes smaller. */
+      handle.queueTask(() => {
+        if (menu === null || place === null) return
+        let size = menu.getBoundingClientRect().height
+        let view = window.visualViewport
+        let visibleTop = view?.offsetTop ?? 0
+        let visibleBottom = visibleTop + (view?.height ?? window.innerHeight)
+        let isShortBelow = box.bottom + GAP + size > visibleBottom
+        if (isShortBelow && box.top - GAP - size >= visibleTop) {
+          place = { right: place.right, top: box.top - GAP - size }
+          handle.update()
+        }
+      })
     }
 
     async function copy(text: string): Promise<void> {
@@ -153,8 +192,21 @@ export const ActionMenu = clientEntry(
           >
             ⋯
           </button>
-          {isOpen ? (
-            <div class="vdm-menu vdm-menu--end" id={menuId}>
+          {isOpen && place !== null ? (
+            <div
+              class="vdm-menu vdm-menu--end"
+              id={menuId}
+              mix={ref((node) => {
+                menu = node as HTMLElement
+              })}
+              style={{
+                left: `${place.right}px`,
+                position: 'fixed',
+                right: 'auto',
+                top: `${place.top}px`,
+                transform: 'translateX(-100%)',
+              }}
+            >
               {items.map(itemView)}
             </div>
           ) : null}

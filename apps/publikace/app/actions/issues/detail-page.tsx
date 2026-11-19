@@ -246,6 +246,10 @@ const ARTICLE_COLUMNS = 'minmax(180px, 3fr) 160px minmax(110px, 1fr) 44px'
 
 const quietStyle = css({ color: 'var(--text-tertiary)' })
 
+/* Holds the hidden name of the actions column: an absolute `.vdm-sr-only` with no positioned
+   ancestor escapes the table that scrolls sideways on a phone and widens the whole page. */
+const actionHeaderStyle = css({ position: 'relative' })
+
 const artworksCellStyle = css({
   display: 'flex',
   flexDirection: 'column',
@@ -470,7 +474,7 @@ function Articles(handle: Handle<{ articles: readonly ArticleRowView[] }>) {
               <span role="columnheader">Článek</span>
               <span role="columnheader">Stav</span>
               <span role="columnheader">Obrazová díla</span>
-              <span role="columnheader">
+              <span mix={actionHeaderStyle} role="columnheader">
                 <span class="vdm-sr-only">Akce</span>
               </span>
             </TableRow>
@@ -576,7 +580,7 @@ function Artworks(handle: Handle<{ artworks: ArtworksView; csrfToken: string }>)
               <span role="columnheader">{PROVIDER_COLUMN}</span>
               <span role="columnheader">{AUTHOR_SOURCE_COLUMN}</span>
               <span role="columnheader">{STATE_COLUMN}</span>
-              <span role="columnheader">
+              <span mix={actionHeaderStyle} role="columnheader">
                 <span class="vdm-sr-only">Akce</span>
               </span>
             </TableRow>

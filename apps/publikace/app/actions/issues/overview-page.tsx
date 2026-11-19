@@ -83,6 +83,10 @@ const phoneOnlyStyle = css({ display: 'none', [PHONE]: { display: 'block' } })
 
 const quietStyle = css({ color: 'var(--text-tertiary)' })
 
+/* Holds the hidden name of the actions column: an absolute `.vdm-sr-only` with no positioned
+   ancestor escapes the table that scrolls sideways on a phone and widens the whole page. */
+const actionHeaderStyle = css({ position: 'relative' })
+
 /*
  * `11e`: a row is two lines, and the whole row leads to the detail. The name's link is
  * stretched over the row; _Dokončit vydání_ stands above it, so it stays its own target.
@@ -268,7 +272,7 @@ function IssueList(
                   <span role="columnheader">Články</span>
                   <span role="columnheader">Obrazová díla</span>
                   <span role="columnheader">Čeká na vás</span>
-                  <span role="columnheader">
+                  <span mix={actionHeaderStyle} role="columnheader">
                     <span class="vdm-sr-only">Akce</span>
                   </span>
                 </TableRow>
