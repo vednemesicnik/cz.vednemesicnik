@@ -1,4 +1,3 @@
-import { logger, type LoggerOptions } from 'remix/middleware/logger'
 import type { Middleware } from 'remix/router'
 
 /**
@@ -13,8 +12,7 @@ import type { Middleware } from 'remix/router'
  * no sign-in to ride on.
  *
  * Of those, the key is the one whoever holds it can use from anywhere, so a log line names the
- * page without it (`/l/…/article`): logs are read and exported for other reasons, and on Fly.io
- * they leave the machine.
+ * page without it (`/l/…/article`), as `request-log.server.ts` writes it.
  */
 
 const PUBLIC_LINK_PREFIX = '/l/'
@@ -29,29 +27,6 @@ export function withoutLinkKey(pathname: string): string {
   let rest = pathname.slice(PUBLIC_LINK_PREFIX.length)
   let slash = rest.indexOf('/')
   return `${PUBLIC_LINK_PREFIX}…${slash === -1 ? '' : rest.slice(slash)}`
-}
-
-/**
- * Remix's `logger()`, with a shared link's key left out of the line.
- *
- * The logger offers no hook for the path, only the finished line, so for a request under `/l/`
- * it gets a `log` that replaces that request's own pathname — the string `%path` starts with —
- * rather than a pattern that would guess where a key is. The same `log` is `context.logger`, so
- * whatever a controller logs loses the key too.
- */
-export function logRequests(options: LoggerOptions = {}): ReturnType<typeof logger> {
-  let log = options.log ?? console.log
-  let everyRequest = logger(options)
-  return (context, next) => {
-    let { pathname } = context.url
-    if (!isPublicLinkPath(pathname)) return everyRequest(context, next)
-    let redacted = withoutLinkKey(pathname)
-    let linkRequest = logger({
-      ...options,
-      log: (message) => log(message.replaceAll(pathname, redacted)),
-    })
-    return linkRequest(context, next)
-  }
 }
 
 /** Runs `middleware` for every request except those to a shared link. */

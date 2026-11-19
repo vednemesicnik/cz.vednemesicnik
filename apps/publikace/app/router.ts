@@ -60,12 +60,9 @@ import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
 import { loadIssues } from './middleware/issues.server.ts'
-import {
-  logRequests,
-  publicLinkHeaders,
-  skipForPublicLinks,
-} from './middleware/public-link.server.ts'
+import { publicLinkHeaders, skipForPublicLinks } from './middleware/public-link.server.ts'
 import { render } from './middleware/render.tsx'
+import { logRequests } from './middleware/request-log.server.ts'
 import { takeToasts } from './middleware/toasts.server.ts'
 import { routes } from './routes.ts'
 
@@ -218,7 +215,8 @@ export function createAppRouter(dependencies: AppDependencies) {
     /*
      * Ordering matters:
      *   - `logRequests()` outermost, so what it reports is the status and duration the browser
-     *     saw, a static file and a refusal included; a shared link's key stays out of the line,
+     *     saw, a static file and a refusal included; a shared link's key and a Google callback's
+     *     code stay out of the line,
      *   - `compression()` above the static files, because the stylesheet and the fonts are the
      *     largest things the app sends,
      *   - the fast exits next — `staticFiles()` and `serveAssets()` — so no file request ever
