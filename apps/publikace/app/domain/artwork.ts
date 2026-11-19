@@ -321,6 +321,13 @@ export function discardDialogText(articleName: string, email: string): string {
 export const DISCARD_CONFIRM_LABEL = 'Zahodit dávku'
 export const DISCARD_CANCEL_LABEL = 'Zrušit'
 
+/* `12o`: the dialog's Callout when the discard did not go through, the step over the state. */
+export const DISCARD_UNAVAILABLE_TITLE = 'Zkuste dávku zahodit za chvíli znovu.'
+export const DISCARD_DISCONNECTED_TITLE =
+  'Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz. Pak zkuste dávku zahodit znovu.'
+/** Drive refused to take back what the attempt had put in the bin; not in the drawing. */
+export const DISCARD_PARTLY_BINNED_TEXT = 'Část souborů už může být v koši.'
+
 /* The toasts after _Poslat žádost znovu_ and _Zahodit dávku_. */
 export function resentToast(email: string): string {
   return `Žádost o souhlas odešla na ${email}.`

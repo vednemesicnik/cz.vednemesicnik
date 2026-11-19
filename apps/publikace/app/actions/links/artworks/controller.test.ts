@@ -437,4 +437,55 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
       let batch = await createArtworkStore(context.app.database).findBatch(1)
       assert.equal(batch?.discardedAt, null)
     }))
+
+  it('keeps the dialog Zahodit dávku open with the error when Drive stops midway', () =>
+    withArtworksLink(async (context) => {
+      await batchInError(context)
+      let dialog = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      await context.editor.get(dialog)
+      context.app.drive.failTrashOf(await artworkFileOf(context))
+
+      let refused = await context.editor.post(dialog, {}, dialog)
+      assert.equal(refused.status, 409)
+      let html = await refused.text()
+      assert.ok(!html.includes('vdm-toast'))
+      assert.ok(
+        textOf(html).includes('Zkuste dávku zahodit za chvíli znovu. Dávka zůstala, jak byla.'),
+      )
+
+      /* A Drive that refuses both ways cannot take back what it may have put in the bin. */
+      context.app.drive.failStep('trash')
+      let partly = textOf(await (await context.editor.post(dialog, {}, dialog)).text())
+      assert.ok(
+        partly.includes('Zkuste dávku zahodit za chvíli znovu. Část souborů už může být v koši.'),
+      )
+      let batch = await createArtworkStore(context.app.database).findBatch(1)
+      assert.equal(batch?.discardedAt, null)
+    }))
+
+  it('keeps the dialog Zahodit dávku open with the step while the account is disconnected', () =>
+    withArtworksLink(async (context) => {
+      await batchInError(context)
+      let dialog = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      await context.editor.get(dialog)
+      await context.app.driveAccount.markDisconnected(now())
+
+      let refused = await context.editor.post(dialog, {}, dialog)
+      assert.equal(refused.status, 409)
+      let html = await refused.text()
+      assert.ok(!html.includes('vdm-toast'))
+      assert.ok(
+        textOf(html).includes(
+          'Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz. Pak zkuste dávku zahodit znovu. Dávka zůstala, jak byla.',
+        ),
+      )
+    }))
 })
+
+/** The Drive file of the batch's artwork, for failing its move to the bin alone. */
+async function artworkFileOf(context: Context): Promise<string> {
+  let batch = await createArtworkStore(context.app.database).findBatch(1)
+  let file = batch?.artworks.at(-1)?.driveFileId
+  if (file === undefined) throw new Error('No artwork')
+  return file
+}

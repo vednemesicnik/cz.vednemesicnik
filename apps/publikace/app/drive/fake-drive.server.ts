@@ -43,8 +43,12 @@ export type FakeDrive = {
   calls: string[]
   /** Creating a folder of this name answers 503 until `heal()`. */
   failCreate(name: string): void
+  /** Taking any file back out of the bin answers 503 until `heal()`. */
+  failRestore(): void
   /** Every call of this kind answers 503 until `heal()`. */
   failStep(step: FakeStep): void
+  /** Moving this file to the bin answers 503 until `heal()`; other files go as usual. */
+  failTrashOf(id: string): void
   fetch: typeof globalThis.fetch
   files(): FakeFile[]
   folders(): FakeFolder[]
@@ -88,6 +92,8 @@ export function createFakeDrive(): FakeDrive {
   let failingNames = new Set<string>()
   let losingNames = new Set<string>()
   let failingSteps = new Set<FakeStep>()
+  let failingTrashes = new Set<string>()
+  let isRestoreFailing = false
   let losingSteps = new Set<FakeStep>()
   let isDown = false
   let next = 1
@@ -330,7 +336,16 @@ export function createFakeDrive(): FakeDrive {
       if (file === undefined || !isOnSharedDrives) return failure('File not found', 404)
       if (failingSteps.has('trash')) return failure('down')
       let body = JSON.parse(String(init?.body)) as { trashed?: boolean }
-      if (body.trashed === true) file.isTrashed = true
+      if (body.trashed === false) {
+        if (isRestoreFailing) return failure('down')
+        file.isTrashed = false
+        return Response.json({ id: file.id })
+      }
+      if (body.trashed === true) {
+        if (failingTrashes.has(file.id)) return failure('down')
+        file.isTrashed = true
+        return done('trash', file.id)
+      }
       return Response.json({ id: file.id })
     }
 
@@ -356,7 +371,11 @@ export function createFakeDrive(): FakeDrive {
   return {
     calls,
     failCreate: (name) => void failingNames.add(name),
+    failRestore() {
+      isRestoreFailing = true
+    },
     failStep: (step) => void failingSteps.add(step),
+    failTrashOf: (id) => void failingTrashes.add(id),
     fetch,
     files: () => [...files.values()],
     folders: () =>
@@ -370,6 +389,8 @@ export function createFakeDrive(): FakeDrive {
       isDown = false
       failingNames.clear()
       failingSteps.clear()
+      failingTrashes.clear()
+      isRestoreFailing = false
     },
     loseReplyOnCreate: (name) => void losingNames.add(name),
     loseReplyOnStep: (step) => void losingSteps.add(step),

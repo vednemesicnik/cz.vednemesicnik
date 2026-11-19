@@ -50,6 +50,11 @@ export type ArtworkFiles = Pick<ArticleFiles, 'findTagged' | 'trash'> & {
   previewOf(fileId: string, size: number): Promise<Preview | null>
   /** A file's bytes, for attaching a stored PDF to a resent request. */
   read(fileId: string): Promise<Bytes | null>
+  /**
+   * Takes a file back out of the shared drive's bin, for a discard that Drive stopped midway
+   * (`12o`). A file not in the bin stays as it is, and one deleted for good counts as done.
+   */
+  restore(fileId: string): Promise<boolean>
   /** Stores bytes as a file in one resumable session, which takes any size Drive allows. */
   upload(
     parentId: string,
@@ -176,6 +181,22 @@ export function createArtworkFiles(options: ArtworkFilesOptions): ArtworkFiles {
       url.searchParams.set('alt', 'media')
       url.searchParams.set('supportsAllDrives', 'true')
       return bytesOf(what, await call(what, url))
+    },
+
+    async restore(fileId) {
+      let what = 'a file of a discard Drive stopped was not taken out of the bin'
+      let url = new URL(`${FILES_ENDPOINT}/${encodeURIComponent(fileId)}`)
+      url.searchParams.set('supportsAllDrives', 'true')
+      url.searchParams.set('fields', 'id')
+      let response = await call(what, url, {
+        body: JSON.stringify({ trashed: false }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      })
+      if (response === null) return false
+      if (response.ok || response.status === 404) return true
+      logDriveFailure(what, describe(response, await readJson(response)))
+      return false
     },
 
     async upload(parentId, name, mimeType, bytes, key) {

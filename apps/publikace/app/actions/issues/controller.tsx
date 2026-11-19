@@ -352,10 +352,6 @@ async function renderDetail(
   )
 }
 
-/* Not drawn: the discard's own failure, in the shape of _Zkuste dokončit vydání za chvíli znovu._,
-   not yet through the copywriter. */
-const DISCARD_UNAVAILABLE_TOAST = 'Zkuste dávku zahodit za chvíli znovu.'
-
 /** The question _Zahodit dávku_ over the detail, keeping the artworks' filter (`12o`). */
 function discardingView(context: PageContext, issue: Issue, batch: ListedBatch): DiscardView {
   let filter = filterOf(context)
@@ -557,7 +553,6 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let batch = issue === null ? null : await batchOf(context, issue, context.params.id)
         if (issue === null || batch === null) return notFound()
         let back = () => redirect(detailHref(issue, filterOf(context)), 303)
-        let { expectedEmail } = context.get(DriveAccount)
         let outcome = await discardBatch(articlesOf(context).artworks, batch.id)
         switch (outcome.kind) {
           case 'discarded':
@@ -575,18 +570,24 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
               status: IN_THE_WAY,
             })
           }
+          /* An action with a dialog keeps its error in the dialog (`12o`, `11c`). */
           case 'unavailable':
-            flashToast(context, DISCARD_UNAVAILABLE_TOAST, 'error')
-            return back()
+            return renderDetail(context, issue, {
+              discarding: {
+                ...discardingView(context, issue, batch),
+                refusal: outcome.isPartlyBinned ? 'partly-binned' : 'unavailable',
+              },
+              status: IN_THE_WAY,
+            })
+          case 'not-connected':
+          case 'disconnected':
+            return renderDetail(context, issue, {
+              discarding: { ...discardingView(context, issue, batch), refusal: 'disconnected' },
+              status: IN_THE_WAY,
+            })
           /* The provider's page sent the request while the dialog was open: nothing to discard,
              the table now says _U poskytovatele_. */
           case 'already-sent':
-            return back()
-          case 'not-connected':
-            flashToast(context, notConnectedToast(expectedEmail), 'error')
-            return back()
-          case 'disconnected':
-            flashToast(context, disconnectedBanner(expectedEmail), 'error')
             return back()
           case 'closed':
           case 'gone':

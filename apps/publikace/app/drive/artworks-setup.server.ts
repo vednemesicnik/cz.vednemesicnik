@@ -730,15 +730,20 @@ export async function resendBatch(setup: ArtworksSetup, batchId: number): Promis
 
 export type DiscardOutcome =
   | { batch: BatchRow; kind: 'discarded' }
-  | { kind: 'already-sent' | 'closed' | 'gone' | 'unavailable' }
+  | { kind: 'already-sent' | 'closed' | 'gone' }
   | { kind: 'disconnected' | 'not-connected' }
   | { kind: 'folder-gone'; missing: ArticleFolderKind[] }
+  /** `isPartlyBinned`: Drive refused to take back a file this attempt had put in the bin. */
+  | { isPartlyBinned: boolean; kind: 'unavailable' }
 
 /**
  * _Zahodit dávku_ (`12o`): the batch's artworks and PDFs to the shared drive's bin, a file a
- * person moved out of `Obrazová díla` or `Licence` left alone, and the batch kept as a record. Nothing is
- * deleted for good. When Drive does not answer for a file, nothing is marked and the editors try
- * again.
+ * person moved out of `Obrazová díla` or `Licence` left alone, and the batch kept as a record.
+ * Nothing is deleted for good.
+ *
+ * All or nothing (`11c`): where every file is gets asked before any goes, and when Drive stops
+ * midway, what this attempt put in the bin comes back out and nothing is marked. A file Drive
+ * would not take back stays in the bin, logged; the next discard counts it as done.
  */
 export async function discardBatch(setup: ArtworksSetup, batchId: number): Promise<DiscardOutcome> {
   let batch = await setup.artworks.findBatch(batchId)
@@ -755,11 +760,14 @@ export async function discardBatch(setup: ArtworksSetup, batchId: number): Promi
     if (current.mailSentAt !== null) return { kind: 'already-sent' }
 
     let token = await setup.token()
-    if (!token.ok) return { kind: token.reason }
+    if (!token.ok) {
+      if (token.reason === 'unavailable') return { isPartlyBinned: false, kind: 'unavailable' }
+      return { kind: token.reason }
+    }
     /* A file in a folder that is in the bin would come back with the folder, as a file of a
        batch the app holds discarded: nothing goes while one of the three is missing (`12o`). */
     let check = await checkArticleFolders(folderDeps(setup, token.accessToken), article)
-    if (check === 'unavailable') return { kind: 'unavailable' }
+    if (check === 'unavailable') return { isPartlyBinned: false, kind: 'unavailable' }
     if (check.missing.length > 0) return { kind: 'folder-gone', missing: check.missing }
     let { artworksFolderId, licencesFolderId } = article
     if (artworksFolderId === null || licencesFolderId === null) return { kind: 'gone' }
@@ -771,8 +779,23 @@ export async function discardBatch(setup: ArtworksSetup, batchId: number): Promi
         { folderId: licencesFolderId, id: artwork.licenceDocId },
       ].filter((file): file is { folderId: string; id: string } => file.id !== null),
     )
+    let ours: string[] = []
     for (let file of placed) {
-      if (!(await trashIfInFolder(files, file.id, file.folderId))) return { kind: 'unavailable' }
+      let place = await files.placeOf(file.id)
+      if (place.kind === 'unavailable') return { isPartlyBinned: false, kind: 'unavailable' }
+      if (place.kind === 'here' && place.parents.includes(file.folderId)) ours.push(file.id)
+    }
+    let tried: string[] = []
+    for (let id of ours) {
+      /* Tried before it is trashed: a reply Drive lost leaves the file in the bin as well, and
+         taking back one that never went changes nothing. */
+      tried.push(id)
+      if (await files.trash(id)) continue
+      let isPartlyBinned = false
+      for (let back of tried) {
+        if (!(await files.restore(back))) isPartlyBinned = true
+      }
+      return { isPartlyBinned, kind: 'unavailable' }
     }
     await setup.artworks.discardBatch(current.id, setup.now())
     return { batch: current, kind: 'discarded' }

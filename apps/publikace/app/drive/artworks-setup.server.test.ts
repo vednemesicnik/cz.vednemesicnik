@@ -123,6 +123,30 @@ function batch(linkKey: string, ids: number[], overrides: Partial<NewBatch> = {}
   }
 }
 
+/** A batch of two artworks in _Chyba_, its e-mail unconfirmed. */
+async function twoArtworkBatch(harness: Harness) {
+  let ids = [await uploaded(harness), await uploaded(harness, FORM, 'jidelna-2.jpg')]
+  await submitArtworks(harness.setup, batch(harness.linkKey, ids))
+  let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
+  if (stored === null) throw new Error('No batch')
+  return stored
+}
+
+/** The batch's artworks and PDFs that are in the bin, in the batch's order. */
+function binned(drive: FakeDrive, stored: { artworks: readonly ArtworkFileIds[] }): string[] {
+  let trashed = new Set(
+    drive
+      .files()
+      .filter((file) => file.isTrashed)
+      .map((file) => file.id),
+  )
+  return stored.artworks
+    .flatMap((artwork) => [artwork.driveFileId, artwork.licenceFileId])
+    .filter((id): id is string => id !== null && trashed.has(id))
+}
+
+type ArtworkFileIds = { driveFileId: string; licenceFileId: string | null }
+
 function live(drive: FakeDrive) {
   return drive
     .files()
@@ -616,6 +640,73 @@ describe('a missing folder of the article (12j)', () => {
           .filter((file) => file.id === artwork?.driveFileId || file.id === artwork?.licenceFileId)
         assert.ok(kept.length === 2 && kept.every((file) => !file.isTrashed))
         assert.equal((await harness.setup.artworks.findBatch(stored?.id ?? 0))?.discardedAt, null)
+      },
+      { isMailFailing: true },
+    ))
+
+  it('takes back out of the bin what a discard Drive stopped midway had put there', () =>
+    withHarness(
+      async (harness) => {
+        let stored = await twoArtworkBatch(harness)
+        harness.drive.failTrashOf(stored.artworks[1]?.driveFileId ?? '')
+
+        assert.deepEqual(await discardBatch(harness.setup, stored.id), {
+          isPartlyBinned: false,
+          kind: 'unavailable',
+        })
+        assert.deepEqual(binned(harness.drive, stored), [])
+        assert.equal((await harness.setup.artworks.findBatch(stored.id))?.discardedAt, null)
+
+        harness.drive.heal()
+        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'discarded')
+        assert.equal(binned(harness.drive, stored).length, 4)
+      },
+      { isMailFailing: true },
+    ))
+
+  it('leaves a PDF a person had put in the bin there when a discard is taken back', () =>
+    withHarness(
+      async (harness) => {
+        let stored = await twoArtworkBatch(harness)
+        let pdf = stored.artworks[0]?.licenceFileId ?? ''
+        harness.drive.trash(pdf)
+        harness.drive.failTrashOf(stored.artworks[1]?.driveFileId ?? '')
+
+        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'unavailable')
+        assert.deepEqual(binned(harness.drive, stored), [pdf])
+      },
+      { isMailFailing: true },
+    ))
+
+  it('takes back a file whose move to the bin Drive did but never confirmed', () =>
+    withHarness(
+      async (harness) => {
+        let stored = await twoArtworkBatch(harness)
+        harness.drive.loseReplyOnStep('trash')
+
+        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'unavailable')
+        assert.deepEqual(binned(harness.drive, stored), [])
+      },
+      { isMailFailing: true },
+    ))
+
+  it('says so when Drive would not take back what the discard had put in the bin', () =>
+    withHarness(
+      async (harness) => {
+        let stored = await twoArtworkBatch(harness)
+        harness.drive.failTrashOf(stored.artworks[1]?.driveFileId ?? '')
+        harness.drive.failRestore()
+
+        assert.deepEqual(await discardBatch(harness.setup, stored.id), {
+          isPartlyBinned: true,
+          kind: 'unavailable',
+        })
+        assert.equal(binned(harness.drive, stored).length, 2)
+        assert.equal((await harness.setup.artworks.findBatch(stored.id))?.discardedAt, null)
+
+        harness.drive.heal()
+        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'discarded')
+        assert.equal(binned(harness.drive, stored).length, 4)
       },
       { isMailFailing: true },
     ))

@@ -18,6 +18,9 @@ import {
   resendLabel,
   DISCARD_CANCEL_LABEL,
   DISCARD_CONFIRM_LABEL,
+  DISCARD_DISCONNECTED_TITLE,
+  DISCARD_PARTLY_BINNED_TEXT,
+  DISCARD_UNAVAILABLE_TITLE,
   discardDialogText,
   discardDialogTitle,
   isWaiting,
@@ -151,6 +154,20 @@ export type DiscardView = {
   email: string
   /** The confirm met a folder gone meanwhile: nothing went to the bin (`12o`). */
   folderGone?: { heading: readonly HeadingPart[]; urls: MissingFoldersView['urls'] }
+  /**
+   * The confirm did not go through (`12o`): Drive stopped, and the batch is whole again or
+   * `partly-binned` when Drive would not take a file back; or the account is not connected.
+   */
+  refusal?: DiscardRefusal
+}
+
+export type DiscardRefusal = 'disconnected' | 'partly-binned' | 'unavailable'
+
+/** Each refusal's step and the state under it, the shape of the missing folder's Callout. */
+const DISCARD_REFUSALS: Record<DiscardRefusal, { text: string; title: string }> = {
+  disconnected: { text: DISCARD_KEPT_TEXT, title: DISCARD_DISCONNECTED_TITLE },
+  'partly-binned': { text: DISCARD_PARTLY_BINNED_TEXT, title: DISCARD_UNAVAILABLE_TITLE },
+  unavailable: { text: DISCARD_KEPT_TEXT, title: DISCARD_UNAVAILABLE_TITLE },
 }
 
 export type DetailPageProps = {
@@ -615,6 +632,21 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
                   urls={discarding.folderGone.urls}
                 />
                 <p style={{ margin: 0 }}>{DISCARD_KEPT_TEXT}</p>
+              </Callout>
+            </div>
+          )}
+          {discarding.refusal === undefined ? null : (
+            <div role="alert">
+              <Callout tone="error">
+                {/* The account's address does not break by itself, and on a phone it would widen
+                    the dialog past the screen. */}
+                <p
+                  class="vdm-callout__title"
+                  style={{ margin: '0 0 4px', overflowWrap: 'anywhere' }}
+                >
+                  {DISCARD_REFUSALS[discarding.refusal].title}
+                </p>
+                <p style={{ margin: 0 }}>{DISCARD_REFUSALS[discarding.refusal].text}</p>
               </Callout>
             </div>
           )}
