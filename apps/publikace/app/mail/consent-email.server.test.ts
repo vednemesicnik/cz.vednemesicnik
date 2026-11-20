@@ -53,6 +53,21 @@ describe('the consent request', () => {
     assert.ok(!html.includes('<po>'))
   })
 
+  it('opens with the logo of the magazine from its website', () => {
+    let html = message().htmlBody
+    assert.ok(
+      html.includes(
+        '<body style="margin:0;padding:24px;font-family:\'Helvetica Neue\',Arial,sans-serif"><img src="https://vednemesicnik.cz/images/email-logo.png" width="36" height="36" alt="Vedneměsíčník"',
+      ),
+    )
+  })
+
+  it('asks for the „Souhlasím“ reply in a paragraph of its own', () => {
+    let html = message().htmlBody
+    assert.ok(html.includes('jediným slovem <strong>„Souhlasím“</strong>.</p>'))
+    assert.ok(html.includes('">Takovou odpověď zpracujeme automaticky, jiné znění'))
+  })
+
   it('sets no text or background colour, and frames the terms with a border alone', () => {
     let html = message().htmlBody
     assert.ok(!/[;"]color:/.test(html.replace(/<title>.*<\/title>/, '')))
@@ -95,8 +110,11 @@ describe('the welcome e-mail', () => {
       to: 'tereza.vlkova@external.test',
     }).htmlBody
     assert.ok(
-      html.includes('Když přibude nová připomínka, pošleme vám e-mailem odkaz do dokumentu'),
+      html.includes(
+        'Souhrnné upozornění s odkazem do dokumentu vám pošleme e-mailem jen tehdy, když přibudou nové připomínky.',
+      ),
     )
+    assert.ok(!html.includes('čtyřikrát'))
     assert.ok(html.includes('Komentáře a odpovědi autorů článku při tom vynecháváme.'))
   })
 })

@@ -41,7 +41,20 @@ export function houseEnding(ending: { question: string; reason: string; signOff:
   ].join('')
 }
 
-/** The document around a body, with the subject as its title. */
+/**
+ * The magazine's logo at the top of every e-mail, as the magazine's own e-mails carry it (`f1a2evxo`):
+ * one address on the magazine's website, so the logo changes everywhere at once. It is a PNG with
+ * a transparent ground, so it sets no area a client in dark mode would have to invert.
+ */
+export const EMAIL_LOGO_URL = 'https://vednemesicnik.cz/images/email-logo.png'
+
+const LOGO = `<img src="${EMAIL_LOGO_URL}" width="36" height="36" alt="Vedneměsíčník" style="display:block;width:36px;height:36px;border:0;margin:0 0 18px">`
+
+/**
+ * The document around a body, with the subject as its title and the logo above it. The font is
+ * the stack every e-mail of the magazine uses: a mail client loads no web font, so Inter would
+ * reach only the few who have it installed.
+ */
 export function htmlDocument(subject: string, body: string): string {
-  return `<!doctype html><html lang="cs"><head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head><body style="margin:0;padding:24px;font-family:Inter,Arial,sans-serif">${body}</body></html>`
+  return `<!doctype html><html lang="cs"><head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head><body style="margin:0;padding:24px;font-family:'Helvetica Neue',Arial,sans-serif">${LOGO}${body}</body></html>`
 }

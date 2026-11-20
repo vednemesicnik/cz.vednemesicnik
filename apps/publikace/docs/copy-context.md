@@ -39,8 +39,9 @@ v e-mailu, tedy nejen s textem finální verze: i s jejím zveřejněním, s lic
 s jazykovými úpravami a zkrácením a s tvarem jména v podpisu.
 
 **Komentáře a návrhy úprav** v dokumentu píše kdokoli, kdo ho má otevřený, nejčastěji při
-korektuře, až je text dopsaný. Autorům o nich chodí e-mail nejvýš čtyřikrát denně, a jen když
-v některém jejich článku přibylo něco nového. E-mail říká, _že_ v článku přibyly komentáře,
+korektuře, až je text dopsaný. Autorům o nich chodí souhrnný e-mail, a jen když v některém jejich
+článku přibylo něco nového: co přibude mezi dvěma běhy úlohy, spojí do jednoho. Kolikrát denně
+úloha běží, texty pro autora neříkají. E-mail říká, _že_ v článku přibyly komentáře,
 odpovědi nebo návrhy úprav, ne _co_ v nich je: u každého článku má odkaz do dokumentu. Komentáře
 a odpovědi autorů článku do něj nejdou; návrhy úprav autora nemají, takže jdou všechny. Tomu
 všemu e-mail říká **připomínky**.

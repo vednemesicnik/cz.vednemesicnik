@@ -98,7 +98,7 @@ export const OPEN_DOCUMENT_LABEL = 'Otevřít dokument'
 export const UPLOAD_ARTWORKS_LABEL = 'Nahrát obrazová díla'
 export const WHAT_NEXT_TITLE = 'Co bude dál'
 export const WHAT_NEXT_STEPS: readonly string[] = [
-  'V dokumentu může komentovat každý, nejčastěji při korektuře. Upozornění posíláme e-mailem nejvýš čtyřikrát denně.',
+  'V dokumentu může komentovat každý, nejčastěji při korektuře. Souhrnné upozornění e-mailem posíláme jen tehdy, když přibudou připomínky.',
   'Až text dopíšete, dejte šéfredakci vědět, že je připravený ke korektuře.',
   'Po korektuře přijde e-mail s finální verzí.',
   'Souhlas dáte odpovědí přesně „Souhlasím“.',

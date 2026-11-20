@@ -85,7 +85,8 @@ export function consentEmail(details: ConsentDetails): MailMessage {
     `<p style="${PARAGRAPH_STYLE}">v souvislosti s připravovanou publikací vašich obrazových děl v časopisu Vedneměsíčník vás prosíme o potvrzení níže uvedeného souhlasu s jejich užitím.</p>`,
     `<div style="${FRAME}">${terms(details.issueName, details.artworks)}</div>`,
     `<p style="${PARAGRAPH_STYLE}">Přílohy tohoto e-mailu s náhledy děl tvoří nedílnou součást tohoto souhlasu.</p>`,
-    `<p style="${PARAGRAPH_STYLE}">Prosím, potvrďte souhlas odpovědí na tento e-mail jediným slovem <strong>„Souhlasím“</strong>. Takovou odpověď zpracujeme automaticky, jiné znění vyžaduje ruční kontrolu. Pokud máte dotaz nebo připomínku, napište je do odpovědi.</p>`,
+    `<p style="${PARAGRAPH_STYLE}">Prosím, potvrďte souhlas odpovědí na tento e-mail jediným slovem <strong>„Souhlasím“</strong>.</p>`,
+    `<p style="${PARAGRAPH_STYLE}">Takovou odpověď zpracujeme automaticky, jiné znění vyžaduje ruční kontrolu. Pokud máte dotaz nebo připomínku, napište je do odpovědi.</p>`,
     houseEnding({
       question: CONSENT_QUESTION_LINE,
       reason: CONSENT_REASON_LINE,
