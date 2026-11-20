@@ -46,7 +46,12 @@ describe('access directory', () => {
         },
       )
       assert.deepEqual(
-        await app.directory.addGroup('eva@vednemesicnik.test', 'vybor@vednemesicnik.test', now()),
+        await app.directory.addGroup(
+          'eva@vednemesicnik.test',
+          'vybor@vednemesicnik.test',
+          null,
+          now(),
+        ),
         {
           ok: false,
           reason: 'not-admin',
@@ -131,6 +136,43 @@ describe('access directory', () => {
       assert.equal(accounts.length, 1)
       assert.equal(accounts[0]?.displayName, 'Marie Horáková')
       assert.notEqual(accounts[0]?.lastSignedInAt, null)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('stores a group’s name and keeps it current, never erasing it', async () => {
+    let app = await createTestApp()
+    try {
+      await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        'Výbor redakce',
+        now(),
+      )
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'sefredakce@vednemesicnik.test',
+        null,
+        now(),
+      )
+      let names = async () =>
+        (await app.directory.listGroups()).map((group) => [group.email, group.name])
+
+      assert.deepEqual(await names(), [
+        ['vybor@vednemesicnik.test', 'Výbor redakce'],
+        ['sefredakce@vednemesicnik.test', null],
+      ])
+
+      await app.directory.recordGroupName('vybor@vednemesicnik.test', 'Výbor redakce 2026')
+      await app.directory.recordGroupName('sefredakce@vednemesicnik.test', 'Šéfredakce')
+      await app.directory.recordGroupName('jinde@vednemesicnik.test', 'Nikde v Přístupu')
+
+      assert.deepEqual(await names(), [
+        ['vybor@vednemesicnik.test', 'Výbor redakce 2026'],
+        ['sefredakce@vednemesicnik.test', 'Šéfredakce'],
+      ])
     } finally {
       await app.close()
     }

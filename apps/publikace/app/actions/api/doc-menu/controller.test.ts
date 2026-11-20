@@ -32,7 +32,9 @@ async function setup(options: { isShared?: boolean } = {}) {
   if (options.isShared !== false) {
     app.drive.share(article.docId, { emailAddress: KOREKTORI, role: 'writer', type: 'group' })
     app.setMembership(KOREKTORI, (email) =>
-      email === JAKUB.email ? { displayName: null, status: 'member' } : { status: 'not-member' },
+      email === JAKUB.email
+        ? { displayName: null, groupName: null, status: 'member' }
+        : { groupName: null, status: 'not-member' },
     )
   }
   return { app, article, issueId }

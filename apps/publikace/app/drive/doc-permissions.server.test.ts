@@ -18,7 +18,7 @@ function listing(...pages: unknown[]) {
 }
 
 function membership(answers: Record<string, MembershipAnswer> = {}): MembershipCheck {
-  return async (_email, group) => answers[group] ?? { status: 'not-member' }
+  return async (_email, group) => answers[group] ?? { groupName: null, status: 'not-member' }
 }
 
 function permissions(fetch: typeof globalThis.fetch, checkMembership = membership()) {
@@ -83,8 +83,8 @@ describe('whether an address may edit a Doc', () => {
         membership({ 'korektori@vednemesicnik.test': answer }),
       ).canEdit('doc-1', JAKUB)
 
-    assert.equal(await ask({ displayName: null, status: 'member' }), 'yes')
-    assert.equal(await ask({ status: 'not-member' }), 'no')
+    assert.equal(await ask({ displayName: null, groupName: null, status: 'member' }), 'yes')
+    assert.equal(await ask({ groupName: null, status: 'not-member' }), 'no')
     assert.equal(await ask({ status: 'unavailable' }), 'unavailable')
     assert.equal(await ask({ status: 'unknown-group' }), 'unavailable')
     assert.equal(await ask({ status: 'unavailable' }, [{ role: 'writer', type: 'anyone' }]), 'yes')

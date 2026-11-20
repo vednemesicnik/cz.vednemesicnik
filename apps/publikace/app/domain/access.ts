@@ -63,9 +63,16 @@ export function unknownGroupMessage(email: string): string {
 export const MEMBERSHIP_UNAVAILABLE_MESSAGE =
   'Zkuste skupinu přidat za chvíli znovu. Členství teď nelze ověřit.'
 
-/** `14b`, the toast after adding. */
-export function addedMessage(kind: AccessKind, email: string): string {
-  return kind === 'account' ? `${email} má přístup.` : `Členové skupiny ${email} mají přístup.`
+/**
+ * `14b`, the toast after adding, with the group's name when the service gave one.
+ *
+ * A group's toast says it was added rather than that its members have access: a Google group can
+ * have members outside the domain, who never sign in (`ooltisq0`, worded by the copywriter). An
+ * account can only be added on the domain, so its toast can say it has access.
+ */
+export function addedMessage(kind: AccessKind, email: string, groupName: string | null): string {
+  if (kind === 'account') return `${email} má přístup.`
+  return groupName === null ? `Přidána skupina ${email}.` : `Přidána skupina „${groupName}“.`
 }
 
 /**

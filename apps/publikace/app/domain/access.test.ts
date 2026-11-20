@@ -51,12 +51,19 @@ describe('the words of 14b', () => {
       'Skupina vybor@vednemesicnik.test už je přidaná.',
     )
     assert.equal(
-      addedMessage('account', 'eva@vednemesicnik.test'),
+      addedMessage('account', 'eva@vednemesicnik.test', null),
       'eva@vednemesicnik.test má přístup.',
     )
+  })
+
+  it('names an added group by its name in quotes, or by its address without one', () => {
     assert.equal(
-      addedMessage('group', 'vybor@vednemesicnik.test'),
-      'Členové skupiny vybor@vednemesicnik.test mají přístup.',
+      addedMessage('group', 'sefredakce@vednemesicnik.test', 'Šéfredakce 2026'),
+      'Přidána skupina „Šéfredakce 2026“.',
+    )
+    assert.equal(
+      addedMessage('group', 'vybor@vednemesicnik.test', null),
+      'Přidána skupina vybor@vednemesicnik.test.',
     )
   })
 

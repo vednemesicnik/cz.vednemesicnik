@@ -25,7 +25,7 @@ describe('decideAccess', () => {
     let app = await createTestApp()
     try {
       let context = {
-        checkMembership: service({ status: 'not-member' }).check,
+        checkMembership: service({ groupName: null, status: 'not-member' }).check,
         directory: app.directory,
         domain: TEST_DOMAIN,
       }
@@ -77,10 +77,16 @@ describe('decideAccess', () => {
     let app = await createTestApp()
     try {
       await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
-      await app.directory.addGroup('marie@vednemesicnik.test', 'vybor@vednemesicnik.test', now())
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        null,
+        now(),
+      )
 
       let decision = await decideAccess(profile('jan@vednemesicnik.test', { name: null }), {
-        checkMembership: service({ displayName: 'Jan Novák', status: 'member' }).check,
+        checkMembership: service({ displayName: 'Jan Novák', groupName: null, status: 'member' })
+          .check,
         directory: app.directory,
         domain: TEST_DOMAIN,
       })
@@ -99,7 +105,12 @@ describe('decideAccess', () => {
     let app = await createTestApp()
     try {
       await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
-      await app.directory.addGroup('marie@vednemesicnik.test', 'vybor@vednemesicnik.test', now())
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        null,
+        now(),
+      )
       let context = (answer: MembershipAnswer) => ({
         checkMembership: service(answer).check,
         directory: app.directory,
@@ -108,7 +119,7 @@ describe('decideAccess', () => {
 
       let no = await decideAccess(
         profile('jan@vednemesicnik.test'),
-        context({ status: 'not-member' }),
+        context({ groupName: null, status: 'not-member' }),
       )
       let down = await decideAccess(
         profile('jan@vednemesicnik.test'),

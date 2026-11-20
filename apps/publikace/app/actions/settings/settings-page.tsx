@@ -133,6 +133,14 @@ const whoTextStyle = css({
 
 const nameStyle = css({ fontSize: '14px', fontWeight: 500 })
 
+/* `14a`: _Skupiny Google_ with the one sentence on how membership is checked right under it. */
+const groupsHeadStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  marginTop: '8px',
+})
+
 /* The cards of Účty Publikace: `.acct` and `.hintline` in `14-Nastaveni-ucet.dc.html`. */
 const cardsStyle = css({
   display: 'grid',
@@ -359,7 +367,10 @@ function AccountRow(handle: Handle<AccountRowProps>) {
   }
 }
 
-/** `14a`, _Skupiny Google_: one group, by its address. */
+/**
+ * `14a`, _Skupiny Google_: one group, by its name with the address under it, as an account row
+ * stands, or by the address alone while no name is known (`ooltisq0`).
+ */
 function GroupRow(handle: Handle<{ group: AccessGroup }>) {
   return () => {
     let { group } = handle.props
@@ -370,9 +381,13 @@ function GroupRow(handle: Handle<{ group: AccessGroup }>) {
           <GroupIcon />
           <span mix={whoTextStyle}>
             <span mix={nameStyle}>
-              <Address email={group.email} />
+              {group.name === null ? <Address email={group.email} /> : group.name}
             </span>
-            <span mix={metaStyle}>členství se ověřuje při přihlášení a pak každých 10 minut</span>
+            {group.name === null ? null : (
+              <span mix={metaStyle}>
+                <Address email={group.email} />
+              </span>
+            )}
           </span>
         </span>
         <a
@@ -496,10 +511,19 @@ function ReadOnlyAccess(handle: Handle<ReadOnlyAccessProps>) {
         ) : null}
         <p mix={metaStyle}>{administratorsSentence(administrators)}</p>
         <div mix={readOnlyListStyle}>
+          {/* A group to a line, since a name may hold a comma (`ooltisq0`). */}
           {groups.length === 0 ? null : (
-            <span>
-              <strong style={{ fontWeight: 600 }}>Skupiny</strong> ·{' '}
-              {groups.map((group) => group.email).join(', ')}
+            <span style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <strong style={{ fontWeight: 600 }}>Skupiny</strong>
+              {groups.map((group) =>
+                group.name === null ? (
+                  <span>{group.email}</span>
+                ) : (
+                  <span>
+                    {group.name} <span mix={metaStyle}>· {group.email}</span>
+                  </span>
+                ),
+              )}
             </span>
           )}
           <span>
@@ -543,10 +567,14 @@ function RemovalDialog(handle: Handle<{ question: RemovalQuestion }>) {
             </>
           ) : (
             <>
-              <p class="vdm-dialog__text" style={{ overflowWrap: 'anywhere' }}>
+              <p
+                class="vdm-dialog__text"
+                style={{ display: 'flex', flexDirection: 'column', overflowWrap: 'anywhere' }}
+              >
                 <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                  {question.group.email}
+                  {question.group.name ?? question.group.email}
                 </strong>
+                {question.group.name === null ? null : <span>{question.group.email}</span>}
               </p>
               <p class="vdm-dialog__text">
                 Členové skupiny přijdou o přístup nejpozději za 10 minut, pokud tu nejsou jmenovitě
@@ -708,7 +736,13 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
                   </p>
                   {groups.length === 0 ? null : (
                     <>
-                      <h3>Skupiny Google</h3>
+                      <div mix={groupsHeadStyle}>
+                        <h3 style={{ margin: 0 }}>Skupiny Google</h3>
+                        <p mix={metaStyle}>
+                          Členství se ověřuje při přihlášení. Dokud je člověk přihlášený, ověřuje se
+                          každých 10 minut.
+                        </p>
+                      </div>
                       <div>
                         {groups.map((group) => (
                           <GroupRow group={group} />

@@ -184,6 +184,39 @@ describe('expiry', () => {
 })
 
 describe('the ten-minute check', () => {
+  it('refreshes a group’s name whenever the service names it', async () => {
+    let app = await createTestApp()
+    try {
+      await seedAdmin(app, 'marie@vednemesicnik.test')
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        'Výbor redakce',
+        Temporal.Now.instant(),
+      )
+      app.setMembership('vybor@vednemesicnik.test', () => ({
+        displayName: null,
+        groupName: 'Výbor redakce 2026',
+        status: 'member',
+      }))
+      let browser = app.browser()
+      await browser.signInAs('jan@vednemesicnik.test', 'Jan Novák', 0)
+      assert.equal((await browser.get('/')).status, 200)
+      assert.equal((await app.directory.listGroups())[0]?.name, 'Výbor redakce 2026')
+
+      // An answer without a name keeps the one already stored.
+      app.setMembership('vybor@vednemesicnik.test', () => ({
+        displayName: null,
+        groupName: null,
+        status: 'member',
+      }))
+      await browser.get('/')
+      assert.equal((await app.directory.listGroups())[0]?.name, 'Výbor redakce 2026')
+    } finally {
+      await app.close()
+    }
+  })
+
   it('signs out a member dropped from the group, keeping the address for the message', async () => {
     let app = await createTestApp()
     try {
@@ -191,9 +224,13 @@ describe('the ten-minute check', () => {
       await app.directory.addGroup(
         'marie@vednemesicnik.test',
         'vybor@vednemesicnik.test',
+        null,
         Temporal.Now.instant(),
       )
-      app.setMembership('vybor@vednemesicnik.test', () => ({ status: 'not-member' }))
+      app.setMembership('vybor@vednemesicnik.test', () => ({
+        groupName: null,
+        status: 'not-member',
+      }))
       let browser = app.browser()
       await browser.signInAs('jan@vednemesicnik.test', 'Jan Novák', 0)
 
@@ -205,7 +242,11 @@ describe('the ten-minute check', () => {
         calloutOf(html)?.text,
         'Požádejte šéfredakci o kontakt na správce Publikace. Účet jan@vednemesicnik.test nemá přístup.',
       )
-      app.setMembership('vybor@vednemesicnik.test', () => ({ displayName: null, status: 'member' }))
+      app.setMembership('vybor@vednemesicnik.test', () => ({
+        displayName: null,
+        groupName: null,
+        status: 'member',
+      }))
       assert.equal((await browser.get('/')).status, 303, 'the sign-in is gone, not paused')
     } finally {
       await app.close()
@@ -219,6 +260,7 @@ describe('the ten-minute check', () => {
       await app.directory.addGroup(
         'marie@vednemesicnik.test',
         'vybor@vednemesicnik.test',
+        null,
         Temporal.Now.instant(),
       )
       app.setMembership('vybor@vednemesicnik.test', () => ({ status: 'unavailable' }))
@@ -229,6 +271,7 @@ describe('the ten-minute check', () => {
 
       app.setMembership('vybor@vednemesicnik.test', () => ({
         displayName: 'Jan Novák',
+        groupName: null,
         status: 'member',
       }))
       assert.equal((await browser.get('/')).status, 200)

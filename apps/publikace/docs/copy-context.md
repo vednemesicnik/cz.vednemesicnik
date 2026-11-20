@@ -64,6 +64,11 @@ všemu e-mail říká **připomínky**.
 | **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.                |
 | **připojit**, **připojení** | Trvalé spojení aplikace s účtem `publikace.app@`. Ne „přihlásit“: to dělá šéfredakce. |
 
+**Skupina Google v Přístupu** neznamená, že se přihlásí každý její člen. Přihlásí se jen člen,
+který má účet na doméně redakce; skupina může mít i členy s jinou adresou a ti se nepřihlásí nikdy.
+Věta o skupině proto netvrdí, že _členové mají přístup_. Skupina má název z Google Workspace, který
+aplikace přebírá, jak je, a nezná ho vždy; bez něj ji jmenuje adresou.
+
 **Co aplikace smí dělat s Diskem účtu `publikace.app@`** se neříká přístupem ani oprávněním, ale
 činností: _povolit aplikaci pracovat se soubory na Disku_. _Povolení_ pak odkazuje jen na tuto
 činnost. _Přístup_ zůstává jen pro to, kdo se smí přihlásit.

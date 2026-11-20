@@ -41,6 +41,7 @@ import {
   createMembershipCheck,
   type MembershipCheck,
   membershipUnavailable,
+  rememberGroupNames,
 } from './auth/group-membership.server.ts'
 import {
   createIdentityTokenVerifier,
@@ -232,7 +233,10 @@ export function createAppRouter(dependencies: AppDependencies) {
   }
   let articleSetup = createArticleSetup(dependencies)
   let artworksSetup = createArtworksSetup(dependencies, articleSetup)
-  let checkMembership = dependencies.checkMembership ?? defaultMembershipCheck()
+  let checkMembership = rememberGroupNames(
+    dependencies.checkMembership ?? defaultMembershipCheck(),
+    directory.recordGroupName,
+  )
   let jobRuns = createJobRunStore(dependencies.database)
 
   let router = createRouter({

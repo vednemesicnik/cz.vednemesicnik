@@ -25,6 +25,8 @@ export type AccessGroup = {
   addedAt: Temporal.Instant
   email: string
   id: number
+  /** The group's name in Google Workspace, as the membership service last gave it. */
+  name: string | null
 }
 
 /** Why a change was not made. `not-admin` is the one the screen explains (`14b`). */
@@ -34,10 +36,20 @@ export type ChangeResult = { ok: false; reason: RefusedChange } | { ok: true }
 
 export type AccessDirectory = {
   addAccount(actor: string, email: string, when: Temporal.Instant): Promise<ChangeResult>
-  addGroup(actor: string, email: string, when: Temporal.Instant): Promise<ChangeResult>
+  addGroup(
+    actor: string,
+    email: string,
+    name: string | null,
+    when: Temporal.Instant,
+  ): Promise<ChangeResult>
   findAccount(email: string): Promise<AccessAccount | null>
   listAccounts(): Promise<AccessAccount[]>
   listGroups(): Promise<AccessGroup[]>
+  /**
+   * Keeps a listed group's name up to date with the membership service. Only a name replaces
+   * a name: an answer without one never erases it, and a group not in the list is left alone.
+   */
+  recordGroupName(email: string, name: string): Promise<void>
   /** Records a sign-in of a named account; does nothing for a member of a group. */
   recordSignIn(email: string, displayName: string, when: Temporal.Instant): Promise<void>
   /** Ends every session of the account in the same transaction. */
@@ -66,6 +78,7 @@ function toGroup(row: Row): AccessGroup {
     addedAt: parseStamp(row['added_at']) ?? Temporal.Instant.fromEpochMilliseconds(0),
     email: String(row['email']),
     id: Number(row['id']),
+    name: typeof row['name'] === 'string' ? row['name'] : null,
   }
 }
 
@@ -104,7 +117,7 @@ export function createAccessDirectory(database: Database): AccessDirectory {
       })
     },
 
-    async addGroup(actor, email, when) {
+    async addGroup(actor, email, name, when) {
       return database.transaction(async (db) => {
         if (!(await isAdmin(db, actor))) return REFUSED('not-admin')
 
@@ -112,7 +125,7 @@ export function createAccessDirectory(database: Database): AccessDirectory {
         if ((existing.rows?.length ?? 0) > 0) return REFUSED('duplicate')
 
         await db.exec(
-          sql`INSERT INTO access_groups (email, added_at) VALUES (${email}, ${stamp(when)})`,
+          sql`INSERT INTO access_groups (email, name, added_at) VALUES (${email}, ${name}, ${stamp(when)})`,
         )
         return DONE
       })
@@ -132,6 +145,13 @@ export function createAccessDirectory(database: Database): AccessDirectory {
     async listGroups() {
       let result = await database.exec(sql`SELECT * FROM access_groups ORDER BY added_at, id`)
       return (result.rows ?? []).map(toGroup)
+    },
+
+    async recordGroupName(email, name) {
+      // `IS NOT` writes nothing when the name is unchanged, which is nearly every answer.
+      await database.exec(
+        sql`UPDATE access_groups SET name = ${name} WHERE email = ${email} AND name IS NOT ${name}`,
+      )
     },
 
     async recordSignIn(email, displayName, when) {

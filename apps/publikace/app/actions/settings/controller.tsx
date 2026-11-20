@@ -150,26 +150,29 @@ export default function createSettingsController(
         let address = checkAddress(kind, value, domain)
         if (!address.ok) return refuse(address.message)
 
+        let groupName: string | null = null
         if (kind === 'group') {
           /* The service is asked before the group is stored, so a group missing from its
              `allowedGroups` shows here and not at somebody's sign-in (`03`, row 27). Whether the
-             one asking is a member does not matter; only that the service knows the group. */
+             one asking is a member does not matter; only that the service knows the group, and
+             its answer names the group either way. */
           let answer = await checkMembership(editor.email, address.email)
           if (answer.status === 'unknown-group') return refuse(unknownGroupMessage(address.email))
           if (answer.status === 'unavailable') return refuse(MEMBERSHIP_UNAVAILABLE_MESSAGE)
+          groupName = answer.groupName
         }
 
         let result =
           kind === 'account'
             ? await directory.addAccount(editor.email, address.email, now())
-            : await directory.addGroup(editor.email, address.email, now())
+            : await directory.addGroup(editor.email, address.email, groupName, now())
 
         if (!result.ok) {
           if (result.reason === 'not-admin') return roleLost(context, runs, editor)
           return refuse(duplicateMessage(kind, address.email))
         }
 
-        flashToast(context, addedMessage(kind, address.email))
+        flashToast(context, addedMessage(kind, address.email, groupName))
         return backToSettings()
       },
 

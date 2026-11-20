@@ -38,7 +38,18 @@ describe('settings, Přístup', () => {
   it('shows an administrator the lists, the menus and the add form (14a)', async () => {
     let app = await editorialBoard()
     try {
-      await app.directory.addGroup('marie@vednemesicnik.test', 'vybor@vednemesicnik.test', now())
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'sefredakce@vednemesicnik.test',
+        'Šéfredakce 2026',
+        now(),
+      )
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        null,
+        now(),
+      )
       let browser = app.browser()
       await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
       let html = await (await browser.get('/settings')).text()
@@ -49,8 +60,15 @@ describe('settings, Přístup', () => {
           'Přihlásit se mohou účty @vednemesicnik.test přidané jmenovitě nebo přes skupinu.',
         ),
       )
-      assert.ok(text.includes('Skupiny Google'))
-      assert.ok(text.includes('členství se ověřuje při přihlášení a pak každých 10 minut'))
+      assert.ok(
+        text.includes(
+          'Skupiny Google Členství se ověřuje při přihlášení. Dokud je člověk přihlášený, ověřuje se každých 10 minut.',
+        ),
+      )
+      // A named group stands by its name with the address under it, the other by its address.
+      assert.ok(text.includes('Šéfredakce 2026 sefredakce@vednemesicnik.test Odebrat'))
+      assert.ok(text.includes('vybor@vednemesicnik.test Odebrat'))
+      assert.ok(!text.includes('a pak každých 10 minut'))
       assert.ok(text.includes('Marie Horáková (vy)'))
       assert.ok(text.includes('jakub@vednemesicnik.test · poslední přihlášení dnes'))
       assert.ok(
@@ -79,12 +97,30 @@ describe('settings, Přístup', () => {
   it('shows everybody else Přístup read-only, with who changes it (14b)', async () => {
     let app = await editorialBoard()
     try {
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'sefredakce@vednemesicnik.test',
+        'Šéfredakce, 2026',
+        now(),
+      )
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        null,
+        now(),
+      )
       let browser = app.browser()
       await browser.signInAs('eva@vednemesicnik.test')
       let html = await (await browser.get('/settings')).text()
       let text = textOf(html)
 
       assert.ok(text.includes('Přístup mění správce: Marie Horáková.'))
+      // A group to a line, the name first: a comma in a name cannot run two groups together.
+      assert.ok(
+        text.includes(
+          'Skupiny Šéfredakce, 2026 · sefredakce@vednemesicnik.test vybor@vednemesicnik.test',
+        ),
+      )
       assert.ok(text.includes('Účty · 3'))
       assert.ok(!html.includes('name="email"'), 'no field')
       assert.ok(!html.includes('Další akce'), 'no menu')
@@ -172,14 +208,35 @@ describe('settings, Přístup', () => {
       assert.ok(down.includes('Zkuste skupinu přidat za chvíli znovu. Členství teď nelze ověřit.'))
       assert.equal((await app.directory.listGroups()).length, 0)
 
-      app.setMembership('vybor@vednemesicnik.test', () => ({ status: 'not-member' }))
+      app.setMembership('vybor@vednemesicnik.test', () => ({
+        groupName: null,
+        status: 'not-member',
+      }))
       let added = await browser.post('/settings/access', {
         email: 'vybor@vednemesicnik.test',
         kind: 'group',
       })
       assert.equal(added.status, 303)
       let html = await (await browser.get('/settings')).text()
-      assert.ok(html.includes('Členové skupiny vybor@vednemesicnik.test mají přístup.'))
+      assert.ok(html.includes('Přidána skupina vybor@vednemesicnik.test.'))
+
+      app.setMembership('sefredakce@vednemesicnik.test', () => ({
+        groupName: 'Šéfredakce 2026',
+        status: 'not-member',
+      }))
+      await browser.post('/settings/access', {
+        email: 'sefredakce@vednemesicnik.test',
+        kind: 'group',
+      })
+      let named = await (await browser.get('/settings')).text()
+      assert.ok(named.includes('Přidána skupina „Šéfredakce 2026“.'))
+      assert.deepEqual(
+        (await app.directory.listGroups()).map((group) => [group.email, group.name]),
+        [
+          ['vybor@vednemesicnik.test', null],
+          ['sefredakce@vednemesicnik.test', 'Šéfredakce 2026'],
+        ],
+      )
     } finally {
       await app.close()
     }
@@ -276,10 +333,15 @@ describe('settings, Přístup', () => {
     }
   })
 
-  it('asks before removing a group, by its address', async () => {
+  it('asks before removing a group, by its name and its address', async () => {
     let app = await editorialBoard()
     try {
-      await app.directory.addGroup('marie@vednemesicnik.test', 'vybor@vednemesicnik.test', now())
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        'Výbor redakce',
+        now(),
+      )
       let group = (await app.directory.listGroups())[0]?.id ?? 0
       let browser = app.browser()
       await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
@@ -289,7 +351,7 @@ describe('settings, Přístup', () => {
       )
       assert.ok(
         question.includes(
-          'Odebrat skupinu? vybor@vednemesicnik.test Členové skupiny přijdou o přístup nejpozději za 10 minut',
+          'Odebrat skupinu? Výbor redakce vybor@vednemesicnik.test Členové skupiny přijdou o přístup nejpozději za 10 minut',
         ),
       )
 

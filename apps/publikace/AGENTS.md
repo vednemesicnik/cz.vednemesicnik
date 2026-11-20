@@ -101,8 +101,9 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   scripts' template stays in `publikace@`'s drive until the switch.
 - **Two kinds of visitor.** Editors-in-chief sign in with Google, for seven days from the sign-in:
   an account on the domain `AUTHORIZED_DOMAIN` names, listed by name in Settings or a member of
-  a Google group listed there. A group is shown by its address, because the service never names
-  it. Group membership is asked of `SCRIPT__Auth__Group_Membership`,
+  a Google group listed there. A group is shown by its name from Google Workspace with its address
+  under it, or by its address alone while the service has not named it; the name decides nothing.
+  Group membership is asked of `SCRIPT__Auth__Group_Membership`,
   re-checked every ten minutes, and an unreachable service denies without remembering the
   denial. Only an administrator, always a named account and never a group, changes who may sign
   in; the first one comes from `INITIAL_ADMIN_EMAIL`, read only while the list has no named
