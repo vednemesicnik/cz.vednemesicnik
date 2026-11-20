@@ -1,3 +1,5 @@
+import { keepOneLetterWords } from '../domain/typography.ts'
+
 /**
  * The association that publishes the magazine, as its contracts and e-mails name it. The IČO is
  * a public registration number, kept here once rather than in every template, as the scripts keep
@@ -29,15 +31,15 @@ export const SMALL_STYLE = 'margin:0 0 8px;font-size:13px;line-height:1.6'
 /**
  * The ending of every e-mail, in the shape of the donation confirmation (`mpz96z33`): the sign-off
  * and the magazine's name, the line about questions, the association with its IČO, and why the
- * e-mail came.
+ * e-mail came. Every part is the e-mail's own text, so its one-letter words are kept with the next.
  */
 export function houseEnding(ending: { question: string; reason: string; signOff: string }): string {
   return [
-    `<p style="margin:24px 0 0;font-size:15px;line-height:1.6">${escapeHtml(ending.signOff)}</p>`,
+    `<p style="margin:24px 0 0;font-size:15px;line-height:1.6">${escapeHtml(keepOneLetterWords(ending.signOff))}</p>`,
     `<p style="margin:0 0 24px;font-size:15px;line-height:1.6;font-weight:600">Vedneměsíčník</p>`,
-    `<p style="${SMALL_STYLE}">${escapeHtml(ending.question)}</p>`,
+    `<p style="${SMALL_STYLE}">${escapeHtml(keepOneLetterWords(ending.question))}</p>`,
     `<p style="${SMALL_STYLE}">${escapeHtml(ASSOCIATION_NAME)} IČO: ${ASSOCIATION_ID}</p>`,
-    `<p style="${SMALL_STYLE}">${escapeHtml(ending.reason)}</p>`,
+    `<p style="${SMALL_STYLE}">${escapeHtml(keepOneLetterWords(ending.reason))}</p>`,
   ].join('')
 }
 

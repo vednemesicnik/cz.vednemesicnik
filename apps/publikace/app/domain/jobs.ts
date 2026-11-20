@@ -6,6 +6,7 @@
 import { isOverdue, type JobRunRecord, type JobState } from './job-run.ts'
 import { REPLY_CHECK_JOB, REPLY_CHECK_JOB_NAME } from './reply-check.ts'
 import { atTime, clockTime, formatDate, formatDay, formatDayMonth, pragueYear } from './time.ts'
+import { NBSP } from './typography.ts'
 
 export type Job = {
   /** What a reported failure left behind, in the history and over it: the job's own words. */
@@ -81,8 +82,6 @@ export function scheduleText(intervalMinutes: number): string {
  * The tag's line sits in a column of about 170 px. It may break between its parts, never inside
  * one: the preposition stays with its time, and _další kolem 9:30_ stays whole (`14d`).
  */
-const NBSP = '\u00a0'
-
 function unbroken(text: string): string {
   return text.replaceAll(' ', NBSP)
 }

@@ -145,6 +145,9 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
 - Časové okno se píše rozsahem: _9:00–10:00_.
 - Pomlčka ve větě je em dash `—` s mezerami.
 - Uvozovky české „…“.
+- V e-mailech zůstává jednopísmenná předložka nebo spojka (_v, s, k, z, o, u, a, i_) na řádku se
+  slovem za ní. Zařídí to aplikace a skripty, v textu se píše obyčejná mezera. Jméno nebo název,
+  které někdo zadal, zůstávají, jak je zadal.
 
 ## Co v otázce nikdy nebude
 

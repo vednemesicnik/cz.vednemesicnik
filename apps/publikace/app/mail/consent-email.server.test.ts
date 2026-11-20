@@ -6,6 +6,22 @@ import { welcomeEmail } from './welcome-email.server.ts'
 
 const HASH = 'f27d03217672c1b563f228ed4f148afa4754d20a1fbdf9f46b4192f57fdba81d'
 
+/*
+ * A one-letter preposition or conjunction followed by an ordinary space. The e-mails write a
+ * no-break space after each in their own text; a value a person typed keeps its spaces.
+ */
+const LOOSE_ONE_LETTER_WORD = /(?<=^|[\s„(])[aikosuvz] /iu
+
+/**
+ * The e-mail's own text: the tags gone, and the title with them, because it is the subject, which
+ * the reply checks search by and which stays as it is; the values a person typed taken out.
+ */
+function ownText(html: string, typed: readonly string[]): string {
+  let text = html.replace(/<title>.*<\/title>/, '').replace(/<[^>]+>/g, '\n')
+  for (let value of typed) text = text.replaceAll(value, '')
+  return text
+}
+
 function message() {
   return consentEmail({
     articleName: 'Školní jídelna <po> roce',
@@ -46,7 +62,9 @@ describe('the consent request', () => {
     assert.ok(html.includes(`Ověřovací otisk přílohy: ${HASH}`))
     assert.ok(html.includes('IČO 22851356, bezúplatnou nevýhradní licenci'))
     assert.ok(
-      html.includes('Přílohy tohoto e-mailu s náhledy děl tvoří nedílnou součást tohoto souhlasu.'),
+      html.includes(
+        'Přílohy tohoto e-mailu s\u00a0náhledy děl tvoří nedílnou součást tohoto souhlasu.',
+      ),
     )
     assert.ok(html.includes('Máte dotaz? Odpovězte na tento e-mail.'))
     assert.ok(html.includes('Vedneměsíčník, z. s. IČO: 22851356'))
@@ -74,6 +92,37 @@ describe('the consent request', () => {
     assert.ok(!/background/.test(html))
     assert.ok(html.includes('border:1px solid #6B7280;border-radius:8px;padding:16px'))
   })
+
+  it('keeps every one-letter word of its own with the next, the terms included, and typed values as typed', () => {
+    let sent = consentEmail({
+      articleName: 'Obědy v jídelně',
+      artworks: [
+        {
+          author: 'Jan z Brna',
+          pdfHash: HASH,
+          source: 'Archiv k výročí',
+          storedName: `${'3'.repeat(64)}.jpg`,
+        },
+      ],
+      attachments: [],
+      formKey: 'form-1',
+      issueName: 'VDM_2026_5',
+      tag: '20261118T134500',
+      to: 'jan.brna@external.test',
+    })
+    let html = sent.htmlBody
+    assert.ok(
+      !LOOSE_ONE_LETTER_WORD.test(
+        ownText(html, ['Obědy v jídelně', 'Jan z Brna', 'Archiv k výročí']),
+      ),
+    )
+    assert.ok(html.includes('k\u00a0užití výše uvedených děl'))
+    assert.ok(html.includes('a\u00a0to v\u00a0tištěné i\u00a0digitální podobě'))
+    assert.ok(html.includes('Autor: Jan z Brna'))
+    assert.ok(html.includes('Zdroj: Archiv k výročí'))
+    assert.ok(html.includes('Vedneměsíčník, z. s., IČO 22851356'))
+    assert.ok(sent.subject.includes('ke článku „Obědy v jídelně“'))
+  })
 })
 
 describe('the welcome e-mail', () => {
@@ -88,10 +137,10 @@ describe('the welcome e-mail', () => {
       to: 'tereza.vlkova@external.test',
     })
     assert.equal(sent.name, 'Publikace Vedneměsíčník')
-    assert.ok(sent.htmlBody.includes('S pozdravem'))
+    assert.ok(sent.htmlBody.includes('S\u00a0pozdravem'))
     assert.ok(
       sent.htmlBody.includes(
-        'Tento e-mail jste obdrželi na základě adresy uvedené u vašeho jména při založení článku.',
+        'Tento e-mail jste obdrželi na základě adresy uvedené u\u00a0vašeho jména při založení článku.',
       ),
     )
     assert.ok(!sent.htmlBody.includes('studentské nekritické noviny'))
@@ -109,10 +158,28 @@ describe('the welcome e-mail', () => {
       issueName: 'VDM_2026_5',
       to: 'tereza.vlkova@external.test',
     }).htmlBody
-    assert.ok(html.includes('Text pište přímo v dokumentu Google.'))
+    assert.ok(html.includes('Text pište přímo v\u00a0dokumentu Google.'))
     assert.ok(html.includes('Až bude text připravený ke korektuře, dejte prosím vědět šéfredakci.'))
     assert.ok(!html.includes('Souhlasím'))
     assert.ok(!html.includes('finální verzi'))
     assert.ok(!html.includes('Souhrnné upozornění'))
+  })
+
+  it('keeps every one-letter word of its own with the next, and the names as typed', () => {
+    let sent = welcomeEmail({
+      articleName: 'Obědy v jídelně',
+      artworksUrl: 'https://publikace.vednemesicnik.test/l/AAAAAAAAAAAA/artworks',
+      coauthors: ['Jan z Brna', 'Robin Malá'],
+      documentUrl: 'https://docs.google.com/document/d/x/edit',
+      formKey: 'form-1',
+      issueName: 'VDM_2026_5',
+      to: 'tereza.vlkova@external.test',
+    })
+    let html = sent.htmlBody
+    assert.ok(!LOOSE_ONE_LETTER_WORD.test(ownText(html, ['Obědy v jídelně', 'Jan z Brna'])))
+    assert.ok(html.includes('článek „Obědy v jídelně“ je zařazený'))
+    assert.ok(html.includes('podílejí Jan z Brna a\u00a0Robin Malá.'))
+    assert.ok(html.includes('Dotazy k\u00a0textu pište přímo do komentářů v\u00a0dokumentu.'))
+    assert.equal(sent.subject, 'Článek „Obědy v jídelně“ je ve vydání VDM_2026_5')
   })
 })

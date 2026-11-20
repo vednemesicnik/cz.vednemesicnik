@@ -10,6 +10,7 @@ import {
   EMPTY_AUTHOR_EMAIL_MESSAGE,
   EMPTY_AUTHOR_NAME_MESSAGE,
   INVALID_EMAIL_MESSAGE,
+  joinNames,
   LONG_ARTICLE_NAME_MESSAGE,
   MISSING_AT_MESSAGE,
   summaryTitle,
@@ -108,13 +109,20 @@ describe('summaryTitle', () => {
   })
 })
 
+describe('joinNames', () => {
+  it('joins with an ordinary a unless told otherwise', () => {
+    assert.equal(joinNames(['Alex Novák', 'Robin Malá']), 'Alex Novák a Robin Malá')
+    assert.equal(joinNames(['Alex Novák']), 'Alex Novák')
+  })
+})
+
 describe('coauthorLine', () => {
   it('is missing for a single author and follows the count otherwise', () => {
     assert.equal(coauthorLine([]), null)
     assert.equal(coauthorLine(['Ondřej Beneš']), 'Na článku se také podílí Ondřej Beneš.')
     assert.equal(
       coauthorLine(['Alex Novák', 'Robin Malá', 'Jan Novák']),
-      'Na článku se také podílejí Alex Novák, Robin Malá a Jan Novák.',
+      'Na článku se také podílejí Alex Novák, Robin Malá a\u00a0Jan Novák.',
     )
   })
 })

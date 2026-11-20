@@ -6,6 +6,7 @@
 
 import type { Author } from './public/article-form.ts'
 import { formatDayMonth } from './time.ts'
+import { NBSP } from './typography.ts'
 
 export {
   REQUIRED_LEGEND,
@@ -105,19 +106,20 @@ export const HAND_OVER_STEP = 'Až bude text připravený ke korektuře, dejte p
 export const ANOTHER_ARTICLE_LABEL = 'Založit další článek'
 
 /** `Alex Novák`, `Alex Novák a Robin Malá`, `Alex Novák, Robin Malá a Jan Novák`. */
-export function joinNames(names: readonly string[]): string {
+export function joinNames(names: readonly string[], and = ' a '): string {
   if (names.length <= 1) return names[0] ?? ''
-  return `${names.slice(0, -1).join(', ')} a ${names.at(-1)}`
+  return `${names.slice(0, -1).join(', ')}${and}${names.at(-1)}`
 }
 
 /**
  * The welcome e-mail's line about the other authors, or `null` for a single author. The verb
- * follows the count alone: the app knows no gender (`docs/copy-context.md`).
+ * follows the count alone: the app knows no gender (`docs/copy-context.md`). The _a_ before the
+ * last name is the e-mail's own word and stays with that name; the names stay as typed.
  */
 export function coauthorLine(coauthors: readonly string[]): string | null {
   if (coauthors.length === 0) return null
   let verb = coauthors.length === 1 ? 'podílí' : 'podílejí'
-  return `Na článku se také ${verb} ${joinNames(coauthors)}.`
+  return `Na článku se také ${verb} ${joinNames(coauthors, ` a${NBSP}`)}.`
 }
 
 /**

@@ -1,4 +1,5 @@
 import { consentIdempotencyKey, consentSubject } from '../domain/artwork.ts'
+import { keepOneLetterWords } from '../domain/typography.ts'
 import {
   ASSOCIATION_ID,
   escapeHtml,
@@ -17,7 +18,9 @@ import type { MailAttachment, MailMessage } from './mailer.server.ts'
  * (`SCRIPT__Publication__Artwork_Upload/consent-email.html`), in the same structure: the numbered
  * list with the stored file name, _Autor_, _Zdroj_ and _Ověřovací otisk přílohy_, and the sentence
  * on the attachments below the frame. Only the sentences around them changed, into the formal
- * voice (`mpz96z33`, `zoy6ixjt`).
+ * voice (`mpz96z33`, `zoy6ixjt`). A one-letter word is kept with the next one by a no-break space,
+ * in the terms too: that changes how a line breaks, not a word, a letter or a mark of the terms.
+ * The values a person typed go in afterwards, as typed.
  *
  * The frame is a border and nothing else: the e-mail sets no text or background colour anywhere,
  * so a client in dark mode has nothing to invert.
@@ -65,16 +68,16 @@ function artworkList(artworks: readonly ConsentArtwork[]): string {
 /** The terms, word for word as the script's template has them. */
 function terms(issueName: string, artworks: readonly ConsentArtwork[]): string {
   return [
-    `<p style="${TERM};font-weight:700">Souhlas s užitím obrazových děl</p>`,
-    `<p style="${TERM}">Poskytovatel potvrzuje, že je oprávněn udělit licenci k užití následujících obrazových děl určených k publikaci v časopisu Vedneměsíčník, číslo vydání <strong>${escapeHtml(issueName)}</strong>:</p>`,
+    `<p style="${TERM};font-weight:700">${keepOneLetterWords('Souhlas s užitím obrazových děl')}</p>`,
+    `<p style="${TERM}">${keepOneLetterWords('Poskytovatel potvrzuje, že je oprávněn udělit licenci k užití následujících obrazových děl určených k publikaci v časopisu Vedneměsíčník, číslo vydání')} <strong>${escapeHtml(issueName)}</strong>:</p>`,
     `<div style="margin:0 0 12px 12px">${artworkList(artworks)}</div>`,
-    `<p style="${TERM}">a že k dílům neváznou práva třetích osob bránící jejich užití podle této licence.</p>`,
-    `<p style="${TERM}">Poskytovatel prohlašuje, že je oprávněn tuto licenci udělit a že v případě, že by se ukázalo, že k dílům váznou práva třetích osob, nese za takovou skutečnost odpovědnost.</p>`,
-    `<p style="${TERM}">Poskytovatel tímto uděluje spolku Vedneměsíčník, z. s., IČO ${ASSOCIATION_ID}, bezúplatnou nevýhradní licenci k užití výše uvedených děl pro účely vydávání časopisu Vedneměsíčník, a to v tištěné i digitální podobě, ke zveřejnění na webových stránkách, v online archivu a pro propagaci časopisu, včetně sociálních sítí.</p>`,
-    `<p style="${TERM}">Poskytovatel souhlasí s technickými úpravami nezbytnými pro publikaci (ořez, změna rozlišení, barevné korekce), přičemž díla nebudou měněna způsobem snižujícím jejich hodnotu.</p>`,
-    `<p style="${TERM}">Poskytovatel prohlašuje, že údaje o autorech uvedené u jednotlivých děl výše jsou správné a že je oprávněn sjednat způsob označení děl uvedený v tomto odstavci. U děl s uvedeným autorem souhlasí s uvedením autora ve znění uvedeném u příslušného díla. U děl označených výše údajem „Autor: neuveden“ souhlasí s jejich užitím bez uvedení autora a prohlašuje, že je oprávněn takové užití sjednat. Tento způsob označení se vztahuje i na další užití děl podle této licence.</p>`,
-    `<p style="${TERM}">Licence se poskytuje bez územního omezení a na dobu trvání majetkových autorských práv k dílům.</p>`,
-    `<p style="margin:0;font-size:14px;line-height:1.6">Potvrzení souhlasu bude redakcí uchováno jako doklad o udělení licence.</p>`,
+    `<p style="${TERM}">${keepOneLetterWords('a že k dílům neváznou práva třetích osob bránící jejich užití podle této licence.')}</p>`,
+    `<p style="${TERM}">${keepOneLetterWords('Poskytovatel prohlašuje, že je oprávněn tuto licenci udělit a že v případě, že by se ukázalo, že k dílům váznou práva třetích osob, nese za takovou skutečnost odpovědnost.')}</p>`,
+    `<p style="${TERM}">${keepOneLetterWords(`Poskytovatel tímto uděluje spolku Vedneměsíčník, z. s., IČO ${ASSOCIATION_ID}, bezúplatnou nevýhradní licenci k užití výše uvedených děl pro účely vydávání časopisu Vedneměsíčník, a to v tištěné i digitální podobě, ke zveřejnění na webových stránkách, v online archivu a pro propagaci časopisu, včetně sociálních sítí.`)}</p>`,
+    `<p style="${TERM}">${keepOneLetterWords('Poskytovatel souhlasí s technickými úpravami nezbytnými pro publikaci (ořez, změna rozlišení, barevné korekce), přičemž díla nebudou měněna způsobem snižujícím jejich hodnotu.')}</p>`,
+    `<p style="${TERM}">${keepOneLetterWords('Poskytovatel prohlašuje, že údaje o autorech uvedené u jednotlivých děl výše jsou správné a že je oprávněn sjednat způsob označení děl uvedený v tomto odstavci. U děl s uvedeným autorem souhlasí s uvedením autora ve znění uvedeném u příslušného díla. U děl označených výše údajem „Autor: neuveden“ souhlasí s jejich užitím bez uvedení autora a prohlašuje, že je oprávněn takové užití sjednat. Tento způsob označení se vztahuje i na další užití děl podle této licence.')}</p>`,
+    `<p style="${TERM}">${keepOneLetterWords('Licence se poskytuje bez územního omezení a na dobu trvání majetkových autorských práv k dílům.')}</p>`,
+    `<p style="margin:0;font-size:14px;line-height:1.6">${keepOneLetterWords('Potvrzení souhlasu bude redakcí uchováno jako doklad o udělení licence.')}</p>`,
   ].join('')
 }
 
@@ -82,11 +85,11 @@ export function consentEmail(details: ConsentDetails): MailMessage {
   let subject = consentSubject(details.articleName, details.issueName, details.tag)
   let body = [
     `<p style="${PARAGRAPH_STYLE}">Dobrý den,</p>`,
-    `<p style="${PARAGRAPH_STYLE}">v souvislosti s připravovanou publikací vašich obrazových děl v časopisu Vedneměsíčník vás prosíme o potvrzení níže uvedeného souhlasu s jejich užitím.</p>`,
+    `<p style="${PARAGRAPH_STYLE}">${keepOneLetterWords('v souvislosti s připravovanou publikací vašich obrazových děl v časopisu Vedneměsíčník vás prosíme o potvrzení níže uvedeného souhlasu s jejich užitím.')}</p>`,
     `<div style="${FRAME}">${terms(details.issueName, details.artworks)}</div>`,
-    `<p style="${PARAGRAPH_STYLE}">Přílohy tohoto e-mailu s náhledy děl tvoří nedílnou součást tohoto souhlasu.</p>`,
+    `<p style="${PARAGRAPH_STYLE}">${keepOneLetterWords('Přílohy tohoto e-mailu s náhledy děl tvoří nedílnou součást tohoto souhlasu.')}</p>`,
     `<p style="${PARAGRAPH_STYLE}">Prosím, potvrďte souhlas odpovědí na tento e-mail jediným slovem <strong>„Souhlasím“</strong>.</p>`,
-    `<p style="${PARAGRAPH_STYLE}">Takovou odpověď zpracujeme automaticky, jiné znění vyžaduje ruční kontrolu. Pokud máte dotaz nebo připomínku, napište je do odpovědi.</p>`,
+    `<p style="${PARAGRAPH_STYLE}">${keepOneLetterWords('Takovou odpověď zpracujeme automaticky, jiné znění vyžaduje ruční kontrolu. Pokud máte dotaz nebo připomínku, napište je do odpovědi.')}</p>`,
     houseEnding({
       question: CONSENT_QUESTION_LINE,
       reason: CONSENT_REASON_LINE,

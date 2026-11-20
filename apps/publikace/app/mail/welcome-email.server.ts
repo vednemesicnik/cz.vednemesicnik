@@ -4,6 +4,7 @@ import {
   OPEN_DOCUMENT_LABEL,
   UPLOAD_ARTWORKS_LABEL,
 } from '../domain/article.ts'
+import { keepOneLetterWords } from '../domain/typography.ts'
 import {
   escapeHtml,
   houseEnding,
@@ -26,6 +27,9 @@ import type { MailMessage } from './mailer.server.ts'
  * no stylesheet, so every style is inline. Only the primary button has a colour, the design
  * system's violet with white text. The outline button's text inherits the client's, because a
  * link left without a colour turns the client's link blue.
+ *
+ * Its own sentences keep a one-letter word with the next one; the article's and the issue's names
+ * and the co-authors' go in as typed.
  */
 
 export { SENDER_NAME }
@@ -76,9 +80,9 @@ export function welcomeEmail(details: WelcomeDetails): MailMessage {
     `<p style="${PARAGRAPH}">Dobrý den,</p>`,
     `<p style="${PARAGRAPH}">článek „${article}“ je zařazený do vydání ${issue}.</p>`,
     coauthors === null ? '' : `<p style="${PARAGRAPH}">${escapeHtml(coauthors)}</p>`,
-    `<p style="${PARAGRAPH}">Text pište přímo v dokumentu Google.</p>`,
+    `<p style="${PARAGRAPH}">${keepOneLetterWords('Text pište přímo v dokumentu Google.')}</p>`,
     `<p style="${PARAGRAPH}"><a href="${escapeHtml(details.documentUrl)}" style="${PRIMARY}">${OPEN_DOCUMENT_LABEL}</a>&nbsp;&nbsp;<a href="${escapeHtml(details.artworksUrl)}" style="${OUTLINE}">${UPLOAD_ARTWORKS_LABEL}</a></p>`,
-    `<p style="${NOTE}">${HAND_OVER_STEP}</p>`,
+    `<p style="${NOTE}">${keepOneLetterWords(HAND_OVER_STEP)}</p>`,
     houseEnding({
       question: WELCOME_QUESTION_LINE,
       reason: WELCOME_REASON_LINE,
