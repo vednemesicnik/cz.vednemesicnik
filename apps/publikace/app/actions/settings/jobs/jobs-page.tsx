@@ -12,13 +12,16 @@ import { TableRow } from '../../../ui/table-row/component.tsx'
 import type { ToastMessage } from '../../../ui/toast/component.tsx'
 import { Document } from '../../document.tsx'
 
-/** The tone of each tag, as `14d`'s table colours it. */
+/**
+ * The tone of each tag, as `14d`'s table colours it. _Neběží_ is `problem` like _S chybou_: it
+ * stands under the rose banner, where grey would say nobody is waiting (`14i`).
+ */
 export const JOB_TONES: Record<JobState['kind'], StatusTone> = {
   failed: 'problem',
   never: 'neutral',
   ok: 'done',
   running: 'running',
-  stopped: 'neutral',
+  stopped: 'problem',
 }
 
 export type JobRowView = {

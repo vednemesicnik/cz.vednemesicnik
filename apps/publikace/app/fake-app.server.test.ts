@@ -165,6 +165,19 @@ describe('the fake app (pnpm app:fake)', () => {
       assert.ok((await (await get(fake, '/', { Cookie: cookie })).text()).includes(banner))
     }))
 
+  it('makes the reply check go quiet, which puts up the banner and the Neběží Callout', () =>
+    withFakeApp(async (fake) => {
+      let [cookie = ''] = ((await control(fake, '/sign-in')).headers.get('Set-Cookie') ?? '').split(
+        ';',
+      )
+      let banner = 'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.'
+
+      assert.equal((await control(fake, '/replies/silence')).status, 303)
+      assert.ok((await (await get(fake, '/', { Cookie: cookie })).text()).includes(banner))
+      let job = await (await get(fake, '/settings/jobs/artwork-replies', { Cookie: cookie })).text()
+      assert.ok(job.includes('Dejte vědět tomu, kdo má úlohu na starosti.'))
+    }))
+
   it('refuses a step it does not know and never hands /_fake to the app', () =>
     withFakeApp(async (fake) => {
       assert.equal((await control(fake, '/drive/fail', { step: 'everything' })).status, 400)

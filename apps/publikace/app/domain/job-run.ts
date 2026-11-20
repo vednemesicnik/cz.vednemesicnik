@@ -119,3 +119,13 @@ export function isFailingRepeatedly(runs: readonly JobRunRecord[], now: Temporal
     latest.every((run) => run.finishedAt === null || run.outcome === 'failed')
   )
 }
+
+/**
+ * Whether the job stands in the banner over every editor screen (`14i`): its latest runs failed
+ * twice in a row, or it is _Neběží_. `runs` come newest first, so the first is the latest. A job
+ * that never reported stays out: it has no interval to miss, and until its trigger runs as
+ * `publikace.app@` the banner would stand from the deployment on (`r1oqllvb`).
+ */
+export function isInJobsBanner(runs: readonly JobRunRecord[], now: Temporal.Instant): boolean {
+  return isFailingRepeatedly(runs, now) || jobHealth(runs[0] ?? null, now).kind === 'stopped'
+}

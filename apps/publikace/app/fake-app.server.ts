@@ -4,11 +4,13 @@ import { html, type SafeHtml } from 'remix/html-template'
 import { appOrigin } from './auth/environment.server.ts'
 import { createSessionCookie } from './auth/session.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
+import { createJobRunStore } from './data/job-runs.server.ts'
 import { batchState } from './domain/artwork.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
-import { now } from './domain/time.ts'
+import { REPLY_CHECK_JOB } from './domain/reply-check.ts'
+import { now, parseStamp, stamp } from './domain/time.ts'
 import { FAKE_STEPS, type FakeStep } from './drive/fake-drive.server.ts'
 import { routes } from './routes.ts'
 import {
@@ -309,6 +311,11 @@ export async function createFakeApp(): Promise<FakeApp> {
         ${button('/replies/fail', 'Report a failed run')} — it changes no artwork; two in a row put
         the banner over every editor screen, and any run that ends well takes it away.
       </p>
+      <p>
+        ${button('/replies/silence', 'Make the job go quiet')} — every run it reported moves two
+        hours back, or one that ended well is recorded then: the job is <em>Neběží</em> and the
+        banner stands until the next run reports.
+      </p>
 
       <h2>Mailer</h2>
       <p>
@@ -395,6 +402,36 @@ export async function createFakeApp(): Promise<FakeApp> {
       results: batches.map((item) => ({ batchId: item.batchId, state: 'failed' })),
       runKey,
     })
+  }
+
+  /**
+   * The reply check as a job whose trigger was deleted: its runs move two hours back, in their
+   * order, so the latest misses two intervals of 30 minutes. A job that never reported gets one
+   * run that ended well, since a job with no run is _Zatím se neohlásila_ instead.
+   */
+  async function silenceReplyCheck(): Promise<void> {
+    let result = await app.database.exec(
+      sql`SELECT id, started_at, finished_at FROM job_runs WHERE job = ${REPLY_CHECK_JOB}`,
+    )
+    let rows = result.rows ?? []
+    if (rows.length === 0) {
+      let runs = createJobRunStore(app.database)
+      let runKey = crypto.randomUUID()
+      let at = now().subtract({ hours: 2 })
+      await runs.start({ at, intervalMinutes: 30, job: REPLY_CHECK_JOB, runKey })
+      await runs.finish(REPLY_CHECK_JOB, runKey, { at, error: null, outcome: 'ok' })
+      return
+    }
+    for (let row of rows) {
+      let startedAt = parseStamp(row['started_at'])
+      let finishedAt = parseStamp(row['finished_at'])
+      if (startedAt === null) continue
+      await app.database.exec(
+        sql`UPDATE job_runs SET started_at = ${stamp(startedAt.subtract({ hours: 2 }))},
+              finished_at = ${finishedAt === null ? null : stamp(finishedAt.subtract({ hours: 2 }))}
+            WHERE id = ${Number(row['id'])}`,
+      )
+    }
   }
 
   async function control(request: Request, path: string): Promise<Response> {
@@ -489,6 +526,9 @@ export async function createFakeApp(): Promise<FakeApp> {
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()
       }
+      case '/replies/silence':
+        await silenceReplyCheck()
+        return backToControls()
       case '/replies': {
         let id = Number(fileId)
         let kind = form?.get('kind') ?? null

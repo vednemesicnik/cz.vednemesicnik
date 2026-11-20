@@ -5,15 +5,24 @@
 
 import { isOverdue, type JobRunRecord, type JobState } from './job-run.ts'
 import { REPLY_CHECK_JOB, REPLY_CHECK_JOB_NAME } from './reply-check.ts'
-import { atTime, clockTime, formatDate, formatDay, formatDayMonth, pragueYear } from './time.ts'
+import {
+  atTime,
+  clockTime,
+  formatDate,
+  formatDay,
+  formatDayMonth,
+  formatMoment,
+  pragueYear,
+} from './time.ts'
 
 export type Job = {
   /** What a reported failure left behind, in the history and over it: the job's own words. */
   failedCallout: string
   failedEvent: string
   /**
-   * The sentence over every editor screen once the job failed twice in a row (`14d`): its name as
-   * the subject and one consequence the editors can check, the shape every job's takes (`acs9lly8`).
+   * The sentence over every editor screen once the job failed twice in a row or stopped reporting
+   * (`14i`): its name as the subject and one consequence the editors can check, the shape every
+   * job's takes (`acs9lly8`). It names the consequence, not the cause, so it holds for both.
    */
   failingBanner: string
   /** As `job_runs` names it, and as its address does. */
@@ -52,7 +61,7 @@ export const DETAILS_LABEL = 'Zobrazit podrobnosti'
 export const MANY_FAILING_JOBS_BANNER =
   'U několika úloh na pozadí chybí potvrzení, že proběhly v pořádku.'
 
-/** The sentence of the banner over every editor screen for these failing jobs (`14d`). */
+/** The sentence of the banner over every editor screen for these jobs (`14i`). */
 export function failingJobsBanner(jobs: readonly Job[]): string {
   let [only, ...others] = jobs
   return only !== undefined && others.length === 0 ? only.failingBanner : MANY_FAILING_JOBS_BANNER
@@ -159,6 +168,28 @@ export function failedCalloutText(job: Job, state: JobState): string | null {
   if (state.next !== null) parts.push(`Další běh proběhne kolem ${clockTime(state.next)}.`)
   parts.push('Pokud se to opakuje, obraťte se na toho, kdo má úlohu na starosti.')
   return parts.join(' ')
+}
+
+/** The title of the Callout over the history while the job is _Neběží_ (`14e`): the step first. */
+export const STOPPED_CALLOUT_TITLE = 'Dejte vědět tomu, kdo má úlohu na starosti.'
+
+/**
+ * The Callout's text under that title (`14e`, the copywriter's `8ltizgsg`). It says only what the
+ * app knows: how often the job should run and when it last reported. Whether the job stopped
+ * running or its reports stopped arriving, the app cannot tell, so neither is claimed. The
+ * drawing's sentence about _Spustit teď_ waits for that button.
+ */
+export function stoppedCalloutText(
+  state: JobState,
+  intervalMinutes: number,
+  today: Temporal.Instant,
+): string | null {
+  if (state.kind !== 'stopped') return null
+  let when =
+    formatDay(state.lastStartedAt, today) === 'dnes'
+      ? atTime(state.lastStartedAt)
+      : formatMoment(state.lastStartedAt, today)
+  return `Úloha má běžet ${scheduleText(intervalMinutes)}. Naposledy se ohlásila ${when}. Příčinu aplikace nezná.`
 }
 
 /** The history of a job that never reported (`13c`, the same sentence over the queue). */

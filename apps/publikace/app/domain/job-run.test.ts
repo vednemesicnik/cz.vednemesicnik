@@ -1,7 +1,13 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
-import { isFailingRepeatedly, jobHealth, jobState, type JobRunRecord } from './job-run.ts'
+import {
+  isFailingRepeatedly,
+  isInJobsBanner,
+  jobHealth,
+  jobState,
+  type JobRunRecord,
+} from './job-run.ts'
 
 const START = Temporal.Instant.from('2026-11-19T08:02:00Z')
 const RUN = { intervalMinutes: 30, startedAt: START }
@@ -79,24 +85,24 @@ describe('jobState', () => {
   })
 })
 
-describe('isFailingRepeatedly', () => {
-  const NOW = START.add({ hours: 3 })
+const NOW = START.add({ hours: 3 })
 
-  /** A run that started `minutesAgo` before `NOW`, and how it ended, if it did. */
-  function run(minutesAgo: number, outcome?: 'failed' | 'ok'): JobRunRecord {
-    let startedAt = NOW.subtract({ minutes: minutesAgo })
-    if (outcome === undefined) {
-      return { error: null, finishedAt: null, intervalMinutes: 30, outcome: null, startedAt }
-    }
-    return {
-      error: outcome === 'failed' ? 'Reply check failed: timeout' : null,
-      finishedAt: startedAt.add({ minutes: 1 }),
-      intervalMinutes: 30,
-      outcome,
-      startedAt,
-    }
+/** A run that started `minutesAgo` before `NOW`, and how it ended, if it did. */
+function run(minutesAgo: number, outcome?: 'failed' | 'ok'): JobRunRecord {
+  let startedAt = NOW.subtract({ minutes: minutesAgo })
+  if (outcome === undefined) {
+    return { error: null, finishedAt: null, intervalMinutes: 30, outcome: null, startedAt }
   }
+  return {
+    error: outcome === 'failed' ? 'Reply check failed: timeout' : null,
+    finishedAt: startedAt.add({ minutes: 1 }),
+    intervalMinutes: 30,
+    outcome,
+    startedAt,
+  }
+}
 
+describe('isFailingRepeatedly', () => {
   it('needs two runs that ended, so none or one failure is not enough', () => {
     assert.equal(isFailingRepeatedly([], NOW), false)
     assert.equal(isFailingRepeatedly([run(5, 'failed')], NOW), false)
@@ -123,5 +129,23 @@ describe('isFailingRepeatedly', () => {
   it('skips a run still within its time, so the banner holds while it runs', () => {
     assert.equal(isFailingRepeatedly([run(2), run(32, 'failed'), run(62, 'failed')], NOW), true)
     assert.equal(isFailingRepeatedly([run(2), run(32, 'failed')], NOW), false)
+  })
+})
+
+describe('isInJobsBanner', () => {
+  it('leaves out a job that never reported and one that runs', () => {
+    assert.equal(isInJobsBanner([], NOW), false)
+    assert.equal(isInJobsBanner([run(10, 'ok')], NOW), false)
+    assert.equal(isInJobsBanner([run(5, 'failed'), run(35, 'ok')], NOW), false)
+  })
+
+  it('takes a job that missed two runs, whatever its last run did', () => {
+    assert.equal(isInJobsBanner([run(70, 'ok')], NOW), true)
+    assert.equal(isInJobsBanner([run(70, 'failed'), run(100, 'ok')], NOW), true)
+  })
+
+  it('takes a job that failed twice in a row, and keeps it once it goes quiet', () => {
+    assert.equal(isInJobsBanner([run(5, 'failed'), run(35, 'failed')], NOW), true)
+    assert.equal(isInJobsBanner([run(70, 'failed'), run(100, 'failed')], NOW), true)
   })
 })

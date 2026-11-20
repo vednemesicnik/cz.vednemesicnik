@@ -7,10 +7,10 @@ import { routes } from '../../routes.ts'
 import { Callout } from '../callout/component.tsx'
 
 /**
- * The banner over every screen of the editors-in-chief once a job failed twice in a row (`14d`),
- * shaped like the account's (`14c`): error, one action, no close, as long as the state lasts. It
- * reads the failing jobs from the request, so no page passes them. On _Úlohy na pozadí_ itself the
- * action goes, because the table it would open is right under it.
+ * The banner over every screen of the editors-in-chief once a job failed twice in a row or stopped
+ * reporting (`14i`), shaped like the account's (`14c`): error, one action, no close, as long as
+ * the state lasts. It reads those jobs from the request, so no page passes them. On _Úlohy na
+ * pozadí_ itself the action goes, because the table it would open is right under it.
  */
 export function JobsBanner(_handle: Handle) {
   return () => {

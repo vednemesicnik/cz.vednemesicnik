@@ -256,7 +256,7 @@ export function createAppRouter(dependencies: AppDependencies) {
      *     `loadIssues()` beside that,
      *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart, and
      *     `loadReviewCount()` after it, for the number beside _Ke kontrole_ in the panel, and
-     *     `loadFailingJobs()` beside that, for the banner of a job that keeps failing,
+     *     `loadFailingJobs()` beside that, for the banner of a job that fails or went quiet,
      *   - `takeToasts()` last, so the message is cleared while the session can still be saved.
      *
      * The session, the sign-in, CSRF and the toasts are skipped for a shared link's page and for

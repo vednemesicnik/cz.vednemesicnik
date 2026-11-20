@@ -13,6 +13,8 @@ import {
   JOBS,
   scheduleText,
   settingsSummary,
+  STOPPED_CALLOUT_TITLE,
+  stoppedCalloutText,
 } from './jobs.ts'
 
 /* 9:00 and 9:13 in Prague. */
@@ -142,5 +144,37 @@ describe('the history of a job (14e)', () => {
       'Úloha neohlásila, jak poslední běh skončil. Pokud se to opakuje, obraťte se na toho, kdo má úlohu na starosti.',
     )
     assert.equal(failedCalloutText(JOB, { kind: 'stopped', lastStartedAt: LAST }), null)
+  })
+
+  it('says of a job that went quiet how often it should run and when it last reported', () => {
+    let stopped: JobState = { kind: 'stopped', lastStartedAt: LAST }
+    assert.equal(STOPPED_CALLOUT_TITLE, 'Dejte vědět tomu, kdo má úlohu na starosti.')
+    assert.equal(
+      stoppedCalloutText(stopped, 30, TODAY.add({ hours: 2 })),
+      'Úloha má běžet každých 30 min. Naposledy se ohlásila v 9:00. Příčinu aplikace nezná.',
+    )
+    let afternoon: JobState = { kind: 'stopped', lastStartedAt: LAST.add({ hours: 5 }) }
+    assert.match(
+      stoppedCalloutText(afternoon, 60, TODAY.add({ hours: 7 })) ?? '',
+      /^Úloha má běžet každou hodinu\. Naposledy se ohlásila ve 14:00\./,
+    )
+    assert.match(
+      stoppedCalloutText(stopped, 30, TODAY.add({ hours: 48 })) ?? '',
+      /Naposledy se ohlásila 19\. 11\. v 9:00\./,
+    )
+    assert.match(
+      stoppedCalloutText(stopped, 30, Temporal.Instant.from('2027-01-02T08:00:00Z')) ?? '',
+      /Naposledy se ohlásila 19\. 11\. 2026 v 9:00\./,
+    )
+  })
+
+  it('has no Neběží Callout for any other tag', () => {
+    let others: JobState[] = [
+      { kind: 'never' },
+      { kind: 'running', startedAt: TODAY },
+      { isUnreported: false, kind: 'failed', lastStartedAt: LAST, next: null },
+      { kind: 'ok', lastStartedAt: LAST, next: NEXT },
+    ]
+    for (let state of others) assert.equal(stoppedCalloutText(state, 30, TODAY), null)
   })
 })

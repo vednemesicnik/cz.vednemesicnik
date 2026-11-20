@@ -14,6 +14,8 @@ import {
   jobTag,
   neverReportedText,
   scheduleText,
+  STOPPED_CALLOUT_TITLE,
+  stoppedCalloutText,
 } from '../../../domain/jobs.ts'
 import { now } from '../../../domain/time.ts'
 import { requireEditor } from '../../../middleware/auth.server.ts'
@@ -86,11 +88,19 @@ export default function createJobsController(
            which is what _Neběží_ sends the editors here to find (`14d`). */
         let runs = recent.length === 0 && latest !== null ? [latest] : recent
         let state = jobState(latest, today)
-        let text = failedCalloutText(job, state)
+        let failed = failedCalloutText(job, state)
+        let stopped =
+          latest === null ? null : stoppedCalloutText(state, latest.intervalMinutes, today)
+        let callout =
+          failed !== null
+            ? { error: latest?.error ?? null, text: failed, title: null }
+            : stopped !== null
+              ? { error: null, text: stopped, title: STOPPED_CALLOUT_TITLE }
+              : null
 
         return context.render(
           <JobPage
-            callout={text === null ? null : { error: latest?.error ?? null, text }}
+            callout={callout}
             driveAccount={driveAccount}
             history={runs.map((run) => ({
               event: historyEvent(job, run, today),

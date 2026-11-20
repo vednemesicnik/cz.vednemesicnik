@@ -121,8 +121,8 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
   rod ani pád jména odhadovat: _poslední přihlášení včera_, _účet přidán 10. 11. 2026_, ne
   _přihlásila se_, ne _Odebrat Jakuba?_
 - **Čas dalšího běhu úlohy aplikace jen odhaduje.** Úlohy na pozadí spouští Google v intervalu,
-  ale minutu si volí sám, takže věta smí slíbit jen přibližný čas. Úloha, která neběží, žádný
-  další běh nemá.
+  ale minutu si volí sám, takže věta smí slíbit jen přibližný čas. U úlohy, která se neozývá,
+  aplikace žádný další běh neslibuje: ví jen, že hlášení nepřichází, ne jestli úloha běží.
 - Kratší vyhrává, ale nikdy za cenu tvrzení, které není pravda.
 
 ## Formáty a typografie

@@ -52,6 +52,8 @@ describe('Úlohy na pozadí (14d)', () => {
       assert.ok(text.includes('Zatím se neohlásila'))
       assert.doesNotMatch(html, /každých/)
       assert.doesNotMatch(html, />\s*Zobrazit\s*</)
+      assert.doesNotMatch(html, /vdm-callout--error/)
+      assert.doesNotMatch(textOf(await (await browser.get('/')).text()), /nepromítají do stavu děl/)
     } finally {
       await app.close()
     }
@@ -98,7 +100,7 @@ describe('Úlohy na pozadí (14d)', () => {
     try {
       await run(app, 70, { outcome: 'failed' })
       let html = await (await browser.get('/settings/jobs')).text()
-      assert.match(html, /Neběží/)
+      assert.match(html, /vdm-status--problem"><span class="vdm-status__tag">Neběží/)
       assert.doesNotMatch(html, /další kolem/)
       assert.match(html, /href="\/settings\/jobs\/artwork-replies"/)
     } finally {
@@ -169,11 +171,40 @@ describe('the banner of a job that keeps failing (14d)', () => {
   it('shows for neither one failure nor a failure that a good run followed', async () => {
     let { app, browser } = await setup()
     try {
-      await run(app, 65, { outcome: 'failed' })
+      await run(app, 50, { outcome: 'failed' })
       assert.ok(!textOf(await (await browser.get('/')).text()).includes(BANNER))
-      await run(app, 35, { outcome: 'ok' })
+      await run(app, 30, { outcome: 'ok' })
       await run(app, 5, { outcome: 'failed' })
       assert.ok(!textOf(await (await browser.get('/')).text()).includes(BANNER))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('stands over every editor screen for a job that stopped reporting', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 70, { outcome: 'ok' })
+      for (let path of ['/', '/review', '/settings', '/settings/jobs/artwork-replies']) {
+        let html = await (await browser.get(path)).text()
+        assert.ok(textOf(html).includes(BANNER), path)
+        assert.match(html, BUTTON, path)
+      }
+      let jobs = await (await browser.get('/settings/jobs')).text()
+      assert.ok(textOf(jobs).includes(BANNER))
+      assert.doesNotMatch(jobs, BUTTON)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('names a job that failed twice and then went quiet once', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 100, { outcome: 'failed' })
+      await run(app, 70, { outcome: 'failed' })
+      let text = textOf(await (await browser.get('/')).text())
+      assert.equal(text.split(BANNER).length - 1, 1)
     } finally {
       await app.close()
     }
@@ -236,7 +267,29 @@ describe('the history of a job (14e)', () => {
       await run(app, 60 * 24 * 35, { outcome: 'ok' })
       let html = await (await browser.get('/settings/jobs/artwork-replies')).text()
       assert.equal(html.match(/vdm-history__item/g)?.length, 1)
-      assert.doesNotMatch(html, /vdm-callout--error/)
+      assert.match(textOf(html), /Naposledy se ohlásila \d+\. \d+\.( \d{4})? ve? \d+:\d\d\./)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('tells the editors who to turn to when the job went quiet, with nothing to start', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 70, { error: 'Reply check failed: <timeout>', outcome: 'failed' })
+      let html = await (await browser.get('/settings/jobs/artwork-replies')).text()
+      let text = textOf(html)
+      assert.match(
+        html,
+        /class="vdm-callout__title">Dejte vědět tomu, kdo má úlohu na starosti\.<\/p><p[^>]*>Úloha má běžet/,
+      )
+      assert.match(
+        text,
+        /Úloha má běžet každých 30 min\. Naposledy se ohlásila ve? \d+:\d\d\. Příčinu aplikace nezná\./,
+      )
+      assert.doesNotMatch(html, /Spustit teď/)
+      assert.doesNotMatch(html, /Zobrazit podrobnosti/)
+      assert.doesNotMatch(text, /Úloha skončila s chybou/)
     } finally {
       await app.close()
     }
