@@ -5,15 +5,7 @@
 
 import { isOverdue, type JobRunRecord, type JobState } from './job-run.ts'
 import { REPLY_CHECK_JOB, REPLY_CHECK_JOB_NAME } from './reply-check.ts'
-import {
-  atTime,
-  clockTime,
-  formatDate,
-  formatDay,
-  formatDayMonth,
-  formatMoment,
-  pragueYear,
-} from './time.ts'
+import { atTime, clockTime, formatDate, formatDay, formatDayMonth, pragueYear } from './time.ts'
 
 export type Job = {
   /** What a reported failure left behind, in the history and over it: the job's own words. */
@@ -95,13 +87,21 @@ function unbroken(text: string): string {
   return text.replaceAll(' ', NBSP)
 }
 
-/** _Poslední běh v 9:00_ today, _Poslední běh 14. 11. v 9:00_ on another day. */
-export function lastRunText(startedAt: Temporal.Instant, today: Temporal.Instant): string {
+/**
+ * _v 9:00_ today, _14. 11. v 9:00_ on another day, with the year in another year. The preposition
+ * stays with its time, in the tag's column and in a sentence alike (`14d`, `14e`).
+ */
+function lastReportedAt(startedAt: Temporal.Instant, today: Temporal.Instant): string {
   let time = unbroken(atTime(startedAt))
-  if (formatDay(startedAt, today) === 'dnes') return `Poslední běh ${time}`
+  if (formatDay(startedAt, today) === 'dnes') return time
   let date =
     pragueYear(startedAt) === pragueYear(today) ? formatDayMonth(startedAt) : formatDate(startedAt)
-  return `Poslední běh ${date} ${time}`
+  return `${date} ${time}`
+}
+
+/** _Poslední běh v 9:00_ today, _Poslední běh 14. 11. v 9:00_ on another day. */
+export function lastRunText(startedAt: Temporal.Instant, today: Temporal.Instant): string {
+  return `Poslední běh ${lastReportedAt(startedAt, today)}`
 }
 
 /** The tone stays with the page, which knows the design system's tones. */
@@ -185,10 +185,7 @@ export function stoppedCalloutText(
   today: Temporal.Instant,
 ): string | null {
   if (state.kind !== 'stopped') return null
-  let when =
-    formatDay(state.lastStartedAt, today) === 'dnes'
-      ? atTime(state.lastStartedAt)
-      : formatMoment(state.lastStartedAt, today)
+  let when = lastReportedAt(state.lastStartedAt, today)
   return `Úloha má běžet ${scheduleText(intervalMinutes)}. Naposledy se ohlásila ${when}. Příčinu aplikace nezná.`
 }
 

@@ -151,20 +151,20 @@ describe('the history of a job (14e)', () => {
     assert.equal(STOPPED_CALLOUT_TITLE, 'Dejte vědět tomu, kdo má úlohu na starosti.')
     assert.equal(
       stoppedCalloutText(stopped, 30, TODAY.add({ hours: 2 })),
-      'Úloha má běžet každých 30 min. Naposledy se ohlásila v 9:00. Příčinu aplikace nezná.',
+      'Úloha má běžet každých 30 min. Naposledy se ohlásila v\u00a09:00. Příčinu aplikace nezná.',
     )
     let afternoon: JobState = { kind: 'stopped', lastStartedAt: LAST.add({ hours: 5 }) }
     assert.match(
       stoppedCalloutText(afternoon, 60, TODAY.add({ hours: 7 })) ?? '',
-      /^Úloha má běžet každou hodinu\. Naposledy se ohlásila ve 14:00\./,
+      /^Úloha má běžet každou hodinu\. Naposledy se ohlásila ve\u00a014:00\./,
     )
     assert.match(
       stoppedCalloutText(stopped, 30, TODAY.add({ hours: 48 })) ?? '',
-      /Naposledy se ohlásila 19\. 11\. v 9:00\./,
+      /Naposledy se ohlásila 19\. 11\. v\u00a09:00\./,
     )
     assert.match(
       stoppedCalloutText(stopped, 30, Temporal.Instant.from('2027-01-02T08:00:00Z')) ?? '',
-      /Naposledy se ohlásila 19\. 11\. 2026 v 9:00\./,
+      /Naposledy se ohlásila 19\. 11\. 2026 v\u00a09:00\./,
     )
   })
 
