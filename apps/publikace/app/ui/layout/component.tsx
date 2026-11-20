@@ -48,8 +48,26 @@ const shellStyle = css({
    system's unlayered `.vdm-topbar { display: flex }` would beat it on the same element. */
 const topBarStyle = css({ display: 'none', [PHONE]: { display: 'block' } })
 
-/* `contents` keeps the aside the grid's first track on a wide screen. */
-const sideStyle = css({ display: 'contents', [PHONE]: { display: 'none' } })
+/*
+ * The panel is exactly as tall as the window and stays there while the page scrolls beside it.
+ * On the wrapper, because `css()` loses to `.vdm-sidebar` on the aside itself; the aside's own
+ * `min-height: 100%` then fills it.
+ *
+ * `sticky` rather than `fixed`, so the panel keeps its grid track and the page needs no margin
+ * for it. It only sticks with `alignSelf: start`: a grid item stretches to the row, and one as
+ * tall as the whole page has nowhere to slide. `100dvh` is the visible window, not the one under
+ * a browser's toolbars. A window shorter than the panel scrolls the panel itself, and a flick at
+ * its end stays in the panel.
+ */
+const sideStyle = css({
+  alignSelf: 'start',
+  height: '100dvh',
+  overflow: 'hidden auto',
+  overscrollBehavior: 'contain',
+  position: 'sticky',
+  top: 0,
+  [PHONE]: { display: 'none' },
+})
 
 const mainStyle = css({
   display: 'flex',
