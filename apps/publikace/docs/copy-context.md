@@ -42,7 +42,8 @@ s jazykovými úpravami a zkrácením a s tvarem jména v podpisu.
 korektuře, až je text dopsaný. Autorům o nich chodí e-mail nejvýš čtyřikrát denně, a jen když
 v některém jejich článku přibylo něco nového. E-mail říká, _že_ v článku přibyly komentáře,
 odpovědi nebo návrhy úprav, ne _co_ v nich je: u každého článku má odkaz do dokumentu. Komentáře
-autorů článku do něj nejdou.
+a odpovědi autorů článku do něj nejdou; návrhy úprav autora nemají, takže jdou všechny. Tomu
+všemu e-mail říká **připomínky**.
 
 ## Termíny: co se nesmí přejmenovat
 

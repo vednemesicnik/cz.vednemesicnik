@@ -80,6 +80,23 @@ describe('the welcome e-mail', () => {
       ),
     )
     assert.ok(!sent.htmlBody.includes('studentské nekritické noviny'))
-    assert.equal(sent.htmlBody.match(/[;"]color:/g)?.length, 1)
+    assert.equal(sent.htmlBody.match(/[;"]color:(?!inherit)/g)?.length, 1)
+    assert.ok(sent.htmlBody.includes('border:1px solid #cad5e2;color:inherit'))
+  })
+
+  it('names the digest by its word and leaves out what the authors wrote', () => {
+    let html = welcomeEmail({
+      articleName: 'Školní jídelna po roce',
+      artworksUrl: 'https://publikace.vednemesicnik.test/l/AAAAAAAAAAAA/artworks',
+      coauthors: [],
+      documentUrl: 'https://docs.google.com/document/d/x/edit',
+      formKey: 'form-1',
+      issueName: 'VDM_2026_5',
+      to: 'tereza.vlkova@external.test',
+    }).htmlBody
+    assert.ok(
+      html.includes('Když přibude nová připomínka, pošleme vám e-mailem odkaz do dokumentu'),
+    )
+    assert.ok(html.includes('Komentáře a odpovědi autorů článku při tom vynecháváme.'))
   })
 })
