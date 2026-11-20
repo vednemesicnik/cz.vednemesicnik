@@ -99,7 +99,7 @@ describe('the welcome e-mail', () => {
     assert.ok(sent.htmlBody.includes('border:1px solid #cad5e2;color:inherit'))
   })
 
-  it('names the digest by its word and leaves out what the authors wrote', () => {
+  it('names only the next steps and announces no later e-mail', () => {
     let html = welcomeEmail({
       articleName: 'Školní jídelna po roce',
       artworksUrl: 'https://publikace.vednemesicnik.test/l/AAAAAAAAAAAA/artworks',
@@ -109,12 +109,10 @@ describe('the welcome e-mail', () => {
       issueName: 'VDM_2026_5',
       to: 'tereza.vlkova@external.test',
     }).htmlBody
-    assert.ok(
-      html.includes(
-        'Souhrnné upozornění s odkazem do dokumentu vám pošleme e-mailem jen tehdy, když přibudou nové připomínky.',
-      ),
-    )
-    assert.ok(!html.includes('čtyřikrát'))
-    assert.ok(html.includes('Komentáře a odpovědi autorů článku při tom vynecháváme.'))
+    assert.ok(html.includes('Text pište přímo v dokumentu Google.'))
+    assert.ok(html.includes('Až bude text připravený ke korektuře, dejte prosím vědět šéfredakci.'))
+    assert.ok(!html.includes('Souhlasím'))
+    assert.ok(!html.includes('finální verzi'))
+    assert.ok(!html.includes('Souhrnné upozornění'))
   })
 })

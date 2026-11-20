@@ -183,6 +183,11 @@ describe('creating an article from the link (20b–20d)', () => {
       assert.ok(text.includes('Článek je založený'))
       assert.ok(text.includes('„Školní jídelna po roce“ je ve vydání VDM_2026_5.'))
       assert.ok(text.includes('Uvítací e-mail jsme odeslali na všechny uvedené adresy.'))
+      assert.ok(
+        text.includes('Až bude text připravený ke korektuře, dejte prosím vědět šéfredakci.'),
+      )
+      assert.ok(!text.includes('Co bude dál'))
+      assert.ok(!text.includes('Souhlasím'))
       assert.deepEqual(
         app.mail.map((message) => message.to),
         [TEREZA.email, ONDREJ.email],

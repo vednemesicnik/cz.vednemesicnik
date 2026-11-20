@@ -1,4 +1,9 @@
-import { coauthorLine, OPEN_DOCUMENT_LABEL, UPLOAD_ARTWORKS_LABEL } from '../domain/article.ts'
+import {
+  coauthorLine,
+  HAND_OVER_STEP,
+  OPEN_DOCUMENT_LABEL,
+  UPLOAD_ARTWORKS_LABEL,
+} from '../domain/article.ts'
 import {
   escapeHtml,
   houseEnding,
@@ -10,8 +15,12 @@ import type { MailMessage } from './mailer.server.ts'
 
 /**
  * The welcome e-mail every author of a new article gets (`20d`), formal and in the newsroom's
- * voice, as the copywriter settled it (il3qqrj9; the comments and the hand-over sn7j5h2m; the
- * word _připomínka_ the digest uses, 2yekm0pt; no count of digests, c3ccbgxr).
+ * voice, as the copywriter settled it (il3qqrj9; the next steps only, bdbj09rg).
+ *
+ * It names only what the author does now: write in the Doc, upload the artworks, and tell
+ * šéfredakce when the text is ready for proofreading, the one step no later e-mail asks for. The
+ * digest, the final version and the „Souhlasím“ reply are not announced, because each comes in
+ * its own e-mail that says why it came; told here, they are steps the author cannot take yet.
  *
  * The HTML is written out by hand rather than drawn by the app's components: a mail client reads
  * no stylesheet, so every style is inline. Only the primary button has a colour, the design
@@ -67,9 +76,9 @@ export function welcomeEmail(details: WelcomeDetails): MailMessage {
     `<p style="${PARAGRAPH}">Dobrý den,</p>`,
     `<p style="${PARAGRAPH}">článek „${article}“ je zařazený do vydání ${issue}.</p>`,
     coauthors === null ? '' : `<p style="${PARAGRAPH}">${escapeHtml(coauthors)}</p>`,
-    `<p style="${PARAGRAPH}">Pište přímo v dokumentu Google. Kdo má dokument otevřený, může v něm komentovat, odpovídat i navrhovat úpravy. Nejčastěji se tak děje při korektuře. Souhrnné upozornění s odkazem do dokumentu vám pošleme e-mailem jen tehdy, když přibudou nové připomínky. Komentáře a odpovědi autorů článku při tom vynecháváme.</p>`,
+    `<p style="${PARAGRAPH}">Text pište přímo v dokumentu Google.</p>`,
     `<p style="${PARAGRAPH}"><a href="${escapeHtml(details.documentUrl)}" style="${PRIMARY}">${OPEN_DOCUMENT_LABEL}</a>&nbsp;&nbsp;<a href="${escapeHtml(details.artworksUrl)}" style="${OUTLINE}">${UPLOAD_ARTWORKS_LABEL}</a></p>`,
-    `<p style="${NOTE}">Až bude text připravený ke korektuře, dejte prosím vědět šéfredakci. Po korektuře vám pošleme finální verzi a redakční doložku. Pokud s doložkou souhlasíte, odpovězte na e-mail přesně „Souhlasím“.</p>`,
+    `<p style="${NOTE}">${HAND_OVER_STEP}</p>`,
     houseEnding({
       question: WELCOME_QUESTION_LINE,
       reason: WELCOME_REASON_LINE,

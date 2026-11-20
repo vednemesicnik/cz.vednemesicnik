@@ -96,13 +96,12 @@ export function createdLead(articleName: string, issueName: string): string {
 export const ALL_WELCOMES_SENT = 'Uvítací e-mail jsme odeslali na všechny uvedené adresy.'
 export const OPEN_DOCUMENT_LABEL = 'Otevřít dokument'
 export const UPLOAD_ARTWORKS_LABEL = 'Nahrát obrazová díla'
-export const WHAT_NEXT_TITLE = 'Co bude dál'
-export const WHAT_NEXT_STEPS: readonly string[] = [
-  'V dokumentu může komentovat každý, nejčastěji při korektuře. Souhrnné upozornění e-mailem posíláme jen tehdy, když přibudou připomínky.',
-  'Až text dopíšete, dejte šéfredakci vědět, že je připravený ke korektuře.',
-  'Po korektuře přijde e-mail s finální verzí.',
-  'Souhlas dáte odpovědí přesně „Souhlasím“.',
-]
+/**
+ * The one later step the page after creating and the welcome e-mail both name, in the same words
+ * (`20d`, z7q2ypod): nothing reminds anybody to hand a finished text over, so it is said up front.
+ * Every other later step comes in an e-mail of its own when it is due.
+ */
+export const HAND_OVER_STEP = 'Až bude text připravený ke korektuře, dejte prosím vědět šéfredakci.'
 export const ANOTHER_ARTICLE_LABEL = 'Založit další článek'
 
 /** `Alex Novák`, `Alex Novák a Robin Malá`, `Alex Novák, Robin Malá a Jan Novák`. */

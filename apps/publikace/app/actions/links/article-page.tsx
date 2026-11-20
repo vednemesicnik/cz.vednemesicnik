@@ -16,8 +16,7 @@ import {
   OPEN_DOCUMENT_LABEL,
   type SubmitMessage,
   UPLOAD_ARTWORKS_LABEL,
-  WHAT_NEXT_STEPS,
-  WHAT_NEXT_TITLE,
+  HAND_OVER_STEP,
 } from '../../domain/article.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { LinkPage, type LinkPreview } from '../../ui/link-page/component.tsx'
@@ -74,21 +73,10 @@ const doneMarkStyle = css({
 })
 
 const nextStyle = css({
-  borderTop: '1px solid var(--border)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '10px',
-  paddingTop: '20px',
-  '& h2': { fontSize: '16px', fontWeight: 600, margin: 0 },
-  '& ol': {
-    display: 'flex',
-    flexDirection: 'column',
-    fontSize: '15px',
-    gap: '8px',
-    lineHeight: 1.5,
-    margin: 0,
-    paddingLeft: '20px',
-  },
+  color: 'var(--text-secondary)',
+  fontSize: '15px',
+  lineHeight: 1.5,
+  margin: 0,
 })
 
 const anotherStyle = css({
@@ -207,14 +195,7 @@ export function ArticleCreatedPage(handle: Handle<ArticleCreatedPageProps>) {
             {UPLOAD_ARTWORKS_LABEL}
           </a>
         )}
-        <section aria-labelledby="what-next" mix={nextStyle}>
-          <h2 id="what-next">{WHAT_NEXT_TITLE}</h2>
-          <ol>
-            {WHAT_NEXT_STEPS.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        </section>
+        <p mix={nextStyle}>{HAND_OVER_STEP}</p>
         <a href={anotherHref} mix={anotherStyle}>
           {ANOTHER_ARTICLE_LABEL}
         </a>

@@ -102,9 +102,12 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
   žádost o souhlas.“). Hlášky aplikace _my_ nemají.
 - **E-maily vykají, ale přátelsky.** Čtou je členové redakce, se kterými se známe, a zároveň
   mluví za časopis: tón je slušný, reprezentativní a trochu formální, ne úřední. Začínají „Dobrý
-  den“ jako e-maily v návrhu: uvítání autorů, žádost o souhlas s díly, e-maily korektorům.
-  Dnešní e-mail s redakční doložkou tyká a začíná „Ahoj“, stejně jako dnešní uvítání autorů.
-  Vzorem není.
+  den“ jako e-maily v návrhu: uvítání autorů, žádost o souhlas s díly, e-maily korektorům,
+  finální verze s redakční doložkou.
+- **E-mail nese jen nejbližší krok.** Říká, co se právě stalo a co čtenář udělá teď. Pozdější
+  krok neohlašuje: má vlastní e-mail, který přijde, až je na řadě, a sám řekne, proč přišel.
+  Uvítání autora proto nepopisuje finální verzi ani odpověď „Souhlasím“; o tu požádá až e-mail
+  s finální verzí.
 - **Dialog v dokumentu Google mluví hlasem aplikace.** Co se ukáže po kliknutí v menu
   _Publikace_, vrací aplikace, takže dialog vyká a nemá _my_. Čte ho autor nebo redaktor, který
   v aplikaci nic nenastaví: věta mu říká, co udělat sám, ne co má opravit šéfredakce.
