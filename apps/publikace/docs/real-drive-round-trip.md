@@ -29,7 +29,11 @@ Nothing here is real data in the repository: the IDs, the URLs and the testers' 
 
 - [ ] `publikace.app@` is a member with the role **Content manager**, not Manager, because that
       is its role on _Publikace_ and the cleanup's bin is what is being tried;
-- [ ] a folder in it holds the issues, and its ID is `ISSUES_FOLDER_ID`.
+- [ ] a folder in it holds the issues, and its ID is `ISSUES_FOLDER_ID`;
+- [ ] the drive allows sharing with people outside the organisation, and the issues folder is
+      shared as _Kdokoli s odkazem: Editor_. Every issue, article folder and Doc inherits it, as on
+      _Redakce_: an author outside the domain edits the Doc through its link, and the Doc menu
+      accepts whoever may edit.
 
 **The article template**, which is not on the shared drive. On a shared drive every member who can
 write may change or bin it, its bound script included. It lives in `publikace.app@`'s own
@@ -211,15 +215,15 @@ _Vytvořit kopii_, as the app copies it for every article. In each copy's bound 
 - [x] note whether `name` is in the payload with `profile`. Without it the app records and shows
       the address (`12a`, `12p`);
 - [x] open a `showModalDialog` whose button calls `google.script.run`, in a browser where two Google
-      accounts are signed in, and note whether the call fails. That is the case the script's own
-      dialog _Zkuste to za chvíli znovu_ covers.
+      accounts are signed in, and note whether the call fails.
 
 What it showed, on 20 November 2026:
 
 - **`aud` differs between copies.** Each copy's bound script gets a default Cloud project of its
   own (_Nastavení projektu › Projekt Google Cloud Platform: Výchozí_), so its token carries that
-  project's OAuth client. No value can be pinned: `DOC_MENU_TOKEN_AUDIENCES` is `*`, and the
-  Drive check is what stops a token issued to another client.
+  project's OAuth client. No value can be pinned: `DOC_MENU_TOKEN_AUDIENCES` is `*`. The token
+  still proves whose account it is, so a mark always carries the clicker's own address; what
+  decides whether that account may mark is the Drive check below.
 - **`name` is in the payload** with `profile`, along with `given_name`, `family_name`, `picture`
   and `hd`. `email_verified` is `true`; there is no `azp`.
 - **`google.script.run` fails** when the clicking account is not the browser's default one: the
@@ -227,15 +231,34 @@ What it showed, on 20 November 2026:
   vyžadována autorizace_. A server call made by the menu item itself runs as the clicking
   account; one made from the dialog runs as the default account. Trying again in the same window
   fails the same way, so an answer that only says to try later does not get that person through.
+  Where the default account has authorised the script, the call would run, and record, as that
+  account instead of the one the confirmation named.
+- **`fetch` from the dialog works** in the same browser: a dialog opened by the menu item, with
+  the item's identity token written into it, reached a CORS-enabled Google endpoint from its
+  sandbox origin (`https://n-…-script.googleusercontent.com`), and the token was the clicking
+  account's. `google.script.host.close()` closes it.
+
+So the dialog never calls the script's server. The menu item takes the identity token and asks
+the app for the confirmation; the dialog's _Označit_ sends that same token straight to the app
+with `fetch`, which is why the Doc menu's endpoints answer CORS.
 
 **Who may edit an article's Doc.** Nothing in the app shares a Doc with its authors, so:
 
-- [ ] list the permissions of an article's Doc as `publikace.app@` (`permissions.list` with
+- [x] list the permissions of an article's Doc as `publikace.app@` (`permissions.list` with
       `supportsAllDrives`), and write down how an author and a proofreader get the right to edit:
       a grant to them, a group, the domain, anyone with the link, or the shared drive's members;
-- [ ] when it is a group, check that the group is in the membership service's `allowedGroups`:
+- [x] when it is a group, check that the group is in the membership service's `allowedGroups`:
       a group the service does not know leaves the app's answer a "don't know", and the menu
       shows its own dialog instead of recording.
+
+What it showed, on 20 November 2026: an article's Doc made by the scripts on _Redakce_ is open to
+**anyone with the link as an editor**, inherited from above it, besides the shared drive's members.
+No script and nothing in the app shares a Doc; the link is the right to edit, for authors outside
+the domain too. A Doc the app made on the test drive had only the members and the domain as
+readers, because its issues folder was never opened. On the drive the app uses, the issues
+folder therefore carries _Kdokoli s odkazem: Editor_ and the drive allows sharing outside the
+organisation (see the test shared drive above). With that grant the app's check answers yes
+before it asks about any group, so no group is looked up.
 
 **Then end to end.** Apps Script has to reach the app, so it runs behind a tunnel to
 `http://localhost:44100` until the app is on Fly.io, with the script's `CONFIG.appOrigin` set to
@@ -251,7 +274,8 @@ the tunnel's address in the test copy only:
 4. _Soubor › Vytvořit kopii_ in the same folder, then the menu in the copy: _Toto je kopie
    dokumentu článku_, and _Otevřít původní_ opens the article's Doc.
 5. An account that may only comment answers _Publikace váš účet nepřijala_, with nothing about
-   the article.
+   the article. Under the issues folder every Google account with the link may edit, so this
+   needs a Doc outside it, shared to that account as a commenter.
 6. With the app stopped, the menu shows _Zkuste to za chvíli znovu_.
 
 ## The reply check's API

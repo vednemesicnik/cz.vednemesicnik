@@ -121,7 +121,13 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   article template, so every Doc carries a copy and anyone who edits the Doc, authors included,
   can read it. It sends the app the Doc's ID and `ScriptApp.getIdentityToken()` of whoever
   clicked, and the app decides by that e-mail whether they may. **No secret goes into a bound
-  script.**
+  script.** A dialog never calls the script's server with `google.script.run`, which runs as the
+  browser's default Google account rather than the one that clicked: the menu item writes its
+  token into the dialog, and the dialog's buttons send it to the app with `fetch`.
+- **The link to a Doc is the right to edit it.** The issues folder on the shared drive is shared
+  as _Kdokoli s odkazem: Editor_, and the drive allows people outside the organisation, so every
+  issue, article folder and Doc inherits it, as on _Redakce_. Authors outside the domain edit
+  through the link; nothing in the app or the scripts shares a file with a person.
 
 ## Workflow skills
 
