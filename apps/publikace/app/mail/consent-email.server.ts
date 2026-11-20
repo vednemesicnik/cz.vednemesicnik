@@ -1,5 +1,5 @@
 import { consentIdempotencyKey, consentSubject } from '../domain/artwork.ts'
-import { keepOneLetterWords } from '../domain/typography.ts'
+import { keepOneLetterWords } from '../domain/public/typography.ts'
 import {
   ASSOCIATION_ID,
   escapeHtml,

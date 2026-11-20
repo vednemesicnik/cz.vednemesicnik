@@ -4,6 +4,8 @@
  * browser may load it, and free of anything it could not.
  */
 
+import { tied } from './typography.ts'
+
 export const MAX_ARTICLE_NAME_LENGTH = 200
 export const MAX_AUTHOR_NAME_LENGTH = 200
 export const MAX_AUTHORS = 10
@@ -31,7 +33,7 @@ export type ArticleCheck =
 /* `20b`, as the copywriter settled them (il3qqrj9). */
 export const EMPTY_ARTICLE_NAME_MESSAGE = 'Vyplňte název článku.'
 export const LONG_ARTICLE_NAME_MESSAGE = 'Zkraťte název na nejvýš 200 znaků.'
-export const EMPTY_AUTHOR_NAME_MESSAGE = 'Vyplňte jméno a příjmení.'
+export const EMPTY_AUTHOR_NAME_MESSAGE = tied`Vyplňte jméno a příjmení.`
 /* Derived from the article name's sentence, not yet through the copywriter. */
 export const LONG_AUTHOR_NAME_MESSAGE = 'Zkraťte jméno na nejvýš 200 znaků.'
 export const EMPTY_AUTHOR_EMAIL_MESSAGE = 'Vyplňte e-mail autora.'
@@ -40,7 +42,7 @@ export const INVALID_EMAIL_MESSAGE = 'Zadejte e-mail ve tvaru jan.novak@external
 export const AUTHOR_LIMIT_NOTE = 'Článek může mít nejvýš 10 autorů.'
 
 export function duplicateEmailMessage(firstAuthor: number): string {
-  return `Zkontrolujte adresu. Stejnou má i autor ${firstAuthor}.`
+  return tied`Zkontrolujte adresu. Stejnou má i autor ${firstAuthor}.`
 }
 
 /** `Opravte 1 pole`, `Opravte 2 pole`, `Opravte 5 polí`. */
@@ -117,20 +119,18 @@ export function fieldLabel(key: FieldKey): string {
   return match?.[2] === 'email' ? `E-mail autora ${number}` : `Autor ${number}`
 }
 
-export const REQUIRED_LEGEND = 'Pole s hvězdičkou jsou povinná.'
+export const REQUIRED_LEGEND = tied`Pole s hvězdičkou jsou povinná.`
 export const ARTICLE_NAME_LABEL = 'Název článku'
 export const ARTICLE_NAME_PLACEHOLDER = 'Rozhovor s hostem'
 export const AUTHORS_LEGEND = 'Autoři'
-export const AUTHORS_HINT =
-  'Každého autora po korektuře požádáme e-mailem o souhlas s redakční doložkou. Můžete přidat nejvýš 10 autorů.'
-export const AUTHOR_NAME_LABEL = 'Jméno a příjmení'
+export const AUTHORS_HINT = tied`Každého autora po korektuře požádáme e-mailem o souhlas s redakční doložkou. Můžete přidat nejvýš 10 autorů.`
+export const AUTHOR_NAME_LABEL = tied`Jméno a příjmení`
 export const AUTHOR_NAME_PLACEHOLDER = 'Jan Novák'
 export const AUTHOR_EMAIL_LABEL = 'E-mail'
 export const AUTHOR_EMAIL_PLACEHOLDER = 'jan.novak@external.test'
 export const ADD_AUTHOR_LABEL = 'Přidat autora'
 export const REMOVE_AUTHOR_LABEL = 'Odebrat'
-export const CONSENT_SENTENCE =
-  'Odesláním formuláře souhlasíte se zasíláním e-mailů k tomuto článku na uvedené adresy.'
+export const CONSENT_SENTENCE = tied`Odesláním formuláře souhlasíte se zasíláním e-mailů k tomuto článku na uvedené adresy.`
 export const CREATE_ARTICLE_LABEL = 'Vytvořit článek'
 export const CREATING_ARTICLE_LABEL = 'Článek se vytváří…'
 

@@ -70,7 +70,7 @@ describe('the Doc menu’s answer to Označit probíhající korekturu', () => {
       let dialog = asDialog(decideProofreading({ account: JAKUB, isConfirmed, target }))
       assert.equal(dialog.heading, 'Korektura už je označená')
       assert.deepEqual(texts(dialog), [
-        'Označeno 19. 11. v 10:12 · Jakub Novák',
+        'Označeno 19. 11. v\u00a010:12 · Jakub Novák',
         'Nic se nezměnilo.',
       ])
     }

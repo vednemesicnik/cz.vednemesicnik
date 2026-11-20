@@ -29,7 +29,7 @@ describe('the queue’s lines', () => {
     let at = Temporal.Instant.from('2026-11-14T06:12:00Z')
     assert.equal(
       receivedLine('Klára Šimková', 'klara.simkova@external.test', at, TODAY),
-      'Klára Šimková · klara.simkova@external.test · přijato 14. 11. v 7:12',
+      'Klára Šimková · klara.simkova@external.test · přijato 14. 11. v\u00a07:12',
     )
     let late = Temporal.Instant.from('2025-11-13T20:47:00Z')
     assert.match(
@@ -41,30 +41,30 @@ describe('the queue’s lines', () => {
   it('reads the job: the time and the estimate, the passed estimate, a stopped job and none', () => {
     assert.deepEqual(readLine(RUNNING, TODAY), {
       after: '',
-      before: 'Odpovědi čteny v 9:00 · další běh kolem 9:30',
+      before: 'Odpovědi čteny v\u00a09:00 · další běh kolem 9:30',
       link: null,
     })
     assert.deepEqual(readLine(PASSED, TODAY), {
       after: '',
-      before: 'Odpovědi čteny v 9:00',
+      before: 'Odpovědi čteny v\u00a09:00',
       link: null,
     })
     assert.deepEqual(readLine(STOPPED, TODAY), {
       after: '',
       before: '',
-      link: 'Čtení odpovědí k obrazovým dílům teď neběží.',
+      link: 'Čtení odpovědí k\u00a0obrazovým dílům teď neběží.',
     })
     assert.deepEqual(readLine(NEVER, TODAY), {
       after: ' se zatím neohlásila.',
       before: 'Úloha ',
-      link: 'Odpovědi k obrazovým dílům',
+      link: 'Odpovědi k\u00a0obrazovým dílům',
     })
   })
 
   it('promises an archive only while there is an estimate', () => {
     assert.equal(
       verifiedToast(RUNNING),
-      'Souhlas zaznamenán. Pokus o uložení konverzace proběhne kolem 9:30.',
+      'Souhlas zaznamenán. Pokus o\u00a0uložení konverzace proběhne kolem 9:30.',
     )
     assert.equal(verifiedToast(PASSED), 'Souhlas zaznamenán. Konverzace čeká na uložení.')
     assert.equal(verifiedToast(NEVER), 'Souhlas zaznamenán. Konverzace čeká na uložení.')

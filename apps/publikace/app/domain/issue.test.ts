@@ -114,7 +114,7 @@ describe('what an unfinished issue lacks (11d, 12i)', () => {
     assert.deepEqual(missingFolders(both), ['articles', 'print'])
     assert.equal(
       unfinishedText(missingFolders(both)),
-      'Zvolte Dokončit vydání. Doplní se chybějící složky Články a podklady pro tisk; složka vydání už vznikla.',
+      'Zvolte Dokončit vydání. Doplní se chybějící složky Články a\u00a0podklady pro tisk; složka vydání už vznikla.',
     )
     assert.equal(
       unfinishedText(['print']),
@@ -129,7 +129,7 @@ describe('what an unfinished issue lacks (11d, 12i)', () => {
   it('does not claim the issue folder exists when it does not', () => {
     assert.equal(
       unfinishedText(['issue', 'articles', 'print']),
-      'Zvolte Dokončit vydání. Doplní se chybějící složky vydání, Články a podklady pro tisk.',
+      'Zvolte Dokončit vydání. Doplní se chybějící složky vydání, Články a\u00a0podklady pro tisk.',
     )
   })
 })

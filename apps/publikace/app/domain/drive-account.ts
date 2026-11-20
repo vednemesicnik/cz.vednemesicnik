@@ -6,6 +6,7 @@
  */
 
 import { normalizeEmail } from './access.ts'
+import { tied } from './public/typography.ts'
 
 /** The scope the app asks for. Anything narrower cannot create in a folder it did not create. */
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive'
@@ -58,21 +59,17 @@ export function accountDomain(email: string): string {
   return at === -1 ? '' : email.slice(at + 1)
 }
 
-export const NOT_CONNECTED_CARD_TEXT =
-  'Připojte účet, aby aplikace mohla zakládat vydání a pracovat se soubory na Disku.'
+export const NOT_CONNECTED_CARD_TEXT = tied`Připojte účet, aby aplikace mohla zakládat vydání a pracovat se soubory na Disku.`
 
-export const CONNECTED_CARD_TEXT =
-  'Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Registru a Evidence. Soubory patří disku.'
+export const CONNECTED_CARD_TEXT = tied`Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Registru a Evidence. Soubory patří disku.`
 
-export const DISCONNECTED_CARD_TEXT =
-  'Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Zápis do Registru a Evidence čeká a po připojení se doplní.'
+export const DISCONNECTED_CARD_TEXT = tied`Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Zápis do Registru a Evidence čeká a po připojení se doplní.`
 
-export const MAILBOX_CARD_TEXT =
-  'Schránka pro uvítání, žádosti o souhlas, připomínky a odpovědi. Aplikace zadává odeslání a dostává výsledky kontroly odpovědí; ke schránce se nepřihlašuje ani ji nečte.'
+export const MAILBOX_CARD_TEXT = tied`Schránka pro uvítání, žádosti o souhlas, připomínky a odpovědi. Aplikace zadává odeslání a dostává výsledky kontroly odpovědí; ke schránce se nepřihlašuje ani ji nečte.`
 
 /** Under the button in _Nepřipojeno_ and _Odpojeno_. */
 export function connectHint(expectedEmail: string): string {
-  return `V Googlu vyberte účet ${expectedEmail} a povolte aplikaci pracovat se soubory na Disku.`
+  return tied`V Googlu vyberte účet ${expectedEmail} a povolte aplikaci pracovat se soubory na Disku.`
 }
 
 export function notConnectedBanner(expectedEmail: string): string {
@@ -97,14 +94,14 @@ export function refusalMessage(
   isConnected: boolean,
 ): string {
   if (isConnected) {
-    return `Účet ${shortAccount(expectedEmail)} už je připojený. Váš pokus o připojení se nepodařil, ale účet zůstává připojený.`
+    return tied`Účet ${shortAccount(expectedEmail)} už je připojený. Váš pokus o připojení se nepodařil, ale účet zůstává připojený.`
   }
 
   switch (refusal.reason) {
     case 'wrong-account':
-      return `Vyberte v Googlu účet ${expectedEmail}. Účet ${refusal.email} připojit nejde.`
+      return tied`Vyberte v Googlu účet ${expectedEmail}. Účet ${refusal.email} připojit nejde.`
     case 'no-drive-scope':
-      return 'Povolte v Googlu aplikaci pracovat se soubory na Disku. Bez tohoto povolení účet připojit nejde.'
+      return tied`Povolte v Googlu aplikaci pracovat se soubory na Disku. Bez tohoto povolení účet připojit nejde.`
     case 'failed':
       return 'Zkuste účet připojit znovu.'
   }

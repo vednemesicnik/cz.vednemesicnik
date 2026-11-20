@@ -1,4 +1,5 @@
 import type { Handle } from 'remix/component'
+import { tied } from '../../domain/public/typography.ts'
 
 export type TableRowTitleProps = {
   href: string
@@ -18,7 +19,7 @@ export function TableRowTitle(handle: Handle<TableRowTitleProps>) {
         {isNewTab ? (
           <a class="vdm-row__link" href={href} rel="noopener" target="_blank">
             {title}
-            <span class="vdm-sr-only"> (otevře se v nové záložce)</span>
+            <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
           </a>
         ) : (
           <a class="vdm-row__link" href={href}>

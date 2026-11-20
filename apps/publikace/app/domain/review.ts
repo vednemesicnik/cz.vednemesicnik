@@ -16,9 +16,10 @@ import {
   formatMoment,
   pragueYear,
 } from './time.ts'
+import { tied } from './public/typography.ts'
 
 export const REVIEW_TITLE = 'Ke kontrole'
-export const REVIEW_LEAD = 'Odpovědi, které systém nepoznal jako souhlas. Přečtěte je a rozhodněte.'
+export const REVIEW_LEAD = tied`Odpovědi, které systém nepoznal jako souhlas. Přečtěte je a rozhodněte.`
 
 /** `Obrazová díla · 2 díla · VDM_2026_5`. */
 export function kindLine(artworks: number, issueName: string): string {
@@ -77,7 +78,7 @@ export function verifiedTagDetail(health: JobHealth): string {
 export function verifiedToast(health: JobHealth): string {
   if (health.kind === 'stopped') return 'Konverzace čeká na uložení. Úloha teď neběží.'
   if (health.kind === 'running' && health.next !== null) {
-    return `Souhlas zaznamenán. Pokus o uložení konverzace proběhne kolem ${clockTime(health.next)}.`
+    return tied`Souhlas zaznamenán. Pokus o uložení konverzace proběhne kolem ${clockTime(health.next)}.`
   }
   return 'Souhlas zaznamenán. Konverzace čeká na uložení.'
 }
@@ -88,17 +89,17 @@ export const ARCHIVE_STOPPED_TITLE = `Zkontrolujte úlohu ${REPLY_CHECK_JOB_NAME
 
 export function archiveFailedText(health: JobHealth): string {
   if (health.kind === 'stopped') {
-    return 'Souhlas platí. Konverzaci se nepodařilo uložit do složky Licence a úloha, která to zkusí znovu, teď neběží.'
+    return tied`Souhlas platí. Konverzaci se nepodařilo uložit do složky Licence a úloha, která to zkusí znovu, teď neběží.`
   }
   if (health.kind === 'running' && health.next !== null) {
-    return `Souhlas platí. Konverzaci se nepodařilo uložit do složky Licence. Další pokus o uložení proběhne kolem ${clockTime(health.next)}.`
+    return tied`Souhlas platí. Konverzaci se nepodařilo uložit do složky Licence. Další pokus o uložení proběhne kolem ${clockTime(health.next)}.`
   }
-  return 'Souhlas platí. Konverzaci se nepodařilo uložit do složky Licence. Další pokus o uložení proběhne při dalším běhu úlohy.'
+  return tied`Souhlas platí. Konverzaci se nepodařilo uložit do složky Licence. Další pokus o uložení proběhne při dalším běhu úlohy.`
 }
 
 /* `13g`: a reply to a batch the editors-in-chief discarded. */
 export function discardedBatchText(discardedAt: Temporal.Instant, today: Temporal.Instant): string {
-  return `Dávka je od ${dateOf(discardedAt, today)} zahozená. Díla i jejich PDF jsou v koši sdíleného disku Publikace. Volbou „Je to souhlas“ uložíte konverzaci do složky Licence. Díla zůstanou mimo vydání.`
+  return tied`Dávka je od ${dateOf(discardedAt, today)} zahozená. Díla i jejich PDF jsou v koši sdíleného disku Publikace. Volbou „Je to souhlas“ uložíte konverzaci do složky Licence. Díla zůstanou mimo vydání.`
 }
 
 function dateOf(instant: Temporal.Instant, today: Temporal.Instant): string {
@@ -117,7 +118,7 @@ export function readLine(health: JobHealth, today: Temporal.Instant): ReadLine {
     return { after: ' se zatím neohlásila.', before: 'Úloha ', link: REPLY_CHECK_JOB_NAME }
   }
   if (health.kind === 'stopped') {
-    return { after: '', before: '', link: 'Čtení odpovědí k obrazovým dílům teď neběží.' }
+    return { after: '', before: '', link: tied`Čtení odpovědí k obrazovým dílům teď neběží.` }
   }
   let day = formatDay(health.lastStartedAt, today)
   let read =
@@ -130,6 +131,5 @@ export function readLine(health: JobHealth, today: Temporal.Instant): ReadLine {
 
 /* `13c`, the empty queue. */
 export const EMPTY_TITLE = 'Nic ke kontrole'
-export const EMPTY_TEXT =
-  'Všechny odpovědi byly přesně „Souhlasím“, nebo jste o nich už rozhodli. Kde co čeká na souhlas, ukazuje detail vydání.'
+export const EMPTY_TEXT = tied`Všechny odpovědi byly přesně „Souhlasím“, nebo jste o nich už rozhodli. Kde co čeká na souhlas, ukazuje detail vydání.`
 export const EMPTY_ACTION = 'Přejít na vydání'

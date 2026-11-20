@@ -28,6 +28,7 @@ import { Layout } from '../../ui/layout/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { StatusTag } from '../../ui/status-tag/component.tsx'
 import { Document } from '../document.tsx'
+import { tied } from '../../domain/public/typography.ts'
 
 /** What the add form was sent with, drawn again when it was refused. */
 export type AddForm = {
@@ -561,8 +562,7 @@ function RemovalDialog(handle: Handle<{ question: RemovalQuestion }>) {
                 )}
               </p>
               <p class="vdm-dialog__text">
-                Účet bude odhlášen ze všech zařízení. Znovu se s ním lze přihlásit jen přes skupinu
-                s přístupem. Vydání založená tímto účtem zůstanou.
+                {tied`Účet bude odhlášen ze všech zařízení. Znovu se s ním lze přihlásit jen přes skupinu s přístupem. Vydání založená tímto účtem zůstanou.`}
               </p>
             </>
           ) : (
@@ -577,8 +577,7 @@ function RemovalDialog(handle: Handle<{ question: RemovalQuestion }>) {
                 {question.group.name === null ? null : <span>{question.group.email}</span>}
               </p>
               <p class="vdm-dialog__text">
-                Členové skupiny přijdou o přístup nejpozději za 10 minut, pokud tu nejsou jmenovitě
-                nebo v jiné skupině s přístupem. Skupina v Google Workspace zůstane.
+                {tied`Členové skupiny přijdou o přístup nejpozději za 10 minut, pokud tu nejsou jmenovitě nebo v jiné skupině s přístupem. Skupina v Google Workspace zůstane.`}
               </p>
             </>
           )}

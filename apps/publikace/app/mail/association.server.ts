@@ -1,4 +1,4 @@
-import { keepOneLetterWords } from '../domain/typography.ts'
+import { keepOneLetterWords } from '../domain/public/typography.ts'
 
 /**
  * The association that publishes the magazine, as its contracts and e-mails name it. The IČO is

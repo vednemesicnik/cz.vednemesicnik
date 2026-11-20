@@ -197,7 +197,7 @@ describe('settings, Přístup', () => {
       ).text()
       assert.ok(
         unknown.includes(
-          'Požádejte člověka, který spravuje Google Workspace, o povolení skupiny vybor@vednemesicnik.test pro ověřování členství.',
+          'Požádejte člověka, který spravuje Google Workspace, o\u00a0povolení skupiny vybor@vednemesicnik.test pro ověřování členství.',
         ),
       )
 

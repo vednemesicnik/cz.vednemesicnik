@@ -94,7 +94,7 @@ describe('batchState', () => {
     let unsent = { ...sent, mailSentAt: null }
     assert.equal(batchState(unsent), 'error')
     assert.equal(isMailError(unsent), true)
-    assert.equal(batchStateDetail(unsent), 'chybí potvrzení o odeslání žádosti')
+    assert.equal(batchStateDetail(unsent), 'chybí potvrzení o\u00a0odeslání žádosti')
     assert.equal(batchStateDetail({ ...unsent, mailRefusedAt: at }), 'pošta žádost trvale odmítla')
   })
 
@@ -128,7 +128,7 @@ describe('batchState', () => {
   it('is approved once the conversation is in Licence', () => {
     let approved = { ...replied, approvedAt: at, replyText: null }
     assert.equal(batchState(approved), 'approved')
-    assert.equal(batchStateDetail(approved), 'konverzace v Licencích')
+    assert.equal(batchStateDetail(approved), 'konverzace v\u00a0Licencích')
   })
 })
 
@@ -143,11 +143,11 @@ describe('articleArtworksLine', () => {
   it('shows only what waits, errors first', () => {
     assert.deepEqual(articleArtworksLine({ ...NO_ARTWORKS, error: 1, provider: 1, review: 2 }), {
       isWaiting: true,
-      text: '1 s chybou · 2 ke kontrole',
+      text: '1 s\u00a0chybou · 2 ke kontrole',
     })
     assert.deepEqual(articleArtworksLine({ ...NO_ARTWORKS, error: 2, provider: 2 }), {
       isWaiting: true,
-      text: '2 s chybou',
+      text: '2 s\u00a0chybou',
     })
   })
 
@@ -162,7 +162,7 @@ describe('articleArtworksLine', () => {
       articleArtworksLine({ ...NO_ARTWORKS, approved: 5, provider: 1 })?.text,
       '5 schválených',
     )
-    assert.equal(articleArtworksLine({ ...NO_ARTWORKS, provider: 2 })?.text, 'u poskytovatele')
+    assert.equal(articleArtworksLine({ ...NO_ARTWORKS, provider: 2 })?.text, 'u\u00a0poskytovatele')
     assert.equal(articleArtworksLine(NO_ARTWORKS), null)
   })
 })
@@ -205,7 +205,7 @@ describe('the short lines', () => {
   it('agree with the count', () => {
     assert.equal(
       sentLead(2, 'Školní jídelna po roce'),
-      '2 díla k článku „Školní jídelna po roce“ jsou nahraná.',
+      '2 díla k\u00a0článku „Školní jídelna po roce“ jsou nahraná.',
     )
     assert.equal(resendLabel(2), 'Poslat žádost znovu · 2 díla')
     assert.equal(resendLabel(5), 'Poslat žádost znovu · 5 děl')

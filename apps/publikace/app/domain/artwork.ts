@@ -6,6 +6,7 @@
  */
 
 import { formatDayMonth } from './time.ts'
+import { tied } from './public/typography.ts'
 
 export { SUBMISSIONS_PER_HOUR as SUBMITS_PER_HOUR } from './article.ts'
 
@@ -144,13 +145,13 @@ export function replyExcerpt(text: string): string {
 export const ARTWORK_STATE_LABELS: Readonly<Record<ArtworkState, string>> = {
   approved: 'Schváleno',
   error: 'Chyba',
-  provider: 'U poskytovatele',
+  provider: tied`U poskytovatele`,
   review: 'Ke kontrole',
 }
 
 /** The line under the tag (`12a`, `01b`, `13c`). */
 export function batchStateDetail(batch: BatchStatus): string {
-  if (batch.approvedAt !== null) return 'konverzace v Licencích'
+  if (batch.approvedAt !== null) return tied`konverzace v Licencích`
   if (batch.archiveFailedAt !== null) return 'konverzace se neuložila'
   if (batch.consentVerifiedAt !== null) {
     return `souhlas zaznamenán ${formatDayMonth(batch.consentVerifiedAt)}`
@@ -161,7 +162,7 @@ export function batchStateDetail(batch: BatchStatus): string {
   }
   if (batch.mailSentAt !== null) return `žádost odeslána ${formatDayMonth(batch.mailSentAt)}`
   if (batch.mailRefusedAt !== null) return 'pošta žádost trvale odmítla'
-  return 'chybí potvrzení o odeslání žádosti'
+  return tied`chybí potvrzení o odeslání žádosti`
 }
 
 /* `12a`, the filter over the table, in the address as `?artworks=`. */
@@ -170,7 +171,7 @@ export type ArtworkFilter = 'all' | ArtworkState
 export const ARTWORK_FILTERS: readonly { label: string; value: ArtworkFilter }[] = [
   { label: 'Vše', value: 'all' },
   { label: 'Ke kontrole', value: 'review' },
-  { label: 'U poskytovatele', value: 'provider' },
+  { label: tied`U poskytovatele`, value: 'provider' },
   { label: 'Schválená', value: 'approved' },
   { label: 'Chyba', value: 'error' },
 ]
@@ -221,7 +222,7 @@ export function articleArtworksLine(
   if (totalOf(counts) === 0) return null
   if (counts.error > 0 || counts.review > 0) {
     let parts = [
-      counts.error > 0 ? `${counts.error} s chybou` : null,
+      counts.error > 0 ? tied`${counts.error} s chybou` : null,
       counts.review > 0 ? `${counts.review} ke kontrole` : null,
     ].filter((part) => part !== null)
     return { isWaiting: true, text: parts.join(' · ') }
@@ -229,7 +230,7 @@ export function articleArtworksLine(
   if (counts.provider === 0) {
     return { isWaiting: false, text: counts.approved === 1 ? 'schválené' : 'všechna schválená' }
   }
-  if (counts.approved === 0) return { isWaiting: false, text: 'u poskytovatele' }
+  if (counts.approved === 0) return { isWaiting: false, text: tied`u poskytovatele` }
   return { isWaiting: false, text: `${counts.approved} ${approvedWord(counts.approved)}` }
 }
 
@@ -278,19 +279,18 @@ export const SENT_TITLE = 'Díky, díla máme'
  * agreement, not yet through the copywriter.
  */
 export function sentLead(count: number, articleName: string): string {
-  if (count === 1) return `1 dílo k článku „${articleName}“ je nahrané.`
-  if (count >= 2 && count <= 4) return `${count} díla k článku „${articleName}“ jsou nahraná.`
-  return `${count} děl k článku „${articleName}“ je nahraných.`
+  if (count === 1) return tied`1 dílo k článku „${articleName}“ je nahrané.`
+  if (count >= 2 && count <= 4) return tied`${count} díla k článku „${articleName}“ jsou nahraná.`
+  return tied`${count} děl k článku „${articleName}“ je nahraných.`
 }
 
 export const CONSENT_CALLOUT_TITLE = 'Ještě souhlas e-mailem'
 
 export function consentCalloutText(email: string): string {
-  return `Na ${email} jsme poslali žádost o souhlas. K potvrzení souhlasu stačí odpověď jediným slovem „Souhlasím“. Bez souhlasu se díla do tisku nedostanou.`
+  return tied`Na ${email} jsme poslali žádost o souhlas. K potvrzení souhlasu stačí odpověď jediným slovem „Souhlasím“. Bez souhlasu se díla do tisku nedostanou.`
 }
 
-export const CONSENT_CALLOUT_NOTE =
-  'Žádost může být i ve spamu. Odesílatelem je publikace@vednemesicnik.cz.'
+export const CONSENT_CALLOUT_NOTE = tied`Žádost může být i ve spamu. Odesílatelem je publikace@vednemesicnik.cz.`
 export const ANOTHER_BATCH_LABEL = 'Nahrát další díla'
 
 /* `21d`: the submit's failures, a step as the Callout's title and the result under it. */
@@ -309,31 +309,30 @@ export const FOLDER_GONE_ON_SEND = {
   title: 'Zkuste díla odeslat později.',
 }
 export const SUBMIT_LIMIT_ON_SEND = {
-  text: 'Z tohoto odkazu už za poslední hodinu proběhlo 30 odeslání. Nechte stránku otevřenou, abyste mohli odeslání zkusit znovu. Pokud díla potřebujete poslat hned, napište šéfredakci.',
+  text: tied`Z tohoto odkazu už za poslední hodinu proběhlo 30 odeslání. Nechte stránku otevřenou, abyste mohli odeslání zkusit znovu. Pokud díla potřebujete poslat hned, napište šéfredakci.`,
   title: 'Zkuste díla odeslat později.',
 }
 export const RECIPIENT_LIMIT_ON_SEND = {
-  text: 'Z tohoto odkazu už za posledních 24 hodin odešly žádosti na 5 různých adres. Další žádost teď může odejít jen na některou z nich.',
+  text: tied`Z tohoto odkazu už za posledních 24 hodin odešly žádosti na 5 různých adres. Další žádost teď může odejít jen na některou z nich.`,
   title: 'Zkuste díla odeslat později.',
 }
-export const DAILY_CAP_TEXT =
-  'Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů. Údaje zůstávají ve formuláři.'
+export const DAILY_CAP_TEXT = tied`Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů. Údaje zůstávají ve formuláři.`
 export const DAILY_CAP_ON_SEND = { text: DAILY_CAP_TEXT, title: 'Zkuste díla odeslat později.' }
 export const DISCARDED_ON_SEND = {
-  text: 'Šéfredakce původní díla mezitím zahodila. Z tohoto formuláře už je nelze odeslat. Jméno a e-mail zůstaly vyplněné.',
+  text: tied`Šéfredakce původní díla mezitím zahodila. Z tohoto formuláře už je nelze odeslat. Jméno a e-mail zůstaly vyplněné.`,
   title: 'Nahrajte díla znovu.',
 }
 
 /** On _Díky, díla máme_ when the Mailer refused the request for good (`21d`). */
 export function refusedOnSent(email: string): { text: string; title: string } {
   return {
-    text: `Pošta odmítla žádost o souhlas na ${email}. Díla máme uložená a tady už nic odesílat nemusíte.`,
+    text: tied`Pošta odmítla žádost o souhlas na ${email}. Díla máme uložená a tady už nic odesílat nemusíte.`,
     title: 'Další postup je na šéfredakci.',
   }
 }
 
 /* `02f`: one page for a replaced link, a closed issue and a key nobody issued. */
-export const ARTWORKS_LINK_GONE_TITLE = 'Z tohoto odkazu nejde nahrát obrazová díla'
+export const ARTWORKS_LINK_GONE_TITLE = tied`Z tohoto odkazu nejde nahrát obrazová díla`
 export const ARTWORKS_LINK_GONE_TEXT = 'Pokud díla ještě potřebujete poslat, napište šéfredakci.'
 export const ARTWORKS_LINK_GONE_NOTE = 'Neplatný odkaz nemá vliv na díla, která jste už odeslali.'
 
@@ -363,7 +362,7 @@ export function discardDialogTitle(count: number): string {
 }
 
 export function discardDialogText(articleName: string, email: string): string {
-  return `Díla k článku „${articleName}“ i jejich PDF se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (${email}) žádné upozornění neodejde. Dokud odkaz platí, lze jím díla nahrát znovu.`
+  return tied`Díla k článku „${articleName}“ i jejich PDF se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (${email}) žádné upozornění neodejde. Dokud odkaz platí, lze jím díla nahrát znovu.`
 }
 
 export const DISCARD_CONFIRM_LABEL = 'Zahodit dávku'
@@ -371,31 +370,26 @@ export const DISCARD_CANCEL_LABEL = 'Zrušit'
 
 /* `12o`: the dialog's Callout when the discard did not go through, the step over the state. */
 export const DISCARD_UNAVAILABLE_TITLE = 'Zkuste dávku zahodit za chvíli znovu.'
-export const DISCARD_DISCONNECTED_TITLE =
-  'Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz. Pak zkuste dávku zahodit znovu.'
+export const DISCARD_DISCONNECTED_TITLE = tied`Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz. Pak zkuste dávku zahodit znovu.`
 /** Drive refused to take back what the attempt had put in the bin; not in the drawing. */
-export const DISCARD_PARTLY_BINNED_TEXT = 'Část souborů už může být v koši.'
+export const DISCARD_PARTLY_BINNED_TEXT = tied`Část souborů už může být v koši.`
 
 /* The toasts after _Poslat žádost znovu_ and _Zahodit dávku_. */
 export function resentToast(email: string): string {
-  return `Žádost o souhlas odešla na ${email}.`
+  return tied`Žádost o souhlas odešla na ${email}.`
 }
 export const RESEND_UNAVAILABLE_TOAST =
   'Zkuste žádost poslat za chvíli znovu. Odeslání se nepodařilo potvrdit.'
-export const RESEND_DISCONNECTED_TOAST =
-  'Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz. Pak zkuste žádost poslat znovu.'
-export const RESEND_PDF_GONE_TOAST =
-  'Vraťte PDF dávky z koše sdíleného disku. Pokud je neobnovíte, můžete dávku zahodit.'
-export const RESEND_REFUSED_TOAST =
-  'Zahoďte dávku. Pošta žádost trvale odmítla. O nové nahrání děl požádejte poskytovatele.'
-export const RESEND_DAILY_CAP_TOAST =
-  'Zkuste žádost poslat později. Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů.'
+export const RESEND_DISCONNECTED_TOAST = tied`Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz. Pak zkuste žádost poslat znovu.`
+export const RESEND_PDF_GONE_TOAST = tied`Vraťte PDF dávky z koše sdíleného disku. Pokud je neobnovíte, můžete dávku zahodit.`
+export const RESEND_REFUSED_TOAST = tied`Zahoďte dávku. Pošta žádost trvale odmítla. O nové nahrání děl požádejte poskytovatele.`
+export const RESEND_DAILY_CAP_TOAST = tied`Zkuste žádost poslat později. Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů.`
 
 /** `2 díla i jejich PDF jsou v koši…`; one and five or more by agreement, not yet through copy. */
 export function discardedToast(count: number): string {
-  if (count === 1) return '1 dílo i jeho PDF je v koši sdíleného disku Publikace.'
+  if (count === 1) return tied`1 dílo i jeho PDF je v koši sdíleného disku Publikace.`
   if (count >= 2 && count <= 4) {
-    return `${count} díla i jejich PDF jsou v koši sdíleného disku Publikace.`
+    return tied`${count} díla i jejich PDF jsou v koši sdíleného disku Publikace.`
   }
-  return `${count} děl i jejich PDF je v koši sdíleného disku Publikace.`
+  return tied`${count} děl i jejich PDF je v koši sdíleného disku Publikace.`
 }

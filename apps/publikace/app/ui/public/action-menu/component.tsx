@@ -1,5 +1,6 @@
 import type { Handle } from 'remix/component'
 import { clientEntry, on, ref } from 'remix/component'
+import { tied } from '../../../domain/public/typography.ts'
 
 /**
  * One item of the menu: a link, which opens a new tab unless it stays in the app; a copy of a
@@ -152,7 +153,7 @@ export const ActionMenu = clientEntry(
       ) : (
         <a class="vdm-menu__item" href={item.href} key={index} rel="noopener" target="_blank">
           {item.label}
-          <span class="vdm-sr-only"> (otevře se v nové záložce)</span>
+          <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
         </a>
       )
     }

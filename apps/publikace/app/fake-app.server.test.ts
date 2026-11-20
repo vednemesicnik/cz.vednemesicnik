@@ -156,7 +156,8 @@ describe('the fake app (pnpm app:fake)', () => {
       let [cookie = ''] = ((await control(fake, '/sign-in')).headers.get('Set-Cookie') ?? '').split(
         ';',
       )
-      let banner = 'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.'
+      let banner =
+        'Odpovědi k\u00a0obrazovým dílům se teď v\u00a0aplikaci nepromítají do stavu děl.'
 
       assert.equal((await control(fake, '/replies/fail')).status, 303)
       assert.ok(!(await (await get(fake, '/', { Cookie: cookie })).text()).includes(banner))
@@ -170,7 +171,8 @@ describe('the fake app (pnpm app:fake)', () => {
       let [cookie = ''] = ((await control(fake, '/sign-in')).headers.get('Set-Cookie') ?? '').split(
         ';',
       )
-      let banner = 'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.'
+      let banner =
+        'Odpovědi k\u00a0obrazovým dílům se teď v\u00a0aplikaci nepromítají do stavu děl.'
 
       assert.equal((await control(fake, '/replies/silence')).status, 303)
       assert.ok((await (await get(fake, '/', { Cookie: cookie })).text()).includes(banner))

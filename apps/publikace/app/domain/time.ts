@@ -5,6 +5,8 @@
  * database can compare them as text. Every time a person reads is Prague time.
  */
 
+import { keepOneLetterWords } from './public/typography.ts'
+
 const TIME_ZONE = 'Europe/Prague'
 
 export function now(): Temporal.Instant {
@@ -34,12 +36,13 @@ function inPrague(instant: Temporal.Instant): Temporal.ZonedDateTime {
  * `ve 14:38`, `v 9:12`: the time with its preposition.
  *
  * _Ve_ before the hours 2, 3, 4, 12, 13, 14 and 20–23, _v_ otherwise. A convention of Publikace
- * (`docs/copy-context.md`), not a rule of Czech.
+ * (`docs/copy-context.md`), not a rule of Czech. A lone _v_ stays with its time, as every
+ * one-letter word on the screens does.
  */
 export function atTime(instant: Temporal.Instant): string {
   let hour = inPrague(instant).hour
   let preposition = [2, 3, 4, 12, 13, 14, 20, 21, 22, 23].includes(hour) ? 've' : 'v'
-  return `${preposition} ${clockTime(instant)}`
+  return keepOneLetterWords(`${preposition} ${clockTime(instant)}`)
 }
 
 /** `9:30`, as after _kolem_. */

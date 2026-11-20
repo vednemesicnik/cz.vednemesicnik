@@ -3,6 +3,7 @@ import type { Handle } from 'remix/component'
 import { disconnectedBanner, notConnectedBanner } from '../../domain/drive-account.ts'
 import { routes } from '../../routes.ts'
 import { Callout } from '../callout/component.tsx'
+import { tied } from '../../domain/public/typography.ts'
 
 export type AccountBannerProps = {
   /** `publikace.app@…`: the account the sentence names. */
@@ -35,7 +36,7 @@ export function AccountBanner(handle: Handle<AccountBannerProps>) {
         <div class="vdm-callout__actions">
           {/* A whole page, so the browser itself jumps to the card. */}
           <a class="vdm-btn vdm-btn--outline vdm-btn--sm" data-rmx-document href={href}>
-            {isOnSettings ? 'Přejít k účtu' : 'Do Nastavení'}
+            {isOnSettings ? tied`Přejít k účtu` : 'Do Nastavení'}
           </a>
         </div>
       </Callout>

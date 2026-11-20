@@ -30,7 +30,7 @@ function spaced(tag: JobTag): JobTag {
 
 describe('the jobs that report', () => {
   it('finds a job by its key and nothing else', () => {
-    assert.equal(jobByKey('artwork-replies')?.name, 'Odpovědi k obrazovým dílům')
+    assert.equal(jobByKey('artwork-replies')?.name, 'Odpovědi k\u00a0obrazovým dílům')
     assert.equal(jobByKey('approval-send'), null)
     assert.equal(jobByKey(undefined), null)
   })
@@ -38,11 +38,11 @@ describe('the jobs that report', () => {
   it('says the sentence of the one failing job, and one shared by several', () => {
     assert.equal(
       failingJobsBanner([JOB]),
-      'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.',
+      'Odpovědi k\u00a0obrazovým dílům se teď v\u00a0aplikaci nepromítají do stavu děl.',
     )
     assert.equal(
       failingJobsBanner([JOB, { ...JOB, key: 'other' }]),
-      'U několika úloh na pozadí chybí potvrzení, že proběhly v pořádku.',
+      'U\u00a0několika úloh na pozadí chybí potvrzení, že proběhly v\u00a0pořádku.',
     )
   })
 
@@ -58,10 +58,10 @@ describe('the tag of a job (14d)', () => {
     let ahead = spaced(jobTag({ kind: 'ok', lastStartedAt: LAST, next: NEXT }, TODAY))
     assert.deepEqual(ahead, {
       detail: 'Poslední běh v 9:00 · další kolem 9:30',
-      label: 'V pořádku',
+      label: 'V\u00a0pořádku',
     })
     let passed = spaced(jobTag({ kind: 'ok', lastStartedAt: LAST, next: null }, TODAY))
-    assert.deepEqual(passed, { detail: 'Poslední běh v 9:00', label: 'V pořádku' })
+    assert.deepEqual(passed, { detail: 'Poslední běh v 9:00', label: 'V\u00a0pořádku' })
   })
 
   it('breaks the line only between its parts', () => {
@@ -87,7 +87,7 @@ describe('the tag of a job (14d)', () => {
     let failed: JobState = { isUnreported: false, kind: 'failed', lastStartedAt: LAST, next: null }
     assert.deepEqual(spaced(jobTag(failed, TODAY)), {
       detail: 'Poslední běh v 9:00',
-      label: 'S chybou',
+      label: 'S\u00a0chybou',
     })
     assert.deepEqual(jobTag({ kind: 'never' }, TODAY), { label: 'Zatím se neohlásila' })
   })
@@ -95,7 +95,7 @@ describe('the tag of a job (14d)', () => {
   it('sums the one job up in Settings by its name and tag', () => {
     assert.equal(
       settingsSummary(JOB, { kind: 'never' }, TODAY),
-      'Odpovědi k obrazovým dílům · Zatím se neohlásila',
+      'Odpovědi k\u00a0obrazovým dílům · Zatím se neohlásila',
     )
   })
 })
@@ -114,7 +114,7 @@ describe('the history of a job (14e)', () => {
     assert.equal(historyEvent(JOB, { ...finished, outcome: 'ok' }, TODAY), 'Skončila bez chyby')
     assert.equal(
       historyEvent(JOB, { ...finished, outcome: 'failed' }, TODAY),
-      'Skončila s chybou, na dílech se nic nezměnilo',
+      'Skončila s\u00a0chybou, na dílech se nic nezměnilo',
     )
     assert.equal(historyEvent(JOB, RUN, LAST.add({ minutes: 5 })), 'Právě běží')
     assert.equal(historyEvent(JOB, RUN, TODAY), 'Neohlásila výsledek')
@@ -132,7 +132,7 @@ describe('the history of a job (14e)', () => {
         lastStartedAt: LAST,
         next: NEXT,
       }),
-      'Úloha skončila s chybou. Na dílech se nic nezměnilo. Další běh proběhne kolem 9:30. Pokud se to opakuje, obraťte se na toho, kdo má úlohu na starosti.',
+      'Úloha skončila s\u00a0chybou. Na dílech se nic nezměnilo. Další běh proběhne kolem 9:30. Pokud se to opakuje, obraťte se na toho, kdo má úlohu na starosti.',
     )
     assert.equal(
       failedCalloutText(JOB, {

@@ -65,7 +65,7 @@ describe('Úlohy na pozadí (14d)', () => {
       await run(app, 5, { outcome: 'ok' })
       let html = await (await browser.get('/settings/jobs')).text()
       assert.match(html, /každých 30 min/)
-      assert.match(html, /V pořádku/)
+      assert.match(html, /V\u00a0pořádku/)
       assert.match(html, /Poslední běh ve?\u00a0\d+:\d\d\u00a0· další\u00a0kolem\u00a0\d+:\d\d/)
       assert.doesNotMatch(html, /href="\/settings\/jobs\/artwork-replies"/)
     } finally {
@@ -88,7 +88,7 @@ describe('Úlohy na pozadí (14d)', () => {
     try {
       await run(second.app, 15)
       let overdue = await (await second.browser.get('/settings/jobs')).text()
-      assert.match(overdue, /S chybou/)
+      assert.match(overdue, /S\u00a0chybou/)
       assert.match(overdue, /href="\/settings\/jobs\/artwork-replies"/)
     } finally {
       await second.app.close()
@@ -299,7 +299,7 @@ describe('the history of a job (14e)', () => {
     let { app, browser } = await setup()
     try {
       let html = await (await browser.get('/settings/jobs/artwork-replies')).text()
-      assert.match(html, /Úloha Odpovědi k obrazovým dílům se zatím neohlásila\./)
+      assert.match(html, /Úloha Odpovědi k\u00a0obrazovým dílům se zatím neohlásila\./)
       assert.equal((await browser.get('/settings/jobs/approval-send')).status, 404)
     } finally {
       await app.close()

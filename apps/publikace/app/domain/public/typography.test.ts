@@ -1,7 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
-import { keepOneLetterWords } from './typography.ts'
+import { keepOneLetterWords, tied } from './typography.ts'
 
 describe('keepOneLetterWords', () => {
   it('ties a one-letter preposition or conjunction to the word after it', () => {
@@ -30,5 +30,30 @@ describe('keepOneLetterWords', () => {
   it('changes nothing that is tied already', () => {
     let tied = keepOneLetterWords('v dokumentu u vašeho jména')
     assert.equal(keepOneLetterWords(tied), tied)
+  })
+})
+
+describe('tied', () => {
+  it('ties the template’s own text', () => {
+    assert.equal(tied`Část souborů už může být v koši.`, 'Část souborů už může být v koši.')
+  })
+
+  it('puts a value in as typed and ties the word before it', () => {
+    let title = 'Výstava v Brně a jinde'
+    assert.equal(
+      tied`Díla k článku „${title}“ i PDF`,
+      'Díla k článku „Výstava v Brně a jinde“ i PDF',
+    )
+    assert.equal(tied`Soubor v ${title}`, 'Soubor v Výstava v Brně a jinde')
+  })
+
+  it('does not take a letter glued to a value for a word', () => {
+    assert.equal(tied`${'Jan'}a k textu`, 'Jana k textu')
+    assert.equal(tied`${'Jan'} a k textu`, 'Jan a k textu')
+  })
+
+  it('gives what keepOneLetterWords leaves alone', () => {
+    let text = tied`Text pište v dokumentu, ${'z. s.'} u vás`
+    assert.equal(keepOneLetterWords(text), text)
   })
 })

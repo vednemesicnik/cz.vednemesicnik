@@ -4,7 +4,7 @@ import {
   OPEN_DOCUMENT_LABEL,
   UPLOAD_ARTWORKS_LABEL,
 } from '../domain/article.ts'
-import { keepOneLetterWords } from '../domain/typography.ts'
+import { keepOneLetterWords } from '../domain/public/typography.ts'
 import {
   escapeHtml,
   houseEnding,

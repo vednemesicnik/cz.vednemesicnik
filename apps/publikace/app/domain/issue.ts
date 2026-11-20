@@ -7,6 +7,7 @@
 
 import { shortAccount } from './drive-account.ts'
 import { formatDate, formatDayMonth, pragueYear } from './time.ts'
+import { tied } from './public/typography.ts'
 
 /** The three folders an issue has on the shared drive, in the order they are created. */
 export type FolderKind = 'issue' | 'articles' | 'print'
@@ -103,7 +104,7 @@ export function checkIssueName(value: string): NameCheck {
 }
 
 export function duplicateNameMessage(existingName: string): string {
-  return `Zvolte jiný název — vydání ${existingName} už v aplikaci existuje.`
+  return tied`Zvolte jiný název — vydání ${existingName} už v aplikaci existuje.`
 }
 
 const NUMBERED_NAME = /^VDM_(\d{4})_(\d+)$/i
@@ -129,19 +130,18 @@ export function suggestNextName(names: readonly string[], today: Temporal.Instan
 }
 
 /* `11d`, as drawn, the Evidence, the Registr and the link included. */
-export const NEW_ISSUE_TEXT =
-  'Na sdíleném disku Publikace vznikne složka vydání se složkami Články a podklady pro tisk. Evidence a záznam v Registru se doplní následně. Odkaz pro redakci na nový článek bude v detailu vydání.'
+export const NEW_ISSUE_TEXT = tied`Na sdíleném disku Publikace vznikne složka vydání se složkami Články a podklady pro tisk. Evidence a záznam v Registru se doplní následně. Odkaz pro redakci na nový článek bude v detailu vydání.`
 
 export const NAME_HINT = 'Ve tvaru VDM_RRRR_N.'
 
 /** In the dialog from the moment it opens, while the account was never connected (`14g`). */
 export function notConnectedDialogMessage(expectedEmail: string): string {
-  return `Nejdřív v Nastavení připojte účet ${shortAccount(expectedEmail)}, aby šlo vytvořit vydání.`
+  return tied`Nejdřív v Nastavení připojte účet ${shortAccount(expectedEmail)}, aby šlo vytvořit vydání.`
 }
 
 /** _Dokončit vydání_ while the account was never connected (`14g`). */
 export function notConnectedToast(expectedEmail: string): string {
-  return `Nejdřív v Nastavení připojte účet ${shortAccount(expectedEmail)}.`
+  return tied`Nejdřív v Nastavení připojte účet ${shortAccount(expectedEmail)}.`
 }
 
 /* `11c`: Drive did not answer at the issue folder, so nothing exists. */
@@ -164,7 +164,7 @@ const FOLDER_LABELS: Record<Exclude<FolderKind, 'issue'>, string> = {
  */
 export function unfinishedText(missing: readonly FolderKind[]): string {
   if (missing.includes('issue')) {
-    return 'Zvolte Dokončit vydání. Doplní se chybějící složky vydání, Články a podklady pro tisk.'
+    return tied`Zvolte Dokončit vydání. Doplní se chybějící složky vydání, Články a podklady pro tisk.`
   }
 
   let labels = missing.filter((kind) => kind !== 'issue').map((kind) => FOLDER_LABELS[kind])
@@ -172,7 +172,9 @@ export function unfinishedText(missing: readonly FolderKind[]): string {
      last step, and finishing only records it. */
   if (labels.length === 0) return 'Zvolte Dokončit vydání.'
   let what =
-    labels.length === 1 ? `chybějící složka ${labels[0]}` : `chybějící složky ${labels.join(' a ')}`
+    labels.length === 1
+      ? `chybějící složka ${labels[0]}`
+      : `chybějící složky ${labels.join(tied` a `)}`
   return `Zvolte Dokončit vydání. Doplní se ${what}; složka vydání už vznikla.`
 }
 
@@ -189,7 +191,7 @@ export const FINISH_UNAVAILABLE_TOAST = 'Zkuste dokončit vydání za chvíli zn
 
 /** `12i`: the stored issue folder is no longer on Drive, so finishing would create it twice. */
 export function folderGoneMessage(name: string): string {
-  return `Obnovte složku vydání ${name} z koše, nebo ji vraťte na sdílený disk Publikace. Pak zvolte Dokončit vydání.`
+  return tied`Obnovte složku vydání ${name} z koše, nebo ji vraťte na sdílený disk Publikace. Pak zvolte Dokončit vydání.`
 }
 
 /**
@@ -236,8 +238,7 @@ export function phoneRowLine(issue: Issue, articles: number, artworks: number): 
 }
 
 export const EMPTY_TITLE = 'Zatím tu není žádné vydání'
-export const EMPTY_TEXT =
-  'Založte první vydání v aplikaci. Vydání z doby před aplikací dál dokončujte v původních tabulkách.'
+export const EMPTY_TEXT = tied`Založte první vydání v aplikaci. Vydání z doby před aplikací dál dokončujte v původních tabulkách.`
 
 export function emptyFilterTitle(filter: Exclude<IssueFilter, 'all'>): string {
   return filter === 'closed' ? 'Žádné uzavřené vydání' : 'Žádné neuzavřené vydání'
@@ -251,8 +252,7 @@ export function otherFilterText(count: number): string {
 /* `12c`, the sections of a fresh issue. */
 export const ARTICLES_EMPTY_TEXT =
   'Zatím žádný článek. Pošlete redakci odkaz nahoře, články se tu objeví hned po založení.'
-export const ARTWORKS_EMPTY_TEXT =
-  'Díla nahrají autoři odkazem z uvítacího e-mailu, nebo poskytovatelé odkazem ke skupině.'
+export const ARTWORKS_EMPTY_TEXT = tied`Díla nahrají autoři odkazem z uvítacího e-mailu, nebo poskytovatelé odkazem ke skupině.`
 
 /* `12i`: where the link will stand, without the link, so nobody copies it before it is valid. */
 export const LINK_PLACEHOLDER_TEXT = 'Odkaz na nový článek bude tady, až bude vydání dokončené.'

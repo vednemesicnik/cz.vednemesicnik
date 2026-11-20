@@ -77,6 +77,7 @@ import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
 import { FinishIssueForm, IssueStateTag } from './issue-parts.tsx'
 import type { DriveStatus } from './overview-page.tsx'
+import { tied } from '../../domain/public/typography.ts'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
 export type LinkBlockView = {
@@ -397,7 +398,7 @@ function FolderHeading(
                 <path d="M10 14 21 3" />
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
               </svg>
-              <span class="vdm-sr-only"> (otevře se v nové záložce)</span>
+              <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
             </a>
           )
         })}
@@ -758,7 +759,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
                     target="_blank"
                   >
                     Složka na Disku
-                    <span class="vdm-sr-only"> (otevře se v nové záložce)</span>
+                    <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
                   </a>
                 )}
               </div>

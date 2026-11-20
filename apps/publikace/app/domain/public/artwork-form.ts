@@ -7,6 +7,8 @@
  * _stejná pole, formáty a limity_ (`21a`).
  */
 
+import { tied } from './typography.ts'
+
 export const MAX_ARTWORKS = 20
 export const MAX_FILE_MEGABYTES = 15
 export const MAX_FILE_BYTES = MAX_FILE_MEGABYTES * 1024 * 1024
@@ -81,7 +83,7 @@ export const TOO_MANY_NOTE = 'Víc než 20 děl najednou nejde. Další pošlete
    uploaded artwork, the reason is the same. */
 export const UPLOAD_CAP_WITH_UPLOADS = 'Nahraná díla můžete odeslat. Další zkuste nahrát později.'
 export const UPLOAD_CAP_WITHOUT_UPLOADS = 'Zkuste díla nahrát později, nebo dejte vědět šéfredakci.'
-export const UPLOAD_CAP_REASON = 'Z tohoto odkazu se za poslední hodinu nahrálo 60 souborů.'
+export const UPLOAD_CAP_REASON = tied`Z tohoto odkazu se za poslední hodinu nahrálo 60 souborů.`
 
 /* `21b`, a card whose file uploaded but is no image the server recognises. */
 export function unreadableTitle(fileName: string): string {
@@ -126,7 +128,7 @@ export function checkSource(value: string): string | null {
 }
 
 /* The provider's fields. Not drawn for this page: the article form's sentences where they fit. */
-export const EMPTY_PROVIDER_NAME_MESSAGE = 'Vyplňte jméno a příjmení.'
+export const EMPTY_PROVIDER_NAME_MESSAGE = tied`Vyplňte jméno a příjmení.`
 export const LONG_PROVIDER_NAME_MESSAGE = 'Zkraťte jméno na nejvýš 200 znaků.'
 /* Not yet through the copywriter: the article's sentence names the author. */
 export const EMPTY_PROVIDER_EMAIL_MESSAGE = 'Vyplňte e-mail.'
@@ -221,27 +223,24 @@ export function artworkFieldLabel(key: ArtworkFieldKey): string {
 
 /* `21a`. */
 export const ARTWORKS_PAGE_TITLE = 'Nahrání obrazových děl'
-export const ARTWORKS_PAGE_LEAD =
-  'Nahrajte díla k publikaci. Po odeslání pošleme na uvedenou adresu žádost o souhlas. Souhlas se dává odpovědí přesně „Souhlasím“.'
+export const ARTWORKS_PAGE_LEAD = tied`Nahrajte díla k publikaci. Po odeslání pošleme na uvedenou adresu žádost o souhlas. Souhlas se dává odpovědí přesně „Souhlasím“.`
 
 export function articleBadge(articleName: string): string {
-  return `K článku ${articleName}`
+  return tied`K článku ${articleName}`
 }
 
 export const PROVIDER_LEGEND = 'Kdo díla poskytuje'
-export const PROVIDER_HINT =
-  'Uveďte jméno a e-mail osoby, která dává souhlas s užitím děl. Autora díla uvedete u každého díla zvlášť.'
-export const PROVIDER_NAME_LABEL = 'Jméno a příjmení'
+export const PROVIDER_HINT = tied`Uveďte jméno a e-mail osoby, která dává souhlas s užitím děl. Autora díla uvedete u každého díla zvlášť.`
+export const PROVIDER_NAME_LABEL = tied`Jméno a příjmení`
 export const PROVIDER_EMAIL_LABEL = 'E-mail'
-export const PROVIDER_EMAIL_HINT = 'Na tuto adresu pošleme žádost o souhlas.'
+export const PROVIDER_EMAIL_HINT = tied`Na tuto adresu pošleme žádost o souhlas.`
 export const ARTWORKS_LEGEND = 'Díla'
-export const ARTWORKS_HINT =
-  'JPG, PNG, TIFF, WebP i fotky z iPhonu (HEIC). Nejvýše 20 děl, každé do 15 MB.'
+export const ARTWORKS_HINT = tied`JPG, PNG, TIFF, WebP i fotky z iPhonu (HEIC). Nejvýše 20 děl, každé do 15 MB.`
 export const ARTWORK_AUTHOR_LABEL = 'Autor díla'
 export const ARTWORK_AUTHOR_HINT = 'Bez autora dílo vyjde bez podpisu.'
 export const ARTWORK_SOURCE_LABEL = 'Zdroj, odkaz přímo na dílo'
 export const REMOVE_ARTWORK_LABEL = 'Odebrat'
-export const CHOOSE_HINT = 'Vyfoťte nebo vyberte z galerie. Víc obrázků najednou jde.'
+export const CHOOSE_HINT = tied`Vyfoťte nebo vyberte z galerie. Víc obrázků najednou jde.`
 export const CHOOSE_LABEL = 'Vybrat díla'
 export const DROP_LEAD = 'Přetáhněte díla sem, nebo'
 export const SUBMIT_ARTWORKS_LABEL = 'Odeslat díla'
@@ -271,8 +270,7 @@ export function waitingForUploadNote(number: number): string {
 }
 
 /** Under the heading when the page's script never started (`21a`, _Skript stránky neběží_). */
-export const SCRIPT_MISSING_WARNING =
-  'Načtěte stránku znovu, nebo odkaz otevřete v jiném prohlížeči. Díla tu teď nejde nahrát.'
+export const SCRIPT_MISSING_WARNING = tied`Načtěte stránku znovu, nebo odkaz otevřete v jiném prohlížeči. Díla tu teď nejde nahrát.`
 
 /* `21d`: a step as the Callout's title, the result under it. */
 export type ArtworksMessage = { text: string; title: string }
@@ -283,8 +281,7 @@ export const LINK_GONE_AFTER_UPLOAD: ArtworksMessage = {
 }
 
 /** In place of _Odeslat díla_ once nothing more can be sent from the page (`21d`). */
-export const SENDING_CLOSED_LINE =
-  'Díla už z tohoto odkazu nelze odeslat. Další postup najdete nahoře na stránce. Neodeslané soubory přesuneme do 24 hodin do koše sdíleného disku.'
+export const SENDING_CLOSED_LINE = tied`Díla už z tohoto odkazu nelze odeslat. Další postup najdete nahoře na stránce. Neodeslané soubory přesuneme do 24 hodin do koše sdíleného disku.`
 
 /**
  * The upload endpoint's answer, which the island reads. `unreadable` is a file stored and counted
@@ -310,11 +307,9 @@ export const FILE_NAME_HEADER = 'X-File-Name'
    said on a card whose upload met the same. */
 export const ARTWORKS_DISCONNECTED_WARNING =
   'Zkuste díla nahrát později, nebo dejte vědět šéfredakci.'
-export const ARTWORKS_FOLDER_GONE_WARNING =
-  'Zkuste to později. Z tohoto odkazu teď nejde díla nahrát ani odeslat.'
+export const ARTWORKS_FOLDER_GONE_WARNING = tied`Zkuste to později. Z tohoto odkazu teď nejde díla nahrát ani odeslat.`
 /** The card of a file chosen while a folder is missing: the server refused it (`21a`). */
-export const UPLOAD_FOLDER_GONE_TEXT =
-  'Zkuste to později. Soubor se nenahrál a díla teď nejde odeslat.'
+export const UPLOAD_FOLDER_GONE_TEXT = tied`Zkuste to později. Soubor se nenahrál a díla teď nejde odeslat.`
 
 /* The design system's `UploadStatus`, in its own words (`bxy8xxqs`). */
 export const UPLOADING_LABEL = 'Nahrává se'

@@ -4,6 +4,8 @@
  * Pure, so the field messages are tested here rather than through a page.
  */
 
+import { tied } from './public/typography.ts'
+
 /** What the add form adds: a named account or a Google group. Both are an e-mail address. */
 export type AccessKind = 'account' | 'group'
 
@@ -56,7 +58,7 @@ export function duplicateMessage(kind: AccessKind, email: string): string {
 
 /** `14b`, the membership service does not know the group (`unknown_group`). */
 export function unknownGroupMessage(email: string): string {
-  return `Požádejte člověka, který spravuje Google Workspace, o povolení skupiny ${email} pro ověřování členství.`
+  return tied`Požádejte člověka, který spravuje Google Workspace, o povolení skupiny ${email} pro ověřování členství.`
 }
 
 /** `14b`, the membership service did not answer while a group was being added. */

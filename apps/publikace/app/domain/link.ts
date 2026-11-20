@@ -6,6 +6,7 @@
  */
 
 import { formatDate, formatDayMonth, pragueYear } from './time.ts'
+import { tied } from './public/typography.ts'
 
 /** Twelve characters of this alphabet, random, naming no folder and no issue (`02a`). */
 export const LINK_KEY_LENGTH = 12
@@ -68,8 +69,7 @@ export function shownUrl(url: string): string {
 
 /* `12a`, `12c`, as the copywriter settled them (il3qqrj9). */
 export const LINK_SECTION_TITLE = 'Odkaz pro redakci'
-export const LINK_SECTION_TEXT =
-  'Pošlete odkaz do skupiny redakce. Kdokoli s odkazem může založit článek v tomto vydání.'
+export const LINK_SECTION_TEXT = tied`Pošlete odkaz do skupiny redakce. Kdokoli s odkazem může založit článek v tomto vydání.`
 export const ARTICLE_LINK_LABEL = 'Nový článek'
 export const OPEN_FORM_LABEL = 'Otevřít formulář'
 export const RENEW_LINK_LABEL = 'Vydat nový odkaz…'
@@ -103,14 +103,12 @@ export const PREVIEW_GENERIC_TITLE = 'Vedneměsíčník · Publikace'
 
 /* `02d`. */
 export const RENEW_DIALOG_TITLE = 'Vydat nový odkaz pro redakci?'
-export const RENEW_DIALOG_TEXT =
-  'Dosavadní odkaz hned přestane platit i lidem, kteří ho už mají v konverzaci.'
-export const RENEW_DIALOG_NOTE = 'Rozepsané články zůstanou v dokumentech Google.'
+export const RENEW_DIALOG_TEXT = tied`Dosavadní odkaz hned přestane platit i lidem, kteří ho už mají v konverzaci.`
+export const RENEW_DIALOG_NOTE = tied`Rozepsané články zůstanou v dokumentech Google.`
 export const RENEW_CONFIRM_LABEL = 'Vydat nový odkaz'
 export const RENEWED_TOAST = 'Pošlete redakci nový odkaz. Starý už neplatí.'
 
 /* `02e`: one page for a replaced link, a closed issue and a key nobody issued. */
-export const LINK_GONE_TITLE = 'Z tohoto odkazu nejde založit článek'
-export const LINK_GONE_TEXT = 'Napište šéfredakci a požádejte o aktuální odkaz.'
-export const LINK_GONE_NOTE =
-  'Pokud už máte článek rozepsaný, můžete v něm dál psát v dokumentu Google.'
+export const LINK_GONE_TITLE = tied`Z tohoto odkazu nejde založit článek`
+export const LINK_GONE_TEXT = tied`Napište šéfredakci a požádejte o aktuální odkaz.`
+export const LINK_GONE_NOTE = tied`Pokud už máte článek rozepsaný, můžete v něm dál psát v dokumentu Google.`

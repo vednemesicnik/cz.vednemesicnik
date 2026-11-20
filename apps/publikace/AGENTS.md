@@ -167,6 +167,12 @@ files until this one has its own.
 - A boolean carries a prefix that makes it a question — `is`, `has`, `can`, `keeps`.
 - **Czech in anything a user reads; English in code, identifiers, URL paths, query parameters,
   commit messages and issues.** `/issues/new`, `?state=all`, never `/vydani/nove`.
+- **The app's Czech on a screen is written through `` tied`…` ``** from
+  `app/domain/public/typography.ts`, which keeps _v, s, k, z, o, u, a, i_ with the next word and
+  puts a `${value}` a person typed in as typed. A string that leaves the app (a Drive name, an
+  e-mail subject, a sheet cell, an API answer) stays plain; the e-mails tie their own sentences
+  with `keepOneLetterWords`. `app/actions/typography.test.ts` sweeps the main pages for a word
+  left untied.
 - An issue title is a plain English sentence about the problem, never a `type(scope):` subject.
   That form belongs to commits and PR titles, because the squash turns a PR title into a commit
   on `dev`.

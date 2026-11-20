@@ -5,6 +5,7 @@ import { routes } from '../../routes.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { SignInCard } from '../../ui/sign-in-card/component.tsx'
 import { Document } from '../document.tsx'
+import { tied } from '../../domain/public/typography.ts'
 
 /** The refusals `10a` has a sentence for, as they come in `?error=`. */
 export type SignInError = 'domain' | 'expired' | 'notlisted' | 'oauth' | 'unavailable'
@@ -63,13 +64,13 @@ export type SignInPageProps = {
 function errorMessage(error: SignInError, domain: string, refusedEmail: string | undefined) {
   switch (error) {
     case 'domain':
-      return `Vyberte účet Google s adresou @${domain} — jinou adresou se přihlásit nelze.`
+      return tied`Vyberte účet Google s adresou @${domain} — jinou adresou se přihlásit nelze.`
     case 'expired':
-      return 'Přihlášení vypršelo. Přihlaste se znovu a pokračujte tam, kde jste skončili.'
+      return tied`Přihlášení vypršelo. Přihlaste se znovu a pokračujte tam, kde jste skončili.`
     case 'notlisted':
       return refusedEmail === undefined
-        ? 'Požádejte šéfredakci o kontakt na správce Publikace. Účet nemá přístup.'
-        : `Požádejte šéfredakci o kontakt na správce Publikace. Účet ${refusedEmail} nemá přístup.`
+        ? tied`Požádejte šéfredakci o kontakt na správce Publikace. Účet nemá přístup.`
+        : tied`Požádejte šéfredakci o kontakt na správce Publikace. Účet ${refusedEmail} nemá přístup.`
     case 'oauth':
       return 'Zkuste přihlášení přes Google znovu.'
     case 'unavailable':
@@ -88,7 +89,7 @@ export function SignInPage(handle: Handle<SignInPageProps>) {
         : `${routes.auth.google.start.href()}?${new URLSearchParams({ redirectTo })}`
 
     if (signedOut) {
-      let note = 'Na sdíleném počítači se ještě odhlaste z účtu Google.'
+      let note = tied`Na sdíleném počítači se ještě odhlaste z účtu Google.`
 
       return (
         <Document title="Odhlášeno">
@@ -101,7 +102,7 @@ export function SignInPage(handle: Handle<SignInPageProps>) {
                 Přihlásit se znovu
               </a>
               <a class="vdm-btn vdm-btn--ghost" href={GOOGLE_SIGN_OUT_URL}>
-                Odhlásit i účet Google
+                {tied`Odhlásit i účet Google`}
               </a>
             </SignInCard>
           </div>
@@ -122,7 +123,7 @@ export function SignInPage(handle: Handle<SignInPageProps>) {
               Přihlásit se přes Google
             </a>
             <p class="vdm-signin__note vdm-signin__note--quiet">
-              S účtem @{domain}, který má přístup do Publikace.
+              {tied`S účtem @${domain}, který má přístup do Publikace.`}
             </p>
           </SignInCard>
         </div>

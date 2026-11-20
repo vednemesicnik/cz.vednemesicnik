@@ -86,7 +86,7 @@ describe('checkArticle', () => {
         authors: [TEREZA, { ...ONDREJ, email: 'Tereza.Vlkova@external.test' }],
         name: 'Č',
       }),
-      [{ key: 'author-2-email', message: 'Zkontrolujte adresu. Stejnou má i autor 1.' }],
+      [{ key: 'author-2-email', message: 'Zkontrolujte adresu. Stejnou má i\u00a0autor 1.' }],
     )
   })
 

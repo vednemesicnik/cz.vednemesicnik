@@ -6,7 +6,7 @@
 
 import type { Author } from './public/article-form.ts'
 import { formatDayMonth } from './time.ts'
-import { NBSP } from './typography.ts'
+import { NBSP, tied } from './public/typography.ts'
 
 export {
   REQUIRED_LEGEND,
@@ -50,8 +50,7 @@ export type {
 
 /* `20a`, as the copywriter settled them (il3qqrj9). */
 export const ARTICLE_PAGE_TITLE = 'Nový článek'
-export const ARTICLE_PAGE_LEAD =
-  'Pro článek vytvoříme dokument Google. V uvítacím e-mailu najdou autoři odkaz na dokument i na nahrání obrazových děl.'
+export const ARTICLE_PAGE_LEAD = tied`Pro článek vytvoříme dokument Google. V uvítacím e-mailu najdou autoři odkaz na dokument i na nahrání obrazových děl.`
 export function issueLine(issueName: string): string {
   return `Vydání ${issueName}`
 }
@@ -59,27 +58,26 @@ export function issueLine(issueName: string): string {
 /* The warnings under the lead, checked when the page opens (`20a`; `dkssdpyc`, `1jv85zum`). */
 export const ACCOUNT_DISCONNECTED_WARNING =
   'Zkuste článek vytvořit později, nebo dejte vědět šéfredakci.'
-export const ARTICLES_FOLDER_GONE_WARNING =
-  'Z tohoto odkazu teď nejde založit článek. Šéfredakce vidí problém v aplikaci.'
+export const ARTICLES_FOLDER_GONE_WARNING = tied`Z tohoto odkazu teď nejde založit článek. Šéfredakce vidí problém v aplikaci.`
 
 /* `20c`: a step as the Callout's title, the result under it. */
 export type SubmitMessage = { text: string; title: string }
 
 export const LINK_GONE_ON_SUBMIT: SubmitMessage = {
-  text: 'Tento odkaz mezitím přestal platit a článek se nevytvořil. Vyplněné údaje jsou stále na této stránce.',
-  title: 'Napište šéfredakci o aktuální odkaz.',
+  text: tied`Tento odkaz mezitím přestal platit a článek se nevytvořil. Vyplněné údaje jsou stále na této stránce.`,
+  title: tied`Napište šéfredakci o aktuální odkaz.`,
 }
 export const DRIVE_UNAVAILABLE_ON_SUBMIT: SubmitMessage = {
   text: 'Článek se nevytvořil.',
   title: 'Zkuste článek vytvořit za chvíli znovu.',
 }
 export const LIMIT_REACHED_ON_SUBMIT: SubmitMessage = {
-  text: 'Z tohoto odkazu už za poslední hodinu vzniklo 30 článků. Pokud článek potřebujete založit hned, napište šéfredakci.',
+  text: tied`Z tohoto odkazu už za poslední hodinu vzniklo 30 článků. Pokud článek potřebujete založit hned, napište šéfredakci.`,
   title: 'Zkuste článek vytvořit později.',
 }
 
 export const DAILY_CAP_ON_SUBMIT: SubmitMessage = {
-  text: 'Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů. Údaje zůstávají ve formuláři.',
+  text: tied`Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů. Údaje zůstávají ve formuláři.`,
   title: 'Zkuste článek vytvořit později.',
 }
 

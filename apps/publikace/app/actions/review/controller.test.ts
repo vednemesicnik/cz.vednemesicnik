@@ -111,7 +111,7 @@ describe('Ke kontrole', () => {
       assert.match(html, /Nic ke kontrole/)
       assert.match(
         html,
-        /Úloha <a href="\/settings\/jobs">Odpovědi k obrazovým dílům<\/a> se zatím neohlásila\./,
+        /Úloha <a href="\/settings\/jobs">Odpovědi k\u00a0obrazovým dílům<\/a> se zatím neohlásila\./,
       )
       assert.match(html, /href="\/review"[^>]*>\s*Ke kontrole\s*</)
     } finally {
@@ -125,7 +125,10 @@ describe('Ke kontrole', () => {
       await replyTo(app, batch, 'Můžu se zeptat, kde přesně fotka vyjde?')
       let html = await (await browser.get('/review')).text()
       assert.match(html, /Obrazová díla · 2 díla · VDM_2026_5/)
-      assert.match(html, /Klára Šimková · klara\.simkova@external\.test · přijato 14\. 11\. v 7:12/)
+      assert.match(
+        html,
+        /Klára Šimková · klara\.simkova@external\.test · přijato 14\. 11\. v\u00a07:12/,
+      )
       assert.match(
         html,
         /<blockquote class="vdm-queue-item__quote">Můžu se zeptat, kde přesně fotka vyjde\?<\/blockquote>/,
@@ -157,7 +160,7 @@ describe('Ke kontrole', () => {
       assert.match(settled, /Klára Šimková · odpověď „ok, souhlas“/)
       assert.match(
         settled,
-        /Souhlas zaznamenán\. Pokus o uložení konverzace proběhne kolem \d+:\d\d\./,
+        /Souhlas zaznamenán\. Pokus o\u00a0uložení konverzace proběhne kolem \d+:\d\d\./,
       )
       assert.match(
         settled,
@@ -232,7 +235,10 @@ describe('Ke kontrole', () => {
     try {
       await replyTo(app, batch, 'Souhlasím', { archive: { fileId: 'pdf-1' }, isExact: true })
       assert.match(await (await browser.get('/review')).text(), /Nic ke kontrole/)
-      assert.match(await (await browser.get('/issues/VDM_2026_5')).text(), /konverzace v Licencích/)
+      assert.match(
+        await (await browser.get('/issues/VDM_2026_5')).text(),
+        /konverzace v\u00a0Licencích/,
+      )
     } finally {
       await app.close()
     }

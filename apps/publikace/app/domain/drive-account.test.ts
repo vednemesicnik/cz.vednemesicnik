@@ -71,11 +71,11 @@ describe('the words of 14g, 14h and 14c (fxmhsx1r)', () => {
         EXPECTED,
         false,
       ),
-      'Vyberte v Googlu účet publikace.app@vednemesicnik.test. Účet jan.novak@vednemesicnik.test připojit nejde.',
+      'Vyberte v\u00a0Googlu účet publikace.app@vednemesicnik.test. Účet jan.novak@vednemesicnik.test připojit nejde.',
     )
     assert.equal(
       refusalMessage({ reason: 'no-drive-scope' }, EXPECTED, false),
-      'Povolte v Googlu aplikaci pracovat se soubory na Disku. Bez tohoto povolení účet připojit nejde.',
+      'Povolte v\u00a0Googlu aplikaci pracovat se soubory na Disku. Bez tohoto povolení účet připojit nejde.',
     )
     assert.equal(
       refusalMessage({ reason: 'failed' }, EXPECTED, false),
@@ -83,7 +83,7 @@ describe('the words of 14g, 14h and 14c (fxmhsx1r)', () => {
     )
     assert.equal(
       refusalMessage({ reason: 'failed' }, EXPECTED, true),
-      'Účet publikace.app@ už je připojený. Váš pokus o připojení se nepodařil, ale účet zůstává připojený.',
+      'Účet publikace.app@ už je připojený. Váš pokus o\u00a0připojení se nepodařil, ale účet zůstává připojený.',
     )
   })
 

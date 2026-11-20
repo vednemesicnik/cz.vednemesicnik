@@ -5,6 +5,7 @@
  */
 
 import { atTime, formatDayMonth } from './time.ts'
+import { tied } from './public/typography.ts'
 
 export type ArticleFolderKind = 'article' | 'artworks' | 'licences'
 
@@ -42,25 +43,26 @@ export function missingFoldersHeading(missing: readonly ArticleFolderKind[]): He
   let [only] = subfolders
   if (isArticle && subfolders.length === 1 && only !== undefined) {
     return [
-      'Obnovte složku článku a složku ',
+      tied`Obnovte složku článku a složku `,
       subfolder(only),
-      ' z koše, nebo je vraťte na sdílený disk Publikace.',
+      tied` z koše, nebo je vraťte na sdílený disk Publikace.`,
     ]
   }
-  if (isArticle) return ['Obnovte složku článku z koše, nebo ji vraťte na sdílený disk Publikace.']
+  if (isArticle)
+    return [tied`Obnovte složku článku z koše, nebo ji vraťte na sdílený disk Publikace.`]
   if (subfolders.length === 2) {
     return [
       'Obnovte složky ',
       subfolder('artworks'),
-      ' a ',
+      tied` a `,
       subfolder('licences'),
-      ' z koše, nebo je vraťte na sdílený disk Publikace.',
+      tied` z koše, nebo je vraťte na sdílený disk Publikace.`,
     ]
   }
   return [
     'Obnovte složku ',
     subfolder(only ?? 'licences'),
-    ' z koše, nebo ji vraťte na sdílený disk Publikace.',
+    tied` z koše, nebo ji vraťte na sdílený disk Publikace.`,
   ]
 }
 
@@ -87,18 +89,16 @@ export function missingFoldersLines(view: {
   return lines
 }
 
-export const LINK_STOPPED_TEXT = 'Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat.'
-export const RESEND_STOPPED_TEXT = 'Žádost o souhlas nejde poslat znovu.'
+export const LINK_STOPPED_TEXT = tied`Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat.`
+export const RESEND_STOPPED_TEXT = tied`Žádost o souhlas nejde poslat znovu.`
 export const CHECK_AGAIN_LABEL = 'Zkontrolovat znovu'
 
 /* The toasts after _Zkontrolovat znovu_ (`12j`). One folder of two back gets the singular error,
    which says what still has to be done. */
 export const FOLDER_BACK_TOAST = 'Složka je zpátky na sdíleném disku Publikace.'
 export const FOLDERS_BACK_TOAST = 'Obě složky jsou zpátky na sdíleném disku Publikace.'
-export const FOLDER_STILL_MISSING_TOAST =
-  'Obnovte složku z koše, nebo ji vraťte na sdílený disk Publikace. Stále není dostupná.'
-export const FOLDERS_STILL_MISSING_TOAST =
-  'Obnovte složky z koše, nebo je vraťte na sdílený disk Publikace. Stále nejsou dostupné.'
+export const FOLDER_STILL_MISSING_TOAST = tied`Obnovte složku z koše, nebo ji vraťte na sdílený disk Publikace. Stále není dostupná.`
+export const FOLDERS_STILL_MISSING_TOAST = tied`Obnovte složky z koše, nebo je vraťte na sdílený disk Publikace. Stále nejsou dostupné.`
 export const CHECK_UNAVAILABLE_TOAST = 'Zkuste kontrolu za chvíli znovu.'
 
 /** What _Zkontrolovat znovu_ says, from the folders checked and the ones still missing. */
@@ -116,8 +116,7 @@ export function checkedToast(
 }
 
 /** `12o`: _Poslat žádost znovu_ met a missing article folder or `Licence`. */
-export const RESEND_FOLDER_GONE_TOAST =
-  'Obnovte složku z koše, nebo ji vraťte na sdílený disk Publikace. Žádost se neodeslala.'
+export const RESEND_FOLDER_GONE_TOAST = tied`Obnovte složku z koše, nebo ji vraťte na sdílený disk Publikace. Žádost se neodeslala.`
 
 /** `12o`: the reason under the step in the dialog _Zahodit dávku_, as when Drive did not answer. */
 export const DISCARD_KEPT_TEXT = 'Dávka zůstala, jak byla.'

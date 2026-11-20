@@ -22,8 +22,8 @@ describe('time', () => {
     assert.equal(atTime(prague('2026-11-17T14:38')), 've 14:38')
     assert.equal(atTime(prague('2026-11-17T02:05')), 've 2:05')
     assert.equal(atTime(prague('2026-11-17T21:47')), 've 21:47')
-    assert.equal(atTime(prague('2026-11-17T09:12')), 'v 9:12')
-    assert.equal(atTime(prague('2026-11-17T18:04')), 'v 18:04')
+    assert.equal(atTime(prague('2026-11-17T09:12')), 'v\u00a09:12')
+    assert.equal(atTime(prague('2026-11-17T18:04')), 'v\u00a018:04')
   })
 
   it('names today and yesterday by Prague days, and any other day by its date', () => {

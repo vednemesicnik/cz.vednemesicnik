@@ -1,5 +1,6 @@
 import type { Handle } from 'remix/component'
 import { clientEntry, on, ref } from 'remix/component'
+import { tied } from '../../../domain/public/typography.ts'
 
 export type CopyButtonProps = {
   /** Focused on arrival: the link of a fresh issue or a renewed one (`12c`, `02d`). */
@@ -17,7 +18,7 @@ const COPIED_MS = 2000
    (u7ok7g8f, uvjknd7d, zs8dklyw). */
 const FAILED_FINE =
   'Zkopírujte označený text pomocí Ctrl+C, na Macu ⌘C — kopírování tlačítkem se nepodařilo.'
-const FAILED_TOUCH = 'Označte celý text a zkopírujte ho — kopírování tlačítkem se nepodařilo.'
+const FAILED_TOUCH = tied`Označte celý text a zkopírujte ho — kopírování tlačítkem se nepodařilo.`
 
 function CopyIcon(handle: Handle<{ isOff: boolean }>) {
   return () => (

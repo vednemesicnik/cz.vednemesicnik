@@ -8,10 +8,11 @@
 
 import { type BatchStatus, mayArchive } from './artwork.ts'
 import { RUN_LIMIT_MINUTES } from './job-run.ts'
+import { tied } from './public/typography.ts'
 
 /** The job of the reply check, as `job_runs` names it, and what a person reads of it (`14d`). */
 export const REPLY_CHECK_JOB = 'artwork-replies'
-export const REPLY_CHECK_JOB_NAME = 'Odpovědi k obrazovým dílům'
+export const REPLY_CHECK_JOB_NAME = tied`Odpovědi k obrazovým dílům`
 
 /** The word Reply_Check compares the reply with, as the consent e-mail asks for it. */
 export const EXPECTED_REPLY = 'Souhlasím'

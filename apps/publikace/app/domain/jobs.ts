@@ -6,7 +6,7 @@
 import { isOverdue, type JobRunRecord, type JobState } from './job-run.ts'
 import { REPLY_CHECK_JOB, REPLY_CHECK_JOB_NAME } from './reply-check.ts'
 import { atTime, clockTime, formatDate, formatDay, formatDayMonth, pragueYear } from './time.ts'
-import { NBSP } from './typography.ts'
+import { NBSP, tied } from './public/typography.ts'
 
 export type Job = {
   /** What a reported failure left behind, in the history and over it: the job's own words. */
@@ -31,13 +31,13 @@ export type Job = {
  */
 export const JOBS: readonly Job[] = [
   {
-    failedCallout: 'Úloha skončila s chybou. Na dílech se nic nezměnilo.',
-    failedEvent: 'Skončila s chybou, na dílech se nic nezměnilo',
+    failedCallout: tied`Úloha skončila s chybou. Na dílech se nic nezměnilo.`,
+    failedEvent: tied`Skončila s chybou, na dílech se nic nezměnilo`,
     /* True of a run that never reported too: an artwork changes only when its run reports. */
-    failingBanner: 'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.',
+    failingBanner: tied`Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.`,
     key: REPLY_CHECK_JOB,
     name: REPLY_CHECK_JOB_NAME,
-    summary: 'přečte „Souhlasím“ k licencím, archivuje',
+    summary: tied`přečte „Souhlasím“ k licencím, archivuje`,
   },
 ]
 
@@ -51,8 +51,7 @@ export const SHOW_JOB_LABEL = 'Zobrazit'
 export const DETAILS_LABEL = 'Zobrazit podrobnosti'
 
 /** The banner when more than one job keeps failing: their sentences would not fit one Callout. */
-export const MANY_FAILING_JOBS_BANNER =
-  'U několika úloh na pozadí chybí potvrzení, že proběhly v pořádku.'
+export const MANY_FAILING_JOBS_BANNER = tied`U několika úloh na pozadí chybí potvrzení, že proběhly v pořádku.`
 
 /** The sentence of the banner over every editor screen for these jobs (`14i`). */
 export function failingJobsBanner(jobs: readonly Job[]): string {
@@ -116,7 +115,7 @@ export function jobTag(state: JobState, today: Temporal.Instant): JobTag {
     case 'running':
       return { detail: `spuštěno ${unbroken(atTime(state.startedAt))}`, label: 'Běží' }
     case 'failed':
-      return { detail: lastRunText(state.lastStartedAt, today), label: 'S chybou' }
+      return { detail: lastRunText(state.lastStartedAt, today), label: tied`S chybou` }
     case 'ok': {
       let last = lastRunText(state.lastStartedAt, today)
       return {
@@ -124,7 +123,7 @@ export function jobTag(state: JobState, today: Temporal.Instant): JobTag {
           state.next === null
             ? last
             : `${last}${NBSP}· ${unbroken(`další kolem ${clockTime(state.next)}`)}`,
-        label: 'V pořádku',
+        label: tied`V pořádku`,
       }
     }
   }

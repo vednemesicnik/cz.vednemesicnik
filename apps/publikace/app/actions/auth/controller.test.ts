@@ -33,7 +33,7 @@ describe('sign-in page', () => {
           html,
         ),
       )
-      assert.ok(html.includes('S účtem @vednemesicnik.test, který má přístup do Publikace.'))
+      assert.ok(html.includes('S\u00a0účtem @vednemesicnik.test, který má přístup do Publikace.'))
       // The client runtime must leave the way to Google to the browser.
       assert.ok(/<a [^>]*data-rmx-document[^>]*>Přihlásit se přes Google<\/a>/.test(html))
       assert.equal(calloutOf(html), null)
@@ -50,11 +50,11 @@ describe('sign-in page', () => {
       let messages: Record<string, { isError: boolean; text: string }> = {
         domain: {
           isError: true,
-          text: 'Vyberte účet Google s adresou @vednemesicnik.test — jinou adresou se přihlásit nelze.',
+          text: 'Vyberte účet Google s\u00a0adresou @vednemesicnik.test — jinou adresou se přihlásit nelze.',
         },
         expired: {
           isError: false,
-          text: 'Přihlášení vypršelo. Přihlaste se znovu a pokračujte tam, kde jste skončili.',
+          text: 'Přihlášení vypršelo. Přihlaste se znovu a\u00a0pokračujte tam, kde jste skončili.',
         },
         oauth: { isError: true, text: 'Zkuste přihlášení přes Google znovu.' },
         unavailable: {
@@ -240,7 +240,7 @@ describe('the ten-minute check', () => {
       let html = await (await browser.get(refused.pathname + refused.search)).text()
       assert.equal(
         calloutOf(html)?.text,
-        'Požádejte šéfredakci o kontakt na správce Publikace. Účet jan@vednemesicnik.test nemá přístup.',
+        'Požádejte šéfredakci o\u00a0kontakt na správce Publikace. Účet jan@vednemesicnik.test nemá přístup.',
       )
       app.setMembership('vybor@vednemesicnik.test', () => ({
         displayName: null,
@@ -311,13 +311,13 @@ describe('sign-out', () => {
       let html = await (await browser.get('/sign-in?signed-out=1')).text()
       assert.ok(html.includes('<h1 class="vdm-signin__title">Jste odhlášeni</h1>'))
       assert.ok(
-        /Odhlášeno ve? \d{1,2}:\d{2}\. Na sdíleném počítači se ještě odhlaste z účtu Google\./.test(
+        /Odhlášeno ve? \d{1,2}:\d{2}\. Na sdíleném počítači se ještě odhlaste z\u00a0účtu Google\./.test(
           html,
         ),
       )
       assert.ok(/<a [^>]*href="\/sign-in\/google"[^>]*>Přihlásit se znovu<\/a>/.test(html))
       assert.ok(
-        /<a [^>]*href="https:\/\/accounts.google.com\/Logout"[^>]*>Odhlásit i účet Google<\/a>/.test(
+        /<a [^>]*href="https:\/\/accounts.google.com\/Logout"[^>]*>Odhlásit i\u00a0účet Google<\/a>/.test(
           html,
         ),
       )
