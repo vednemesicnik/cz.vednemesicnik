@@ -120,6 +120,78 @@ describe('Úlohy na pozadí (14d)', () => {
   })
 })
 
+describe('the banner of a job that keeps failing (14d)', () => {
+  const BANNER = 'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.'
+  /* Right after the banner's sentence: Settings has a button of its own to the same page. */
+  const BUTTON =
+    /nepromítají do stavu děl\.<\/p><div class="vdm-callout__actions"><a href="\/settings\/jobs" class="vdm-btn[^"]*">Zobrazit úlohy<\/a>/
+
+  it('stands over every editor screen after two failed runs, leading to the jobs', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 35, { outcome: 'failed' })
+      await run(app, 5, { outcome: 'failed' })
+      for (let path of ['/', '/review', '/settings', '/settings/jobs/artwork-replies']) {
+        let html = await (await browser.get(path)).text()
+        assert.ok(textOf(html).includes(BANNER), path)
+        assert.match(html, BUTTON, path)
+      }
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('has no button on the jobs page, whose table is right under it', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 35, { outcome: 'failed' })
+      await run(app, 5, { outcome: 'failed' })
+      let html = await (await browser.get('/settings/jobs')).text()
+      assert.ok(textOf(html).includes(BANNER))
+      assert.doesNotMatch(html, BUTTON)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('counts a run left open past its time as failed, and holds while the next one runs', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 65, { outcome: 'failed' })
+      await run(app, 35)
+      await run(app, 2)
+      assert.ok(textOf(await (await browser.get('/')).text()).includes(BANNER))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('shows for neither one failure nor a failure that a good run followed', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 65, { outcome: 'failed' })
+      assert.ok(!textOf(await (await browser.get('/')).text()).includes(BANNER))
+      await run(app, 35, { outcome: 'ok' })
+      await run(app, 5, { outcome: 'failed' })
+      assert.ok(!textOf(await (await browser.get('/')).text()).includes(BANNER))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('is not shown to somebody who is not signed in', async () => {
+    let app = await createTestApp()
+    try {
+      await run(app, 35, { outcome: 'failed' })
+      await run(app, 5, { outcome: 'failed' })
+      let signIn = await (await app.browser().get('/sign-in')).text()
+      assert.ok(!textOf(signIn).includes(BANNER))
+    } finally {
+      await app.close()
+    }
+  })
+})
+
 describe('the history of a job (14e)', () => {
   it('shows a reported failure with what holds and the technical text under a disclosure', async () => {
     let { app, browser } = await setup()

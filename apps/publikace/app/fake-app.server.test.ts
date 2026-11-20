@@ -151,6 +151,20 @@ describe('the fake app (pnpm app:fake)', () => {
       assert.equal((await store.findBatch(batch.id))?.consentFileId, `fake-consent-${batch.id}`)
     }))
 
+  it('reports failed runs of the reply check, and two in a row put up the banner', () =>
+    withFakeApp(async (fake) => {
+      let [cookie = ''] = ((await control(fake, '/sign-in')).headers.get('Set-Cookie') ?? '').split(
+        ';',
+      )
+      let banner = 'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.'
+
+      assert.equal((await control(fake, '/replies/fail')).status, 303)
+      assert.ok(!(await (await get(fake, '/', { Cookie: cookie })).text()).includes(banner))
+
+      await control(fake, '/replies/fail')
+      assert.ok((await (await get(fake, '/', { Cookie: cookie })).text()).includes(banner))
+    }))
+
   it('refuses a step it does not know and never hands /_fake to the app', () =>
     withFakeApp(async (fake) => {
       assert.equal((await control(fake, '/drive/fail', { step: 'everything' })).status, 400)

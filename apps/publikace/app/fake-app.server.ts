@@ -305,6 +305,10 @@ export async function createFakeApp(): Promise<FakeApp> {
         ${batchRows}
       </table>
       <p>${button('/batch', 'Seed a sent batch of two artworks for the first article')}</p>
+      <p>
+        ${button('/replies/fail', 'Report a failed run')} — it changes no artwork; two in a row put
+        the banner over every editor screen, and any run that ends well takes it away.
+      </p>
 
       <h2>Mailer</h2>
       <p>
@@ -371,6 +375,26 @@ export async function createFakeApp(): Promise<FakeApp> {
           },
     )
     return job(routes.api.artworkReplies.report.href(), { outcome: 'ok', results, runKey })
+  }
+
+  /**
+   * One run of the reply check that fails as Reply_Check not answering does: claimed, then reported
+   * `failed` with every batch it took left as it was.
+   */
+  async function failReplyCheck(): Promise<Response> {
+    await app.database.exec(sql`UPDATE artwork_batches SET claimed_at = NULL`)
+    let claimed = await job(routes.api.artworkReplies.claim.href(), { intervalMinutes: 30 })
+    if (claimed.status !== 200) return claimed
+    let { batches, runKey } = (await claimed.json()) as {
+      batches: { batchId: number }[]
+      runKey: string
+    }
+    return job(routes.api.artworkReplies.report.href(), {
+      error: 'Reply check failed: the fake Reply_Check timed out',
+      outcome: 'failed',
+      results: batches.map((item) => ({ batchId: item.batchId, state: 'failed' })),
+      runKey,
+    })
   }
 
   async function control(request: Request, path: string): Promise<Response> {
@@ -458,6 +482,11 @@ export async function createFakeApp(): Promise<FakeApp> {
         if (first === undefined || link === undefined)
           return new Response('No article', { status: 400 })
         await seedBatch(app, { articleId: first.id, link }, issueId, { at: now() })
+        return backToControls()
+      }
+      case '/replies/fail': {
+        let answer = await failReplyCheck()
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()
       }
       case '/replies': {

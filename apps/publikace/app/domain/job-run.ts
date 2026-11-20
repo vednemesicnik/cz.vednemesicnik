@@ -101,3 +101,21 @@ export function jobState(latest: JobRunRecord | null, now: Temporal.Instant): Jo
   }
   return { kind: 'ok', lastStartedAt: latest.startedAt, next: health.next }
 }
+
+/** Runs in a row that failed before the banner over the screens shows (`14d`): one is not enough. */
+export const FAILURES_FOR_BANNER = 2
+
+/**
+ * Whether the job's latest runs that ended all failed, `FAILURES_FOR_BANNER` of them (`14d`,
+ * _S chybou_): reported `failed`, or open past the time a run can last. `runs` come newest first.
+ * A run still within its time is skipped, so the banner holds while the next attempt runs instead
+ * of going for its minute and coming back when it fails too.
+ */
+export function isFailingRepeatedly(runs: readonly JobRunRecord[], now: Temporal.Instant): boolean {
+  let ended = runs.filter((run) => run.finishedAt !== null || isOverdue(run, now))
+  let latest = ended.slice(0, FAILURES_FOR_BANNER)
+  return (
+    latest.length === FAILURES_FOR_BANNER &&
+    latest.every((run) => run.finishedAt === null || run.outcome === 'failed')
+  )
+}

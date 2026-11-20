@@ -71,6 +71,7 @@ import { loadArticles } from './middleware/articles.server.ts'
 import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
+import { loadFailingJobs } from './middleware/failing-jobs.server.ts'
 import { loadIssues } from './middleware/issues.server.ts'
 import { loadReviewCount } from './middleware/review-count.server.ts'
 import { publicLinkHeaders, skipWithoutSession } from './middleware/public-link.server.ts'
@@ -99,6 +100,7 @@ export type AppContext = MiddlewareContext<
     ReturnType<typeof loadArticles>,
     ReturnType<typeof loadAuth>,
     ReturnType<typeof loadReviewCount>,
+    ReturnType<typeof loadFailingJobs>,
     ReturnType<typeof takeToasts>,
   ]
 >
@@ -231,6 +233,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   let articleSetup = createArticleSetup(dependencies)
   let artworksSetup = createArtworksSetup(dependencies, articleSetup)
   let checkMembership = dependencies.checkMembership ?? defaultMembershipCheck()
+  let jobRuns = createJobRunStore(dependencies.database)
 
   let router = createRouter({
     /*
@@ -252,7 +255,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *     `loadDriveAccount()` beside it, for the banner every editor screen draws, and
      *     `loadIssues()` beside that,
      *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart, and
-     *     `loadReviewCount()` after it, for the number beside _Ke kontrole_ in the panel,
+     *     `loadReviewCount()` after it, for the number beside _Ke kontrole_ in the panel, and
+     *     `loadFailingJobs()` beside that, for the banner of a job that keeps failing,
      *   - `takeToasts()` last, so the message is cleared while the session can still be saved.
      *
      * The session, the sign-in, CSRF and the toasts are skipped for a shared link's page and for
@@ -289,6 +293,7 @@ export function createAppRouter(dependencies: AppDependencies) {
       }),
       skipWithoutSession(loadAuth()),
       skipWithoutSession(loadReviewCount(artworksSetup.artworks)),
+      skipWithoutSession(loadFailingJobs(jobRuns, now)),
       skipWithoutSession(
         csrf({
           // Behind a TLS-terminating proxy the request's own URL says `http:`.
@@ -329,13 +334,12 @@ export function createAppRouter(dependencies: AppDependencies) {
       artworks: artworksSetup.artworks,
       jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
       now,
-      runs: createJobRunStore(dependencies.database),
+      runs: jobRuns,
       verifyIdentityToken:
         dependencies.verifyJobToken ??
         createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
     }),
   )
-  let jobRuns = createJobRunStore(dependencies.database)
   router.map(
     routes.review,
     createReviewController(signedInUntil, {

@@ -1,7 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
-import { jobHealth, jobState } from './job-run.ts'
+import { isFailingRepeatedly, jobHealth, jobState, type JobRunRecord } from './job-run.ts'
 
 const START = Temporal.Instant.from('2026-11-19T08:02:00Z')
 const RUN = { intervalMinutes: 30, startedAt: START }
@@ -76,5 +76,52 @@ describe('jobState', () => {
         lastStartedAt: START,
       })
     }
+  })
+})
+
+describe('isFailingRepeatedly', () => {
+  const NOW = START.add({ hours: 3 })
+
+  /** A run that started `minutesAgo` before `NOW`, and how it ended, if it did. */
+  function run(minutesAgo: number, outcome?: 'failed' | 'ok'): JobRunRecord {
+    let startedAt = NOW.subtract({ minutes: minutesAgo })
+    if (outcome === undefined) {
+      return { error: null, finishedAt: null, intervalMinutes: 30, outcome: null, startedAt }
+    }
+    return {
+      error: outcome === 'failed' ? 'Reply check failed: timeout' : null,
+      finishedAt: startedAt.add({ minutes: 1 }),
+      intervalMinutes: 30,
+      outcome,
+      startedAt,
+    }
+  }
+
+  it('needs two runs that ended, so none or one failure is not enough', () => {
+    assert.equal(isFailingRepeatedly([], NOW), false)
+    assert.equal(isFailingRepeatedly([run(5, 'failed')], NOW), false)
+    assert.equal(isFailingRepeatedly([run(5, 'failed'), run(35, 'ok')], NOW), false)
+  })
+
+  it('shows after two failures in a row, and a success after them ends it', () => {
+    assert.equal(isFailingRepeatedly([run(5, 'failed'), run(35, 'failed')], NOW), true)
+    assert.equal(
+      isFailingRepeatedly([run(5, 'ok'), run(35, 'failed'), run(65, 'failed')], NOW),
+      false,
+    )
+    assert.equal(
+      isFailingRepeatedly([run(5, 'failed'), run(35, 'ok'), run(65, 'failed')], NOW),
+      false,
+    )
+  })
+
+  it('counts a run open past its time as failed', () => {
+    assert.equal(isFailingRepeatedly([run(11), run(35, 'failed')], NOW), true)
+    assert.equal(isFailingRepeatedly([run(11), run(41)], NOW), true)
+  })
+
+  it('skips a run still within its time, so the banner holds while it runs', () => {
+    assert.equal(isFailingRepeatedly([run(2), run(32, 'failed'), run(62, 'failed')], NOW), true)
+    assert.equal(isFailingRepeatedly([run(2), run(32, 'failed')], NOW), false)
   })
 })

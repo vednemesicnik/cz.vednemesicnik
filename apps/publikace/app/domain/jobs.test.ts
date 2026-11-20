@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 import type { JobRunRecord, JobState } from './job-run.ts'
 import {
   failedCalloutText,
+  failingJobsBanner,
   historyEvent,
   historyTime,
   jobByKey,
@@ -30,6 +31,17 @@ describe('the jobs that report', () => {
     assert.equal(jobByKey('artwork-replies')?.name, 'Odpovědi k obrazovým dílům')
     assert.equal(jobByKey('approval-send'), null)
     assert.equal(jobByKey(undefined), null)
+  })
+
+  it('says the sentence of the one failing job, and one shared by several', () => {
+    assert.equal(
+      failingJobsBanner([JOB]),
+      'Odpovědi k obrazovým dílům se teď v aplikaci nepromítají do stavu děl.',
+    )
+    assert.equal(
+      failingJobsBanner([JOB, { ...JOB, key: 'other' }]),
+      'U několika úloh na pozadí chybí potvrzení, že proběhly v pořádku.',
+    )
   })
 
   it('writes the schedule from the interval', () => {

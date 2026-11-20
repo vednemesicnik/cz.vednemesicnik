@@ -2,6 +2,7 @@ import type { Handle, RemixNode } from 'remix/component'
 import { css } from 'remix/component'
 
 import { AccountBanner, type AccountBannerProps } from '../account-banner/component.tsx'
+import { JobsBanner } from '../jobs-banner/component.tsx'
 import { Panel, type PanelPerson, type PanelSection } from '../panel/component.tsx'
 import { MenuButton } from '../public/menu-button/component.tsx'
 import { type ToastMessage, Toasts } from '../toast/component.tsx'
@@ -99,6 +100,7 @@ export function Layout(handle: Handle<LayoutProps>) {
           {...handle.props.driveAccount}
           isOnSettings={handle.props.active === 'settings'}
         />
+        <JobsBanner />
         {handle.props.children}
       </main>
       <Toasts messages={handle.props.toasts ?? []} />

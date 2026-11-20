@@ -56,4 +56,30 @@ describe('the job run store', () => {
       await app.close()
     }
   })
+
+  it('gives the latest runs up to a limit, the newest first, and only of that job', async () => {
+    let app = await createTestApp()
+    try {
+      let runs = createJobRunStore(app.database)
+      assert.deepEqual(await runs.latestRuns('artwork-replies', 3), [])
+      let starts = [0, 30, 60, 90].map((minutes) => AT.add({ minutes }))
+      for (let [index, at] of starts.entries()) {
+        await runs.start({ at, intervalMinutes: 30, job: 'artwork-replies', runKey: `r-${index}` })
+      }
+      await runs.start({
+        at: AT.add({ minutes: 120 }),
+        intervalMinutes: 60,
+        job: 'other',
+        runKey: 'r-9',
+      })
+
+      let latest = await runs.latestRuns('artwork-replies', 3)
+      assert.deepEqual(
+        latest.map((run) => run.startedAt),
+        [starts[3], starts[2], starts[1]],
+      )
+    } finally {
+      await app.close()
+    }
+  })
 })

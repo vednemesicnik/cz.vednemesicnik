@@ -26,6 +26,8 @@ export type JobRunStore = {
   isOpen(job: string, runKey: string): Promise<boolean>
   /** The job's latest run, finished or not. */
   latest(job: string): Promise<JobRunRecord | null>
+  /** The job's latest runs, finished or not, the newest first, at most `limit` of them. */
+  latestRuns(job: string, limit: number): Promise<JobRunRecord[]>
   /** The job's runs started since then, the newest first (`14e`). */
   history(job: string, since: Temporal.Instant): Promise<JobRunRecord[]>
 }
@@ -76,6 +78,14 @@ export function createJobRunStore(database: Database): JobRunStore {
             WHERE job = ${job} ORDER BY started_at DESC, id DESC LIMIT 1`,
       )
       return recordOf(result.rows?.[0])
+    },
+
+    async latestRuns(job, limit) {
+      let result = await database.exec(
+        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text FROM job_runs
+            WHERE job = ${job} ORDER BY started_at DESC, id DESC LIMIT ${limit}`,
+      )
+      return (result.rows ?? []).flatMap((row) => recordOf(row) ?? [])
     },
 
     async history(job, since) {
