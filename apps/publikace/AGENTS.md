@@ -11,8 +11,9 @@ what it does; this file is about working in it without breaking something expens
 Google sign-in and Přístup in `/settings` with the `publikace.app@` account, the issues (`/`,
 `/issues/new`, `/issues/{name}`) with their folders on Drive, and the newsroom's link, whose
 public page `/l/{key}/article` creates an article with its Doc and mails its authors. Nothing
-runs on Fly.io yet, and the background jobs still read the sheets. What the app does on Drive
-and through the Mailer is tried against the real services by hand, as
+runs on Fly.io yet, and the background jobs still read the sheets, except the artwork reply
+check, which goes through the app's API and whose runs `/settings/jobs` shows. What the app
+does on Drive and through the Mailer is tried against the real services by hand, as
 [docs/real-drive-round-trip.md](docs/real-drive-round-trip.md) lays out, before the scripts are
 switched off. Beside it sits the setup shared with `cz.vednemesicnik` and
 `cz.vednemesicnik.billing`: the workflow skills, the agent rules, the designer agent, the PR and

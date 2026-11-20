@@ -20,6 +20,7 @@ import createLinksController from './actions/links/controller.tsx'
 import createReviewController from './actions/review/controller.tsx'
 import createDriveAccountController from './actions/settings/account/controller.tsx'
 import createSettingsController from './actions/settings/controller.tsx'
+import createJobsController from './actions/settings/jobs/controller.tsx'
 import {
   appOrigin,
   articleTemplateDocumentId,
@@ -334,17 +335,19 @@ export function createAppRouter(dependencies: AppDependencies) {
         createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
     }),
   )
+  let jobRuns = createJobRunStore(dependencies.database)
   router.map(
     routes.review,
     createReviewController(signedInUntil, {
       artworks: artworksSetup.artworks,
-      runs: createJobRunStore(dependencies.database),
+      runs: jobRuns,
     }),
   )
   router.map(routes.auth, createAuthController(signedInUntil))
   router.map(routes.auth.google, createGoogleController(signedInUntil))
-  router.map(routes.settings, createSettingsController(signedInUntil))
+  router.map(routes.settings, createSettingsController(signedInUntil, { runs: jobRuns }))
   router.map(routes.settings.account, createDriveAccountController(signedInUntil))
+  router.map(routes.settings.jobs, createJobsController(signedInUntil, { runs: jobRuns }))
 
   return router
 }

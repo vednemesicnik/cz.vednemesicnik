@@ -106,18 +106,26 @@ function dateOf(instant: Temporal.Instant, today: Temporal.Instant): string {
 }
 
 /**
- * The line under the title (`13a`, `13c`): when the replies were last read and the next run,
- * which job is not reading them, or that it never reported.
+ * The line under the title (`13a`, `13c`), in three parts so the page can link the middle one to
+ * _Úlohy na pozadí_: the whole sentence of a job that is not reading the replies, the job's name
+ * when it never reported. When the replies were read, nothing is linked.
  */
-export function readLine(health: JobHealth, today: Temporal.Instant): string {
-  if (health.kind === 'never') return `Úloha ${REPLY_CHECK_JOB_NAME} se zatím neohlásila.`
-  if (health.kind === 'stopped') return 'Čtení odpovědí k obrazovým dílům teď neběží.'
+export type ReadLine = { after: string; before: string; link: string | null }
+
+export function readLine(health: JobHealth, today: Temporal.Instant): ReadLine {
+  if (health.kind === 'never') {
+    return { after: ' se zatím neohlásila.', before: 'Úloha ', link: REPLY_CHECK_JOB_NAME }
+  }
+  if (health.kind === 'stopped') {
+    return { after: '', before: '', link: 'Čtení odpovědí k obrazovým dílům teď neběží.' }
+  }
   let day = formatDay(health.lastStartedAt, today)
   let read =
     day === 'dnes'
       ? `Odpovědi čteny ${atTime(health.lastStartedAt)}`
       : `Odpovědi čteny ${formatMoment(health.lastStartedAt, today)}`
-  return health.next === null ? read : `${read} · další běh kolem ${clockTime(health.next)}`
+  let text = health.next === null ? read : `${read} · další běh kolem ${clockTime(health.next)}`
+  return { after: '', before: text, link: null }
 }
 
 /* `13c`, the empty queue. */

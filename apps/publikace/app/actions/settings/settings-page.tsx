@@ -15,6 +15,7 @@ import {
   refusalMessage,
   shortAccount,
 } from '../../domain/drive-account.ts'
+import { JOBS_TITLE, SHOW_JOBS_LABEL } from '../../domain/jobs.ts'
 import { formatDate, formatDay } from '../../domain/time.ts'
 import type { Editor } from '../../middleware/auth.server.ts'
 import { routes } from '../../routes.ts'
@@ -57,6 +58,8 @@ export type SettingsPageProps = {
   groups: readonly AccessGroup[]
   /** `14b`: a change was sent from a page opened before the role was taken away. */
   isRoleLost?: boolean
+  /** The line under _Úlohy na pozadí_, one per job that reports (`14a`). */
+  jobsSummary: readonly string[]
   question?: RemovalQuestion
   toasts?: readonly ToastMessage[]
   today: Temporal.Instant
@@ -80,6 +83,21 @@ const partStyle = css({
   paddingTop: '24px',
   '& h2': { fontSize: '16px', fontWeight: 600, margin: 0 },
   '& h3': { fontSize: '14px', fontWeight: 600, margin: '8px 0 0' },
+})
+
+/* `14a`'s `.bar`: the part's title, and its link at the far end. */
+const partBarStyle = css({
+  alignItems: 'baseline',
+  display: 'flex',
+  gap: '12px',
+  justifyContent: 'space-between',
+})
+
+/* The design system draws a link in its own colour, and has no rule for a bare one. */
+const partLinkStyle = css({
+  color: 'var(--link)',
+  fontSize: '14px',
+  '&:hover': { color: 'var(--link-hover)' },
 })
 
 const metaStyle = css({
@@ -638,8 +656,8 @@ function MailboxCard(handle: Handle<{ email: string }>) {
 }
 
 /**
- * `/settings`: Nastavení with Přístup (`14a`, `14b`) and Účty Publikace (`14a`, `14g`, `14h`,
- * `14c`).
+ * `/settings`: Nastavení with Přístup (`14a`, `14b`), Účty Publikace (`14a`, `14g`, `14h`,
+ * `14c`) and the way to Úlohy na pozadí (`14a`, `14d`).
  *
  * The lead sentence under the title waits for the parts it names — files and proofreading arrive
  * with their own issues.
@@ -654,6 +672,7 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
       editor,
       groups,
       isRoleLost = false,
+      jobsSummary,
       question,
       toasts,
       today,
@@ -721,6 +740,18 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
                 <DriveAccountCard view={driveAccount} />
                 <MailboxCard email={`publikace@${accountDomain(driveAccount.expectedEmail)}`} />
               </div>
+            </section>
+
+            <section aria-labelledby="jobs-title" mix={partStyle}>
+              <div mix={partBarStyle}>
+                <h2 id="jobs-title">{JOBS_TITLE}</h2>
+                <a href={routes.settings.jobs.index.href()} mix={partLinkStyle}>
+                  {SHOW_JOBS_LABEL}
+                </a>
+              </div>
+              {jobsSummary.map((line) => (
+                <p mix={metaStyle}>{line}</p>
+              ))}
             </section>
           </div>
         </Layout>

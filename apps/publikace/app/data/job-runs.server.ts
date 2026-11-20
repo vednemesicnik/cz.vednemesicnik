@@ -1,7 +1,7 @@
 import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
-import type { JobRun } from '../domain/job-run.ts'
+import type { JobRunRecord } from '../domain/job-run.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 
 /**
@@ -25,7 +25,23 @@ export type JobRunStore = {
   /** Whether that job has an open run under that key. */
   isOpen(job: string, runKey: string): Promise<boolean>
   /** The job's latest run, finished or not. */
-  latest(job: string): Promise<JobRun | null>
+  latest(job: string): Promise<JobRunRecord | null>
+  /** The job's runs started since then, the newest first (`14e`). */
+  history(job: string, since: Temporal.Instant): Promise<JobRunRecord[]>
+}
+
+function recordOf(row: Record<string, unknown> | undefined): JobRunRecord | null {
+  let startedAt = parseStamp(row?.['started_at'])
+  if (row === undefined || startedAt === null) return null
+  let outcome = row['outcome']
+  let error = row['error_text']
+  return {
+    error: typeof error === 'string' ? error : null,
+    finishedAt: parseStamp(row['finished_at']),
+    intervalMinutes: Number(row['interval_minutes']),
+    outcome: outcome === 'ok' || outcome === 'failed' ? outcome : null,
+    startedAt,
+  }
 }
 
 export function createJobRunStore(database: Database): JobRunStore {
@@ -56,13 +72,19 @@ export function createJobRunStore(database: Database): JobRunStore {
 
     async latest(job) {
       let result = await database.exec(
-        sql`SELECT started_at, interval_minutes FROM job_runs
+        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text FROM job_runs
             WHERE job = ${job} ORDER BY started_at DESC, id DESC LIMIT 1`,
       )
-      let row = result.rows?.[0]
-      let startedAt = parseStamp(row?.['started_at'])
-      if (row === undefined || startedAt === null) return null
-      return { intervalMinutes: Number(row['interval_minutes']), startedAt }
+      return recordOf(result.rows?.[0])
+    },
+
+    async history(job, since) {
+      let result = await database.exec(
+        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text FROM job_runs
+            WHERE job = ${job} AND started_at >= ${stamp(since)}
+            ORDER BY started_at DESC, id DESC`,
+      )
+      return (result.rows ?? []).flatMap((row) => recordOf(row) ?? [])
     },
   }
 }

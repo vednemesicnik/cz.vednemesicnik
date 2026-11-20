@@ -1,5 +1,6 @@
 import type { Handle } from 'remix/component'
 
+import { JOBS_TITLE } from '../../domain/jobs.ts'
 import { CONSENT_LABEL, SHOW_WHOLE_REPLY_LABEL, UNDO_LABEL } from '../../domain/review.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
@@ -15,6 +16,8 @@ export type QueueCardView = {
   consentReplyId: string | null
   id: number
   isSettled: boolean
+  /** _Úlohy na pozadí_ under an archive that failed (`13c`): the way to the job that retries it. */
+  jobsHref: string | null
   /** `Obrazová díla · 2 díla · VDM_2026_5`. */
   kind: string
   menu: { items: ActionMenuItem[]; label: string } | null
@@ -37,7 +40,11 @@ export function QueueCard(handle: Handle<{ card: QueueCardView }>) {
     let { card } = handle.props
     /* The buttons say what they do and the card says which reply: a screen reader hears both. */
     let aboutId = `reply-${card.id}-about`
-    let hasActions = card.consentAction !== null || card.undoAction !== null || card.menu !== null
+    let hasActions =
+      card.consentAction !== null ||
+      card.undoAction !== null ||
+      card.menu !== null ||
+      card.jobsHref !== null
 
     return (
       <li
@@ -115,6 +122,11 @@ export function QueueCard(handle: Handle<{ card: QueueCardView }>) {
             )}
             {card.menu === null ? null : (
               <ActionMenu items={card.menu.items} label={card.menu.label} />
+            )}
+            {card.jobsHref === null ? null : (
+              <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={card.jobsHref}>
+                {JOBS_TITLE}
+              </a>
             )}
           </div>
         ) : null}

@@ -5,6 +5,7 @@ import {
   EMPTY_ACTION,
   EMPTY_TEXT,
   EMPTY_TITLE,
+  type ReadLine,
   REVIEW_LEAD,
   REVIEW_TITLE,
 } from '../../domain/review.ts'
@@ -26,7 +27,7 @@ export type ReviewPageProps = {
   driveAccount: { expectedEmail: string; status: DriveStatus }
   person: PanelPerson
   /** When the replies were read, or which job is not reading them (`13a`, `13c`). */
-  readLine: string
+  readLine: ReadLine
   toasts?: readonly ToastMessage[]
 }
 
@@ -34,7 +35,13 @@ const headStyle = css({ display: 'flex', flexDirection: 'column', gap: '6px' })
 
 const leadStyle = css({ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 })
 
-const readStyle = css({ color: 'var(--text-tertiary)', fontSize: '13px', margin: 0 })
+const readStyle = css({
+  color: 'var(--text-tertiary)',
+  fontSize: '13px',
+  margin: 0,
+  '& a': { color: 'var(--link)' },
+  '& a:hover': { color: 'var(--link-hover)' },
+})
 
 /* The drawing's measure: a card wider than this would make the quote a line nobody reads. */
 const queueStyle = css({ maxWidth: '860px', width: '100%' })
@@ -62,7 +69,13 @@ export function ReviewPage(handle: Handle<ReviewPageProps>) {
               <ListHeaderTitle>{REVIEW_TITLE}</ListHeaderTitle>
             </ListHeader>
             <p mix={leadStyle}>{REVIEW_LEAD}</p>
-            <p mix={readStyle}>{readLine}</p>
+            <p mix={readStyle}>
+              {readLine.before}
+              {readLine.link === null ? null : (
+                <a href={routes.settings.jobs.index.href()}>{readLine.link}</a>
+              )}
+              {readLine.after}
+            </p>
           </div>
           {cards.length === 0 ? (
             <EmptyState>

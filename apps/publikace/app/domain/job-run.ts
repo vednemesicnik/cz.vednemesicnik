@@ -17,6 +17,40 @@ export type JobHealth =
   /** Running on its trigger. `next` is `null` once the estimate has passed. */
   | { kind: 'running'; lastStartedAt: Temporal.Instant; next: Temporal.Instant | null }
 
+/** A run as its job reported it: open until the job says how it ended. */
+export type JobRunRecord = JobRun & {
+  error: string | null
+  finishedAt: Temporal.Instant | null
+  outcome: 'failed' | 'ok' | null
+}
+
+/** The tag of a job in `14d`, from its latest run. */
+export type JobState =
+  /** _Zatím se neohlásila_. */
+  | { kind: 'never' }
+  /** _Neběží_: no run reported in two intervals, whatever the last one did. */
+  | { kind: 'stopped'; lastStartedAt: Temporal.Instant }
+  /** _Běží_: a run is open and still within its time. */
+  | { kind: 'running'; startedAt: Temporal.Instant }
+  /**
+   * _S chybou_: the run reported a failure (`isUnreported` false), or stayed open past the time a
+   * run can last, so it ended without saying how.
+   */
+  | {
+      isUnreported: boolean
+      kind: 'failed'
+      lastStartedAt: Temporal.Instant
+      next: Temporal.Instant | null
+    }
+  /** _V pořádku_. */
+  | { kind: 'ok'; lastStartedAt: Temporal.Instant; next: Temporal.Instant | null }
+
+/**
+ * Apps Script stops a run after six minutes, so a run still open this long after its start ended
+ * without reporting.
+ */
+export const RUN_LIMIT_MINUTES = 10
+
 /** The clocks of Google and of the machine, and a run's own length, may disagree by this much. */
 const GRACE_MINUTES = 5
 
@@ -38,4 +72,32 @@ export function jobHealth(latest: JobRun | null, now: Temporal.Instant): JobHeal
     lastStartedAt: latest.startedAt,
     next: Temporal.Instant.compare(now, next) > 0 ? null : next,
   }
+}
+
+/** A run still open past the time a run can last. */
+export function isOverdue(run: JobRunRecord, now: Temporal.Instant): boolean {
+  let limit = run.startedAt.add({ minutes: RUN_LIMIT_MINUTES })
+  return run.finishedAt === null && Temporal.Instant.compare(now, limit) > 0
+}
+
+/**
+ * The job's tag (`14d`). _Neběží_ wins over what the last run did, as `jobHealth()` decides it;
+ * the estimate of the next run is the same one, and _S chybou_ keeps it for the detail (`14e`).
+ */
+export function jobState(latest: JobRunRecord | null, now: Temporal.Instant): JobState {
+  let health = jobHealth(latest, now)
+  if (latest === null || health.kind === 'never') return { kind: 'never' }
+  if (health.kind === 'stopped') return health
+  if (latest.finishedAt === null && !isOverdue(latest, now)) {
+    return { kind: 'running', startedAt: latest.startedAt }
+  }
+  if (latest.finishedAt === null || latest.outcome === 'failed') {
+    return {
+      isUnreported: latest.finishedAt === null,
+      kind: 'failed',
+      lastStartedAt: latest.startedAt,
+      next: health.next,
+    }
+  }
+  return { kind: 'ok', lastStartedAt: latest.startedAt, next: health.next }
 }

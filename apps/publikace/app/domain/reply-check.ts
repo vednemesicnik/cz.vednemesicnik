@@ -7,6 +7,7 @@
  */
 
 import { type BatchStatus, mayArchive } from './artwork.ts'
+import { RUN_LIMIT_MINUTES } from './job-run.ts'
 
 /** The job of the reply check, as `job_runs` names it, and what a person reads of it (`14d`). */
 export const REPLY_CHECK_JOB = 'artwork-replies'
@@ -16,7 +17,7 @@ export const REPLY_CHECK_JOB_NAME = 'Odpovědi k obrazovým dílům'
 export const EXPECTED_REPLY = 'Souhlasím'
 
 /** A batch claimed this recently is not handed to another run: one run lasts six minutes at most. */
-export const CLAIM_MINUTES = 10
+export const CLAIM_MINUTES = RUN_LIMIT_MINUTES
 
 /** The batches one run may take, as many as one Reply_Check request carries. */
 export const CLAIM_LIMIT = 100

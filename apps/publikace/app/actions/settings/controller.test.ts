@@ -57,6 +57,9 @@ describe('settings, Přístup', () => {
         /eva@vednemesicnik\.test účet přidán \d+\. \d+\. \d{4} · zatím bez přihlášení/.test(text),
       )
       assert.ok(html.includes('aria-label="Další akce Jakub Novák"'))
+      assert.ok(text.includes('Úlohy na pozadí Zobrazit úlohy'))
+      assert.ok(text.includes('Odpovědi k obrazovým dílům · Zatím se neohlásila'))
+      assert.ok(html.includes('href="/settings/jobs"'))
       assert.ok(html.includes('aria-label="Další akce eva@vednemesicnik.test"'))
       assert.ok(
         !html.includes('aria-label="Další akce Marie Horáková"'),

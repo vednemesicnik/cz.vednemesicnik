@@ -39,10 +39,26 @@ describe('the queue’s lines', () => {
   })
 
   it('reads the job: the time and the estimate, the passed estimate, a stopped job and none', () => {
-    assert.equal(readLine(RUNNING, TODAY), 'Odpovědi čteny v 9:00 · další běh kolem 9:30')
-    assert.equal(readLine(PASSED, TODAY), 'Odpovědi čteny v 9:00')
-    assert.equal(readLine(STOPPED, TODAY), 'Čtení odpovědí k obrazovým dílům teď neběží.')
-    assert.equal(readLine(NEVER, TODAY), 'Úloha Odpovědi k obrazovým dílům se zatím neohlásila.')
+    assert.deepEqual(readLine(RUNNING, TODAY), {
+      after: '',
+      before: 'Odpovědi čteny v 9:00 · další běh kolem 9:30',
+      link: null,
+    })
+    assert.deepEqual(readLine(PASSED, TODAY), {
+      after: '',
+      before: 'Odpovědi čteny v 9:00',
+      link: null,
+    })
+    assert.deepEqual(readLine(STOPPED, TODAY), {
+      after: '',
+      before: '',
+      link: 'Čtení odpovědí k obrazovým dílům teď neběží.',
+    })
+    assert.deepEqual(readLine(NEVER, TODAY), {
+      after: ' se zatím neohlásila.',
+      before: 'Úloha ',
+      link: 'Odpovědi k obrazovým dílům',
+    })
   })
 
   it('promises an archive only while there is an estimate', () => {

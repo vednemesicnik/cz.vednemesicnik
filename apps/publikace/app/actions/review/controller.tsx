@@ -86,6 +86,7 @@ function cardOf(
       consentAction: null,
       consentReplyId: null,
       isSettled: true,
+      jobsHref: null,
       menu: null,
       meta: settledLine(batch.providerName, replyExcerpt(batch.replyText ?? '')),
       quote: null,
@@ -107,6 +108,7 @@ function cardOf(
       consentAction: null,
       consentReplyId: null,
       isSettled: false,
+      jobsHref: routes.settings.jobs.index.href(),
       menu: null,
       meta:
         batch.consentVerifiedAt === null
@@ -136,6 +138,7 @@ function cardOf(
     consentAction: routes.review.verify.href(ids),
     consentReplyId: batch.replyMessageId,
     isSettled: false,
+    jobsHref: null,
     /* A discarded batch has nothing to show in the issue and no request to send again. */
     menu: isDiscarded
       ? null

@@ -4,6 +4,7 @@ import { Session } from 'remix/session'
 
 import type { AccessContext } from '../../auth/access.server.ts'
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
+import type { JobRunStore } from '../../data/job-runs.server.ts'
 import {
   type AccessKind,
   addedMessage,
@@ -12,6 +13,8 @@ import {
   MEMBERSHIP_UNAVAILABLE_MESSAGE,
   unknownGroupMessage,
 } from '../../domain/access.ts'
+import { jobState } from '../../domain/job-run.ts'
+import { JOBS, settingsSummary } from '../../domain/jobs.ts'
 import { now } from '../../domain/time.ts'
 import { Access } from '../../middleware/access.server.ts'
 import { type Editor, requireEditor } from '../../middleware/auth.server.ts'
@@ -44,17 +47,20 @@ type PageState = {
 
 async function renderSettings(
   context: PageContext,
+  runs: JobRunStore,
   editor: Editor,
   state: PageState,
   init?: ResponseInit,
 ): Promise<Response> {
   let access = accessOf(context)
   let driveAccount = context.get(DriveAccount) as DriveAccountContext
-  let [accounts, groups, driveState] = await Promise.all([
+  let [accounts, groups, driveState, jobs] = await Promise.all([
     access.directory.listAccounts(),
     access.directory.listGroups(),
     driveAccount.store.state(),
+    Promise.all(JOBS.map(async (job) => ({ job, latest: await runs.latest(job.key) }))),
   ])
+  let today = now()
 
   return context.render(
     <SettingsPage
@@ -69,9 +75,12 @@ async function renderSettings(
       editor={editor}
       groups={groups}
       isRoleLost={state.isRoleLost}
+      jobsSummary={jobs.map(({ job, latest }) =>
+        settingsSummary(job, jobState(latest, today), today),
+      )}
       question={state.question}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
-      today={now()}
+      today={today}
     />,
     init,
   )
@@ -81,9 +90,10 @@ async function renderSettings(
  * A change sent by somebody who is not an administrator — by the time it arrived. `14b`: the
  * page comes back read-only with the Callout that says why, and nothing changed.
  */
-function roleLost(context: PageContext, editor: Editor): Promise<Response> {
+function roleLost(context: PageContext, runs: JobRunStore, editor: Editor): Promise<Response> {
   return renderSettings(
     context,
+    runs,
     { ...editor, isAdmin: false },
     { isRoleLost: true },
     { status: 403 },
@@ -104,24 +114,38 @@ function formText(context: PageContext, name: string): string {
   return typeof value === 'string' ? value : ''
 }
 
-export default function createSettingsController(signedInUntil: SignedInUntilCookie) {
+export type SettingsDependencies = {
+  runs: JobRunStore
+}
+
+export default function createSettingsController(
+  signedInUntil: SignedInUntilCookie,
+  dependencies: SettingsDependencies,
+) {
+  let { runs } = dependencies
   return createController(routes.settings, {
     middleware: [requireEditor(signedInUntil)],
     actions: {
       index(context) {
-        return renderSettings(context, context.auth.identity, {})
+        return renderSettings(context, runs, context.auth.identity, {})
       },
 
       async addAccess(context) {
         let editor = context.auth.identity
-        if (!editor.isAdmin) return roleLost(context, editor)
+        if (!editor.isAdmin) return roleLost(context, runs, editor)
 
         let { checkMembership, directory, domain } = context.get(Access)
         let kind: AccessKind = formText(context, 'kind') === 'group' ? 'group' : 'account'
         let value = formText(context, 'email')
 
         let refuse = (error: string) =>
-          renderSettings(context, editor, { addForm: { error, kind, value } }, { status: 400 })
+          renderSettings(
+            context,
+            runs,
+            editor,
+            { addForm: { error, kind, value } },
+            { status: 400 },
+          )
 
         let address = checkAddress(kind, value, domain)
         if (!address.ok) return refuse(address.message)
@@ -141,7 +165,7 @@ export default function createSettingsController(signedInUntil: SignedInUntilCoo
             : await directory.addGroup(editor.email, address.email, now())
 
         if (!result.ok) {
-          if (result.reason === 'not-admin') return roleLost(context, editor)
+          if (result.reason === 'not-admin') return roleLost(context, runs, editor)
           return refuse(duplicateMessage(kind, address.email))
         }
 
@@ -158,7 +182,7 @@ export default function createSettingsController(signedInUntil: SignedInUntilCoo
           .get(Access)
           .directory.setAdmin(editor.email, id, formText(context, 'isAdmin') === '1')
 
-        if (!result.ok && result.reason === 'not-admin') return roleLost(context, editor)
+        if (!result.ok && result.reason === 'not-admin') return roleLost(context, runs, editor)
         // The badge and the menu show the outcome; a refused self or last administrator is the
         // data layer's safeguard and has no message of its own (`14a`).
         return backToSettings()
@@ -181,7 +205,7 @@ export default function createSettingsController(signedInUntil: SignedInUntilCoo
           return backToSettings()
         }
 
-        return renderSettings(context, editor, { question: { account, kind: 'account' } })
+        return renderSettings(context, runs, editor, { question: { account, kind: 'account' } })
       },
 
       async removeAccount(context) {
@@ -190,7 +214,7 @@ export default function createSettingsController(signedInUntil: SignedInUntilCoo
         if (id === null) return backToSettings()
 
         let result = await context.get(Access).directory.removeAccount(editor.email, id)
-        if (!result.ok && result.reason === 'not-admin') return roleLost(context, editor)
+        if (!result.ok && result.reason === 'not-admin') return roleLost(context, runs, editor)
         return backToSettings()
       },
 
@@ -203,7 +227,7 @@ export default function createSettingsController(signedInUntil: SignedInUntilCoo
         let group = groups.find((candidate) => candidate.id === id)
         if (group === undefined) return backToSettings()
 
-        return renderSettings(context, editor, { question: { group, kind: 'group' } })
+        return renderSettings(context, runs, editor, { question: { group, kind: 'group' } })
       },
 
       async removeGroup(context) {
@@ -212,7 +236,7 @@ export default function createSettingsController(signedInUntil: SignedInUntilCoo
         if (id === null) return backToSettings()
 
         let result = await context.get(Access).directory.removeGroup(editor.email, id)
-        if (!result.ok && result.reason === 'not-admin') return roleLost(context, editor)
+        if (!result.ok && result.reason === 'not-admin') return roleLost(context, runs, editor)
         return backToSettings()
       },
     },

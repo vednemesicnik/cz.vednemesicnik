@@ -109,7 +109,10 @@ describe('Ke kontrole', () => {
     try {
       let html = await (await browser.get('/review')).text()
       assert.match(html, /Nic ke kontrole/)
-      assert.match(html, /Úloha Odpovědi k obrazovým dílům se zatím neohlásila\./)
+      assert.match(
+        html,
+        /Úloha <a href="\/settings\/jobs">Odpovědi k obrazovým dílům<\/a> se zatím neohlásila\./,
+      )
       assert.match(html, /href="\/review"[^>]*>\s*Ke kontrole\s*</)
     } finally {
       await app.close()
@@ -197,6 +200,7 @@ describe('Ke kontrole', () => {
       let html = await (await browser.get('/review')).text()
       assert.match(html, /konverzace se neuložila/)
       assert.match(html, /Souhlas platí\. Konverzaci se nepodařilo uložit do složky Licence\./)
+      assert.match(html, /href="\/settings\/jobs"[^>]*>\s*Úlohy na pozadí\s*</)
       assert.doesNotMatch(html, />Je to souhlas</)
     } finally {
       await app.close()
