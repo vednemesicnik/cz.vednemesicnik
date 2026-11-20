@@ -199,20 +199,34 @@ the token and how Drive lists who may edit, so both are checked here.
 _Vytvořit kopii_, as the app copies it for every article. In each copy's bound script (_Rozšíření
 › Apps Script_):
 
-- [ ] set `oauthScopes` in `appsscript.json` to `openid`,
+- [x] set `oauthScopes` in `appsscript.json` to `openid`,
       `https://www.googleapis.com/auth/userinfo.email`, `profile` and the scopes the script uses
       already, then run a throwaway function that logs the decoded payload of
       `ScriptApp.getIdentityToken()`;
-- [ ] compare `aud` between the two copies. The same value in both, and in every later copy, goes
+- [x] compare `aud` between the two copies. The same value in both, and in every later copy, goes
       into `DOC_MENU_TOKEN_AUDIENCES`. Different values make it `*`, the weaker choice: the Drive
       check asks about the account, not the token, so an editor's identity token that another
       Google client received could be replayed until it expires, about an hour. Production does
       not start without one of the two;
-- [ ] note whether `name` is in the payload with `profile`. Without it the app records and shows
+- [x] note whether `name` is in the payload with `profile`. Without it the app records and shows
       the address (`12a`, `12p`);
-- [ ] open a `showModalDialog` whose button calls `google.script.run`, in a browser where two Google
+- [x] open a `showModalDialog` whose button calls `google.script.run`, in a browser where two Google
       accounts are signed in, and note whether the call fails. That is the case the script's own
       dialog _Zkuste to za chvíli znovu_ covers.
+
+What it showed, on 20 November 2026:
+
+- **`aud` differs between copies.** Each copy's bound script gets a default Cloud project of its
+  own (_Nastavení projektu › Projekt Google Cloud Platform: Výchozí_), so its token carries that
+  project's OAuth client. No value can be pinned: `DOC_MENU_TOKEN_AUDIENCES` is `*`, and the
+  Drive check is what stops a token issued to another client.
+- **`name` is in the payload** with `profile`, along with `given_name`, `family_name`, `picture`
+  and `hd`. `email_verified` is `true`; there is no `azp`.
+- **`google.script.run` fails** when the clicking account is not the browser's default one: the
+  dialog opens from the menu, but the call from its button returns _K provedení dané akce je
+  vyžadována autorizace_. A server call made by the menu item itself runs as the clicking
+  account; one made from the dialog runs as the default account. Trying again in the same window
+  fails the same way, so an answer that only says to try later does not get that person through.
 
 **Who may edit an article's Doc.** Nothing in the app shares a Doc with its authors, so:
 
