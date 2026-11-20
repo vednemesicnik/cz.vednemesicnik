@@ -260,25 +260,42 @@ issues the token, how Drive takes the PDF on a shared drive, or what Gmail retur
 `http://localhost:44100` until the app is on Fly.io. Set `CONFIG.appOrigin` to the tunnel's
 address in this project's editor, not in a copy: a copy is another Cloud project, and its token
 carries another `aud`. The next `clasp push` puts the origin back. Each step below runs
-`checkArtworkReplies` by hand. A batch claimed by a run is handed out again after ten minutes, so
-a run within that window skips it.
+`checkArtworkReplies` by hand. A run's report frees its batches at once, so the next run may
+follow straight away; only a batch whose run never reported stays claimed for ten minutes, and a
+run within that window skips it.
 
 1. Send a consent request from an artworks page, and run the job before anybody answers. The run
    log says _Claimed 1 batch(es)_ and _Reported 1 batch(es)_, and the batch stays _U poskytovatele_.
 2. Answer the e-mail from the provider's mailbox with _ok, souhlas_, and run the job. `/review`
    shows the card with the reply, the panel counts one, and the issue's page shows _Ke kontrole_
    with _odpověď „ok, souhlas“_. Nothing new is in `Licence`.
-3. _Je to souhlas_, then run the job ten minutes later. `Licence` holds one PDF named
+3. _Je to souhlas_, then run the job. `Licence` holds one PDF named
    `‹poskytovatel› - obrazová díla ‹sha256›.pdf`, with the whole conversation and the note
    _Odpověď poskytovatele byla ručně posouzena jako souhlas._ The issue's page shows _Schváleno_
    with _konverzace v Licencích_.
 4. On a second batch, archive the thread in `publikace@`'s mailbox first, then answer exactly
    _Souhlasím_, and run the job. The reply is found though the thread is not in the inbox. The
    batch goes straight to _Schváleno_, and its PDF carries no note.
-5. On a third batch, answer _Souhlasím_, run the job, and stop the app as soon as the log shows
-   _Claimed_. The reply check and the PDF take seconds, so the PDF is made and the report ends in
-   _Report refused (unreachable…)_. Start the app, wait ten minutes, and run the job again.
-   `Licence` holds one PDF for that batch, not two, and the batch is _Schváleno_.
+5. On a third batch, answer _Souhlasím_, run the job, and stop the app as soon as the claim has
+   opened the run. The reply check and the PDF take only seconds, which is too quick for a hand,
+   so start this in a shell before the run, and it stops the server the moment a new run's row
+   appears. It waits for a new row rather than an open one, because a run that never reported
+   stays open for good:
+
+   ```sh
+   db=db/round-trip.sqlite
+   last=$(sqlite3 -readonly $db 'select coalesce(max(id), 0) from job_runs')
+   until [ "$(sqlite3 -readonly $db "select count(*) from job_runs where id > $last")" -gt 0 ]; do
+     sleep 0.1
+   done
+   kill "$(lsof -tiTCP:44100 -sTCP:LISTEN)"
+   ```
+
+   The PDF is made and the report is refused: behind the tunnel Cloudflare answers for the
+   stopped app, so the log says _Report refused (bad_response, HTTP 502)_. Start the app, wait
+   ten minutes, and run the job again. `Licence` holds one PDF for that batch, not two, and the
+   batch is _Schváleno_.
+
 6. On a fourth batch, answer with text under a quoted line („Souhlasím“, the quote, then „Ale bez
    třetího obrázku.“). The card quotes the whole reply, the objection included, and nothing is
    archived.
