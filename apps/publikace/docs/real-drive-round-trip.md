@@ -42,7 +42,7 @@ it as its owner. Its bound project is `SCRIPT__Publication__Article_Menu`:
 
 - [ ] a copy of the template, made as `publikace.app@` with _Vytvořit kopii_ in Drive so that it
       carries its bound script. Drive says so on the copy page. Its body still contains
-      `{{NAZEV_CLANKU}}`, its menu bar shows _Publikace_, and its ID is
+      `{{NAZEV_CLANKU}}`, its menu bar shows _✦ Publikace_, and its ID is
       `ARTICLE_TEMPLATE_DOCUMENT_ID`.
 
 **The Mailer of `publikace@`** (`SCRIPT__Mail__Send`), its existing deployment and not a new
@@ -266,7 +266,7 @@ before it asks about any group, so no group is looked up.
 the tunnel's address in the test copy only:
 
 1. Create an article through the app and open its Doc as an account that may edit it.
-   _Publikace › Označit probíhající korekturu_ asks _Označit probíhající korekturu?_ with the
+   _✦ Publikace › Označit probíhající korekturu_ asks _Označit probíhající korekturu?_ with the
    article, _VDM_… · Ke korektuře zatím nepředáno_ and _Účet pro korekturu: ‹jméno›_. _Zrušit_
    records nothing.
 2. _Označit_ answers _Korektura označena_, and the issue's page shows _Korektura_ with _od ‹dnes›
@@ -278,6 +278,24 @@ the tunnel's address in the test copy only:
    the article. Under the issues folder every Google account with the link may edit, so this
    needs a Doc outside it, shared to that account as a commenter.
 6. With the app stopped, the menu shows _Zkuste to za chvíli znovu_.
+
+What it showed, on 21 November 2026, with `SCRIPT__Publication__Article_Menu`'s code in the test
+article's own project and three Google accounts signed in, the clicking one (`publikace.app@`) not
+the browser's default:
+
+- **1–4 and 6 pass.** _Označit_ from the dialog recorded `publikace.app@` with its name, so the
+  `fetch` carries the clicking account's token where `google.script.run` would not. A second
+  click names who and when. A copy made with Drive's _Vytvořit kopii_ in the same folder answers
+  _Toto je kopie dokumentu článku_ with _Otevřít původní_. With the app stopped the script's own
+  dialog shows.
+- **5 was not run.** It needs a Doc outside the issues folder shared to a commenter, and the
+  suite covers the refusal.
+- **The first click in a Doc asks for authorization, and from the menu it fails** for an account
+  that is not the browser's default: Google's consent runs as the default account and the Doc
+  answers _Došlo k chybě_. Every Doc carries its own copy of the script, so this happens once per
+  Doc and person. Granting it in that Doc's script editor (_Rozšíření › Apps Script_, run
+  `testConfiguration`) as the account that clicks works, as does a window where that account is
+  the only one signed in.
 
 ## The reply check's API
 
