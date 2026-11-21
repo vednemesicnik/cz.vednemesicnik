@@ -14,6 +14,7 @@ import createGoogleController from './actions/auth/google/controller.tsx'
 import createHomeController from './actions/controller.tsx'
 import createProofreadingController from './actions/proofreading/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
+import createApprovalsController from './actions/api/approvals/controller.ts'
 import createArtworkRepliesController from './actions/api/artwork-replies/controller.ts'
 import createProofreadingDigestController from './actions/api/proofreading-digest/controller.ts'
 import createArtworksController from './actions/links/artworks/controller.tsx'
@@ -329,6 +330,18 @@ export function createAppRouter(dependencies: AppDependencies) {
     routes.api.artworkReplies,
     createArtworkRepliesController({
       artworks: artworksSetup.artworks,
+      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      now,
+      runs: jobRuns,
+      verifyIdentityToken:
+        dependencies.verifyJobToken ??
+        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+    }),
+  )
+  router.map(
+    routes.api.approvals,
+    createApprovalsController({
+      articles: articleSetup.articles,
       jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
       now,
       runs: jobRuns,

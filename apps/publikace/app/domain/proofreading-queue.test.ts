@@ -68,10 +68,49 @@ describe('the parts of the page Korektura', () => {
     let lenkas = item(2, { proofreading: { at: at(1), ...LENKA } })
     let jakubs = item(3, { proofreading: { at: at(1), ...JAKUB } })
 
-    assert.deepEqual(cardActions(waiting, PROOFREADER), { canCancel: false, canTake: true })
-    assert.deepEqual(cardActions(waiting, EDITOR), { canCancel: false, canTake: false })
-    assert.deepEqual(cardActions(lenkas, PROOFREADER), { canCancel: true, canTake: false })
-    assert.deepEqual(cardActions(jakubs, PROOFREADER), { canCancel: false, canTake: false })
-    assert.deepEqual(cardActions(jakubs, EDITOR), { canCancel: true, canTake: false })
+    let only = (actions: Record<string, boolean>) =>
+      Object.keys(actions).filter((key) => actions[key] === true)
+    assert.deepEqual(only(cardActions(waiting, PROOFREADER)), ['canTake'])
+    assert.deepEqual(only(cardActions(waiting, EDITOR)), [])
+    assert.deepEqual(only(cardActions(lenkas, PROOFREADER)), ['canCancel', 'canMarkFinal'])
+    assert.deepEqual(only(cardActions(jakubs, PROOFREADER)), [])
+    assert.deepEqual(only(cardActions(jakubs, EDITOR)), ['canCancel', 'canMarkFinalForOther'])
+  })
+})
+
+describe('the final version on the page Korektura', () => {
+  function marked(isCancellable: boolean, failed = 0) {
+    return {
+      ...MARIE,
+      at: at(2),
+      clauses: { failed, pending: 1 - failed, sent: 0, total: 1 },
+      isCancellable,
+      pdfFileId: 'pdf-1',
+    }
+  }
+
+  it('keeps a marking in its proofreader’s Moje korektury, after the takes, while it can be cancelled', () => {
+    let taken = item(1, { proofreading: { at: at(3), ...LENKA } })
+    let cancellable = item(2, { finalVersion: marked(true), proofreading: { at: at(1), ...LENKA } })
+    let claimed = item(3, { finalVersion: marked(false), proofreading: { at: at(1), ...LENKA } })
+    let others = item(4, { finalVersion: marked(true), proofreading: { at: at(1), ...JAKUB } })
+    let parts = queueParts([cancellable, taken, claimed, others], PROOFREADER)
+    assert.deepEqual(
+      parts.mine.map((a) => a.id),
+      [1, 2],
+    )
+    assert.equal(parts.others.length, 0)
+    assert.equal(partOf(claimed, PROOFREADER), null)
+    assert.equal(partOf(cancellable, EDITOR), null)
+  })
+
+  it('lets whoever may mark cancel, until a run takes a clause', () => {
+    let cancellable = item(2, { finalVersion: marked(true), proofreading: { at: at(1), ...LENKA } })
+    let claimed = item(3, { finalVersion: marked(false), proofreading: { at: at(1), ...LENKA } })
+    assert.equal(cardActions(cancellable, PROOFREADER).canCancelFinal, true)
+    assert.equal(cardActions(cancellable, EDITOR).canCancelFinal, true)
+    assert.equal(cardActions(claimed, PROOFREADER).canCancelFinal, false)
+    assert.equal(cardActions(cancellable, PROOFREADER).canCancel, false)
+    assert.equal(cardActions(cancellable, PROOFREADER).canMarkFinal, false)
   })
 })

@@ -581,6 +581,7 @@ describe('taking proofreading', () => {
       assert.deepEqual(await articles.takeProofreading(articleId, LENKA, LAST, 'writing'), closed)
       assert.deepEqual(await articles.listForQueue(), [])
       assert.deepEqual(await articles.findForQueue(articleId), {
+        hasFinalVersion: false,
         isIssueClosed: true,
         issueName: 'VDM_2026_6',
         name: 'Školní jídelna po roce',

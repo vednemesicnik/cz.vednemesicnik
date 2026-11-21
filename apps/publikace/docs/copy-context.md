@@ -23,7 +23,8 @@ Provází jedno vydání od založení po podklady pro tisk:
   kdo má odkaz na nahrání obrazových děl, takže věta na stránce nepředpokládá, že nahrává sám.
 - **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Přihlašují se přes Google
   stejně jako šéfredakce a vidí jen stránku **Korektura** přes všechna otevřená vydání: vezmou si
-  korekturu článku a mohou ji zrušit. Ostatní obrazovky aplikace je odmítnou. Od aplikace
+  korekturu článku, mohou ji zrušit a hotovou korekturu zakončí označením finální verze. Ostatní
+  obrazovky aplikace je odmítnou. Od aplikace
   dostávají jediný e-mail, **ranní přehled**: jednou denně mezi 7:00
   a 8:00, a jen v den, kdy přibylo nové předání nebo šéfredakce zrušila předání, o kterém už
   korektoři z přehledu věděli. Přehled pak nese i články, které stále čekají na korekturu.
@@ -36,6 +37,11 @@ redaktor), **dá vědět šéfredakci** a ta článek v detailu vydání **před
 pak _Dopsáno_. Omyl šéfredakce napraví _Zrušit předání_. Po kliknutí nic neodchází, korektoři se
 o předání dozvědí z ranního přehledu, a proto obojí jde hned vrátit. Korektor si článek vezme na
 stránce Korektura (_Vzít si korekturu_) a omyl napraví _Zrušit korekturu_; i to jde hned vrátit.
+Hotovou korekturu korektor zakončí na téže stránce krokem _Označit finální verzi…_, jediným s
+dialogem: aplikace uloží dokument jako PDF, každému autorovi zapíše redakční doložku _K odeslání_
+a článek je _K souhlasu_. Šéfredakce smí krok udělat za korektora. Kliknutí samo nic neposílá:
+e-mail s PDF a doložkou pošle autorům úloha na pozadí při dalším běhu, nejdéle do 30 minut, a
+dokud si úloha doložky nevezme, jde krok zrušit (_Zrušit finální verzi_). Pak už to nejde.
 Dokument nese jen text: v dokumentech vydání z aplikace není žádné menu, odkaz ani doplněk, takže
 text, který autor čte, žádnou položku v dokumentu nejmenuje.
 
@@ -135,8 +141,7 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
   **Registr** a **Evidence** jsou dokumenty, které šéfredakce zná jménem a v nichž dohledává
   licence, takže se smějí jmenovat, i jako tabulky, když se o nich mluví jako o dokumentu. Popis
   vnitřního provozu (fronta, zápis, přepis) tuhle výjimku nemá. Skutečný ovládací prvek se
-  jmenuje přesně, jak se jmenuje, i se zakázaným slovem: _Publikace › Nastavit metadata článku_
-  je položka nabídky v dokumentu Google a každý dokument nese její vlastní kopii.
+  jmenuje přesně, jak se jmenuje, i se zakázaným slovem.
 - **Aplikace nezná rod.** O člověku ví jen adresu a po přihlášení jméno z Googlu. Věta o něm nesmí
   rod ani pád jména odhadovat: _poslední přihlášení včera_, _účet přidán 10. 11. 2026_, ne
   _přihlásila se_, ne _Odebrat Jakuba?_

@@ -3,15 +3,35 @@ import { createController } from 'remix/router'
 import { Session } from 'remix/session'
 
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
-import type { ProofreadingOutcome, QueueArticle } from '../../data/articles.server.ts'
+import type {
+  FinalVersionOutcome,
+  ProofreadingOutcome,
+  QueueArticle,
+} from '../../data/articles.server.ts'
 import { articleStateTag, documentUrl } from '../../domain/article.ts'
+import { driveFileUrl } from '../../domain/artwork.ts'
 import {
   authorsMeta,
   CANCEL_FAILED_TOAST,
+  CANCEL_FINAL_FAILED_TOAST,
+  cancelFinalRefusalToast,
   cancelledToast,
   cancelRefusalToast,
   cardActions,
   closedArticleCallout,
+  type DialogError,
+  FINAL_ACCOUNT_EDITOR,
+  FINAL_ACCOUNT_PROOFREADER,
+  FINAL_CANCELLED_TOAST,
+  FINAL_DOC_EDITOR,
+  FINAL_DOC_PROOFREADER,
+  FINAL_DRIVE_DOWN,
+  FINAL_FOLDER_EDITOR,
+  FINAL_FOLDER_PROOFREADER,
+  FINAL_SAVED_TOAST,
+  type FinalRefusal,
+  finishedArticleCallout,
+  markFinalRefusalToast,
   EMPTY_TEXT_EDITOR,
   EMPTY_TEXT_PROOFREADER,
   issueKind,
@@ -20,6 +40,7 @@ import {
   PART_ORDER,
   PART_TITLES,
   queueLead,
+  partOf,
   type QueuePart,
   type QueueRefusal,
   queueParts,
@@ -31,13 +52,19 @@ import {
 } from '../../domain/proofreading-queue.ts'
 import { UNDO_LABEL } from '../../domain/review.ts'
 import { now, parseStamp, stamp } from '../../domain/time.ts'
+import {
+  cancelFinalVersion,
+  type MarkFinalOutcome,
+  markFinalVersion,
+} from '../../drive/final-version.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { type Person, requireProofreading } from '../../middleware/auth.server.ts'
 import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
 import { routes } from '../../routes.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
-import { driveView, type PageContext } from '../issues/render.tsx'
+import { driveView, IN_THE_WAY, type PageContext } from '../issues/render.tsx'
 import {
+  type FinalDialogView,
   type ProofreadingCardView,
   ProofreadingPage,
   type ProofreadingPartView,
@@ -91,21 +118,50 @@ function restoreHref(id: number, cancelledAt: Temporal.Instant): string {
   return `${routes.proofreading.restore.href({ id: String(id) })}?cancelled=${cancelled}`
 }
 
+/* The dialog and its form carry the take the card showed; the cancel the marking's time. */
+function askFinalHref(id: number, takenAt: Temporal.Instant): string {
+  let take = encodeURIComponent(stamp(takenAt))
+  return `${routes.proofreading.askFinalVersion.href({ id: String(id) })}?take=${take}`
+}
+
+function markFinalHref(id: number, takenAt: Temporal.Instant): string {
+  let take = encodeURIComponent(stamp(takenAt))
+  return `${routes.proofreading.markFinalVersion.href({ id: String(id) })}?take=${take}`
+}
+
+function cancelFinalHref(id: number, markedAt: Temporal.Instant): string {
+  let marked = encodeURIComponent(stamp(markedAt))
+  return `${routes.proofreading.cancelFinalVersion.href({ id: String(id) })}?marked=${marked}`
+}
+
 function cardOf(
   article: QueueArticle,
   viewer: QueueViewer,
   settled: SettledCard | null,
 ): ProofreadingCardView {
   let isSettled = settled?.id === article.id
-  let { canCancel, canTake } = cardActions(article, viewer)
+  let { canCancel, canCancelFinal, canMarkFinal, canMarkFinalForOther, canTake } = cardActions(
+    article,
+    viewer,
+  )
   let ids = { id: String(article.id) }
   let tag = articleStateTag(article)
+  let take = article.proofreading
+  let finalVersion = article.finalVersion
   return {
-    cancelAction:
-      isSettled || !canCancel || article.proofreading === null
+    cancelAction: isSettled || !canCancel || take === null ? null : cancelHref(article.id, take.at),
+    cancelFinalAction:
+      isSettled || !canCancelFinal || finalVersion === null
         ? null
-        : cancelHref(article.id, article.proofreading.at),
+        : cancelFinalHref(article.id, finalVersion.at),
     documentUrl: documentUrl(article.docId),
+    markFinal:
+      isSettled || !canMarkFinal || take === null ? null : askFinalHref(article.id, take.at),
+    markFinalForOther:
+      isSettled || !canMarkFinalForOther || take === null
+        ? null
+        : askFinalHref(article.id, take.at),
+    pdfUrl: finalVersion === null ? null : driveFileUrl(finalVersion.pdfFileId),
     id: article.id,
     isSettled,
     kind: issueKind(article.issueName),
@@ -153,6 +209,8 @@ function refusalOf(
   switch (outcome.kind) {
     case 'closed':
       return { issueName: outcome.issueName, kind: 'closed' }
+    case 'final-version':
+      return { kind: 'final-version', step: outcome.step }
     case 'proofreading':
       return { kind: 'proofreading', step: outcome.step }
     case 'not-proofreading':
@@ -160,6 +218,116 @@ function refusalOf(
     case 'gone':
       return null
   }
+}
+
+/** What stood in the way of marking, for the toast; `null` for an article that is gone. */
+function finalRefusalOf(
+  outcome: Exclude<FinalVersionOutcome, { kind: 'done' }>,
+  isEditor: boolean,
+): FinalRefusal | null {
+  switch (outcome.kind) {
+    case 'closed':
+      return { issueName: outcome.issueName, kind: 'closed' }
+    case 'final-version':
+      return { kind: 'final-version', step: outcome.step }
+    case 'proofreading':
+      return { kind: 'proofreading', step: outcome.step }
+    case 'not-proofreading':
+      return { isEditor, kind: 'not-proofreading' }
+    case 'gone':
+      return null
+  }
+}
+
+/**
+ * The Callout a failed marking keeps in the dialog (`15f`): the account and a missing file are
+ * mended only by an editor-in-chief, so a proofreader is told whom to tell.
+ */
+function dialogErrorOf(
+  outcome: Extract<
+    MarkFinalOutcome,
+    { kind: 'account' | 'doc-missing' | 'folder-missing' | 'unavailable' }
+  >,
+  isEditor: boolean,
+): DialogError {
+  switch (outcome.kind) {
+    case 'account':
+      return isEditor ? FINAL_ACCOUNT_EDITOR : FINAL_ACCOUNT_PROOFREADER
+    case 'doc-missing':
+      return isEditor ? FINAL_DOC_EDITOR : FINAL_DOC_PROOFREADER
+    case 'folder-missing':
+      return isEditor ? FINAL_FOLDER_EDITOR : FINAL_FOLDER_PROOFREADER
+    case 'unavailable':
+      return FINAL_DRIVE_DOWN
+  }
+}
+
+type QueueContext = PageContext & { auth: { identity: Person } }
+
+/**
+ * The page Korektura as it now stands, with the Callout a digest link asked for or the dialog of
+ * `15f` over it, the page under the dialog then inert.
+ */
+async function renderQueue(
+  context: QueueContext,
+  options: {
+    callout?: { text: string; title: string | null } | null
+    dialog?: FinalDialogView
+    init?: ResponseInit
+    queue?: QueueArticle[]
+  } = {},
+): Promise<Response> {
+  let person = context.auth.identity
+  let viewer = viewerOf(person)
+  let queue = options.queue ?? (await articlesOf(context).articles.listForQueue())
+  let settled = takeSettled(context.get(Session) as Session | undefined)
+  let parts = partsOf(queue, viewer, settled)
+  let isEmpty = parts.every((part) => part.cards.length === 0)
+  return context.render(
+    <ProofreadingPage
+      callout={options.callout ?? null}
+      dialog={options.dialog ?? null}
+      driveAccount={await driveView(context)}
+      empty={
+        isEmpty
+          ? {
+              hasAction: person.isEditor,
+              text: person.isProofreader ? EMPTY_TEXT_PROOFREADER : EMPTY_TEXT_EDITOR,
+            }
+          : null
+      }
+      lead={queueLead(person.isProofreader)}
+      parts={isEmpty ? [] : parts}
+      person={person}
+      toasts={context.get(Toasts) as readonly ToastMessage[]}
+    />,
+    options.init,
+  )
+}
+
+/** The dialog of `15f` over the card whose take was shown at `takenAt`. */
+function dialogOf(
+  article: QueueArticle,
+  takenAt: Temporal.Instant,
+  error: DialogError | null,
+): FinalDialogView {
+  /* The signature each clause carries is the author's name as the form took it. */
+  return {
+    action: markFinalHref(article.id, takenAt),
+    articleName: article.name,
+    cancelHref: cardHref(article.id),
+    error,
+    signatures: article.authors,
+  }
+}
+
+/** Why a marking wrote nothing, for the toast; `null` for an article that is gone. */
+function markRefusalToastOf(
+  outcome: Exclude<FinalVersionOutcome, { kind: 'done' }>,
+  isEditor: boolean,
+) {
+  let refusal = finalRefusalOf(outcome, isEditor)
+  return refusal === null ? null : markFinalRefusalToast(refusal, now())
 }
 
 function notFound(): Response {
@@ -183,44 +351,26 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
     middleware: [requireProofreading(signedInUntil)],
     actions: {
       async index(context) {
-        let person = context.auth.identity
-        let viewer = viewerOf(person)
         let { articles } = articlesOf(context)
         let queue = await articles.listForQueue()
 
         /* A link from the digest carries `?article=`, which survives the way through Google's
            sign-in where an anchor would not (`15a`); the anchor is added here. */
+        let viewer = viewerOf(context.auth.identity)
         let linked = Number(context.url.searchParams.get('article'))
-        let callout: { text: string; title: string } | null = null
+        let callout: { text: string; title: string | null } | null = null
         if (context.url.searchParams.has('article') && Number.isSafeInteger(linked)) {
-          if (queue.some((article) => article.id === linked)) {
+          if (queue.some((article) => article.id === linked && partOf(article, viewer) !== null)) {
             return redirect(cardHref(linked), 303)
           }
           let found = await articles.findForQueue(linked)
-          if (found?.isIssueClosed === true)
+          if (found?.isIssueClosed === true) {
             callout = closedArticleCallout(found.name, found.issueName)
+          } else if (found?.hasFinalVersion === true) {
+            callout = finishedArticleCallout(found.name)
+          }
         }
-
-        let settled = takeSettled(context.get(Session) as Session | undefined)
-        let isEmpty = queue.length === 0
-        return context.render(
-          <ProofreadingPage
-            callout={callout}
-            driveAccount={await driveView(context)}
-            empty={
-              isEmpty
-                ? {
-                    hasAction: person.isEditor,
-                    text: person.isProofreader ? EMPTY_TEXT_PROOFREADER : EMPTY_TEXT_EDITOR,
-                  }
-                : null
-            }
-            lead={queueLead(person.isProofreader)}
-            parts={isEmpty ? [] : partsOf(queue, viewer, settled)}
-            person={person}
-            toasts={context.get(Toasts) as readonly ToastMessage[]}
-          />,
-        )
+        return renderQueue(context, { callout, queue })
       },
 
       /*
@@ -332,6 +482,106 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
         let refusal = refusalOf(outcome)
         if (refusal === null) return notFound()
         let toast = takeRefusalToast(refusal)
+        flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+        return back()
+      },
+
+      /*
+       * The dialog of `15f` over the page, for the take the card showed (`?take=`). A card that
+       * no longer offers the step answers with the reason, as the step itself would.
+       */
+      async askFinalVersion(context) {
+        let id = Number(context.params.id)
+        let takenAt = parseStamp(context.url.searchParams.get('take'))
+        if (!Number.isSafeInteger(id) || takenAt === null) return notFound()
+        let person = context.auth.identity
+        let { articles } = articlesOf(context)
+        let refusal = await articles.checkFinalVersion(
+          id,
+          takenAt,
+          person.isEditor ? undefined : person.email,
+        )
+        if (refusal !== null) {
+          let toast = markRefusalToastOf(refusal, person.isEditor)
+          if (toast === null) return notFound()
+          flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+          return redirect(cardHref(id), 303)
+        }
+        let queue = await articles.listForQueue()
+        let article = queue.find((each) => each.id === id)
+        if (article === undefined) return notFound()
+        return renderQueue(context, { dialog: dialogOf(article, takenAt, null), queue })
+      },
+
+      /*
+       * _Označit finální verzi_: the PDF, the clauses and _K souhlasu_ (`15f`). What Drive stops
+       * stays in the dialog to be tried again; what somebody changed meanwhile reloads the page
+       * with the reason (`15g`). After it the card stands where it was, with _Vrátit_.
+       */
+      async markFinalVersion(context) {
+        let id = Number(context.params.id)
+        let takenAt = parseStamp(context.url.searchParams.get('take'))
+        if (!Number.isSafeInteger(id) || takenAt === null) return notFound()
+        let person = context.auth.identity
+        let { articles, artworks } = articlesOf(context)
+        let outcome = await markFinalVersion(artworks, {
+          by: { email: person.email, name: person.displayName || null },
+          id,
+          owner: person.isEditor ? undefined : person.email,
+          takenAt,
+        })
+        if (outcome.kind === 'done') {
+          let isOwn =
+            person.isProofreader &&
+            (await articles.findById(id))?.proofreading?.email === person.email
+          let undo = `${cancelFinalHref(id, outcome.at)}&undo=1`
+          flashSettled(context, { id, part: isOwn ? 'mine' : 'others', undo })
+          flashToast(context, FINAL_SAVED_TOAST, 'neutral', { action: undo, label: UNDO_LABEL })
+          return redirect(cardHref(id), 303)
+        }
+        if (outcome.kind === 'refused') {
+          let toast = markRefusalToastOf(outcome.refusal, person.isEditor)
+          if (toast === null) return notFound()
+          flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+          return redirect(cardHref(id), 303)
+        }
+        let queue = await articles.listForQueue()
+        let article = queue.find((each) => each.id === id)
+        if (article === undefined) return notFound()
+        return renderQueue(context, {
+          dialog: dialogOf(article, takenAt, dialogErrorOf(outcome, person.isEditor)),
+          init: { status: IN_THE_WAY },
+          queue,
+        })
+      },
+
+      /*
+       * _Zrušit finální verzi_, and the _Vrátit_ after marking (`&undo=1`), of the marking the
+       * card showed (`?marked=`), while no run of the job has taken a clause (`15g`). Neither has
+       * a _Vrátit_ of its own: marking again goes through the dialog.
+       */
+      async cancelFinalVersion(context) {
+        let id = Number(context.params.id)
+        let markedAt = parseStamp(context.url.searchParams.get('marked'))
+        if (!Number.isSafeInteger(id) || markedAt === null) return notFound()
+        let person = context.auth.identity
+        let outcome = await cancelFinalVersion(articlesOf(context).artworks, {
+          id,
+          markedAt,
+          owner: person.isEditor ? undefined : person.email,
+        })
+        let back = () => redirect(cardHref(id), 303)
+        if (outcome.kind === 'done') {
+          flashToast(context, FINAL_CANCELLED_TOAST)
+          return back()
+        }
+        if (outcome.kind === 'unavailable') {
+          flashToast(context, CANCEL_FINAL_FAILED_TOAST, 'error')
+          return back()
+        }
+        let refusal = outcome.refusal
+        if (refusal.kind === 'gone') return notFound()
+        let toast = cancelFinalRefusalToast(refusal, now())
         flashToast(context, toast.message, 'neutral', undefined, toast.detail)
         return back()
       },

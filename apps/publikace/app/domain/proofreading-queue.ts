@@ -5,9 +5,10 @@
  * name, the Doc and the state (`sh0zp1if`).
  */
 
-import { type ArticleProgress, type ArticleStep, articleState } from './article.ts'
+import { type ArticleProgress, type ArticleStep, articleState, whoOf } from './article.ts'
 import { alreadyProofreadingToast, type RaceToast } from './handover.ts'
 import { tied } from './public/typography.ts'
+import { formatMoment } from './time.ts'
 
 export const PROOFREADING_TITLE = 'Korektura'
 
@@ -63,7 +64,18 @@ export function authorsMeta(authors: readonly string[]): string {
 
 /** The Callout over the parts for a link from the digest to an article of a closed issue (`15e`). */
 export function closedArticleCallout(articleName: string, issueName: string) {
-  return { text: tied`Vydání ${issueName} je uzavřené.`, title: `„${articleName}“` }
+  return {
+    text: tied`Vydání ${issueName} je uzavřené.`,
+    title: `„${articleName}“` as string | null,
+  }
+}
+
+/**
+ * The same Callout for an article past its proofreading, one sentence without a title (`15e`). It
+ * does not name the step, which a proofreader or an editor-in-chief may have taken.
+ */
+export function finishedArticleCallout(articleName: string) {
+  return { text: tied`Korektura článku „${articleName}“ je hotová.`, title: null as string | null }
 }
 
 export type QueueViewer = { email: string; isEditor: boolean; isProofreader: boolean }
@@ -73,13 +85,20 @@ export type QueueItem = ArticleProgress & {
   id: number
 }
 
-/** Where an article stands on the page for this viewer, from its state alone. */
-export function partOf(article: QueueItem, viewer: QueueViewer): QueuePart {
+/**
+ * Where an article stands on the page for this viewer, from its state alone, or `null` where it
+ * does not stand at all. An article past its final version stays in the _Moje korektury_ of the
+ * proofreader whose take it was while the marking can still be cancelled, and nobody else sees
+ * it (`15g`).
+ */
+export function partOf(article: QueueItem, viewer: QueueViewer): QueuePart | null {
+  let isOwn = viewer.isProofreader && article.proofreading?.email === viewer.email
   switch (articleState(article)) {
+    case 'consent':
+    case 'error':
+      return isOwn && article.finalVersion?.isCancellable === true ? 'mine' : null
     case 'proofreading':
-      return viewer.isProofreader && article.proofreading?.email === viewer.email
-        ? 'mine'
-        : 'others'
+      return isOwn ? 'mine' : 'others'
     case 'handedOver':
       return 'waiting'
     case 'writing':
@@ -114,12 +133,16 @@ export function queueParts<Item extends QueueItem>(
   let parts: Record<QueuePart, Item[]> = { mine: [], others: [], waiting: [], writing: [] }
   for (let article of articles) {
     let part = settled?.id === article.id ? settled.part : partOf(article, viewer)
+    if (part === null) continue
     if (part === 'mine' && !viewer.isProofreader) part = 'others'
     parts[part].push(article)
   }
+  /* In _Moje korektury_ the marked articles stand after the takes: they ask for nothing more. */
+  let isMarked = (article: QueueItem) => Number((article.finalVersion ?? null) !== null)
   for (let part of PART_ORDER) {
     parts[part].sort(
       (a, b) =>
+        isMarked(a) - isMarked(b) ||
         orderKey(a, part) - orderKey(b, part) ||
         a.createdAt.epochMilliseconds - b.createdAt.epochMilliseconds ||
         a.id - b.id,
@@ -128,16 +151,33 @@ export function queueParts<Item extends QueueItem>(
   return parts
 }
 
-/** What the viewer may do on a card: take it, cancel the take, or neither (`15a`, `15b`). */
+/**
+ * What the viewer may do on a card (`15a`, `15b`, `15f`, `15g`): take it, cancel the take, mark
+ * its final version or cancel the marking. The proofreader marks their own take with the card's
+ * button; an editor-in-chief marks anybody else's from „⋯“, for a proofreader who dropped out.
+ * Whoever may mark may cancel, while no run of the job has taken a clause.
+ */
 export function cardActions(
   article: QueueItem,
   viewer: QueueViewer,
-): { canCancel: boolean; canTake: boolean } {
+): {
+  canCancel: boolean
+  canCancelFinal: boolean
+  canMarkFinal: boolean
+  canMarkFinalForOther: boolean
+  canTake: boolean
+} {
   let state = articleState(article)
   let isOwn = article.proofreading?.email === viewer.email
+  let isOwnTake = viewer.isProofreader && isOwn
+  let isMarked = state === 'consent' || state === 'error'
   return {
-    canCancel: state === 'proofreading' && ((viewer.isProofreader && isOwn) || viewer.isEditor),
-    canTake: state !== 'proofreading' && viewer.isProofreader,
+    canCancel: state === 'proofreading' && (isOwnTake || viewer.isEditor),
+    canCancelFinal:
+      isMarked && article.finalVersion?.isCancellable === true && (isOwnTake || viewer.isEditor),
+    canMarkFinal: state === 'proofreading' && isOwnTake,
+    canMarkFinalForOther: state === 'proofreading' && !isOwnTake && viewer.isEditor,
+    canTake: state === 'writing' || state === 'handedOver' ? viewer.isProofreader : false,
   }
 }
 
@@ -162,9 +202,13 @@ export type QueueRefusal =
   | { kind: 'handover-cancelled' }
   | { kind: 'not-proofreading' }
   | { kind: 'proofreading'; step: ArticleStep }
+  | { kind: 'final-version'; step: ArticleStep }
 
 export function takeRefusalToast(refusal: QueueRefusal): RaceToast {
   switch (refusal.kind) {
+    case 'final-version':
+      /* A marking is minutes old when it meets a take's step: its own year is the one to read. */
+      return finalAlreadyMarkedToast(refusal.step, refusal.step.at)
     case 'closed':
       return { message: tied`Vydání ${refusal.issueName} je uzavřené. Korekturu už si nelze vzít.` }
     case 'handover-cancelled':
@@ -176,9 +220,125 @@ export function takeRefusalToast(refusal: QueueRefusal): RaceToast {
   }
 }
 
-/** The closed issue's sentence is a draft of the drawing that the copywriter has not seen. */
 export function cancelRefusalToast(refusal: QueueRefusal): RaceToast {
   return refusal.kind === 'closed'
     ? { message: tied`Vydání ${refusal.issueName} je uzavřené. Korekturu už nelze zrušit.` }
     : takeRefusalToast(refusal)
+}
+
+/*
+ * The final version (`15f`, `15g`, `12q`), worded as the copywriter settled it (`m8jy13rx`, and
+ * `qqdbrrms` for when it can no longer be cancelled).
+ * The texts say nothing of the job's next run: the line that bounds a cancel is the moment a run
+ * takes a clause, which no estimate can tell, and a proofreader never reads the word _úloha_.
+ */
+
+export const MARK_FINAL_LABEL = 'Označit finální verzi…'
+export const MARK_FINAL_CONFIRM_LABEL = 'Označit finální verzi'
+export const MARKING_FINAL_LABEL = 'Ukládá se finální verze…'
+export const CANCEL_FINAL_LABEL = 'Zrušit finální verzi'
+export const OPEN_PDF_LABEL = 'Otevřít PDF'
+export const DIALOG_CANCEL_LABEL = 'Zrušit'
+export const MARK_FINAL_DIALOG_TITLE = 'Označit finální verzi?'
+
+/** The button's name starts with its visible text and carries the article's (`15f`). */
+export function markFinalButtonLabel(articleName: string): string {
+  return tied`Označit finální verzi článku ${articleName}`
+}
+
+/** The dialog's paragraphs, the signatures under the second as a list of their own. */
+export function markFinalDialogText(articleName: string): string {
+  return tied`Dokument „${articleName}“ se uloží jako PDF tak, jak je teď.`
+}
+export const MARK_FINAL_DIALOG_MAIL = tied`Každému autorovi se pošle PDF s žádostí o souhlas s redakční doložkou.`
+export function signaturesLabel(count: number): string {
+  return count === 1 ? tied`Jméno v doložce` : tied`Jména v doložkách`
+}
+export const MARK_FINAL_DIALOG_CANCEL = tied`Jakmile se začnou odesílat e-maily autorům, finální verzi už nezrušíte.`
+
+/** A Callout in the dialog: the step first, the result under it (`11c`). */
+export type DialogError = { text: string; title: string }
+
+export const FINAL_DRIVE_DOWN: DialogError = {
+  text: tied`Nic se neuložilo. Disk teď neodpovídá.`,
+  title: tied`Zkuste finální verzi za chvíli označit znovu.`,
+}
+export const FINAL_ACCOUNT_EDITOR: DialogError = {
+  text: tied`Nic se neuložilo.`,
+  title: tied`Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz.`,
+}
+export const FINAL_ACCOUNT_PROOFREADER: DialogError = {
+  text: tied`Účet aplikace je odpojený. Nic se neuložilo.`,
+  title: tied`Dejte vědět šéfredakci.`,
+}
+export const FINAL_FOLDER_EDITOR: DialogError = {
+  text: tied`Nic se neuložilo.`,
+  title: tied`Obnovte složku z koše nebo ji vraťte na sdílený disk Publikace.`,
+}
+export const FINAL_DOC_EDITOR: DialogError = {
+  text: tied`Nic se neuložilo.`,
+  title: tied`Obnovte dokument z koše nebo ho vraťte na sdílený disk Publikace.`,
+}
+export const FINAL_FOLDER_PROOFREADER: DialogError = {
+  text: tied`Na Disku chybí složka článku. Nic se neuložilo.`,
+  title: tied`Dejte vědět šéfredakci.`,
+}
+export const FINAL_DOC_PROOFREADER: DialogError = {
+  text: tied`Na Disku chybí dokument článku. Nic se neuložilo.`,
+  title: tied`Dejte vědět šéfredakci.`,
+}
+
+export const FINAL_SAVED_TOAST = tied`Finální verze je uložená.`
+export const FINAL_CANCELLED_TOAST = tied`Článek je zpět v korektuře.`
+export const FINAL_TOO_LATE_TOAST = tied`Odesílání e-mailů už začalo. Finální verzi nelze zrušit.`
+export const CANCEL_FINAL_FAILED_TOAST = tied`Zkuste finální verzi hned zrušit znovu. Na zrušení může zbývat jen chvíle.`
+export const FINAL_ALREADY_CANCELLED_TOAST = tied`Finální verze už je zrušená.`
+
+/** Marked meanwhile by somebody else, or twice by the same hand: who and when (`15g`). */
+export function finalAlreadyMarkedToast(step: ArticleStep, today: Temporal.Instant): RaceToast {
+  return {
+    detail: tied`${formatMoment(step.at, today)} · ${whoOf(step)}`,
+    message: tied`Finální verze už je označená.`,
+  }
+}
+
+/** What stood in the way of marking or cancelling the final version: nothing was written. */
+export type FinalRefusal =
+  | { kind: 'closed'; issueName: string }
+  | { kind: 'final-version'; step: ArticleStep }
+  | { kind: 'not-final' }
+  | { kind: 'not-proofreading'; isEditor: boolean }
+  | { kind: 'proofreading'; step: ArticleStep }
+  | { kind: 'too-late' }
+
+export function markFinalRefusalToast(refusal: FinalRefusal, today: Temporal.Instant): RaceToast {
+  switch (refusal.kind) {
+    case 'closed':
+      return {
+        message: tied`Vydání ${refusal.issueName} je uzavřené. Finální verzi už nelze označit.`,
+      }
+    case 'final-version':
+      return finalAlreadyMarkedToast(refusal.step, today)
+    case 'not-proofreading':
+      /* An editor-in-chief marking for a proofreader learns the take is gone; the proofreader
+         learns an editor-in-chief cancelled it, as only one can cancel somebody's take. */
+      return refusal.isEditor
+        ? { message: tied`Korektura už je zrušená.` }
+        : { message: tied`Šéfredakce mezitím zrušila korekturu. Článek nemáte v korektuře.` }
+    case 'proofreading':
+      return alreadyProofreadingToast(refusal.step)
+    case 'not-final':
+      return { message: FINAL_ALREADY_CANCELLED_TOAST }
+    case 'too-late':
+      return { message: FINAL_TOO_LATE_TOAST }
+  }
+}
+
+export function cancelFinalRefusalToast(refusal: FinalRefusal, today: Temporal.Instant): RaceToast {
+  if (refusal.kind === 'closed') {
+    return {
+      message: tied`Vydání ${refusal.issueName} je uzavřené. Finální verzi už nelze zrušit.`,
+    }
+  }
+  return markFinalRefusalToast(refusal, today)
 }

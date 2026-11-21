@@ -346,6 +346,17 @@ export async function createFakeApp(): Promise<FakeApp> {
         banner stands until the next run reports.
       </p>
 
+      <h2>Approval send</h2>
+      <p>
+        One run of <code>Approval_Send</code> through the app's API, as its trigger makes it: it
+        claims every clause of a final version waiting to be sent, and reports them all as sent or
+        all as failed. A marking whose clause was claimed can no longer be cancelled.
+      </p>
+      <p>
+        ${button('/approvals', 'Claim and report sent', { outcome: 'sent' })}
+        ${button('/approvals', 'Claim and report failed', { outcome: 'failed' })}
+      </p>
+
       <h2>Proofreaders' digest</h2>
       <p>
         Address: ${(await proofreaders.find())?.email ?? 'none'}
@@ -547,6 +558,27 @@ export async function createFakeApp(): Promise<FakeApp> {
       }
       case '/replies/fail': {
         let answer = await failReplyCheck()
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
+        return backToControls()
+      }
+      case '/approvals': {
+        let outcome = form?.get('outcome') === 'failed' ? 'failed' : 'sent'
+        let claimed = await job(routes.api.approvals.claim.href(), { intervalMinutes: 30 })
+        if (claimed.status !== 200) return new Response(`The API answered ${claimed.status}`)
+        let { clauses, runKey } = (await claimed.json()) as {
+          clauses: { clauseKey: string }[]
+          runKey: string
+        }
+        let results = clauses.map((clause) =>
+          outcome === 'sent'
+            ? { clauseKey: clause.clauseKey, outcome }
+            : { clauseKey: clause.clauseKey, error: 'The fake Mailer refused it.', outcome },
+        )
+        let answer = await job(routes.api.approvals.report.href(), {
+          outcome: 'ok',
+          results,
+          runKey,
+        })
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()
       }

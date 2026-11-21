@@ -37,6 +37,8 @@ export const routes = route({
        it was offered for. */
     handOver: post('/issues/:name/articles/:id/handover'),
     cancelHandover: post('/issues/:name/articles/:id/handover/cancel'),
+    /* _Zrušit finální verzi_ from the row's „⋯“ (`12q`), with the marking's time as `?marked=`. */
+    cancelFinalVersion: post('/issues/:name/articles/:id/final-version/cancel'),
   },
 
   /* The pages behind a shared link, without sign-in or cookies (`02a`). `GET` draws the form,
@@ -72,6 +74,12 @@ export const routes = route({
     proofreadingDigest: {
       run: post('/api/v1/proofreading-digest/run'),
     },
+    /* `SCRIPT__Publication__Approval_Send` for the issues made in the app (#88, #89): it claims
+       the clauses of final versions to send, mails each author, and reports what the Mailer did. */
+    approvals: {
+      claim: post('/api/v1/approvals/claim'),
+      report: post('/api/v1/approvals/report'),
+    },
   },
 
   /* _Korektura_ (`15a`–`15e`), the one page a proofreader has, and its steps, at once and with no
@@ -84,6 +92,12 @@ export const routes = route({
     take: post('/proofreading/articles/:id'),
     cancel: post('/proofreading/articles/:id/cancel'),
     restore: post('/proofreading/articles/:id/restore'),
+    /* _Označit finální verzi_ (`15f`): the dialog at its own address over the page, with the take
+       the card showed as `?take=`, and the marking. Its cancel carries the marking's time as
+       `?marked=` (`15g`). */
+    askFinalVersion: get('/proofreading/articles/:id/final-version'),
+    markFinalVersion: post('/proofreading/articles/:id/final-version'),
+    cancelFinalVersion: post('/proofreading/articles/:id/final-version/cancel'),
   },
 
   /* _Ke kontrole_ (`13a`): the replies the reply check did not recognise as a consent.

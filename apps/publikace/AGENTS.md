@@ -12,7 +12,9 @@ Google sign-in and Přístup in `/settings` with the `publikace.app@` account, t
 `/issues/new`, `/issues/{name}`) with their folders on Drive, and the newsroom's link, whose
 public page `/l/{key}/article` creates an article with its Doc and mails its authors, and the
 handover to proofreading in the issue detail, which the proofreaders hear of in one digest a
-morning, and the page `/proofreading`, where they sign in to take a text and give it back.
+morning, and the page `/proofreading`, where they sign in to take a text, give it back, and mark
+its final version: a PDF in the article folder and one clause per author, which
+`SCRIPT__Publication__Approval_Send` is to claim through `/api/v1/approvals` (#89).
 Nothing runs on Fly.io yet, and the background jobs still read the sheets, except the
 artwork reply check and the proofreaders' digest, which go through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the

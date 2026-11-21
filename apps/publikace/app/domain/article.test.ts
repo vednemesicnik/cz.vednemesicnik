@@ -5,6 +5,7 @@ import {
   articleMeta,
   articleState,
   articleStateTag,
+  consentLine,
   STATE_ORDER,
   AUTHOR_LIMIT_NOTE,
   checkArticle,
@@ -173,6 +174,44 @@ describe('the state of an article (01a)', () => {
     let taken = { ...handedOver, proofreading: JAKUB }
     assert.equal(articleState(taken), 'proofreading')
     assert.equal(articleStateTag(taken).detail, 'od 14. 11. · jakub@vednemesicnik.test')
+  })
+
+  it('is K souhlasu once marked, and Chyba once a clause was not sent', () => {
+    let finalVersion = {
+      ...MARIE,
+      clauses: { failed: 0, pending: 2, sent: 0, total: 2 },
+      isCancellable: true,
+      pdfFileId: 'pdf-1',
+    }
+    let marked = { createdAt: CREATED, finalVersion, handover: MARIE, proofreading: JAKUB }
+    assert.equal(articleState(marked), 'consent')
+    assert.deepEqual(articleStateTag(marked), {
+      detail: 'e-mail autorům čeká na odeslání',
+      label: 'K souhlasu',
+      tone: 'running',
+    })
+    let sent = {
+      ...marked,
+      finalVersion: { ...finalVersion, clauses: { failed: 0, pending: 0, sent: 2, total: 2 } },
+    }
+    assert.equal(articleStateTag(sent).detail, 'souhlas 0 ze 2 autorů')
+    let failed = {
+      ...marked,
+      finalVersion: { ...finalVersion, clauses: { failed: 1, pending: 0, sent: 1, total: 2 } },
+    }
+    assert.equal(articleState(failed), 'error')
+    assert.deepEqual(articleStateTag(failed), {
+      detail: 'e-mail se nedoručil',
+      label: 'Chyba',
+      tone: 'problem',
+    })
+  })
+
+  it('counts consents with z or ze, and autora or autorů', () => {
+    assert.equal(consentLine(0, 1), 'souhlas 0 z 1 autora')
+    assert.equal(consentLine(1, 2), 'souhlas 1 ze 2 autorů')
+    assert.equal(consentLine(2, 5), 'souhlas 2 z 5 autorů')
+    assert.equal(consentLine(0, 7), 'souhlas 0 ze 7 autorů')
   })
 
   it('orders proofreading first, then what waits for a proofreader, then what is written', () => {

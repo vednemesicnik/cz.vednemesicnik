@@ -203,6 +203,24 @@ here:
       and lands on the article's card (row 59 of `03`). If the window refuses the sign-in, that
       is said in the issue: the proofreaders then open the link in a browser.
 
+## The final version
+
+_Označit finální verzi…_ on the page Korektura exports the article's Doc to PDF and stores it in
+the article folder (#88). The suite exports a fake Doc on a fake Drive, so what the real Drive does
+is checked here, on an article taken in the section above:
+
+- [ ] the dialog names the article and its authors' signatures; _Označit finální verzi_ ends with
+      _Finální verze je uložená._ and the card shows _K souhlasu_ with _Otevřít PDF_;
+- [ ] the article folder holds one `<sha256>.pdf` whose pages are the Doc as it was, and
+      _Otevřít PDF_ opens it for the proofreader, who is not a member of the shared drive;
+- [ ] _Vrátit_ puts the PDF in the shared drive's bin and the article back in _Korektura_ of the
+      same take, with its date;
+- [ ] with the Doc in the bin, the dialog says _Dejte vědět šéfredakci._ to the proofreader and
+      _Obnovte dokument z koše…_ to an editor-in-chief, and nothing is stored;
+- [ ] a call to `POST /api/v1/approvals/claim` with the job's identity token, as in the section
+      below, returns the clause with the PDF's ID; _Zrušit finální verzi_ then answers _Finální
+      verzi už nelze zrušit._ and the PDF stays where it was.
+
 ## The reply check's API
 
 The reply check of artworks is `SCRIPT__Publication__Artwork_Replies`, a standalone Apps Script

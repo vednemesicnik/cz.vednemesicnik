@@ -88,6 +88,12 @@ import type { Article, ArticleRow, HandoverOutcome } from '../../data/articles.s
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
 import { discardBatch, resendBatch } from '../../drive/artworks-setup.server.ts'
+import { cancelFinalVersion } from '../../drive/final-version.server.ts'
+import {
+  CANCEL_FINAL_FAILED_TOAST,
+  cancelFinalRefusalToast,
+  FINAL_CANCELLED_TOAST,
+} from '../../domain/proofreading-queue.ts'
 import { createIssue, finishIssue } from '../../drive/issue-setup.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { type Person, requireEditor } from '../../middleware/auth.server.ts'
@@ -267,7 +273,12 @@ async function linkAndArticles(
         : state === 'handedOver'
           ? (article.handover?.at ?? null)
           : null
+    let finalVersion = article.finalVersion
     return {
+      cancelFinalAction:
+        isOpen && finalVersion !== null && finalVersion.isCancellable
+          ? `${routes.issues.cancelFinalVersion.href(ids)}?marked=${encodeURIComponent(stamp(finalVersion.at))}`
+          : null,
       cancelHandoverAction:
         isOpen && state === 'handedOver' ? routes.issues.cancelHandover.href(ids) : null,
       handOverAction: isOpen && state === 'writing' ? routes.issues.handOver.href(ids) : null,
@@ -281,6 +292,7 @@ async function linkAndArticles(
       id: article.id,
       missing: missingView(issue, article, batches),
       name: article.name,
+      pdfUrl: finalVersion === null ? null : driveFileUrl(finalVersion.pdfFileId),
       state: articleStateTag(article),
     }
   })
@@ -289,7 +301,11 @@ async function linkAndArticles(
      one waiting since Monday leads them on Friday (`12k`). The sort is stable, so the rest keep
      the newest first. */
   let isWaitingRow = (row: ArticleRowView) =>
-    Number((row.artworks.line?.isWaiting ?? false) || row.missing !== null)
+    Number(
+      (row.artworks.line?.isWaiting ?? false) ||
+        row.missing !== null ||
+        row.state.tone === 'problem',
+    )
   rows.sort(
     (a, b) =>
       isWaitingRow(b) - isWaitingRow(a) ||
@@ -609,6 +625,34 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
       },
 
       /* `02d`: the old key answers `02e` from this moment, and the new one starts from nothing. */
+      /*
+       * `12q`: _Zrušit finální verzi_ from the row's „⋯“, of the marking the row showed
+       * (`?marked=`), while no run of the job has taken a clause. Without a _Vrátit_, as in the
+       * queue: marking again goes through the dialog (`15g`).
+       */
+      async cancelFinalVersion(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        let markedAt = parseStamp(context.url.searchParams.get('marked'))
+        if (issue === null || article === null || markedAt === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        let outcome = await cancelFinalVersion(articlesOf(context).artworks, {
+          id: article.id,
+          markedAt,
+        })
+        if (outcome.kind === 'done') {
+          flashToast(context, FINAL_CANCELLED_TOAST)
+          return back()
+        }
+        if (outcome.kind === 'unavailable') {
+          flashToast(context, CANCEL_FINAL_FAILED_TOAST, 'error')
+          return back()
+        }
+        if (outcome.refusal.kind === 'gone') return notFound()
+        flashRace(context, cancelFinalRefusalToast(outcome.refusal, now()))
+        return back()
+      },
+
       async renewLink(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null || issue.completedAt === null || issue.closedAt !== null)

@@ -86,6 +86,7 @@ import {
   HANDING_OVER_LABEL,
 } from '../../domain/handover.ts'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
+import { CANCEL_FINAL_LABEL, OPEN_PDF_LABEL } from '../../domain/proofreading-queue.ts'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
 export type LinkBlockView = {
@@ -120,12 +121,16 @@ export type ArticleRowView = {
   authors: string
   /** _Zrušit předání_ in `⋯`, only on _Dopsáno_ of an issue still open (`12k`). */
   cancelHandoverAction: string | null
+  /** _Zrušit finální verzi_ in `⋯`, on _K souhlasu_ while no run has taken a clause (`12q`). */
+  cancelFinalAction: string | null
   documentUrl: string
   /** _Předat ke korektuře_ in the row, only on _Píše se_ of an issue still open (`12k`). */
   handOverAction: string | null
   id: number
   missing: MissingFoldersView | null
   name: string
+  /** _Otevřít PDF_ in `⋯`, for an article with a final version (`12q`). */
+  pdfUrl: string | null
   /** Where the row stands among the others: a settled row by the state it had (`12l`). */
   sortAt: Temporal.Instant | null
   sortState: ArticleState
@@ -470,6 +475,7 @@ function ArticleRow(
     let { article, csrfToken, isLast } = handle.props
     let items: ActionMenuItem[] = [
       { href: article.documentUrl, label: 'Otevřít dokument' },
+      ...(article.pdfUrl === null ? [] : [{ href: article.pdfUrl, label: OPEN_PDF_LABEL }]),
       ...(article.artworksUrl === null
         ? []
         : [{ copyText: article.artworksUrl, label: COPY_ARTWORKS_LINK_LABEL }]),
@@ -479,6 +485,12 @@ function ArticleRow(
       items.push(
         { isSeparator: true },
         { action: article.cancelHandoverAction, csrfToken, label: CANCEL_HANDOVER_LABEL },
+      )
+    }
+    if (article.cancelFinalAction !== null) {
+      items.push(
+        { isSeparator: true },
+        { action: article.cancelFinalAction, csrfToken, label: CANCEL_FINAL_LABEL },
       )
     }
     return (

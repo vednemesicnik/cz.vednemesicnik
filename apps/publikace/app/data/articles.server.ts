@@ -1,7 +1,8 @@
 import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
-import type { ArticleStep, Author } from '../domain/article.ts'
+import { CLAIM_LIMIT, CLAIM_MINUTES, clauseKey, type ClauseOutcome } from '../domain/approvals.ts'
+import type { ArticleStep, Author, FinalVersion } from '../domain/article.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
 import type { DigestCandidate } from '../domain/proofreading-digest.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
@@ -34,6 +35,8 @@ export type ArticleRow = {
   createdAt: Temporal.Instant | null
   docId: string | null
   folderId: string | null
+  /** The final version that stands, `null` while there is none or it was cancelled (`15f`). */
+  finalVersion: FinalVersion | null
   formKey: string
   /** The handover that stands, `null` while there is none or it was cancelled (`01a`). */
   handover: ArticleStep | null
@@ -73,7 +76,48 @@ export type ProofreadingOutcome =
   | { kind: 'proofreading'; step: ArticleStep }
   | { isHandedOver: boolean; kind: 'not-proofreading' }
   | { issueName: string; kind: 'closed' }
+  | { kind: 'final-version'; step: ArticleStep }
   | { kind: 'gone' }
+
+/**
+ * What marking the final version came to (`15f`). Only `done` wrote anything. Otherwise the
+ * article now stands as the outcome says: marked already (by whom and when), taken by somebody
+ * else or under another take than the card showed, no longer taken, in a closed issue, or gone.
+ */
+export type FinalVersionOutcome =
+  | { at: Temporal.Instant; kind: 'done' }
+  | { kind: 'final-version'; step: ArticleStep }
+  | { kind: 'proofreading'; step: ArticleStep }
+  | { isHandedOver: boolean; kind: 'not-proofreading' }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
+
+/**
+ * What cancelling the final version came to (`15g`). `done` gives the PDF's ID, for the bin.
+ * `too-late` is a marking whose clause a run of the job has taken; `not-final` one that is no
+ * longer the marking the card showed, or never was.
+ */
+export type CancelFinalOutcome =
+  | { kind: 'done'; pdfFileId: string }
+  | { kind: 'not-final' }
+  | { kind: 'too-late' }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
+
+/** A clause a run of `Approval_Send` took: what its e-mail needs (#89). */
+export type ClaimedClause = {
+  articleName: string
+  authorEmail: string
+  authorName: string
+  clauseKey: string
+  docId: string
+  issueName: string
+  pdfFileId: string
+  signature: string
+}
+
+/** The PDF a marking stored, and the tag it carries on Drive. */
+export type FinalVersionPdf = { attemptKey: string; fileId: string; hash: string }
 
 /** An article on the page Korektura (`15a`): only what a proofreader needs for the work. */
 export type QueueArticle = {
@@ -82,6 +126,7 @@ export type QueueArticle = {
   cancelledProofreading: Proofreading | null
   createdAt: Temporal.Instant
   docId: string
+  finalVersion: FinalVersion | null
   handover: ArticleStep | null
   id: number
   issueName: string
@@ -137,9 +182,12 @@ export type ArticleStore = {
    * closed, so that the page can say why the article is not on it. Only one that was handed over,
    * as only those were ever in a digest: an ID tried by hand learns nothing of the closed issues.
    */
-  findForQueue(
-    id: number,
-  ): Promise<{ isIssueClosed: boolean; issueName: string; name: string } | null>
+  findForQueue(id: number): Promise<{
+    hasFinalVersion: boolean
+    isIssueClosed: boolean
+    issueName: string
+    name: string
+  } | null>
   /**
    * Hands the article over to proofreading (`12k`), unless it was handed over meanwhile or a
    * proofreader took it. A cancelled handover is replaced by this one.
@@ -211,13 +259,62 @@ export type ArticleStore = {
     cancelledAt: Temporal.Instant,
     options?: { owner?: string },
   ): Promise<ProofreadingOutcome>
+  /**
+   * Whether _Označit finální verzi_ may go ahead (`15f`), read before Drive is asked to store
+   * anything: `null` when it may, else what stands in the way. `takenAt` is the take the card
+   * showed; `owner` limits it to that account's take, and an editor-in-chief passes none.
+   */
+  checkFinalVersion(
+    id: number,
+    takenAt: Temporal.Instant,
+    owner?: string,
+  ): Promise<Exclude<FinalVersionOutcome, { kind: 'done' }> | null>
+  /**
+   * Records the final version and one clause _K odeslání_ per author, in one transaction, with
+   * the same checks as `checkFinalVersion` made again: anything else wrote nothing, and the PDF
+   * is the caller's to put in the bin.
+   */
+  markFinalVersion(input: {
+    at: Temporal.Instant
+    by: { email: string; name: string | null }
+    id: number
+    owner?: string
+    pdf: FinalVersionPdf
+    takenAt: Temporal.Instant
+  }): Promise<FinalVersionOutcome>
+  /**
+   * _Zrušit finální verzi_ of the marking made at `markedAt`, while no run has taken a clause:
+   * its clauses go, the article is _Korektura_ of the same take again.
+   */
+  cancelFinalVersion(
+    id: number,
+    at: Temporal.Instant,
+    markedAt: Temporal.Instant,
+    owner?: string,
+  ): Promise<CancelFinalOutcome>
+  /**
+   * The clauses _K odeslání_ of standing markings in open issues, for one run of the job: each
+   * taken under `runKey` and not handed to another run for `CLAIM_MINUTES`. Taking one ends the
+   * marking's way back for good.
+   */
+  claimForSending(runKey: string, at: Temporal.Instant): Promise<ClaimedClause[]>
+  /** What the run did with a clause it claimed; `unknown` for one it did not claim. */
+  recordSending(
+    runKey: string,
+    key: string,
+    outcome: ClauseOutcome,
+    at: Temporal.Instant,
+  ): Promise<'done' | 'unknown'>
   markWelcome(
     articleId: number,
     position: number,
     outcome: 'failed' | 'sent',
     at: Temporal.Instant,
   ): Promise<void>
-  /** Created articles with a missing folder per issue: each is one item of _Čeká na vás_. */
+  /**
+   * Created articles with a missing folder, or with a clause the job could not send (_Chyba_), per
+   * issue: each is one item of _Čeká na vás_ (`11a`, `01d`).
+   */
   missingCountsByIssue(): Promise<Map<number, number>>
   /** Attempts whose cleanup failed, safe to take while other requests run. */
   pendingCleanups(): Promise<ArticleRow[]>
@@ -250,8 +347,13 @@ function toAuthor(row: Row): ArticleAuthor {
   }
 }
 
-function toRow(row: Row, authors: ArticleAuthor[]): ArticleRow {
+function toRow(
+  row: Row,
+  authors: ArticleAuthor[],
+  finalVersion: FinalVersion | null = null,
+): ArticleRow {
   return {
+    finalVersion,
     artworksFolderId: text(row['artworks_folder_id']),
     authors,
     cleanupAt: parseStamp(row['cleanup_at']),
@@ -322,8 +424,63 @@ async function proofreadingRefusalOf(db: Database, id: number): Promise<Proofrea
   let issueRow = issue.rows?.[0]
   if (issueRow === undefined) return { kind: 'gone' }
   if (issueRow['closed_at'] !== null) return { issueName: String(issueRow['name']), kind: 'closed' }
+  if (row.finalVersion !== null) return { kind: 'final-version', step: row.finalVersion }
   if (row.proofreading !== null) return { kind: 'proofreading', step: row.proofreading }
   return { isHandedOver: row.handover !== null, kind: 'not-proofreading' }
+}
+
+/** The article and the name of its issue, open or closed; `null` for one not created. */
+async function withIssue(
+  db: Database,
+  id: number,
+): Promise<{ issueName: string; isClosed: boolean; row: ArticleRow } | null> {
+  let row = await byId(db, id)
+  if (row === null || row.createdAt === null) return null
+  let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
+  let issueRow = issue.rows?.[0]
+  if (issueRow === undefined) return null
+  return { isClosed: issueRow['closed_at'] !== null, issueName: String(issueRow['name']), row }
+}
+
+/** What stands in the way of marking the take shown at `takenAt`, or `null`. */
+async function finalVersionRefusalOf(
+  db: Database,
+  id: number,
+  takenAt: Temporal.Instant,
+  owner: string | undefined,
+): Promise<Exclude<FinalVersionOutcome, { kind: 'done' }> | null> {
+  let found = await withIssue(db, id)
+  if (found === null) return { kind: 'gone' }
+  let { isClosed, issueName, row } = found
+  if (isClosed) return { issueName, kind: 'closed' }
+  if (row.finalVersion !== null) return { kind: 'final-version', step: row.finalVersion }
+  if (row.proofreading === null) {
+    return { isHandedOver: row.handover !== null, kind: 'not-proofreading' }
+  }
+  /* Another take than the card showed, or the take of somebody else: the step was decided over
+     a card that is no longer true (`15g`). */
+  let isOtherTake = !row.proofreading.at.equals(takenAt)
+  let isOtherOwner = owner !== undefined && row.proofreading.email !== owner
+  if (isOtherTake || isOtherOwner) return { kind: 'proofreading', step: row.proofreading }
+  return null
+}
+
+/** What stands in the way of cancelling the marking made at `markedAt`, or `null`. */
+async function cancelFinalRefusalOf(
+  db: Database,
+  id: number,
+  markedAt: Temporal.Instant,
+  owner: string | undefined,
+): Promise<Exclude<CancelFinalOutcome, { kind: 'done' }> | null> {
+  let found = await withIssue(db, id)
+  if (found === null) return { kind: 'gone' }
+  let { isClosed, issueName, row } = found
+  if (isClosed) return { issueName, kind: 'closed' }
+  let finalVersion = row.finalVersion
+  if (finalVersion === null || !finalVersion.at.equals(markedAt)) return { kind: 'not-final' }
+  if (owner !== undefined && row.proofreading?.email !== owner) return { kind: 'not-final' }
+  if (!finalVersion.isCancellable) return { kind: 'too-late' }
+  return null
 }
 
 /** Nobody has the article: never taken, or the take was cancelled. */
@@ -351,8 +508,51 @@ async function withAuthors(db: Database, rows: readonly Row[]): Promise<ArticleR
     let id = Number(author['article_id'])
     byArticle.set(id, [...(byArticle.get(id) ?? []), toAuthor(author)])
   }
-  return rows.map((row) => toRow(row, byArticle.get(Number(row['id'])) ?? []))
+  let finalVersions = await standingFinalVersions(db, ids)
+  return rows.map((row) => {
+    let id = Number(row['id'])
+    return toRow(row, byArticle.get(id) ?? [], finalVersions.get(id) ?? null)
+  })
 }
+
+/** The standing marking of each article, with its clauses counted by state. */
+async function standingFinalVersions(
+  db: Database,
+  ids: readonly number[],
+): Promise<Map<number, FinalVersion>> {
+  let result = await db.exec(
+    sql`SELECT f.article_id, f.marked_at, f.marked_by_email, f.marked_by_name, f.pdf_file_id,
+          count(c.id) AS total,
+          coalesce(sum(c.state = 'pending'), 0) AS pending,
+          coalesce(sum(c.state = 'sent'), 0) AS sent,
+          coalesce(sum(c.state = 'failed'), 0) AS failed,
+          coalesce(max(c.first_claimed_at IS NOT NULL), 0) AS is_claimed
+        FROM final_versions f LEFT JOIN article_clauses c ON c.final_version_id = f.id
+        WHERE f.cancelled_at IS NULL
+          AND f.article_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))
+        GROUP BY f.id`,
+  )
+  let byArticle = new Map<number, FinalVersion>()
+  for (let row of result.rows ?? []) {
+    byArticle.set(Number(row['article_id']), {
+      at: parseStamp(row['marked_at']) ?? EPOCH,
+      clauses: {
+        failed: Number(row['failed']),
+        pending: Number(row['pending']),
+        sent: Number(row['sent']),
+        total: Number(row['total']),
+      },
+      email: String(row['marked_by_email']),
+      isCancellable: Number(row['is_claimed']) === 0,
+      name: text(row['marked_by_name']),
+      pdfFileId: String(row['pdf_file_id']),
+    })
+  }
+  return byArticle
+}
+
+/** The article has no standing marking. */
+const NO_FINAL_VERSION = sql`id NOT IN (SELECT article_id FROM final_versions WHERE cancelled_at IS NULL)`
 
 async function byFormKey(db: Database, formKey: string): Promise<ArticleRow | null> {
   let result = await db.exec(sql`SELECT * FROM articles WHERE form_key = ${formKey}`)
@@ -437,7 +637,10 @@ export function createArticleStore(database: Database): ArticleStore {
 
     async findForQueue(id) {
       let result = await database.exec(
-        sql`SELECT articles.name, issues.name AS issue_name, issues.closed_at FROM articles
+        sql`SELECT articles.name, issues.name AS issue_name, issues.closed_at,
+              EXISTS (SELECT 1 FROM final_versions f
+                      WHERE f.article_id = articles.id AND f.cancelled_at IS NULL) AS has_final
+            FROM articles
             JOIN issues ON issues.id = articles.issue_id
             WHERE articles.id = ${id} AND articles.created_at IS NOT NULL
               AND articles.handed_over_at IS NOT NULL`,
@@ -445,6 +648,7 @@ export function createArticleStore(database: Database): ArticleStore {
       let row = result.rows?.[0]
       if (row === undefined) return null
       return {
+        hasFinalVersion: Number(row['has_final']) === 1,
         isIssueClosed: row['closed_at'] !== null,
         issueName: String(row['issue_name']),
         name: String(row['name']),
@@ -540,6 +744,7 @@ export function createArticleStore(database: Database): ArticleStore {
         cancelledProofreading: article.cancelledProofreading,
         createdAt: article.createdAt ?? EPOCH,
         docId: article.docId ?? '',
+        finalVersion: article.finalVersion,
         handover: article.handover,
         id: article.id,
         issueName: String(rows[index]?.['issue_name']),
@@ -649,7 +854,8 @@ export function createArticleStore(database: Database): ArticleStore {
         let result = await db.exec(
           sql`UPDATE articles SET proofreading_cancelled_at = ${stamp(at)}
               WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NOT NULL
-                AND proofreading_cancelled_at IS NULL AND ${IN_OPEN_ISSUE} ${take} ${owner}`,
+                AND proofreading_cancelled_at IS NULL AND ${IN_OPEN_ISSUE} AND ${NO_FINAL_VERSION}
+                ${take} ${owner}`,
         )
         if ((result.affectedRows ?? 0) > 0) {
           let row = await byId(db, id)
@@ -676,6 +882,127 @@ export function createArticleStore(database: Database): ArticleStore {
       })
     },
 
+    checkFinalVersion(id, takenAt, owner) {
+      return finalVersionRefusalOf(database, id, takenAt, owner)
+    },
+
+    markFinalVersion(input) {
+      return database.transaction(async (db) => {
+        let refusal = await finalVersionRefusalOf(db, input.id, input.takenAt, input.owner)
+        if (refusal !== null) return refusal
+        let row = await byId(db, input.id)
+        if (row === null) return { kind: 'gone' }
+        let inserted = await db.exec(
+          sql`INSERT INTO final_versions
+                (article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id, pdf_hash,
+                 attempt_key)
+              VALUES (${input.id}, ${stamp(input.at)}, ${input.by.email}, ${input.by.name},
+                      ${input.pdf.fileId}, ${input.pdf.hash}, ${input.pdf.attemptKey})
+              RETURNING id`,
+        )
+        let versionId = Number(inserted.rows?.[0]?.['id'])
+        /* The signature is the author's name as the form took it, as the script writes it. */
+        for (let author of row.authors) {
+          await db.exec(
+            sql`INSERT INTO article_clauses
+                  (final_version_id, article_id, position, author_name, author_email, signature,
+                   clause_key)
+                VALUES (${versionId}, ${input.id}, ${author.position}, ${author.name},
+                        ${author.email}, ${author.name},
+                        ${clauseKey(input.id, author.position, input.at)})`,
+          )
+        }
+        return { at: input.at, kind: 'done' }
+      })
+    },
+
+    cancelFinalVersion(id, at, markedAt, owner) {
+      return database.transaction(async (db) => {
+        let refusal = await cancelFinalRefusalOf(db, id, markedAt, owner)
+        if (refusal !== null) return refusal
+        let result = await db.exec(
+          sql`UPDATE final_versions SET cancelled_at = ${stamp(at)}
+              WHERE article_id = ${id} AND cancelled_at IS NULL AND marked_at = ${stamp(markedAt)}
+                AND id NOT IN (SELECT final_version_id FROM article_clauses
+                               WHERE first_claimed_at IS NOT NULL)
+              RETURNING id, pdf_file_id`,
+        )
+        let cancelled = result.rows?.[0]
+        if (cancelled === undefined) return { kind: 'too-late' }
+        await db.exec(
+          sql`DELETE FROM article_clauses WHERE final_version_id = ${Number(cancelled['id'])}`,
+        )
+        return { kind: 'done', pdfFileId: String(cancelled['pdf_file_id']) }
+      })
+    },
+
+    claimForSending(runKey, at) {
+      let lease = stamp(at.subtract({ minutes: CLAIM_MINUTES }))
+      return database.transaction(async (db) => {
+        let result = await db.exec(
+          sql`SELECT c.id FROM article_clauses c
+              JOIN final_versions f ON f.id = c.final_version_id
+              JOIN articles a ON a.id = c.article_id
+              JOIN issues i ON i.id = a.issue_id
+              WHERE c.state = 'pending' AND f.cancelled_at IS NULL AND i.closed_at IS NULL
+                AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
+              ORDER BY f.marked_at, c.id
+              LIMIT ${CLAIM_LIMIT}`,
+        )
+        let ids = JSON.stringify((result.rows ?? []).map((row) => Number(row['id'])))
+        await db.exec(
+          sql`UPDATE article_clauses
+              SET claim_key = ${runKey}, claimed_at = ${stamp(at)},
+                  first_claimed_at = coalesce(first_claimed_at, ${stamp(at)})
+              WHERE id IN (SELECT value FROM json_each(${ids}))`,
+        )
+        let claimed = await db.exec(
+          sql`SELECT c.*, a.name AS article_name, a.doc_id, i.name AS issue_name, f.pdf_file_id
+              FROM article_clauses c
+              JOIN final_versions f ON f.id = c.final_version_id
+              JOIN articles a ON a.id = c.article_id
+              JOIN issues i ON i.id = a.issue_id
+              WHERE c.id IN (SELECT value FROM json_each(${ids}))
+              ORDER BY f.marked_at, c.id`,
+        )
+        return (claimed.rows ?? []).map((row) => ({
+          articleName: String(row['article_name']),
+          authorEmail: String(row['author_email']),
+          authorName: String(row['author_name']),
+          clauseKey: String(row['clause_key']),
+          docId: String(row['doc_id']),
+          issueName: String(row['issue_name']),
+          pdfFileId: String(row['pdf_file_id']),
+          signature: String(row['signature']),
+        }))
+      })
+    },
+
+    recordSending(runKey, key, outcome, at) {
+      return database.transaction(async (db) => {
+        /* Reported, so the lease ends. A clause already sent stays sent: a clause reported twice
+           in one report cannot turn it into a failure. */
+        let result =
+          outcome.kind === 'sent'
+            ? await db.exec(
+                sql`UPDATE article_clauses
+                    SET state = 'sent', sent_at = coalesce(sent_at, ${stamp(at)}), error = NULL,
+                        claimed_at = NULL
+                    WHERE clause_key = ${key} AND claim_key = ${runKey}`,
+              )
+            : await db.exec(
+                sql`UPDATE article_clauses
+                    SET state = 'failed', error = ${outcome.error}, claimed_at = NULL
+                    WHERE clause_key = ${key} AND claim_key = ${runKey} AND state != 'sent'`,
+              )
+        if ((result.affectedRows ?? 0) > 0) return 'done'
+        let found = await db.exec(
+          sql`SELECT id FROM article_clauses WHERE clause_key = ${key} AND claim_key = ${runKey}`,
+        )
+        return (found.rows ?? []).length > 0 ? 'done' : 'unknown'
+      })
+    },
+
     async markWelcome(articleId, position, outcome, at) {
       if (outcome === 'sent') {
         await database.exec(
@@ -697,6 +1024,9 @@ export function createArticleStore(database: Database): ArticleStore {
               folder_missing_at IS NOT NULL
               OR artworks_folder_missing_at IS NOT NULL
               OR licences_folder_missing_at IS NOT NULL
+              OR id IN (SELECT c.article_id FROM article_clauses c
+                        JOIN final_versions f ON f.id = c.final_version_id
+                        WHERE f.cancelled_at IS NULL AND c.state = 'failed')
             )
             GROUP BY issue_id`,
       )

@@ -5,10 +5,23 @@ import { getCsrfToken } from 'remix/middleware/csrf'
 
 import { OPEN_DOCUMENT_LABEL } from '../../domain/article.ts'
 import {
+  CANCEL_FINAL_LABEL,
   CANCEL_LABEL,
+  DIALOG_CANCEL_LABEL,
+  type DialogError,
   EMPTY_ACTION_EDITOR,
   EMPTY_TITLE,
+  MARK_FINAL_CONFIRM_LABEL,
+  MARK_FINAL_DIALOG_CANCEL,
+  MARK_FINAL_DIALOG_MAIL,
+  MARK_FINAL_DIALOG_TITLE,
+  MARK_FINAL_LABEL,
+  markFinalButtonLabel,
+  markFinalDialogText,
+  MARKING_FINAL_LABEL,
+  OPEN_PDF_LABEL,
   PROOFREADING_TITLE,
+  signaturesLabel,
   TAKE_LABEL,
 } from '../../domain/proofreading-queue.ts'
 import { tied } from '../../domain/public/typography.ts'
@@ -16,6 +29,8 @@ import { UNDO_LABEL } from '../../domain/review.ts'
 import { routes } from '../../routes.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
+import { Dialog } from '../../ui/dialog/component.tsx'
+import { DialogTitle } from '../../ui/dialog-title/component.tsx'
 import { EmptyState } from '../../ui/empty-state/component.tsx'
 import { EmptyStateText } from '../../ui/empty-state-text/component.tsx'
 import { EmptyStateTitle } from '../../ui/empty-state-title/component.tsx'
@@ -23,7 +38,7 @@ import { Layout } from '../../ui/layout/component.tsx'
 import { ListHeader } from '../../ui/list-header/component.tsx'
 import { ListHeaderTitle } from '../../ui/list-header-title/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
-import { ActionMenu } from '../../ui/public/action-menu/component.tsx'
+import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 import { StatusTag, type StatusTone } from '../../ui/status-tag/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
@@ -34,12 +49,20 @@ import type { DriveStatus } from '../issues/overview-page.tsx'
 export type ProofreadingCardView = {
   /** Where _Zrušit korekturu_ posts, in „⋯“, or `null` where the viewer may not. */
   cancelAction: string | null
+  /** Where _Zrušit finální verzi_ posts, in „⋯“, while it may still be cancelled (`15g`). */
+  cancelFinalAction: string | null
   documentUrl: string
   id: number
   isSettled: boolean
   /** `Vydání VDM_2026_5`, as plain text: the issue's detail is not a proofreader's. */
   kind: string
+  /** The dialog of _Označit finální verzi…_, the card's primary button on the viewer's take. */
+  markFinal: string | null
+  /** The same dialog from „⋯“, for an editor-in-chief on somebody else's take (`15f`). */
+  markFinalForOther: string | null
   meta: string
+  /** The final version's PDF on Drive, once there is one (`15g`). */
+  pdfUrl: string | null
   tag: { detail: string; label: string; tone: StatusTone }
   /** _Vzít si korekturu_: primary from _Dopsáno_, outline from _Píše se_ (`15a`). */
   take: { action: string; isPrimary: boolean; shown: 'handedOver' | 'writing' } | null
@@ -55,9 +78,21 @@ export type ProofreadingPartView = {
   title: string
 }
 
+/** The dialog of `15f`: where it posts, the way back to the card, and the error it keeps. */
+export type FinalDialogView = {
+  action: string
+  articleName: string
+  cancelHref: string
+  error: DialogError | null
+  /** The signatures the clauses carry, one per author. */
+  signatures: readonly string[]
+}
+
 export type ProofreadingPageProps = {
   /** The Callout over the parts for a link from the digest whose article is not here (`15e`). */
-  callout: { text: string; title: string } | null
+  callout: { text: string; title: string | null } | null
+  /** The dialog of `15f` over the page, which is then inert. */
+  dialog: FinalDialogView | null
   driveAccount: { expectedEmail: string; status: DriveStatus }
   /** The empty page, or `null` while any part has a card (`15e`). */
   empty: { hasAction: boolean; text: string } | null
@@ -88,6 +123,48 @@ const noteStyle = css({ color: 'var(--text-secondary)', fontSize: '14px', margin
 
 const newTabIconStyle = css({ marginLeft: '2px', verticalAlign: '-0.125em' })
 
+/* One name per cell, at least 140 px wide: ten authors stay within the dialog's height on a
+   phone, where one per line would push it past a messenger's window (`15f`). */
+const signaturesStyle = css({
+  display: 'grid',
+  gap: '4px 12px',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+  listStyle: 'none',
+  margin: 0,
+  padding: 0,
+})
+
+const signaturesLabelStyle = css({
+  color: 'var(--text-secondary)',
+  fontSize: '13px',
+  margin: '0 0 4px',
+})
+
+/** The icon after a link that opens a new tab, and what a screen reader hears of it. */
+function NewTabMark() {
+  return () => (
+    <>
+      <svg
+        aria-hidden="true"
+        fill="none"
+        height="1em"
+        mix={newTabIconStyle}
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="1em"
+      >
+        <path d="M15 3h6v6" />
+        <path d="M10 14 21 3" />
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      </svg>
+      <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
+    </>
+  )
+}
+
 /**
  * The design system's `.vdm-queue-item` without its quote (`15a`): the issue, the name, the
  * authors by name, the tag of `01a` and the actions. Each action is a form, so it works with no
@@ -98,6 +175,19 @@ function ProofreadingCard(handle: Handle<{ card: ProofreadingCardView; csrfToken
     let { card, csrfToken } = handle.props
     /* The buttons say what they do and the card says which article: a screen reader hears both. */
     let aboutId = `article-${card.id}-about`
+    /* An editor-in-chief's marking for somebody else stands before the line, the cancel of the
+       take after it (`15f`). */
+    let menuItems: ActionMenuItem[] = []
+    if (card.markFinalForOther !== null) {
+      menuItems.push({ href: card.markFinalForOther, isSameTab: true, label: MARK_FINAL_LABEL })
+    }
+    if (card.cancelAction !== null) {
+      if (menuItems.length > 0) menuItems.push({ isSeparator: true })
+      menuItems.push({ action: card.cancelAction, csrfToken, label: CANCEL_LABEL })
+    }
+    if (card.cancelFinalAction !== null) {
+      menuItems.push({ action: card.cancelFinalAction, csrfToken, label: CANCEL_FINAL_LABEL })
+    }
 
     return (
       <li
@@ -115,6 +205,15 @@ function ProofreadingCard(handle: Handle<{ card: ProofreadingCardView; csrfToken
           </StatusTag>
         </div>
         <div class="vdm-queue-item__actions">
+          {card.markFinal === null ? null : (
+            <a
+              aria-label={markFinalButtonLabel(card.title)}
+              class="vdm-btn vdm-btn--primary vdm-btn--sm"
+              href={card.markFinal}
+            >
+              {MARK_FINAL_LABEL}
+            </a>
+          )}
           {card.take === null ? null : (
             <form action={card.take.action} method="post">
               <CsrfField />
@@ -141,6 +240,18 @@ function ProofreadingCard(handle: Handle<{ card: ProofreadingCardView; csrfToken
               </button>
             </form>
           )}
+          {card.pdfUrl === null ? null : (
+            <a
+              aria-describedby={aboutId}
+              class="vdm-btn vdm-btn--outline vdm-btn--sm"
+              href={card.pdfUrl}
+              rel="noopener"
+              target="_blank"
+            >
+              {OPEN_PDF_LABEL}
+              <NewTabMark />
+            </a>
+          )}
           <a
             aria-describedby={aboutId}
             class="vdm-btn vdm-btn--outline vdm-btn--sm"
@@ -149,29 +260,10 @@ function ProofreadingCard(handle: Handle<{ card: ProofreadingCardView; csrfToken
             target="_blank"
           >
             {OPEN_DOCUMENT_LABEL}
-            <svg
-              aria-hidden="true"
-              fill="none"
-              height="1em"
-              mix={newTabIconStyle}
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="1em"
-            >
-              <path d="M15 3h6v6" />
-              <path d="M10 14 21 3" />
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-            </svg>
-            <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
+            <NewTabMark />
           </a>
-          {card.cancelAction === null ? null : (
-            <ActionMenu
-              items={[{ action: card.cancelAction, csrfToken, label: CANCEL_LABEL }]}
-              label={tied`Další akce článku ${card.title}`}
-            />
+          {menuItems.length === 0 ? null : (
+            <ActionMenu items={menuItems} label={tied`Další akce článku ${card.title}`} />
           )}
         </div>
       </li>
@@ -204,13 +296,67 @@ function Part(handle: Handle<{ csrfToken: string; part: ProofreadingPartView }>)
 }
 
 /**
+ * `15f`: marking sends e-mails to people outside the newsroom, and the way back lasts only until
+ * a run of the job takes the clauses, so it is asked first. While it saves, both controls lock.
+ */
+function FinalVersionDialog(handle: Handle<{ dialog: FinalDialogView }>) {
+  return () => {
+    let { dialog } = handle.props
+    return (
+      <Dialog maxWidth="460px">
+        <DialogTitle>{MARK_FINAL_DIALOG_TITLE}</DialogTitle>
+        <div class="vdm-dialog__body">
+          {dialog.error === null ? null : (
+            <div role="alert">
+              <Callout tone="error">
+                {/* The account's address does not break by itself and would widen the dialog
+                    past a phone's screen. */}
+                <p
+                  class="vdm-callout__title"
+                  style={{ margin: '0 0 4px', overflowWrap: 'anywhere' }}
+                >
+                  {dialog.error.title}
+                </p>
+                <p style={{ margin: 0 }}>{dialog.error.text}</p>
+              </Callout>
+            </div>
+          )}
+          <p class="vdm-dialog__text">{markFinalDialogText(dialog.articleName)}</p>
+          <div>
+            <p class="vdm-dialog__text">{MARK_FINAL_DIALOG_MAIL}</p>
+          </div>
+          <div>
+            <p mix={signaturesLabelStyle}>{signaturesLabel(dialog.signatures.length)}</p>
+            <ul mix={signaturesStyle}>
+              {dialog.signatures.map((signature) => (
+                <li>{`„${signature}“`}</li>
+              ))}
+            </ul>
+          </div>
+          <p class="vdm-dialog__text">{MARK_FINAL_DIALOG_CANCEL}</p>
+        </div>
+        <form action={dialog.action} class="vdm-dialog__actions" method="post">
+          <CsrfField />
+          <PendingActions
+            cancel={{ href: dialog.cancelHref, label: DIALOG_CANCEL_LABEL }}
+            emphasis="primary"
+            label={MARK_FINAL_CONFIRM_LABEL}
+            pendingLabel={MARKING_FINAL_LABEL}
+          />
+        </form>
+      </Dialog>
+    )
+  }
+}
+
+/**
  * _Korektura_ (`15a`, `15b`, `15c`, `15e`): one page for both roles and one shape for every width.
  * The parts stand in a fixed order and an empty one is left out, but _Čeká na korekturu_, which is
  * what a proofreader comes for.
  */
 export function ProofreadingPage(handle: Handle<ProofreadingPageProps>) {
   return () => {
-    let { callout, driveAccount, empty, lead, parts, person, toasts } = handle.props
+    let { callout, dialog, driveAccount, empty, lead, parts, person, toasts } = handle.props
     let csrfToken = getCsrfToken(getContext())
 
     return (
@@ -218,6 +364,7 @@ export function ProofreadingPage(handle: Handle<ProofreadingPageProps>) {
         <Layout
           active="proofreading"
           driveAccount={driveAccount}
+          isInert={dialog !== null}
           person={person}
           title={PROOFREADING_TITLE}
           toasts={toasts}
@@ -230,7 +377,7 @@ export function ProofreadingPage(handle: Handle<ProofreadingPageProps>) {
           </div>
           {callout === null ? null : (
             <Callout tone="info">
-              <p class="vdm-callout__title">{callout.title}</p>
+              {callout.title === null ? null : <p class="vdm-callout__title">{callout.title}</p>}
               {/* Inline, as the other Callouts write it: `css()` would lose to the design
                   system's own rules for a paragraph in the body. */}
               <p style={{ margin: 0 }}>{callout.text}</p>
@@ -254,6 +401,7 @@ export function ProofreadingPage(handle: Handle<ProofreadingPageProps>) {
             </EmptyState>
           )}
         </Layout>
+        {dialog === null ? null : <FinalVersionDialog dialog={dialog} />}
       </Document>
     )
   }
