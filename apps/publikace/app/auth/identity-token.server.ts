@@ -9,14 +9,17 @@ type JsonWebKey = webcrypto.JsonWebKey
  *
  * The signature is checked against Google's own keys, the issuer is Google, the token has not
  * expired and Google verified the address. The audience is one of `DOC_MENU_TOKEN_AUDIENCES`, or
- * any when that says `*`: every Doc carries its own copy of the bound script, and a copy may
- * answer to a Cloud project of its own, so production names one of the two on purpose and an
- * empty list refuses every token (#50). `*` is the weaker choice. The Drive check that follows
- * asks about the account, not the token, so with `*` an editor's identity token that another
- * Google client received could be replayed here until it expires, about an hour.
+ * any when that says `*`, and an empty list refuses every token. Each copy of the bound script
+ * answers to a default Cloud project of its own, so the Doc menu's tokens share no audience and
+ * production runs on `*` (`docs/real-drive-round-trip.md`). The token then proves only whose
+ * account it is; whether that account may act is Drive's answer, and under an issues folder
+ * shared with anyone who has the link, any account with the link may.
  *
  * Never throws. Google's keys out of reach is `unavailable`, a "don't know" the script answers
- * with its own dialog; every other failure is a refusal, which tells the caller nothing.
+ * with its own dialog. A token that is Google's and whole but past its expiry is `expired`: the
+ * Doc's dialog keeps the token its menu item took, and a dialog left open longer than the token
+ * lives is a step to take again, not an account to turn away. Every other failure is a refusal,
+ * which tells the caller nothing.
  */
 
 export const GOOGLE_CERTS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
@@ -47,6 +50,7 @@ export type VerifiedIdentity = {
 
 export type IdentityCheck =
   | { identity: VerifiedIdentity; status: 'verified' }
+  | { status: 'expired' }
   | { status: 'refused' }
   | { status: 'unavailable' }
 
@@ -160,9 +164,7 @@ export function createIdentityTokenVerifier(options: {
     let now = seconds()
     let expiresAt = payload['exp']
     let issuedAt = payload['iat']
-    if (typeof expiresAt !== 'number' || expiresAt + SKEW_SECONDS < now) {
-      return { status: 'refused' }
-    }
+    if (typeof expiresAt !== 'number') return { status: 'refused' }
     if (typeof issuedAt === 'number' && issuedAt - SKEW_SECONDS > now) return { status: 'refused' }
     if (typeof payload['iss'] !== 'string' || !ISSUERS.has(payload['iss'])) {
       return { status: 'refused' }
@@ -180,6 +182,8 @@ export function createIdentityTokenVerifier(options: {
     if (typeof email !== 'string' || email === '' || payload['email_verified'] !== true) {
       return { status: 'refused' }
     }
+    /* Last, so that only a token which passed everything else is told it merely ran out. */
+    if (expiresAt + SKEW_SECONDS < now) return { status: 'expired' }
 
     let name =
       typeof payload['name'] === 'string' && payload['name'] !== '' ? payload['name'] : null

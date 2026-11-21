@@ -135,7 +135,7 @@ export default function createArtworkRepliesController(dependencies: ArtworkRepl
     let check = await dependencies.verifyIdentityToken(bearer)
     if (check.status === 'unavailable') return json({ error: 'unavailable' }, 503)
     if (
-      check.status === 'refused' ||
+      check.status !== 'verified' ||
       check.identity.email.toLowerCase() !== dependencies.jobAccount
     ) {
       return json({ error: 'unauthorized' }, 401)

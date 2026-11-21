@@ -22,14 +22,17 @@ import { routes } from '../../../routes.ts'
 
 /**
  * The API the article Doc's menu _Publikace_ calls (#50). A click asks twice: once for the
- * confirmation, once to record. Each call carries the clicker's Google identity token as a bearer
- * and `{ documentId, metaDocumentId }`: the Doc it was clicked in, and the `docId` of the
- * `_meta.json` beside it, which tells a copy of an article apart from a Doc the app never knew.
+ * confirmation, from the script's server when the menu item runs, and once to record, from the
+ * dialog in the browser with `fetch` (`doc-menu-cors.server.ts`). Both carry the token the menu
+ * item took as a bearer, and `{ documentId, metaDocumentId }`: the Doc it was clicked in, and the
+ * `docId` of the `_meta.json` beside it, which tells a copy of an article apart from a Doc the
+ * app never knew.
  *
- * It answers `{ dialog }` for the script to draw, refusals included, or 503 when Google, Drive or
- * the membership service could not be asked, and 429 for an account over its cap: the script
- * then shows its own dialog. Nothing
- * here sets a cookie, and no answer to a caller who is refused says anything of an article.
+ * It answers `{ dialog }` for the script to draw, refusals included. Anything else makes the
+ * script draw its own _Zkuste to za chvíli znovu_: 503 when Google, Drive or the membership
+ * service could not be asked, 429 for an account over its cap, and 401 for a token that ran out
+ * while the dialog stood open, which the next click in the menu replaces. Nothing here sets a
+ * cookie, and no answer to a caller who is refused says anything of an article.
  */
 
 export type DocMenuDependencies = {
@@ -119,6 +122,13 @@ function tooMany(): Response {
   )
 }
 
+function expired(): Response {
+  return Response.json(
+    { error: 'token_expired' },
+    { headers: { 'Cache-Control': 'no-store' }, status: 401 },
+  )
+}
+
 function unavailable(): Response {
   return Response.json(
     { error: 'unavailable' },
@@ -159,6 +169,7 @@ export default function createDocMenuController(dependencies: DocMenuDependencie
         ? { status: 'refused' as const }
         : await dependencies.verifyIdentityToken(bearer)
     if (identity.status === 'unavailable') return unavailable()
+    if (identity.status === 'expired') return expired()
     if (identity.status === 'refused')
       return answer(refusedAccountDialog(PROOFREADING_REFUSED_RESULT))
     let account: VerifiedIdentity = identity.identity

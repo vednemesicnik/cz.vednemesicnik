@@ -28,6 +28,9 @@ const FAKE_IDENTITY_PREFIX = 'fake-identity.'
 /** The token the fake verifier answers with Google's keys out of reach. */
 export const UNREACHABLE_IDENTITY_TOKEN = 'fake-identity-unreachable'
 
+/** A token the suite's verifier finds Google's and whole, but past its expiry. */
+export const EXPIRED_IDENTITY_TOKEN = 'fake-identity-expired'
+
 /**
  * A token the suite's verifier vouches for, as Google's would be for the account that clicked in
  * the article Doc's menu. Any other string is refused.
@@ -41,6 +44,7 @@ export function fakeIdentityToken(
 
 const fakeIdentityVerifier: IdentityTokenVerifier = async (token) => {
   if (token === UNREACHABLE_IDENTITY_TOKEN) return { status: 'unavailable' }
+  if (token === EXPIRED_IDENTITY_TOKEN) return { status: 'expired' }
   if (!token.startsWith(FAKE_IDENTITY_PREFIX)) return { status: 'refused' }
   let identity = JSON.parse(
     Buffer.from(token.slice(FAKE_IDENTITY_PREFIX.length), 'base64url').toString('utf8'),

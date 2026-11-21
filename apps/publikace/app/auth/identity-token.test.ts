@@ -83,19 +83,33 @@ describe('the identity token of a click in the Doc menu', () => {
     })
   })
 
-  it('refuses a token that is not Google’s, has expired, or has no verified address', async () => {
+  it('refuses a token that is not Google’s or has no verified address', async () => {
     let verify = verifier(certs(jwk('k1')).fetch)
     let refused = { status: 'refused' }
 
     assert.deepEqual(await verify(token({}, { key: OTHER.privateKey })), refused)
     assert.deepEqual(await verify(token({ iss: 'https://evil.external.test' })), refused)
-    assert.deepEqual(await verify(token({ exp: NOW - 120 })), refused)
+    assert.deepEqual(await verify(token({ exp: undefined })), refused)
     assert.deepEqual(await verify(token({ iat: NOW + 600 })), refused)
     assert.deepEqual(await verify(token({ email_verified: false })), refused)
     assert.deepEqual(await verify(token({ email: '' })), refused)
     assert.deepEqual(await verify(token({}, { alg: 'HS256' })), refused)
     assert.deepEqual(await verify('not.a-token'), refused)
     assert.deepEqual(await verify(''), refused)
+  })
+
+  it('tells a whole token that ran out apart, and refuses one that ran out and fails anything else', async () => {
+    let verify = verifier(certs(jwk('k1')).fetch, ['script-client'])
+
+    assert.deepEqual(await verify(token({ exp: NOW - 120 })), { status: 'expired' })
+    assert.equal((await verify(token({ exp: NOW - 30 }))).status, 'verified')
+    assert.deepEqual(await verify(token({ exp: NOW - 120 }, { key: OTHER.privateKey })), {
+      status: 'refused',
+    })
+    assert.deepEqual(await verify(token({ aud: 'other', exp: NOW - 120 })), { status: 'refused' })
+    assert.deepEqual(await verify(token({ email_verified: false, exp: NOW - 120 })), {
+      status: 'refused',
+    })
   })
 
   it('checks the audience against the list, takes any only when told to, and none from an empty list', async () => {

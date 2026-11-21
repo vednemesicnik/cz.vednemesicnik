@@ -311,7 +311,7 @@ describe('sign-out', () => {
       let html = await (await browser.get('/sign-in?signed-out=1')).text()
       assert.ok(html.includes('<h1 class="vdm-signin__title">Jste odhlášeni</h1>'))
       assert.ok(
-        /Odhlášeno ve? \d{1,2}:\d{2}\. Na sdíleném počítači se ještě odhlaste z\u00a0účtu Google\./.test(
+        /Odhlášeno (?:ve |v\u00a0)\d{1,2}:\d{2}\. Na sdíleném počítači se ještě odhlaste z\u00a0účtu Google\./.test(
           html,
         ),
       )

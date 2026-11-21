@@ -8,6 +8,7 @@ import type { DocMenuDialog } from '../../../domain/doc-menu.ts'
 import {
   connectDriveAccount,
   createTestApp,
+  EXPIRED_IDENTITY_TOKEN,
   fakeIdentityToken,
   seedArticle,
   seedIssue,
@@ -120,6 +121,23 @@ describe('the Doc menu’s Označit probíhající korekturu', () => {
         assert.equal(dialog.heading, 'Publikace váš účet nepřijala')
         assert.ok(!JSON.stringify(dialog).includes('Volební'))
       }
+      assert.equal(
+        (await createArticleStore(app.database).findById(article.articleId))?.proofreading,
+        null,
+      )
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('answers a token that ran out with 401 and no dialog, so the script asks for a new click', async () => {
+    let { app, article } = await setup()
+    try {
+      let body = { documentId: article.docId, metaDocumentId: article.docId }
+      let response = await call(app, MARK, body, EXPIRED_IDENTITY_TOKEN)
+      assert.equal(response.status, 401)
+      assert.equal(response.headers.get('Cache-Control'), 'no-store')
+      assert.deepEqual(await response.json(), { error: 'token_expired' })
       assert.equal(
         (await createArticleStore(app.database).findById(article.articleId))?.proofreading,
         null,
@@ -276,6 +294,64 @@ describe('two proofreaders marking the same article at once', () => {
       let record = (await createArticleStore(app.database).findById(article.articleId))
         ?.proofreading
       assert.equal(record?.email, 'eva.mala@vednemesicnik.test')
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('the Doc dialog calling the app from the browser', () => {
+  const SANDBOX = 'https://n-abc123-0lu-script.googleusercontent.com'
+
+  it('answers the preflight of both endpoints, and the answers carry the origin header', async () => {
+    let { app, article } = await setup()
+    try {
+      for (let path of [PREVIEW, MARK]) {
+        let preflight = await app.fetch(
+          new Request(new URL(path, appOrigin()), {
+            headers: {
+              'Access-Control-Request-Headers': 'authorization,content-type',
+              'Access-Control-Request-Method': 'POST',
+              Origin: SANDBOX,
+            },
+            method: 'OPTIONS',
+          }),
+        )
+        assert.equal(preflight.status, 204)
+        assert.equal(preflight.headers.get('Access-Control-Allow-Origin'), '*')
+        assert.equal(preflight.headers.get('Access-Control-Allow-Methods'), 'POST')
+        assert.equal(
+          preflight.headers.get('Access-Control-Allow-Headers'),
+          'Authorization, Content-Type',
+        )
+        assert.equal(preflight.headers.get('Access-Control-Allow-Credentials'), null)
+      }
+
+      let response = await app.fetch(
+        new Request(new URL(MARK, appOrigin()), {
+          body: JSON.stringify({ documentId: article.docId, metaDocumentId: article.docId }),
+          headers: {
+            Authorization: `Bearer ${fakeIdentityToken(JAKUB)}`,
+            'Content-Type': 'application/json',
+            Origin: SANDBOX,
+          },
+          method: 'POST',
+        }),
+      )
+      assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*')
+      assert.equal((await dialogOf(response)).heading, 'Korektura označena')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('gives no other address a CORS header', async () => {
+    let { app } = await setup()
+    try {
+      let response = await app.fetch(
+        new Request(new URL('/sign-in', appOrigin()), { headers: { Origin: SANDBOX } }),
+      )
+      assert.equal(response.headers.get('Access-Control-Allow-Origin'), null)
     } finally {
       await app.close()
     }

@@ -71,6 +71,7 @@ import { loadAccess } from './middleware/access.server.ts'
 import { loadArticles } from './middleware/articles.server.ts'
 import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
+import { docMenuCors } from './middleware/doc-menu-cors.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
 import { loadFailingJobs } from './middleware/failing-jobs.server.ts'
 import { loadIssues } from './middleware/issues.server.ts'
@@ -245,6 +246,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `logRequests()` outermost, so what it reports is the status and duration the browser
      *     saw, a static file and a refusal included; a shared link's key and a Google callback's
      *     code stay out of the line,
+     *   - `docMenuCors()` before anything routes, so the Doc dialog's preflight is answered
+     *     there and never reaches a controller,
      *   - `compression()` above the static files, because the stylesheet and the fonts are the
      *     largest things the app sends,
      *   - the fast exits next — `staticFiles()` and `serveAssets()` — so no file request ever
@@ -271,6 +274,7 @@ export function createAppRouter(dependencies: AppDependencies) {
     middleware: [
       logRequests(),
       publicLinkHeaders(),
+      docMenuCors(),
       compression(),
       staticFiles('./public', { index: false }),
       serveAssets(),

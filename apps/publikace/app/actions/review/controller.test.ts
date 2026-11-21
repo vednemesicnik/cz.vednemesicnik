@@ -135,7 +135,7 @@ describe('Ke kontrole', () => {
       )
       assert.match(html, /Další akce pro odpověď \(Klára Šimková\)/)
       assert.match(html, />Ke kontrole<span[^>]*>1<\/span>/)
-      assert.match(html, /Odpovědi čteny ve? \d+:\d\d/)
+      assert.match(html, /Odpovědi čteny (?:ve |v\u00a0)\d+:\d\d/)
 
       let detail = await (await browser.get('/issues/VDM_2026_5')).text()
       assert.match(detail, /odpověď „Můžu se zeptat, kde přesně fotka vyjde\?“/)
