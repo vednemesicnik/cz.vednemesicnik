@@ -528,4 +528,30 @@ describe('settings, Korektura (14a, 14f)', () => {
       await app.close()
     }
   })
+
+  it('warns under an address the membership service does not know, and not once it does', async () => {
+    let app = await editorialBoard()
+    try {
+      let browser = app.browser()
+      await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
+      await browser.post(PATH, { email: 'korektura@vednemesicnik.test' }, PATH)
+      let unknown = textOf(await (await browser.get('/settings')).text())
+      assert.ok(
+        unknown.includes(
+          'o povolení skupiny korektura@vednemesicnik.test pro ověřování členství. Dokud nebude možné ověřit členství, samotné členství ve skupině k přístupu nestačí.',
+        ),
+      )
+
+      app.setMembership('korektura@vednemesicnik.test', () => ({
+        groupName: null,
+        status: 'not-member',
+      }))
+      let known = textOf(await (await browser.get('/settings')).text())
+      assert.ok(!known.includes('Dokud nebude možné ověřit členství'))
+      assert.ok(known.includes('Přístup ke korektuře určuje adresa v části Korektura.'))
+      assert.ok(known.includes('Přístup do Publikace, soubory, účty aplikace a adresa korektorů.'))
+    } finally {
+      await app.close()
+    }
+  })
 })

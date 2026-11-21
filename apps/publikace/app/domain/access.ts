@@ -116,6 +116,23 @@ export function checkProofreadersAddress(value: string, domain: string): Address
 export const PROOFREADERS_TITLE = 'Korektura'
 export const PROOFREADERS_LABEL = 'Adresa korektorů'
 
+/** Under the title of Nastavení (`14a`). */
+export const SETTINGS_LEAD = tied`Přístup do Publikace, soubory, účty aplikace a adresa korektorů.`
+
+/** The intro of Přístup an administrator reads (`14a`); proofreaders come in through Korektura. */
+export function accessIntro(domain: string): string {
+  return tied`Přihlásit se mohou účty @${domain} přidané jmenovitě nebo přes skupinu. Přístup mění jen správci, ostatní části aplikace může používat celá šéfredakce. Přístup ke korektuře určuje adresa v části Korektura. Redakce dostává odkazy.`
+}
+
+/**
+ * Under the proofreaders' address while the membership service does not know it as a group
+ * (`14f`, `unknown_group`). The address is kept: it may be one account, which the service answers
+ * in the same way, so the sentence says both.
+ */
+export function proofreadersUnknownGroupMessage(email: string): string {
+  return tied`${unknownGroupMessage(email)} Dokud nebude možné ověřit členství, samotné členství ve skupině k přístupu nestačí.`
+}
+
 export function proofreadersSectionText(domain: string): string {
   return tied`Adresa určuje, kdo má přístup na stránku Korektura. U skupiny Google ho získají jen členové s účtem na doméně ${domain}. Na uvedenou adresu posílá Publikace také ranní přehled.`
 }

@@ -107,6 +107,22 @@ describe('one-letter words on the screens', () => {
         pages[path] = await (await editor.get(path)).text()
       }
 
+      /* A proofreader's page with a card in every part, and the refusal of an editors' screen
+         (`15a`, `10d`). */
+      let proofreader = app.browser()
+      await proofreader.signInAs(
+        'lenka.svobodova@vednemesicnik.test',
+        'Lenka Svobodová',
+        undefined,
+        {
+          isEditor: false,
+          isProofreader: true,
+        },
+      )
+      pages['proofreading'] = await (await proofreader.get('/proofreading')).text()
+      pages['editors only'] = await (await proofreader.get('/review')).text()
+      assert.ok(readableText(pages['proofreading'] ?? '').includes(SEEDED_ARTICLE))
+
       assert.ok(readableText(pages[`/issues/${ISSUE}`] ?? '').includes(SEEDED_ARTICLE))
       assert.ok(readableText(pages[`/issues/${ISSUE}`] ?? '').includes('Dopsáno'))
       assert.ok(readableText(pages['artworks page'] ?? '').includes(SEEDED_ARTICLE))

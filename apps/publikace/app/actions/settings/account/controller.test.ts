@@ -13,7 +13,13 @@ import {
 } from '../../../test-app.server.ts'
 import { completeDriveConnection } from './controller.tsx'
 
-const EDITOR = { displayName: 'Marie Horáková', email: 'marie@vednemesicnik.test', isAdmin: true }
+const EDITOR = {
+  displayName: 'Marie Horáková',
+  email: 'marie@vednemesicnik.test',
+  isAdmin: true,
+  isEditor: true,
+  isProofreader: false,
+}
 
 /** The context the return from Google sees, with a session that records what it was left. */
 function returnContext(app: TestApp) {

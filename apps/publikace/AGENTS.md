@@ -12,7 +12,8 @@ Google sign-in and Přístup in `/settings` with the `publikace.app@` account, t
 `/issues/new`, `/issues/{name}`) with their folders on Drive, and the newsroom's link, whose
 public page `/l/{key}/article` creates an article with its Doc and mails its authors, and the
 handover to proofreading in the issue detail, which the proofreaders hear of in one digest a
-morning. Nothing runs on Fly.io yet, and the background jobs still read the sheets, except the
+morning, and the page `/proofreading`, where they sign in to take a text and give it back.
+Nothing runs on Fly.io yet, and the background jobs still read the sheets, except the
 artwork reply check and the proofreaders' digest, which go through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
 digest). What the app does on Drive and through the Mailer
@@ -99,11 +100,11 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   it holds the full `drive` scope. Files on a shared drive belong to the drive, not to an account.
   The article template is the one exception: `TEMPLATE__Publication__Article` lives in
   `publikace.app@`'s own _Můj disk → Templates_, beside _Scripts_ for its standalone projects.
-  On the shared drive every member who writes could change or bin it and its bound script,
+  It is a Doc without code. On the shared drive every member who writes could change or bin it,
   while there only that account edits it and the app copies it as its owner. The names on that
   drive are English, as the scripts' are, because nobody but that account reads them. The
   scripts' template stays in `publikace@`'s drive until the switch.
-- **Two kinds of visitor.** Editors-in-chief sign in with Google, for seven days from the sign-in:
+- **Three kinds of visitor.** Editors-in-chief sign in with Google, for seven days from the sign-in:
   an account on the domain `AUTHORIZED_DOMAIN` names, listed by name in Settings or a member of
   a Google group listed there. A group is shown by its name from Google Workspace with its address
   under it, or by its address alone while the service has not named it; the name decides nothing.
@@ -111,7 +112,11 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   re-checked every ten minutes, and an unreachable service denies without remembering the
   denial. Only an administrator, always a named account and never a group, changes who may sign
   in; the first one comes from `INITIAL_ADMIN_EMAIL`, read only while the list has no named
-  account. Everybody else arrives through a shared link that can do one thing in one issue
+  account. Proofreaders sign in the same way: the account that is the address in Nastavení ›
+  Korektura, or a member of that group, checked as a group in Přístup is. The address the morning
+  digest goes to is who may act on it, so there is no second list. They see only `/proofreading`,
+  across every open issue, and every screen of the editors-in-chief refuses them with 403
+  (`10d`); a person may be both. Everybody else arrives through a shared link that can do one thing in one issue
   (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
 - **The background jobs stay in Apps Script and talk to the app.** `SCRIPT__Publication__Approval_Send`,
   `…__Comment_Digest`, `…__Designer_Handoff`, the artwork reply check
@@ -122,15 +127,12 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a
   next run the app shows is an estimate, never a promise. The app reaches Gmail only through the
   Mailer and the reply check, never with a token of its own.
-- **The article Doc's menu calls the app.** `SCRIPT__Publication__Article_Menu` is bound to the
-  app's article template and deploys as `publikace.app@`, so every Doc the app creates carries a
-  copy and anyone who edits the Doc, authors included, can read it. It holds only the steps the
-  app records. `SCRIPT__Publication__Article_Approve`, bound to the scripts' template, serves the
-  issues made before the app and is never changed for it. It sends the app the Doc's ID and `ScriptApp.getIdentityToken()` of whoever
-  clicked, and the app decides by that e-mail whether they may. **No secret goes into a bound
-  script.** A dialog never calls the script's server with `google.script.run`, which runs as the
-  browser's default Google account rather than the one that clicked: the menu item writes its
-  token into the dialog, and the dialog's buttons send it to the app with `fetch`.
+- **The Doc carries only the text; the app carries every state.** Nothing goes into an article
+  Doc: no menu, no link, no add-on. A bound script in a template is copied into every Doc and asks
+  each person to authorize it in each one, so the steps on an article (the handover, taking and
+  cancelling proofreading) are the app's, on its own screens. `SCRIPT__Publication__Article_Approve`,
+  bound to the scripts' template, serves the issues made before the app and is never changed
+  for it.
 - **The link to a Doc is the right to edit it.** The issues folder on the shared drive is shared
   as _Každý, kdo má odkaz · Přispěvatel_ (an editor, in a shared drive’s words), and the drive allows people outside the organisation, so every
   issue, article folder and Doc inherits it, as on _Redakce_. Authors outside the domain edit
@@ -231,13 +233,12 @@ Moving a script to `publikace.app@` means running its `setupTriggers()` as `publ
 deleting the old trigger under `publikace@` the same day; two live copies send every e-mail twice.
 
 **A shared link's pages and the API run without the session, the sign-in and CSRF.** `/l/{key}/…`
-sets no cookie (`02a`) and a bound script sends none to `/api/…`, so `skipWithoutSession()` in
+sets no cookie (`02a`) and a background job sends none to `/api/…`, so `skipWithoutSession()` in
 `app/router.ts` takes those middlewares out for both, and the session-backed CSRF token with them.
 What protects a link's form is the key in the address, the form's one-time key and the limit of
-thirty articles an hour. What protects the Doc menu's API is the clicker's Google identity token
-and Drive's answer that the account may edit the Doc, asked before anything is recorded. A page
-under `/l/` or `/api/` that needs a session is a sign that it belongs behind `requireEditor()`
-instead.
+thirty articles an hour. What protects the API is the job's Google identity token and the job
+account it names. A page under `/l/` or `/api/` that needs a session is a sign that it belongs
+behind `requireEditor()` or `requireProofreading()` instead.
 
 **`css()` loses to a `vdm-*` class on the same element.** The mixes sit in the cascade layer
 `rmx`, and the design system's classes are unlayered, so on one element the class wins whatever
@@ -247,8 +248,7 @@ the order. Put the mix on a wrapper, or the value inline.
 render. An island's inputs take `defaultValue`.
 
 **The API is public, so every call proves who made it.** A call from a script carries a Google
-ID token, checked for its signature, its audience and the e-mail of `publikace.app@` (or of the
-person in the Doc menu). A call from the app to a script's `doPost` or to the Mailer is signed
+ID token, checked for its signature, its audience and the e-mail of `publikace.app@`. A call from the app to a script's `doPost` or to the Mailer is signed
 with a secret that lives only in the Script Properties of a standalone project.
 
 ## Data rules

@@ -7,7 +7,6 @@ import { createArtworkStore } from '../../../data/artworks.server.ts'
 import { batchState } from '../../../domain/artwork.ts'
 import {
   createTestApp,
-  EXPIRED_IDENTITY_TOKEN,
   fakeIdentityToken,
   JOB_TOKEN,
   seedArticle,
@@ -82,10 +81,6 @@ describe('the reply check’s API', () => {
       assert.equal((await call(app, CLAIM, { intervalMinutes: 30 }, null)).status, 401)
       let editor = fakeIdentityToken({ email: 'marie@vednemesicnik.test', name: 'Marie' })
       assert.equal((await call(app, CLAIM, { intervalMinutes: 30 }, editor)).status, 401)
-      assert.equal(
-        (await call(app, CLAIM, { intervalMinutes: 30 }, EXPIRED_IDENTITY_TOKEN)).status,
-        401,
-      )
       assert.equal(
         (await call(app, CLAIM, { intervalMinutes: 30 }, UNREACHABLE_IDENTITY_TOKEN)).status,
         503,

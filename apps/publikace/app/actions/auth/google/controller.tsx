@@ -11,12 +11,11 @@ import { Session } from 'remix/session'
 import { type VerifiedProfile, decideAccess } from '../../../auth/access.server.ts'
 import { appOrigin, googleCredentials } from '../../../auth/environment.server.ts'
 import {
-  AUTHORIZATION_TTL_MS,
   EDITOR_SESSION_KEY,
   REFUSED_EMAIL_SESSION_KEY,
   SESSION_LIFETIME,
   type SignedInUntilCookie,
-  type StoredEditor,
+  storedPerson,
 } from '../../../auth/session.server.ts'
 import { now, stamp } from '../../../domain/time.ts'
 import { Access } from '../../../middleware/access.server.ts'
@@ -93,11 +92,7 @@ export async function completeGoogleSignIn(
   // Rotates the session id, so a session somebody fixed before the sign-in is worthless.
   let session = completeAuth(context)
   session.unset(REFUSED_EMAIL_SESSION_KEY)
-  session.set(EDITOR_SESSION_KEY, {
-    authorizedUntil: Date.now() + AUTHORIZATION_TTL_MS,
-    displayName: decision.displayName,
-    email: decision.email,
-  } satisfies StoredEditor)
+  session.set(EDITOR_SESSION_KEY, storedPerson(decision))
 
   let response = redirect(redirectTo ?? routes.home.href(), 303)
   response.headers.append(

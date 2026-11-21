@@ -12,9 +12,9 @@ import { createRouter, type MiddlewareContext, type RequestContext } from 'remix
 import createAuthController from './actions/auth/controller.tsx'
 import createGoogleController from './actions/auth/google/controller.tsx'
 import createHomeController from './actions/controller.tsx'
+import createProofreadingController from './actions/proofreading/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
 import createArtworkRepliesController from './actions/api/artwork-replies/controller.ts'
-import createDocMenuController from './actions/api/doc-menu/controller.ts'
 import createProofreadingDigestController from './actions/api/proofreading-digest/controller.ts'
 import createArtworksController from './actions/links/artworks/controller.tsx'
 import createLinksController from './actions/links/controller.tsx'
@@ -26,7 +26,6 @@ import {
   appOrigin,
   articleTemplateDocumentId,
   authorizedDomain,
-  docMenuTokenAudiences,
   driveAccountEmail,
   driveTokenKey,
   googleCredentials,
@@ -74,10 +73,10 @@ import { loadAccess } from './middleware/access.server.ts'
 import { loadArticles } from './middleware/articles.server.ts'
 import { serveAssets } from './middleware/assets.server.ts'
 import { loadAuth, signInRedirect } from './middleware/auth.server.ts'
-import { docMenuCors } from './middleware/doc-menu-cors.server.ts'
 import { loadDriveAccount } from './middleware/drive-account.server.ts'
 import { loadFailingJobs } from './middleware/failing-jobs.server.ts'
 import { loadIssues } from './middleware/issues.server.ts'
+import { loadProofreadingCount } from './middleware/proofreading-count.server.ts'
 import { loadReviewCount } from './middleware/review-count.server.ts'
 import { publicLinkHeaders, skipWithoutSession } from './middleware/public-link.server.ts'
 import { render } from './middleware/render.tsx'
@@ -140,8 +139,6 @@ export type AppDependencies = {
   templateId?: string
   /** The account the background jobs run as. Defaults to `SCRIPT_JOB_ACCOUNT`. */
   jobAccount?: string
-  /** Checks a click from the article Doc's menu. Defaults to Google's keys on `fetch`. */
-  verifyIdentityToken?: IdentityTokenVerifier
   /** Checks a call from a background job. Defaults to Google's keys on `fetch`. */
   verifyJobToken?: IdentityTokenVerifier
 }
@@ -250,8 +247,6 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `logRequests()` outermost, so what it reports is the status and duration the browser
      *     saw, a static file and a refusal included; a shared link's key and a Google callback's
      *     code stay out of the line,
-     *   - `docMenuCors()` before anything routes, so the Doc dialog's preflight is answered
-     *     there and never reaches a controller,
      *   - `compression()` above the static files, because the stylesheet and the fonts are the
      *     largest things the app sends,
      *   - the fast exits next — `staticFiles()` and `serveAssets()` — so no file request ever
@@ -266,7 +261,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *     `loadDriveAccount()` beside it, for the banner every editor screen draws, and
      *     `loadIssues()` beside that,
      *   - `loadAuth()` before `csrf()`, so a refused form can tell an expired sign-in apart, and
-     *     `loadReviewCount()` after it, for the number beside _Ke kontrole_ in the panel, and
+     *     `loadReviewCount()` and `loadProofreadingCount()` after it, for the numbers beside _Ke
+     *     kontrole_ and _Korektura_ in the panel, and
      *     `loadFailingJobs()` beside that, for the banner of a job that fails or went quiet,
      *   - `takeToasts()` last, so the message is cleared while the session can still be saved.
      *
@@ -278,7 +274,6 @@ export function createAppRouter(dependencies: AppDependencies) {
     middleware: [
       logRequests(),
       publicLinkHeaders(),
-      docMenuCors(),
       compression(),
       staticFiles('./public', { index: false }),
       serveAssets(),
@@ -290,6 +285,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         checkMembership,
         directory,
         domain: dependencies.domain ?? authorizedDomain(),
+        proofreadersAddress: async () => (await proofreaders.find())?.email ?? null,
       }),
       loadDriveAccount({
         expectedEmail: (dependencies.driveAccountEmail ?? driveAccountEmail()).toLowerCase(),
@@ -306,6 +302,7 @@ export function createAppRouter(dependencies: AppDependencies) {
       }),
       skipWithoutSession(loadAuth()),
       skipWithoutSession(loadReviewCount(artworksSetup.artworks)),
+      skipWithoutSession(loadProofreadingCount(articleSetup.articles)),
       skipWithoutSession(loadFailingJobs(jobRuns, now)),
       skipWithoutSession(
         csrf({
@@ -325,22 +322,9 @@ export function createAppRouter(dependencies: AppDependencies) {
 
   router.map(routes, createHomeController(signedInUntil))
   router.map(routes.issues, createIssuesController(signedInUntil))
+  router.map(routes.proofreading, createProofreadingController(signedInUntil))
   router.map(routes.links, createLinksController())
   router.map(routes.links.artworks, createArtworksController())
-  router.map(
-    routes.api.docMenu,
-    createDocMenuController({
-      articles: articleSetup.articles,
-      checkMembership,
-      fetch,
-      issues: issueStore,
-      now,
-      token: articleSetup.token,
-      verifyIdentityToken:
-        dependencies.verifyIdentityToken ??
-        createIdentityTokenVerifier({ audiences: docMenuTokenAudiences(), fetch }),
-    }),
-  )
   router.map(
     routes.api.artworkReplies,
     createArtworkRepliesController({

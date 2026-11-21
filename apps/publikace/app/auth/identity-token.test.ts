@@ -62,7 +62,7 @@ function verifier(
   return createIdentityTokenVerifier({ audiences, fetch, now })
 }
 
-describe('the identity token of a click in the Doc menu', () => {
+describe('the identity token of a background job', () => {
   it('vouches for the address, lower-cased, and the name', async () => {
     let check = await verifier(certs(jwk('k1')).fetch)(token())
     assert.deepEqual(check, {
@@ -98,18 +98,11 @@ describe('the identity token of a click in the Doc menu', () => {
     assert.deepEqual(await verify(''), refused)
   })
 
-  it('tells a whole token that ran out apart, and refuses one that ran out and fails anything else', async () => {
+  it("accepts a token within the clocks' skew of its expiry, and refuses one past it", async () => {
     let verify = verifier(certs(jwk('k1')).fetch, ['script-client'])
 
-    assert.deepEqual(await verify(token({ exp: NOW - 120 })), { status: 'expired' })
     assert.equal((await verify(token({ exp: NOW - 30 }))).status, 'verified')
-    assert.deepEqual(await verify(token({ exp: NOW - 120 }, { key: OTHER.privateKey })), {
-      status: 'refused',
-    })
-    assert.deepEqual(await verify(token({ aud: 'other', exp: NOW - 120 })), { status: 'refused' })
-    assert.deepEqual(await verify(token({ email_verified: false, exp: NOW - 120 })), {
-      status: 'refused',
-    })
+    assert.deepEqual(await verify(token({ exp: NOW - 120 })), { status: 'refused' })
   })
 
   it('checks the audience against the list, takes any only when told to, and none from an empty list', async () => {

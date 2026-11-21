@@ -2,6 +2,7 @@ import { Auth } from 'remix/middleware/auth'
 import { createContextKey, type Middleware } from 'remix/router'
 
 import type { ArtworkStore } from '../data/artworks.server.ts'
+import type { Person } from './auth.server.ts'
 
 /**
  * How many cards _Ke kontrole_ holds, for the number beside it in the panel (`Panel.dc.html`).
@@ -15,10 +16,12 @@ export function loadReviewCount(artworks: ArtworkStore): Middleware<{
   property: 'reviewCount'
   value: number
 }> {
-  /* Only for a signed-in editor: the sign-in and the pages behind a link draw no panel. A form
-     refused with its page drawn again keeps its count. */
+  /* Only for a signed-in editor-in-chief: the sign-in and the pages behind a link draw no panel,
+     and a proofreader's has no _Ke kontrole_. A form refused with its page drawn again keeps its
+     count. */
   return async (context, next) => {
-    if (context.get(Auth)?.ok === true) {
+    let state = context.get(Auth)
+    if (state?.ok === true && (state.identity as Person).isEditor) {
       context.set(ReviewCount, await artworks.reviewCount())
     }
     return next()

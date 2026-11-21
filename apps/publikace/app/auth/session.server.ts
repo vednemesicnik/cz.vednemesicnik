@@ -19,6 +19,15 @@ const SESSION_LIFETIME_SECONDS = SESSION_LIFETIME.total({ unit: 'seconds' })
  */
 export const AUTHORIZATION_TTL_MS = 10 * 60 * 1000
 
+/**
+ * How long a sign-in that rested partly on an unanswered service waits before asking again: one
+ * minute. The role the service could not confirm stays off meanwhile, so nothing is granted on a
+ * guess. Asking on every request instead would make every page wait the service's whole timeout
+ * through an outage, an editor-in-chief named in Přístup included, who is asked only whether they
+ * proofread too.
+ */
+export const UNSETTLED_RETRY_MS = 60 * 1000
+
 /** Session key holding the signed-in person. */
 export const EDITOR_SESSION_KEY = 'editor'
 
@@ -34,10 +43,35 @@ export const SIGNED_OUT_AT_SESSION_KEY = 'signedOutAt'
 
 /** What the session holds for a signed-in person. */
 export type StoredEditor = {
-  /** Epoch milliseconds until which the last answer about access is trusted. */
+  /**
+   * Epoch milliseconds until which the last answer about access is trusted: ten minutes, or one
+   * when that answer rested on a service that did not reply.
+   */
   authorizedUntil: number
   displayName: string
   email: string
+  /**
+   * The roles that answer gave (`10d`). A session that lacks them is decided again, as if its
+   * answer were old.
+   */
+  isEditor?: boolean
+  isProofreader?: boolean
+}
+
+/** What the session keeps of a decision that let somebody in. */
+export function storedPerson(decision: {
+  displayName: string
+  email: string
+  isSettled: boolean
+  roles: { isEditor: boolean; isProofreader: boolean }
+}): StoredEditor {
+  return {
+    authorizedUntil: Date.now() + (decision.isSettled ? AUTHORIZATION_TTL_MS : UNSETTLED_RETRY_MS),
+    displayName: decision.displayName,
+    email: decision.email,
+    isEditor: decision.roles.isEditor,
+    isProofreader: decision.roles.isProofreader,
+  }
 }
 
 function isProduction(): boolean {

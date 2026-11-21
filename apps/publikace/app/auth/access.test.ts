@@ -10,6 +10,10 @@ function profile(email: string, overrides: Partial<VerifiedProfile> = {}): Verif
   return { email, emailVerified: true, hostedDomain: TEST_DOMAIN, name: 'Eva Malá', ...overrides }
 }
 
+const NO_ADDRESS = async () => null
+const EDITOR_ONLY = { isEditor: true, isProofreader: false }
+const PROOFREADERS = 'korektura@vednemesicnik.test'
+
 /** A service that answers the same for every group, counting how often it was asked. */
 function service(answer: MembershipAnswer) {
   let calls = 0
@@ -28,6 +32,7 @@ describe('decideAccess', () => {
         checkMembership: service({ groupName: null, status: 'not-member' }).check,
         directory: app.directory,
         domain: TEST_DOMAIN,
+        proofreadersAddress: NO_ADDRESS,
       }
 
       for (let candidate of [
@@ -60,12 +65,15 @@ describe('decideAccess', () => {
         checkMembership: down.check,
         directory: app.directory,
         domain: TEST_DOMAIN,
+        proofreadersAddress: NO_ADDRESS,
       })
 
       assert.deepEqual(decision, {
         allowed: true,
         displayName: 'Eva Malá',
         email: 'eva@vednemesicnik.test',
+        isSettled: true,
+        roles: EDITOR_ONLY,
       })
       assert.equal(down.calls(), 0)
     } finally {
@@ -89,12 +97,15 @@ describe('decideAccess', () => {
           .check,
         directory: app.directory,
         domain: TEST_DOMAIN,
+        proofreadersAddress: NO_ADDRESS,
       })
 
       assert.deepEqual(decision, {
         allowed: true,
         displayName: 'Jan Novák',
         email: 'jan@vednemesicnik.test',
+        isSettled: true,
+        roles: EDITOR_ONLY,
       })
     } finally {
       await app.close()
@@ -115,6 +126,7 @@ describe('decideAccess', () => {
         checkMembership: service(answer).check,
         directory: app.directory,
         domain: TEST_DOMAIN,
+        proofreadersAddress: NO_ADDRESS,
       })
 
       let no = await decideAccess(
@@ -141,6 +153,120 @@ describe('decideAccess', () => {
         email: 'jan@vednemesicnik.test',
         reason: 'unavailable',
       })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('makes the proofreaders’ address itself a proofreader, without asking the service', async () => {
+    let app = await createTestApp()
+    try {
+      let down = service({ status: 'unavailable' })
+      let decision = await decideAccess(profile('Korektura@vednemesicnik.test'), {
+        checkMembership: down.check,
+        directory: app.directory,
+        domain: TEST_DOMAIN,
+        proofreadersAddress: async () => PROOFREADERS,
+      })
+
+      assert.deepEqual(decision, {
+        allowed: true,
+        displayName: 'Eva Malá',
+        email: PROOFREADERS,
+        isSettled: true,
+        roles: { isEditor: false, isProofreader: true },
+      })
+      assert.equal(down.calls(), 0)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('makes a member of the proofreaders’ group a proofreader, and an editor-in-chief both', async () => {
+    let app = await createTestApp()
+    try {
+      await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
+      let member = service({ displayName: 'Lenka Svobodová', groupName: null, status: 'member' })
+      let context = {
+        checkMembership: member.check,
+        directory: app.directory,
+        domain: TEST_DOMAIN,
+        proofreadersAddress: async () => PROOFREADERS,
+      }
+
+      let lenka = await decideAccess(profile('lenka@vednemesicnik.test', { name: null }), context)
+      let marie = await decideAccess(profile('marie@vednemesicnik.test'), context)
+
+      assert.deepEqual(lenka, {
+        allowed: true,
+        displayName: 'Lenka Svobodová',
+        email: 'lenka@vednemesicnik.test',
+        isSettled: true,
+        roles: { isEditor: false, isProofreader: true },
+      })
+      assert.deepEqual(marie.allowed && marie.roles, { isEditor: true, isProofreader: true })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('takes a service that does not know the address for a no, and one that is down for a “don’t know”', async () => {
+    let app = await createTestApp()
+    try {
+      await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
+      let context = (answer: MembershipAnswer) => ({
+        checkMembership: service(answer).check,
+        directory: app.directory,
+        domain: TEST_DOMAIN,
+        proofreadersAddress: async () => PROOFREADERS,
+      })
+
+      assert.deepEqual(
+        await decideAccess(profile('jan@vednemesicnik.test'), context({ status: 'unknown-group' })),
+        { allowed: false, email: 'jan@vednemesicnik.test', reason: 'notlisted' },
+      )
+      assert.deepEqual(
+        await decideAccess(profile('jan@vednemesicnik.test'), context({ status: 'unavailable' })),
+        { allowed: false, email: 'jan@vednemesicnik.test', reason: 'unavailable' },
+      )
+      /* A named editor-in-chief stays in, without the role the service could not confirm, and the
+         answer is not to be kept. */
+      assert.deepEqual(
+        await decideAccess(profile('marie@vednemesicnik.test'), context({ status: 'unavailable' })),
+        {
+          allowed: true,
+          displayName: 'Eva Malá',
+          email: 'marie@vednemesicnik.test',
+          isSettled: false,
+          roles: EDITOR_ONLY,
+        },
+      )
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('settles a proofreader’s decision beside a listed group the service does not know', async () => {
+    let app = await createTestApp()
+    try {
+      await app.directory.seedInitialAdmin('marie@vednemesicnik.test', now())
+      await app.directory.addGroup(
+        'marie@vednemesicnik.test',
+        'vybor@vednemesicnik.test',
+        null,
+        now(),
+      )
+      let decision = await decideAccess(profile('lenka@vednemesicnik.test'), {
+        checkMembership: async (_email, group) =>
+          group === PROOFREADERS
+            ? { displayName: null, groupName: null, status: 'member' }
+            : { status: 'unknown-group' },
+        directory: app.directory,
+        domain: TEST_DOMAIN,
+        proofreadersAddress: async () => PROOFREADERS,
+      })
+
+      assert.deepEqual(decision.allowed && decision.isSettled, true)
     } finally {
       await app.close()
     }

@@ -3,7 +3,7 @@
  * of both read from their context.
  */
 
-import type { Editor } from '../../middleware/auth.server.ts'
+import type { Person } from '../../middleware/auth.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { DriveAccount, type DriveAccountContext } from '../../middleware/drive-account.server.ts'
 import { Issues, type IssuesContext } from '../../middleware/issues.server.ts'
@@ -43,7 +43,7 @@ export async function driveView(context: PageContext) {
 
 export async function renderOverview(
   context: PageContext,
-  editor: Editor,
+  editor: Person,
   filter: IssueFilter,
   dialog?: NewIssueDialog,
   init?: ResponseInit,

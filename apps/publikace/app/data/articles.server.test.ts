@@ -207,54 +207,6 @@ describe('the article store', () => {
     }
   })
 
-  it('records proofreading once, finds the article by its Doc, and keeps the first record', async () => {
-    let app = await createTestApp()
-    try {
-      let { articles, issueId, link } = await setup(app)
-      let { attempt } = await articles.startAttempt({
-        at: AT,
-        authors: [TEREZA],
-        formKey: 'k',
-        issueId,
-        linkId: link.id,
-        name: 'Článek',
-      })
-      assert.equal(
-        await articles.markProofread(
-          attempt.id,
-          { email: 'jakub@vednemesicnik.test', name: null },
-          AT,
-        ),
-        false,
-      )
-      await articles.setDriveId(attempt.id, 'folder', 'f-a')
-      await articles.setDriveId(attempt.id, 'artworks-folder', 'f-a-artworks')
-      await articles.setDriveId(attempt.id, 'licences-folder', 'f-a-licences')
-      await articles.setDriveId(attempt.id, 'doc', 'd-a')
-      await articles.setDriveId(attempt.id, 'meta', 'm-a')
-      await articles.commit(attempt.id, AT)
-      assert.equal((await articles.findCreatedByDocId('d-a'))?.proofreading, null)
-
-      let later = AT.add({ hours: 1 })
-      let jakub = { email: 'jakub.novak@vednemesicnik.test', name: 'Jakub Novák' }
-      assert.equal(await articles.markProofread(attempt.id, jakub, AT), true)
-      assert.equal(
-        await articles.markProofread(
-          attempt.id,
-          { email: 'eva@vednemesicnik.test', name: null },
-          later,
-        ),
-        false,
-      )
-
-      let article = await articles.findCreatedByDocId('d-a')
-      assert.deepEqual(article?.proofreading, { at: AT, ...jakub })
-      assert.equal(await articles.findCreatedByDocId('d-unknown'), null)
-    } finally {
-      await app.close()
-    }
-  })
-
   it('refuses a proofreading time without the address that marked it', async () => {
     let app = await createTestApp()
     try {
@@ -301,13 +253,13 @@ describe('the handover to proofreading', () => {
       let articles = createArticleStore(app.database)
       let { articleId } = await seedArticle(app, await seedIssue(app))
       await articles.handOver(articleId, MARIE, AT)
-      await articles.markProofread(articleId, JAKUB, LATER)
+      await articles.takeProofreading(articleId, JAKUB, LATER, 'writing')
 
       let taken = { kind: 'proofreading', step: { at: LATER, ...JAKUB } }
       assert.deepEqual(await articles.cancelHandover(articleId, LATER), taken)
 
       let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? 0, 'B')
-      await articles.markProofread(other.articleId, JAKUB, LATER)
+      await articles.takeProofreading(other.articleId, JAKUB, LATER, 'writing')
       assert.deepEqual(await articles.handOver(other.articleId, MARIE, LATER), taken)
     } finally {
       await app.close()
@@ -370,7 +322,7 @@ describe('the handover to proofreading', () => {
       for (let article of [told, quiet, taken, closed]) {
         await articles.handOver(article.articleId, MARIE, AT)
       }
-      await articles.markProofread(taken.articleId, JAKUB, LATER)
+      await articles.takeProofreading(taken.articleId, JAKUB, LATER, 'writing')
       /* Nothing in the app closes an issue yet; the column says what one would. */
       await app.database.exec(
         sql`UPDATE issues SET closed_at = ${LATER.toString()} WHERE id = ${closedIssue}`,
@@ -464,6 +416,175 @@ describe('the handover to proofreading', () => {
           ['B', null],
         ],
       )
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('taking proofreading', () => {
+  const MARIE = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  const JAKUB = { email: 'jakub.novak@vednemesicnik.test', name: 'Jakub Novák' }
+  const LENKA = { email: 'lenka.svobodova@vednemesicnik.test', name: 'Lenka Svobodová' }
+  const LATER = AT.add({ hours: 1 })
+  const LAST = AT.add({ hours: 2 })
+
+  it('takes once, from either state, and names who has it to the second taker', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let { articleId } = await seedArticle(app, issueId)
+
+      assert.deepEqual(await articles.takeProofreading(articleId, JAKUB, AT, 'writing'), {
+        at: AT,
+        isHandedOver: false,
+        kind: 'done',
+      })
+      assert.deepEqual(await articles.takeProofreading(articleId, LENKA, LATER, 'writing'), {
+        kind: 'proofreading',
+        step: { at: AT, ...JAKUB },
+      })
+      assert.deepEqual((await articles.findById(articleId))?.proofreading, { at: AT, ...JAKUB })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses a take from Dopsáno whose handover was cancelled, and lets one from Píše se through a handover', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let { articleId } = await seedArticle(app, issueId)
+      await articles.handOver(articleId, MARIE, AT)
+      await articles.cancelHandover(articleId, LATER)
+
+      assert.deepEqual(await articles.takeProofreading(articleId, JAKUB, LAST, 'handedOver'), {
+        isHandedOver: false,
+        kind: 'not-proofreading',
+      })
+
+      let other = await seedArticle(app, issueId, 'B')
+      await articles.handOver(other.articleId, MARIE, AT)
+      assert.deepEqual(await articles.takeProofreading(other.articleId, JAKUB, LATER, 'writing'), {
+        at: LATER,
+        isHandedOver: true,
+        kind: 'done',
+      })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('cancels only the take it was shown and only an owner’s, and the article returns where it was', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let { articleId } = await seedArticle(app, issueId)
+      await articles.handOver(articleId, MARIE, AT)
+      await articles.takeProofreading(articleId, JAKUB, LATER, 'handedOver')
+
+      let taken = { kind: 'proofreading', step: { at: LATER, ...JAKUB } }
+      assert.deepEqual(
+        await articles.cancelProofreading(articleId, LAST, { owner: LENKA.email }),
+        taken,
+      )
+      assert.deepEqual(
+        await articles.cancelProofreading(articleId, LAST, { proofreadAt: AT }),
+        taken,
+      )
+      assert.deepEqual(
+        await articles.cancelProofreading(articleId, LAST, {
+          owner: JAKUB.email,
+          proofreadAt: LATER,
+        }),
+        { at: LAST, isHandedOver: true, kind: 'done' },
+      )
+      let row = await articles.findById(articleId)
+      assert.equal(row?.proofreading, null)
+      assert.deepEqual(row?.cancelledProofreading, { at: LATER, cancelledAt: LAST, ...JAKUB })
+      assert.deepEqual(await articles.cancelProofreading(articleId, LAST), {
+        isHandedOver: true,
+        kind: 'not-proofreading',
+      })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('gives a cancelled take back whole, unless somebody took the article since', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let { articleId } = await seedArticle(app, issueId)
+      await articles.takeProofreading(articleId, JAKUB, AT, 'writing')
+      await articles.cancelProofreading(articleId, LATER)
+
+      assert.deepEqual(await articles.restoreProofreading(articleId, LATER), {
+        at: AT,
+        isHandedOver: false,
+        kind: 'done',
+      })
+      assert.deepEqual((await articles.findById(articleId))?.proofreading, { at: AT, ...JAKUB })
+
+      await articles.cancelProofreading(articleId, LATER)
+      await articles.takeProofreading(articleId, LENKA, LAST, 'writing')
+      assert.deepEqual(await articles.restoreProofreading(articleId, LATER), {
+        kind: 'proofreading',
+        step: { at: LAST, ...LENKA },
+      })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('opens the handover and the digest to the article again once its take is cancelled', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let { articleId } = await seedArticle(app, issueId)
+      await articles.handOver(articleId, MARIE, AT)
+      await articles.takeProofreading(articleId, JAKUB, LATER, 'handedOver')
+      assert.deepEqual(await articles.listForDigest(), [])
+      assert.equal(await articles.queueCount(), 0)
+
+      await articles.cancelProofreading(articleId, LAST)
+      assert.deepEqual(
+        (await articles.listForDigest()).map((each) => each.id),
+        [articleId],
+      )
+      assert.equal(await articles.queueCount(), 1)
+      assert.equal((await articles.cancelHandover(articleId, LAST)).kind, 'done')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses every step in a closed issue, and lists only open issues', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let { articleId } = await seedArticle(app, issueId)
+      await articles.handOver(articleId, MARIE, AT)
+      await articles.takeProofreading(articleId, JAKUB, AT, 'writing')
+      await app.database.exec(
+        sql`UPDATE issues SET closed_at = ${LATER.toString()} WHERE id = ${issueId}`,
+      )
+
+      let closed = { issueName: 'VDM_2026_6', kind: 'closed' }
+      assert.deepEqual(await articles.cancelProofreading(articleId, LAST), closed)
+      assert.deepEqual(await articles.takeProofreading(articleId, LENKA, LAST, 'writing'), closed)
+      assert.deepEqual(await articles.listForQueue(), [])
+      assert.deepEqual(await articles.findForQueue(articleId), {
+        isIssueClosed: true,
+        issueName: 'VDM_2026_6',
+        name: 'Školní jídelna po roce',
+      })
     } finally {
       await app.close()
     }

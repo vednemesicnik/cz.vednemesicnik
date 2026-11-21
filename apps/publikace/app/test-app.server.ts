@@ -28,12 +28,9 @@ const FAKE_IDENTITY_PREFIX = 'fake-identity.'
 /** The token the fake verifier answers with Google's keys out of reach. */
 export const UNREACHABLE_IDENTITY_TOKEN = 'fake-identity-unreachable'
 
-/** A token the suite's verifier finds Google's and whole, but past its expiry. */
-export const EXPIRED_IDENTITY_TOKEN = 'fake-identity-expired'
-
 /**
- * A token the suite's verifier vouches for, as Google's would be for the account that clicked in
- * the article Doc's menu. Any other string is refused.
+ * A token the suite's verifier vouches for, as Google's would be for the account a job runs as.
+ * Any other string is refused.
  */
 export function fakeIdentityToken(
   identity: Omit<VerifiedIdentity, 'hostedDomain'> & { hostedDomain?: string | null },
@@ -44,7 +41,6 @@ export function fakeIdentityToken(
 
 const fakeIdentityVerifier: IdentityTokenVerifier = async (token) => {
   if (token === UNREACHABLE_IDENTITY_TOKEN) return { status: 'unavailable' }
-  if (token === EXPIRED_IDENTITY_TOKEN) return { status: 'expired' }
   if (!token.startsWith(FAKE_IDENTITY_PREFIX)) return { status: 'refused' }
   let identity = JSON.parse(
     Buffer.from(token.slice(FAKE_IDENTITY_PREFIX.length), 'base64url').toString('utf8'),
@@ -99,8 +95,16 @@ export type TestBrowser = {
   sendBytes(path: string, body: Uint8Array<ArrayBuffer>, headers: HeadersInit): Promise<Response>
   /** Keeps a cookie as a `Set-Cookie` value would give it. */
   setCookie(serialized: string): void
-  /** Signs in as somebody already allowed, the way the Google callback would leave it. */
-  signInAs(email: string, displayName?: string, authorizedUntil?: number): Promise<void>
+  /**
+   * Signs in as somebody already allowed, the way the Google callback would leave it: an
+   * editor-in-chief unless `roles` says otherwise.
+   */
+  signInAs(
+    email: string,
+    displayName?: string,
+    authorizedUntil?: number,
+    roles?: { isEditor: boolean; isProofreader: boolean },
+  ): Promise<void>
 }
 
 /**
@@ -138,7 +142,6 @@ export async function createTestApp(): Promise<TestApp> {
     },
     jobAccount: TEST_DRIVE_ACCOUNT,
     templateId: TEST_TEMPLATE,
-    verifyIdentityToken: fakeIdentityVerifier,
     verifyJobToken: fakeIdentityVerifier,
   })
   let storage = createSqliteSessionStorage(opened.database)
@@ -211,12 +214,18 @@ export async function createTestApp(): Promise<TestApp> {
       setCookie(serialized) {
         keep(new Response(null, { headers: { 'Set-Cookie': serialized } }))
       },
-      async signInAs(email, displayName = email, authorizedUntil = Date.now() + 60_000) {
+      async signInAs(
+        email,
+        displayName = email,
+        authorizedUntil = Date.now() + 60_000,
+        roles = { isEditor: true, isProofreader: false },
+      ) {
         let session = createSession()
         session.set(EDITOR_SESSION_KEY, {
           authorizedUntil,
           displayName,
           email,
+          ...roles,
         } satisfies StoredEditor)
         let id = await storage.save(session)
         if (id === null) throw new Error('The test session was not saved.')

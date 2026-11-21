@@ -170,7 +170,7 @@ describe('handing an article over to proofreading (12k, 12l)', () => {
       let articles = createArticleStore(app.database)
       let at = Temporal.Instant.from('2026-11-21T08:40:00Z')
       await articles.handOver(articleId, JANA, at)
-      await articles.markProofread(articleId, JAKUB, at.add({ minutes: 5 }))
+      await articles.takeProofreading(articleId, JAKUB, at.add({ minutes: 5 }), 'writing')
 
       await browser.post(`${handOverPath(articleId)}/cancel`, {}, DETAIL)
       assert.equal(
@@ -179,7 +179,7 @@ describe('handing an article over to proofreading (12k, 12l)', () => {
       )
 
       let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? 0, 'B')
-      await articles.markProofread(other.articleId, JAKUB, at)
+      await articles.takeProofreading(other.articleId, JAKUB, at, 'writing')
       await browser.post(handOverPath(other.articleId), {}, DETAIL)
       assert.equal(
         statusText(await (await browser.get(DETAIL)).text()),

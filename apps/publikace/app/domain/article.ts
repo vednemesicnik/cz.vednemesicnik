@@ -121,10 +121,10 @@ export function coauthorLine(coauthors: readonly string[]): string | null {
 }
 
 /**
- * Where an article is, as far as the app records it (`01a`). _Korektura_ wins once a proofreader
- * marked it, whatever was handed over; _Dopsáno_ is a handover the editors-in-chief made and no
- * proofreader has taken yet. _Označit probíhající korekturu_ still works straight from _Píše se_
- * (`01d`).
+ * Where an article is, as far as the app records it (`01a`). _Korektura_ wins while a
+ * proofreader's take stands, whatever was handed over; _Dopsáno_ is a handover the
+ * editors-in-chief made and no proofreader has taken yet. A proofreader may take an article
+ * straight from _Píše se_ too, on the page Korektura (`01d`, `15a`).
  */
 export type ArticleState = 'handedOver' | 'proofreading' | 'writing'
 
@@ -198,8 +198,7 @@ export function authorsLine(authors: readonly Pick<Author, 'name'>[]): string {
 }
 
 /**
- * `_meta.json` in the article folder, in the script's shape: the Doc's menu and the artwork upload
- * read these keys. An issue in the app has no Evidence spreadsheet, so `sheetId` is `null`.
+ * `_meta.json` in the article folder, in the scripts' shape: the artwork upload reads these keys. An issue in the app has no Evidence spreadsheet, so `sheetId` is `null`.
  */
 export function articleMeta(article: {
   articleFolderId: string

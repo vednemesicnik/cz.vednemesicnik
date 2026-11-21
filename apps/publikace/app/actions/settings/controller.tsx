@@ -19,7 +19,7 @@ import {
 import { JOBS, settingsSummary, stateOfJob } from '../../domain/jobs.ts'
 import { now } from '../../domain/time.ts'
 import { Access } from '../../middleware/access.server.ts'
-import { type Editor, requireEditor } from '../../middleware/auth.server.ts'
+import { type Person, requireEditor } from '../../middleware/auth.server.ts'
 import {
   DriveAccount,
   type DriveAccountContext,
@@ -40,7 +40,11 @@ import {
  * What the helpers below read. Every action's context has it; it is written loosely because the
  * actions' contexts differ in their params, and the three values are read back by their keys.
  */
-type PageContext = { get(key: unknown): unknown; render: AppContext['render'] }
+type PageContext = {
+  get(key: unknown): unknown
+  method: string
+  render: AppContext['render']
+}
 
 function accessOf(context: PageContext): AccessContext {
   return context.get(Access) as AccessContext
@@ -58,7 +62,7 @@ type Stores = { proofreaders: ProofreadersStore; runs: JobRunStore }
 async function renderSettings(
   context: PageContext,
   { proofreaders, runs }: Stores,
-  editor: Editor,
+  editor: Person,
   state: PageState,
   init?: ResponseInit,
 ): Promise<Response> {
@@ -72,6 +76,15 @@ async function renderSettings(
     proofreaders.find(),
   ])
   let today = now()
+  /* Asked on every visit, as when a group is added to Přístup (`03`, row 27): the warning stands
+     while the service does not know the address and goes by itself once it does. A service that
+     does not answer shows nothing, since it says nothing about the address. Not for a form drawn
+     again, which should not wait on the service for a warning beside the point. */
+  let isProofreadersUnknownGroup =
+    context.method === 'GET' &&
+    proofreadersAddress !== null &&
+    (await access.checkMembership(editor.email, proofreadersAddress.email)).status ===
+      'unknown-group'
 
   return context.render(
     <SettingsPage
@@ -85,6 +98,7 @@ async function renderSettings(
       }}
       editor={editor}
       groups={groups}
+      isProofreadersUnknownGroup={isProofreadersUnknownGroup}
       isRoleLost={state.isRoleLost}
       jobsSummary={jobs.map(({ job, latest }) =>
         settingsSummary(job, stateOfJob(job, latest, today), today),
@@ -103,7 +117,7 @@ async function renderSettings(
  * A change sent by somebody who is not an administrator — by the time it arrived. `14b`: the
  * page comes back read-only with the Callout that says why, and nothing changed.
  */
-function roleLost(context: PageContext, stores: Stores, editor: Editor): Promise<Response> {
+function roleLost(context: PageContext, stores: Stores, editor: Person): Promise<Response> {
   return renderSettings(
     context,
     stores,

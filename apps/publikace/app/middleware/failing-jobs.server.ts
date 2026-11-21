@@ -4,6 +4,7 @@ import { createContextKey, type Middleware } from 'remix/router'
 import type { JobRunStore } from '../data/job-runs.server.ts'
 import { FAILURES_FOR_BANNER } from '../domain/job-run.ts'
 import { isJobInBanner, type Job, JOBS } from '../domain/jobs.ts'
+import type { Person } from './auth.server.ts'
 
 /**
  * The jobs in `JOBS` whose latest runs failed twice in a row, or once for a job whose one failure
@@ -24,9 +25,11 @@ export function loadFailingJobs(
   runs: JobRunStore,
   now: () => Temporal.Instant,
 ): Middleware<{ key: typeof FailingJobs; property: 'failingJobs'; value: readonly Job[] }> {
-  /* Only for a signed-in editor: the sign-in and the pages behind a link draw no banner. */
+  /* Only for a signed-in editor-in-chief: the sign-in and the pages behind a link draw no
+     banner, and a proofreader is shown none, as it leads into Nastavení. */
   return async (context, next) => {
-    if (context.get(Auth)?.ok === true) {
+    let state = context.get(Auth)
+    if (state?.ok === true && (state.identity as Person).isEditor) {
       let at = now()
       let latest = await Promise.all(JOBS.map((job) => runs.latestRuns(job.key, RUNS_READ)))
       context.set(

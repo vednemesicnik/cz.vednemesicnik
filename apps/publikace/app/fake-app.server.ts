@@ -18,7 +18,6 @@ import { routes } from './routes.ts'
 import {
   connectDriveAccount,
   createTestApp,
-  fakeIdentityToken,
   JOB_TOKEN,
   seedAdmin,
   seedArticle,
@@ -39,6 +38,7 @@ import {
 const MARIE = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
 const TEREZA = { email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }
 const JAKUB = { email: 'jakub.novak@vednemesicnik.test', name: 'Jakub Novák' }
+const LENKA = { email: 'lenka.svobodova@vednemesicnik.test', name: 'Lenka Svobodová' }
 const ISSUE_NAME = 'VDM_2026_6'
 const ARTICLE_NAME = 'Školní jídelna po roce'
 const PROOFREADERS = 'korektori@vednemesicnik.test'
@@ -158,11 +158,22 @@ export async function createFakeApp(): Promise<FakeApp> {
      took, so the detail shows all three states (`12k`). */
   let proofreaders = createProofreadersStore(app.database)
   await proofreaders.save(PROOFREADERS, MARIE.email, now())
+  /* Jakub and Lenka proofread through the group, as `korektura@` lets its members in (`10d`). */
+  app.setMembership(PROOFREADERS, (email) =>
+    email === JAKUB.email || email === LENKA.email
+      ? { displayName: null, groupName: 'Korektoři', status: 'member' }
+      : { groupName: 'Korektoři', status: 'not-member' },
+  )
   let handedOver = await seedArticle(app, issueId, 'Kavárna v knihovně: rok poté')
   await articles.handOver(handedOver.articleId, MARIE, now().subtract({ hours: 26 }))
   let taken = await seedArticle(app, issueId, 'Volební kampaň na sítích')
   await articles.handOver(taken.articleId, MARIE, now().subtract({ hours: 50 }))
-  await articles.markProofread(taken.articleId, JAKUB, now().subtract({ hours: 20 }))
+  await articles.takeProofreading(
+    taken.articleId,
+    JAKUB,
+    now().subtract({ hours: 20 }),
+    'handedOver',
+  )
 
   async function articlePath(): Promise<string> {
     let link = await links.articleLinkOf(issueId)
@@ -221,7 +232,7 @@ export async function createFakeApp(): Promise<FakeApp> {
         <td>
           ${
             each.proofreading === null
-              ? button('/proofread', `Mark proofreading as ${JAKUB.name}`, { id: each.docId })
+              ? '—'
               : `Proofreading by ${each.proofreading.name ?? each.proofreading.email}`
           }
         </td>
@@ -275,7 +286,10 @@ export async function createFakeApp(): Promise<FakeApp> {
       <table>
         ${artworksRows}
       </table>
-      <p>${button('/sign-in', `Sign in as ${MARIE.email}`)}</p>
+      <p>
+        ${button('/sign-in', `Sign in as ${MARIE.email}`)}
+        ${button('/sign-in/proofreader', `Sign in as ${LENKA.email}, a proofreader`)}
+      </p>
 
       <h2>Link</h2>
       ${button('/link/renew', 'Renew the article link')}
@@ -520,24 +534,6 @@ export async function createFakeApp(): Promise<FakeApp> {
         app.failMail(false)
         isMailFailing = false
         return backToControls()
-      case '/proofread': {
-        /* The click in the Doc's menu, as the bound script sends it: the Doc made editable for
-           anyone with its link, so the Drive check lets the fake proofreader through. */
-        if (typeof fileId !== 'string') return new Response('No file', { status: 400 })
-        app.drive.share(fileId, { role: 'writer', type: 'anyone' })
-        let answer = await app.fetch(
-          new Request(new URL(routes.api.docMenu.markProofreading.href(), origin), {
-            body: JSON.stringify({ documentId: fileId, metaDocumentId: fileId }),
-            headers: {
-              Authorization: `Bearer ${fakeIdentityToken(JAKUB)}`,
-              'Content-Type': 'application/json',
-            },
-            method: 'POST',
-          }),
-        )
-        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
-        return backToControls()
-      }
       case '/batch': {
         /* A batch as the artworks page leaves it once the Mailer took the request, without
            uploading files by hand. */
@@ -585,10 +581,17 @@ export async function createFakeApp(): Promise<FakeApp> {
       case '/link/renew':
         await links.renew(issueId, now())
         return backToControls()
-      case '/sign-in': {
+      case '/sign-in':
+      case '/sign-in/proofreader': {
         /* The session `signInAs()` saves, handed to the browser instead of the harness's jar. */
         let browser = app.browser()
-        await browser.signInAs(MARIE.email, MARIE.name)
+        if (path === '/sign-in') await browser.signInAs(MARIE.email, MARIE.name)
+        else {
+          await browser.signInAs(LENKA.email, LENKA.name, Date.now() + 60_000, {
+            isEditor: false,
+            isProofreader: true,
+          })
+        }
         let value = browser.cookie(sessionCookieName) ?? ''
         return new Response(null, {
           headers: {

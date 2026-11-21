@@ -4,6 +4,7 @@ import { css } from 'remix/component'
 import type { AccessAccount, AccessGroup } from '../../data/access.server.ts'
 import type { DriveAccountState } from '../../data/drive-account.server.ts'
 import {
+  accessIntro,
   type AccessKind,
   administratorsSentence,
   NO_PROOFREADERS_TEXT,
@@ -13,7 +14,9 @@ import {
   PROOFREADERS_TITLE,
   proofreadersHint,
   proofreadersSectionText,
+  proofreadersUnknownGroupMessage,
   roleLostMessage,
+  SETTINGS_LEAD,
 } from '../../domain/access.ts'
 import {
   accountDomain,
@@ -28,7 +31,7 @@ import {
 } from '../../domain/drive-account.ts'
 import { JOBS_TITLE, SHOW_JOBS_LABEL } from '../../domain/jobs.ts'
 import { formatDate, formatDay } from '../../domain/time.ts'
-import type { Editor } from '../../middleware/auth.server.ts'
+import type { Person } from '../../middleware/auth.server.ts'
 import { routes } from '../../routes.ts'
 import { Avatar } from '../../ui/avatar/component.tsx'
 import { Callout } from '../../ui/callout/component.tsx'
@@ -69,8 +72,13 @@ export type SettingsPageProps = {
   /** Without the `@`. */
   domain: string
   driveAccount: DriveAccountView
-  editor: Editor
+  editor: Person
   groups: readonly AccessGroup[]
+  /**
+   * `14f`: the membership service does not know the proofreaders' address as a group, asked
+   * whenever Nastavení opens, so the warning goes once the group is allowed there.
+   */
+  isProofreadersUnknownGroup: boolean
   /** `14b`: a change was sent from a page opened before the role was taken away. */
   isRoleLost?: boolean
   /** The line under _Úlohy na pozadí_, one per job that reports (`14a`). */
@@ -92,6 +100,10 @@ const columnStyle = css({
   maxWidth: '640px',
   width: '100%',
 })
+
+const headStyle = css({ display: 'flex', flexDirection: 'column', gap: '6px' })
+
+const leadStyle = css({ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 })
 
 const partStyle = css({
   borderTop: '1px solid var(--border)',
@@ -727,10 +739,15 @@ const addressLabelStyle = css({ color: 'var(--text-secondary)' })
  * sets or changes it; everybody else sees it with the sentence that says so.
  */
 function ProofreadersPart(
-  handle: Handle<{ address: string | null; domain: string; isAdmin: boolean }>,
+  handle: Handle<{
+    address: string | null
+    domain: string
+    isAdmin: boolean
+    isUnknownGroup: boolean
+  }>,
 ) {
   return () => {
-    let { address, domain, isAdmin } = handle.props
+    let { address, domain, isAdmin, isUnknownGroup } = handle.props
     return (
       <section aria-labelledby="proofreading-title" id="proofreading" mix={partStyle}>
         <h2 id="proofreading-title">{PROOFREADERS_TITLE}</h2>
@@ -755,6 +772,13 @@ function ProofreadersPart(
             </a>
           ) : null}
         </div>
+        {address !== null && isUnknownGroup ? (
+          <Callout tone="warning">
+            {/* Inline, as the other Callouts write it: `css()` would lose to the design system's
+                own rules for a paragraph in the body. */}
+            <p style={{ margin: 0 }}>{proofreadersUnknownGroupMessage(address)}</p>
+          </Callout>
+        ) : null}
       </section>
     )
   }
@@ -836,6 +860,7 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
       driveAccount,
       editor,
       groups,
+      isProofreadersUnknownGroup,
       isRoleLost = false,
       jobsSummary,
       proofreaders,
@@ -860,19 +885,18 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
           toasts={toasts}
         >
           <div mix={columnStyle}>
-            <h1 class="vdm-page-title" style={{ margin: 0 }}>
-              Nastavení
-            </h1>
+            <div mix={headStyle}>
+              <h1 class="vdm-page-title" style={{ margin: 0 }}>
+                Nastavení
+              </h1>
+              <p mix={leadStyle}>{SETTINGS_LEAD}</p>
+            </div>
 
             <section aria-labelledby="access-title" mix={partStyle}>
               <h2 id="access-title">Přístup</h2>
               {editor.isAdmin ? (
                 <>
-                  <p mix={metaStyle}>
-                    Přihlásit se mohou účty @{domain} přidané jmenovitě nebo přes skupinu. Přístup
-                    mění jen správci, ostatní části aplikace mohou používat všichni přihlášení.
-                    Redakce dostává odkazy.
-                  </p>
+                  <p mix={metaStyle}>{accessIntro(domain)}</p>
                   {groups.length === 0 ? null : (
                     <>
                       <div mix={groupsHeadStyle}>
@@ -915,7 +939,12 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
               </div>
             </section>
 
-            <ProofreadersPart address={proofreaders} domain={domain} isAdmin={editor.isAdmin} />
+            <ProofreadersPart
+              address={proofreaders}
+              domain={domain}
+              isAdmin={editor.isAdmin}
+              isUnknownGroup={isProofreadersUnknownGroup}
+            />
 
             <section aria-labelledby="jobs-title" mix={partStyle}>
               <div mix={partBarStyle}>

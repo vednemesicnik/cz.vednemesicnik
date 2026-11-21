@@ -18,9 +18,9 @@ import type { Middleware } from 'remix/router'
 const PUBLIC_LINK_PREFIX = '/l/'
 
 /**
- * The API the article Doc's menu calls (`/api/v1/…`) is sessionless too: a bound script carries
- * no cookie. What proves the call is the Google identity token in it and Drive's answer about
- * who may edit the Doc, never a session (`doc-menu/controller.ts`).
+ * The API the background jobs call (`/api/v1/…`) is sessionless too: a script carries no cookie.
+ * What proves the call is the Google identity token in it and the job account it names, never a
+ * session (`identity-token.server.ts`).
  */
 const API_PREFIX = '/api/'
 

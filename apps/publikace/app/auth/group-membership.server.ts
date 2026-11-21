@@ -89,7 +89,7 @@ export const membershipUnavailable: MembershipCheck = async () => ({ status: 'un
  * Hands every group name the service sends to `record`, then returns the answer untouched.
  *
  * Wrapping the check keeps a listed group's name current wherever the service is asked — at
- * sign-in, at the ten-minute re-check, in the Doc menu and when a group is added — without any
+ * sign-in, at the ten-minute re-check and when a group is added — without any
  * of them knowing about names. A name decides nothing, so a name that could not be recorded is
  * logged and the answer stands.
  */

@@ -90,7 +90,7 @@ import { checkArticleFolders, recordedMissing } from '../../drive/article-folder
 import { discardBatch, resendBatch } from '../../drive/artworks-setup.server.ts'
 import { createIssue, finishIssue } from '../../drive/issue-setup.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
-import { type Editor, requireEditor } from '../../middleware/auth.server.ts'
+import { type Person, requireEditor } from '../../middleware/auth.server.ts'
 import { DriveAccount } from '../../middleware/drive-account.server.ts'
 import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
 import { routes } from '../../routes.ts'
@@ -394,7 +394,7 @@ function overviewFilterOf(context: PageContext): IssueFilter {
 }
 
 async function renderDetail(
-  context: PageContext & { auth: { identity: Editor } },
+  context: PageContext & { auth: { identity: Person } },
   issue: Issue,
   options: {
     discarding?: DiscardView
@@ -433,7 +433,7 @@ async function renderDetail(
  * them (`12l`): before the first handover it would warn of nothing.
  */
 async function missingAddressOf(
-  context: PageContext & { auth: { identity: Editor } },
+  context: PageContext & { auth: { identity: Person } },
   rows: readonly ArticleRowView[],
 ): Promise<MissingAddressView | undefined> {
   if (!rows.some((row) => row.cancelHandoverAction !== null)) return undefined

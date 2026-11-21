@@ -32,18 +32,16 @@ Nothing here is real data in the repository: the IDs, the URLs and the testers' 
 - [ ] a folder in it holds the issues, and its ID is `ISSUES_FOLDER_ID`;
 - [x] the drive allows sharing with people outside the organisation, and the issues folder is
       shared as _Každý, kdo má odkaz · Přispěvatel_. Every issue, article folder and Doc inherits it, as on
-      _Redakce_: an author outside the domain edits the Doc through its link, and the Doc menu
-      accepts whoever may edit.
+      _Redakce_: an author outside the domain edits the Doc through its link.
 
 **The article template**, which is not on the shared drive. On a shared drive every member who can
-write may change or bin it, its bound script included. `TEMPLATE__Publication__Article` lives in
-`publikace.app@`'s own _Můj disk → Templates_, where only that account edits it and the app copies
-it as its owner. Its bound project is `SCRIPT__Publication__Article_Menu`:
+write may change or bin it. `TEMPLATE__Publication__Article` lives in `publikace.app@`'s own _Můj
+disk → Templates_, where only that account edits it and the app copies it as its owner. It is a
+Doc without code:
 
-- [ ] a copy of the template, made as `publikace.app@` with _Vytvořit kopii_ in Drive so that it
-      carries its bound script. Drive says so on the copy page. Its body still contains
-      `{{NAZEV_CLANKU}}`, its menu bar shows _✦ Publikace_, and its ID is
-      `ARTICLE_TEMPLATE_DOCUMENT_ID`.
+- [ ] a copy of the template, made as `publikace.app@` with _Vytvořit kopii_ in Drive. Its body
+      still contains `{{NAZEV_CLANKU}}`, _Rozšíření › Apps Script_ opens an empty project of its
+      own rather than a bound one, and its ID is `ARTICLE_TEMPLATE_DOCUMENT_ID`.
 
 **The Mailer of `publikace@`** (`SCRIPT__Mail__Send`), its existing deployment and not a new
 one. `OWN_SECRET` belongs to the project, so a second deployment would share it and keep
@@ -100,15 +98,8 @@ In order: each check uses what the one before it made.
    - `_meta.json` with `docId`, `articleName`, `issue`, `articleFolderId`, `issueFolderId`,
      `sheetId` (`null`) and `authors`.
 
-   Open the Doc. Its own menu, _✦ Publikace_, appears in the menu bar. On a fresh copy that
-   can take well over half a minute, so a menu that is not there yet is not a failure. From it,
-   run only
-   _Zobrazit metadata článku_. It only reads `_meta.json` beside the Doc, and it lists the article,
-   the issue, the folders and the authors, which proves the bound script reads what the app
-   wrote. Its first run asks the tester to authorise the copy's script. **Run none of the other
-   items.** The two _Označit…_ items write to an issue's Evidence sheet, and with `sheetId`
-   `null` they fail before writing. _Nastavit metadata článku_ would rewrite the app's
-   `_meta.json`.
+   Open the Doc. Its menu bar has no menu of the app's and nothing asks for authorization: the
+   Doc carries only the text.
 
 3. **A failed step leaves its files in the bin.** Start the app with a template ID that does not
    exist, `env DATABASE_PATH=./db/round-trip.sqlite ARTICLE_TEMPLATE_DOCUMENT_ID=1doesNotExist pnpm app:dev`,
@@ -193,109 +184,24 @@ In order: each check uses what the one before it made.
     - Restore it, then _Zkontrolovat znovu_: _Složka je zpátky na sdíleném disku Publikace._, and
       the Callout is gone. Nothing was created on Drive in between.
 
-## The article Doc's menu
+## Proofreaders in the app
 
-_Označit probíhající korekturu_ in a Doc of an app issue calls the app's API
-(`/api/v1/doc-menu/proofreading`) with the clicker's Google identity token, and the app asks
-Drive whether that account may edit the Doc (#50). The suite can only assume how Google issues
-the token and how Drive lists who may edit, so both are checked here.
+A proofreader signs in with Google like an editor-in-chief and sees only `/proofreading` (#82).
+Who is one is the address in Nastavení › Korektura, asked of the membership service as a group
+in Přístup is. The suite fakes the service, so what Google and the service answer is checked
+here:
 
-**First, without the app.** As `publikace.app@`, make two copies of the app's template with
-_Vytvořit kopii_, as the app copies it for every article. In each copy's bound script (_Rozšíření
-› Apps Script_):
-
-- [x] set `oauthScopes` in `appsscript.json` to `openid`,
-      `https://www.googleapis.com/auth/userinfo.email`, `profile` and the scopes the script uses
-      already, then run a throwaway function that logs the decoded payload of
-      `ScriptApp.getIdentityToken()`;
-- [x] compare `aud` between the two copies. The same value in both, and in every later copy, goes
-      into `DOC_MENU_TOKEN_AUDIENCES`. Different values make it `*`, the weaker choice: the Drive
-      check asks about the account, not the token, so an editor's identity token that another
-      Google client received could be replayed until it expires, about an hour. Production does
-      not start without one of the two;
-- [x] note whether `name` is in the payload with `profile`. Without it the app records and shows
-      the address (`12a`, `12p`);
-- [x] open a `showModalDialog` whose button calls `google.script.run`, in a browser where two Google
-      accounts are signed in, and note whether the call fails.
-
-What it showed, on 20 November 2026:
-
-- **`aud` differs between copies.** Each copy's bound script gets a default Cloud project of its
-  own (_Nastavení projektu › Projekt Google Cloud Platform: Výchozí_), so its token carries that
-  project's OAuth client. No value can be pinned: `DOC_MENU_TOKEN_AUDIENCES` is `*`. The token
-  still proves whose account it is, so a mark always carries the clicker's own address; what
-  decides whether that account may mark is the Drive check below.
-- **`name` is in the payload** with `profile`, along with `given_name`, `family_name`, `picture`
-  and `hd`. `email_verified` is `true`; there is no `azp`.
-- **`google.script.run` fails** when the clicking account is not the browser's default one: the
-  dialog opens from the menu, but the call from its button returns _K provedení dané akce je
-  vyžadována autorizace_. A server call made by the menu item itself runs as the clicking
-  account; one made from the dialog runs as the default account. Trying again in the same window
-  fails the same way, so an answer that only says to try later does not get that person through.
-  Where the default account has authorised the script, the call would run, and record, as that
-  account instead of the one the confirmation named.
-- **`fetch` from the dialog works** in the same browser: a dialog opened by the menu item, with
-  the item's identity token written into it, reached a CORS-enabled Google endpoint from its
-  sandbox origin (`https://n-…-script.googleusercontent.com`), and the token was the clicking
-  account's. `google.script.host.close()` closes it.
-
-So the dialog never calls the script's server. The menu item takes the identity token and asks
-the app for the confirmation; the dialog's _Označit_ sends that same token straight to the app
-with `fetch`, which is why the Doc menu's endpoints answer CORS.
-
-**Who may edit an article's Doc.** Nothing in the app shares a Doc with its authors, so:
-
-- [x] list the permissions of an article's Doc as `publikace.app@` (`permissions.list` with
-      `supportsAllDrives`), and write down how an author and a proofreader get the right to edit:
-      a grant to them, a group, the domain, anyone with the link, or the shared drive's members;
-- [x] when it is a group, check that the group is in the membership service's `allowedGroups`:
-      a group the service does not know leaves the app's answer a "don't know", and the menu
-      shows its own dialog instead of recording.
-
-What it showed, on 20 November 2026: an article's Doc made by the scripts on _Redakce_ is open to
-**anyone with the link as an editor**, inherited from above it, besides the shared drive's members.
-No script and nothing in the app shares a Doc; the link is the right to edit, for authors outside
-the domain too. A Doc the app made on the test drive had only the members and the domain as
-readers, because its issues folder was never opened. On the drive the app uses, the issues
-folder therefore carries _Každý, kdo má odkaz · Přispěvatel_ and the drive allows sharing outside the
-organisation (see the test shared drive above). With that grant the app's check answers yes
-before it asks about any group, so no group is looked up.
-
-**Then end to end.** Apps Script has to reach the app, so it runs behind a tunnel to
-`http://localhost:44100` until the app is on Fly.io, with the script's `CONFIG.appOrigin` set to
-the tunnel's address in the test copy only:
-
-1. Create an article through the app and open its Doc as an account that may edit it.
-   _✦ Publikace › Označit probíhající korekturu_ asks _Označit probíhající korekturu?_ with the
-   article, _VDM_… · Ke korektuře zatím nepředáno_ and _Účet pro korekturu: ‹jméno›_. _Zrušit_
-   records nothing.
-2. _Označit_ answers _Korektura označena_, and the issue's page shows _Korektura_ with _od ‹dnes›
-   · ‹jméno›_.
-3. A second click answers _Korektura už je označená_ with the same name and time.
-4. _Soubor › Vytvořit kopii_ in the same folder, then the menu in the copy: _Toto je kopie
-   dokumentu článku_, and _Otevřít původní_ opens the article's Doc.
-5. An account that may only comment answers _Publikace váš účet nepřijala_, with nothing about
-   the article. Under the issues folder every Google account with the link may edit, so this
-   needs a Doc outside it, shared to that account as a commenter.
-6. With the app stopped, the menu shows _Zkuste to za chvíli znovu_.
-
-What it showed, on 21 November 2026, with `SCRIPT__Publication__Article_Menu`'s code in the test
-article's own project and three Google accounts signed in, the clicking one (`publikace.app@`) not
-the browser's default:
-
-- **1–4 and 6 pass.** _Označit_ from the dialog recorded `publikace.app@` with its name, so the
-  `fetch` carries the clicking account's token where `google.script.run` would not. A second
-  click names who and when. A copy made with Drive's _Vytvořit kopii_ in the same folder answers
-  _Toto je kopie dokumentu článku_ with _Otevřít původní_. With the app stopped the script's own
-  dialog shows.
-- **5 was not run.** It needs a Doc outside the issues folder shared to a commenter, and the
-  suite covers the refusal.
-- **The first click in a Doc asks for authorization, and from the menu it fails** for an account
-  that is not the browser's default: Google's consent runs as the default account and the Doc
-  answers _Došlo k chybě_. Every Doc carries its own copy of the script, so this happens once per
-  Doc and person. Granting it in that Doc's script editor (_Rozšíření › Apps Script_, run
-  `testConfiguration`) as the account that clicks works, as does a window where that account is
-  the only one signed in.
+- [ ] the group of proofreaders is in `allowedGroups` of `SCRIPT__Auth__Group_Membership`, as
+      every group in Přístup is (row 27 of `03`). Without it Nastavení shows the Callout under the
+      address and the proofreaders get `notlisted`;
+- [ ] a member of the group who is not in Přístup signs in and lands on `/proofreading`, whose
+      panel has the one section _Korektura_; `/issues/…` answers _Sem má přístup jen šéfredakce_;
+- [ ] _Vzít si korekturu_ on an article handed over in check 1–2 shows _Korektura · od … · ‹the
+      account's name›_ in the issue detail, and _Zrušit korekturu_ returns it to _Dopsáno_;
+- [ ] the link _Otevřít v Publikaci_ in a digest (the section below), opened in the Gmail app on
+      iOS and on Android while signed out, goes through Google's sign-in inside the Gmail window
+      and lands on the article's card (row 59 of `03`). If the window refuses the sign-in, that
+      is said in the issue: the proofreaders then open the link in a browser.
 
 ## The reply check's API
 

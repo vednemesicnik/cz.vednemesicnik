@@ -131,7 +131,7 @@ describe('coauthorLine', () => {
 })
 
 describe('articleMeta', () => {
-  it('keeps the shape the Doc menu and the artwork upload read', () => {
+  it('keeps the shape the artwork upload reads', () => {
     let meta = JSON.parse(
       articleMeta({
         articleFolderId: 'f-article',

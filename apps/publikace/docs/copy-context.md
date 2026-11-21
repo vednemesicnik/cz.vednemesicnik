@@ -21,20 +21,23 @@ Provází jedno vydání od založení po podklady pro tisk:
 - **Poskytovatel děl** (autor článku, ilustrátor, fotograf) je ten, koho formulář uvádí jménem
   a e-mailem: dává souhlas s licencí odpovědí na e-mail. Díla za něj může nahrát i někdo jiný,
   kdo má odkaz na nahrání obrazových děl, takže věta na stránce nepředpokládá, že nahrává sám.
-- **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Do aplikace se zatím
-  nepřihlašují. Od aplikace dostávají jediný e-mail, **ranní přehled**: jednou denně mezi 7:00
+- **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Přihlašují se přes Google
+  stejně jako šéfredakce a vidí jen stránku **Korektura** přes všechna otevřená vydání: vezmou si
+  korekturu článku a mohou ji zrušit. Ostatní obrazovky aplikace je odmítnou. Od aplikace
+  dostávají jediný e-mail, **ranní přehled**: jednou denně mezi 7:00
   a 8:00, a jen v den, kdy přibylo nové předání nebo šéfredakce zrušila předání, o kterém už
   korektoři z přehledu věděli. Přehled pak nese i články, které stále čekají na korekturu.
-  Adresu korektorů nastavuje a mění jen správce v Nastavení › Korektura. Dokud chybí, předání se
-  zapíše, jen přehled neodejde.
+  Adresu korektorů nastavuje a mění jen správce v Nastavení › Korektura. Ta adresa určuje i to,
+  kdo se jako korektor přihlásí. Dokud chybí, předání se zapíše, jen přehled neodejde a žádný
+  korektor se nepřihlásí.
 
 Psaní a korektura probíhají v dokumentu Google, mimo aplikaci. Kdo text dopíše (autor nebo
 redaktor), **dá vědět šéfredakci** a ta článek v detailu vydání **předá ke korektuře**: článek je
 pak _Dopsáno_. Omyl šéfredakce napraví _Zrušit předání_. Po kliknutí nic neodchází, korektoři se
-o předání dozvědí z ranního přehledu, a proto obojí jde hned vrátit. V dokumentu položka
-k předání není a nebude: menu dokumentu _✦ Publikace_ má jen položky korektorů _Označit
-probíhající korekturu_ a _Označit finální verzi_ a dvě položky k metadatům. Text, který autor
-čte, proto žádnou položku k předání nejmenuje.
+o předání dozvědí z ranního přehledu, a proto obojí jde hned vrátit. Korektor si článek vezme na
+stránce Korektura (_Vzít si korekturu_) a omyl napraví _Zrušit korekturu_; i to jde hned vrátit.
+Dokument nese jen text: v dokumentech vydání z aplikace není žádné menu, odkaz ani doplněk, takže
+text, který autor čte, žádnou položku v dokumentu nejmenuje.
 
 Souhlas s finální verzí textu i s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail.
 Jiná odpověď jde ke kontrole šéfredakci. Autor článku tím souhlasí s **redakční doložkou**
@@ -123,9 +126,6 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
   - **Ne**: text to řekne celé hned, protože jinde to čtenář neuslyší. Hláška u _Spustit teď_
     proto říká, že opakovaný přehled může přijít podruhé, a nápověda u adresy korektorů, že
     další přehled jde na novou adresu, i když se spustí ručně.
-- **Dialog v dokumentu Google mluví hlasem aplikace.** Co se ukáže po kliknutí v menu
-  _Publikace_, vrací aplikace, takže dialog vyká a nemá _my_. Čte ho autor nebo redaktor, který
-  v aplikaci nic nenastaví: věta mu říká, co udělat sám, ne co má opravit šéfredakce.
 - **Aplikace ví, že e-mail odešel, ne že došel.** Věta smí říct _odešel_, nikdy _korektoři
   dostali_ ani _vědí_. A když se e-mail vrátí jako nedoručitelný, neprokazuje to špatnou adresu:
   skupina Google může odmítat zprávy z `publikace@`, i když adresa platí.

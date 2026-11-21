@@ -13,7 +13,7 @@ import {
 } from '../../../domain/drive-account.ts'
 import { now } from '../../../domain/time.ts'
 import { Access } from '../../../middleware/access.server.ts'
-import { type Editor, requireEditor } from '../../../middleware/auth.server.ts'
+import { type Person, requireEditor } from '../../../middleware/auth.server.ts'
 import {
   DriveAccount,
   type DriveAccountContext,
@@ -86,7 +86,7 @@ export type DriveConnectionReturn = {
  */
 export async function completeDriveConnection(
   context: ConnectContext,
-  editor: Editor,
+  editor: Person,
   returned: DriveConnectionReturn,
 ): Promise<Response> {
   let { expectedEmail, store } = context.get(DriveAccount) as DriveAccountContext

@@ -3,23 +3,17 @@ import { createPublicKey, verify, type webcrypto } from 'node:crypto'
 type JsonWebKey = webcrypto.JsonWebKey
 
 /**
- * Checks the Google identity token a bound script sends with a click in the article Doc's menu
- * (`ScriptApp.getIdentityToken()`). It proves who clicked, and nothing about what they may do:
- * that is the Drive check that follows (`doc-permissions.server.ts`).
+ * Checks the Google identity token a background job sends with every call to the app's API
+ * (`ScriptApp.getIdentityToken()`). It proves which account called, and nothing about what that
+ * account may do: each controller then compares the address with the job's account.
  *
  * The signature is checked against Google's own keys, the issuer is Google, the token has not
- * expired and Google verified the address. The audience is one of `DOC_MENU_TOKEN_AUDIENCES`, or
- * any when that says `*`, and an empty list refuses every token. Each copy of the bound script
- * answers to a default Cloud project of its own, so the Doc menu's tokens share no audience and
- * production runs on `*` (`docs/real-drive-round-trip.md`). The token then proves only whose
- * account it is; whether that account may act is Drive's answer, and under an issues folder
- * shared with anyone who has the link, any account with the link may.
+ * expired and Google verified the address. The audience is one of the accepted ones, or any when
+ * told so, and an empty list refuses every token.
  *
- * Never throws. Google's keys out of reach is `unavailable`, a "don't know" the script answers
- * with its own dialog. A token that is Google's and whole but past its expiry is `expired`: the
- * Doc's dialog keeps the token its menu item took, and a dialog left open longer than the token
- * lives is a step to take again, not an account to turn away. Every other failure is a refusal,
- * which tells the caller nothing.
+ * Never throws. Google's keys out of reach is `unavailable`, a "don't know" the job answers by
+ * trying again. Every other failure, a token past its expiry included, is a refusal, which tells
+ * the caller nothing.
  */
 
 export const GOOGLE_CERTS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
@@ -50,7 +44,6 @@ export type VerifiedIdentity = {
 
 export type IdentityCheck =
   | { identity: VerifiedIdentity; status: 'verified' }
-  | { status: 'expired' }
   | { status: 'refused' }
   | { status: 'unavailable' }
 
@@ -182,8 +175,7 @@ export function createIdentityTokenVerifier(options: {
     if (typeof email !== 'string' || email === '' || payload['email_verified'] !== true) {
       return { status: 'refused' }
     }
-    /* Last, so that only a token which passed everything else is told it merely ran out. */
-    if (expiresAt + SKEW_SECONDS < now) return { status: 'expired' }
+    if (expiresAt + SKEW_SECONDS < now) return { status: 'refused' }
 
     let name =
       typeof payload['name'] === 'string' && payload['name'] !== '' ? payload['name'] : null

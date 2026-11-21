@@ -22,7 +22,7 @@ export type LayoutProps = {
    * the question: it is drawn at its own address with no script to open it as a modal.
    */
   isInert?: boolean
-  /** The signed-in editor-in-chief. */
+  /** The signed-in person; only an editor-in-chief gets the banners, which lead into Nastavení. */
   person: PanelPerson
   /** The name in the top bar on a phone: the section, or the issue on its detail. */
   title: string
@@ -91,7 +91,7 @@ const menuDialogStyle = css({
 })
 
 /**
- * The screen of the editors-in-chief: the panel on the left and the page beside it, as every
+ * A screen of the app: the panel on the left and the page beside it, as every
  * screen from `11` on draws it. On a phone the top bar with _Menu_ stands over the page instead,
  * and _Menu_ opens the same panel over the whole screen (`11e`), the same on every screen.
  */
@@ -114,11 +114,15 @@ export function Layout(handle: Handle<LayoutProps>) {
         <Panel active={handle.props.active} isMenu person={handle.props.person} />
       </dialog>
       <main mix={mainStyle}>
-        <AccountBanner
-          {...handle.props.driveAccount}
-          isOnSettings={handle.props.active === 'settings'}
-        />
-        <JobsBanner />
+        {handle.props.person.isEditor ? (
+          <>
+            <AccountBanner
+              {...handle.props.driveAccount}
+              isOnSettings={handle.props.active === 'settings'}
+            />
+            <JobsBanner />
+          </>
+        ) : null}
         {handle.props.children}
       </main>
       <Toasts messages={handle.props.toasts ?? []} />

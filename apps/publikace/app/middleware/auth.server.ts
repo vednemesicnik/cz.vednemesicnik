@@ -1,4 +1,4 @@
-import { auth, createSessionAuthScheme, requireAuth } from 'remix/middleware/auth'
+import { Auth, auth, createSessionAuthScheme, requireAuth } from 'remix/middleware/auth'
 import { redirect } from 'remix/response/redirect'
 import { createContextKey, type RequestContext } from 'remix/router'
 import { Session } from 'remix/session'
@@ -6,18 +6,19 @@ import { Session } from 'remix/session'
 import { type AccessRefusal, decideAccess } from '../auth/access.server.ts'
 import { appOrigin } from '../auth/environment.server.ts'
 import {
-  AUTHORIZATION_TTL_MS,
   EDITOR_SESSION_KEY,
   REFUSED_EMAIL_SESSION_KEY,
   type SignedInUntilCookie,
   type StoredEditor,
+  storedPerson,
 } from '../auth/session.server.ts'
 import { parseStamp } from '../domain/time.ts'
 import { routes } from '../routes.ts'
+import { renderEditorsOnly } from '../actions/proofreading/editors-only-page.tsx'
 import { Access } from './access.server.ts'
 
-/** The signed-in editor-in-chief, as every controller behind `requireEditor()` sees them. */
-export type Editor = {
+/** The signed-in person, as every controller behind `requireEditor()` or `requireProofreading()` sees them. */
+export type Person = {
   displayName: string
   email: string
   /**
@@ -25,14 +26,18 @@ export type Editor = {
    * taken away counts from the very next request (`14b`).
    */
   isAdmin: boolean
+  /** In Přístup: every screen of the editors-in-chief. Re-checked every ten minutes. */
+  isEditor: boolean
+  /** The proofreaders' address or a member of it: the page Korektura (`10d`). Re-checked as above. */
+  isProofreader: boolean
 }
 
 /** Why this request lost its sign-in, when the ten-minute check just said no or "don't know". */
 const AccessLoss = createContextKey<AccessRefusal | null>(null)
 
 /**
- * Resolves the editor from the session, asking about access again once the last answer is ten
- * minutes old.
+ * Resolves the person from the session, asking about access again once the last answer is ten
+ * minutes old, or one minute when it rested on a service that did not reply.
  *
  * - **No** (`notlisted`, `domain`): the identity leaves the session, and the address stays for
  *   the sign-in page's sentence.
@@ -42,7 +47,7 @@ const AccessLoss = createContextKey<AccessRefusal | null>(null)
 export function loadAuth() {
   return auth({
     schemes: [
-      createSessionAuthScheme<Editor, StoredEditor>({
+      createSessionAuthScheme<Person, StoredEditor>({
         invalidate(session, context) {
           if (context.get(AccessLoss) === 'unavailable') return
           session.unset(EDITOR_SESSION_KEY)
@@ -52,9 +57,10 @@ export function loadAuth() {
         async verify(stored, context) {
           let access = context.get(Access)
           if (access === undefined) throw new Error('loadAccess() must run before loadAuth().')
-          let displayName = stored.displayName
+          let current = stored
+          let hasRoles = stored.isEditor !== undefined && stored.isProofreader !== undefined
 
-          if (stored.authorizedUntil <= Date.now()) {
+          if (stored.authorizedUntil <= Date.now() || !hasRoles) {
             let decision = await decideAccess(
               {
                 email: stored.email,
@@ -74,16 +80,19 @@ export function loadAuth() {
               return null
             }
 
-            displayName = decision.displayName
-            context.get(Session)?.set(EDITOR_SESSION_KEY, {
-              authorizedUntil: Date.now() + AUTHORIZATION_TTL_MS,
-              displayName,
-              email: stored.email,
-            } satisfies StoredEditor)
+            current = storedPerson(decision)
+            context.get(Session)?.set(EDITOR_SESSION_KEY, current)
           }
 
-          let account = await access.directory.findAccount(stored.email)
-          return { displayName, email: stored.email, isAdmin: account?.isAdmin ?? false }
+          let isEditor = current.isEditor === true
+          let account = isEditor ? await access.directory.findAccount(stored.email) : null
+          return {
+            displayName: current.displayName,
+            email: stored.email,
+            isAdmin: account?.isAdmin ?? false,
+            isEditor,
+            isProofreader: current.isProofreader === true,
+          }
         },
       }),
     ],
@@ -148,13 +157,34 @@ export async function signInRedirect(
 }
 
 /**
- * Protects a controller: an anonymous request goes to the sign-in page.
+ * Protects the page Korektura: an editor-in-chief or a proofreader may in, and an anonymous
+ * request goes to the sign-in page.
+ */
+export function requireProofreading(signedInUntil: SignedInUntilCookie) {
+  return requireAuth<Person>({
+    onFailure: (context) => signInRedirect(context, signedInUntil),
+  })
+}
+
+/**
+ * Protects a screen of the editors-in-chief: an anonymous request goes to the sign-in page, and
+ * a proofreader who is not an editor-in-chief is refused in place with 403, at the address they
+ * asked for (`10d`). A form they post writes nothing and gets the same page.
  *
  * `returnTo` replaces the address it would come back to, for a route that cannot be visited
  * twice: the return from Google carries a code that is spent once used.
  */
 export function requireEditor(signedInUntil: SignedInUntilCookie, returnTo?: string) {
-  return requireAuth<Editor>({
+  let signedIn = requireAuth<Person>({
     onFailure: (context) => signInRedirect(context, signedInUntil, returnTo),
   })
+  let middleware: typeof signedIn = (context, next) =>
+    signedIn(context, () => {
+      let state = context.get(Auth)
+      let person = state?.ok === true ? (state.identity as Person) : null
+      return person?.isEditor === true
+        ? next()
+        : Promise.resolve(renderEditorsOnly(context, person))
+    })
+  return middleware
 }

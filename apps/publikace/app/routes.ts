@@ -57,14 +57,10 @@ export const routes = route({
     },
   },
 
-  /* What the article Doc's bound script calls, with the clicker's Google identity token and no
-     cookie. Every Doc keeps the script it was copied with, so a path here and a field in what it
-     sends or gets back are never renamed in place: a change is a new version. */
+  /* What the background jobs in Apps Script call, with a Google identity token and no cookie. A
+     deployed script keeps calling what it was written against, so a path here and a field in what
+     it sends or gets back are never renamed in place: a change is a new version. */
   api: {
-    docMenu: {
-      previewProofreading: post('/api/v1/doc-menu/proofreading/preview'),
-      markProofreading: post('/api/v1/doc-menu/proofreading'),
-    },
     /* The reply check of artworks, a job under `publikace.app@` with its own trigger (#31): it
        claims the batches to ask about, then reports what Reply_Check said and what it archived. */
     artworkReplies: {
@@ -76,6 +72,18 @@ export const routes = route({
     proofreadingDigest: {
       run: post('/api/v1/proofreading-digest/run'),
     },
+  },
+
+  /* _Korektura_ (`15a`–`15e`), the one page a proofreader has, and its steps, at once and with no
+     dialog (`15d`). Each step sends the state the card showed: a take `shown` as a field, a
+     cancel the take's time as `?take=`, a restore the cancellation's as `?cancelled=`, so a
+     step decided over a card that changed meanwhile writes nothing. `?article=` is a link from
+     the morning digest (`12n`). */
+  proofreading: {
+    index: get('/proofreading'),
+    take: post('/proofreading/articles/:id'),
+    cancel: post('/proofreading/articles/:id/cancel'),
+    restore: post('/proofreading/articles/:id/restore'),
   },
 
   /* _Ke kontrole_ (`13a`): the replies the reply check did not recognise as a consent.

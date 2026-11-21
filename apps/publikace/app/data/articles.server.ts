@@ -49,12 +49,45 @@ export type ArticleRow = {
   metaFileId: string | null
   missing: MissingFolders
   name: string
+  /** The take that stands, `null` while there is none or it was cancelled (`01a`). */
   proofreading: Proofreading | null
+  /**
+   * The cancelled take, kept so that _Vrátit_ gives it back whole (`15d`): who had it and since
+   * when, and when it was cancelled, which is what the restore must find unchanged.
+   */
+  cancelledProofreading: (Proofreading & { cancelledAt: Temporal.Instant }) | null
   startedAt: Temporal.Instant
 }
 
-/** Who marked the article as in proofreading in its Doc, and when (`01a`). Set once, for good. */
+/** Who took the article on the page Korektura, and when (`01a`, `15d`). */
 export type Proofreading = ArticleStep
+
+/**
+ * What a take, a cancellation or a restore came to. Only `done` wrote anything, and `at` is the
+ * take's time (the cancellation's, for a cancel). Otherwise the article now stands as the outcome
+ * says: taken by somebody (with who and since when), not taken, in a closed issue, or gone.
+ * `isHandedOver` says where an article without a take stands: _Dopsáno_ or _Píše se_.
+ */
+export type ProofreadingOutcome =
+  | { at: Temporal.Instant; isHandedOver: boolean; kind: 'done' }
+  | { kind: 'proofreading'; step: ArticleStep }
+  | { isHandedOver: boolean; kind: 'not-proofreading' }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
+
+/** An article on the page Korektura (`15a`): only what a proofreader needs for the work. */
+export type QueueArticle = {
+  authors: readonly string[]
+  /** The cancelled take, which keeps a card just cancelled where its take put it (`15d`). */
+  cancelledProofreading: Proofreading | null
+  createdAt: Temporal.Instant
+  docId: string
+  handover: ArticleStep | null
+  id: number
+  issueName: string
+  name: string
+  proofreading: Proofreading | null
+}
 
 /**
  * What a handover, a cancellation or a restore came to. Anything but `done` wrote nothing: the
@@ -99,8 +132,14 @@ export type ArticleStore = {
   discard(id: number): Promise<void>
   findByFormKey(formKey: string): Promise<ArticleRow | null>
   findById(id: number): Promise<ArticleRow | null>
-  /** The created article whose Doc this is, for the Doc's menu. */
-  findCreatedByDocId(docId: string): Promise<Article | null>
+  /**
+   * A created article for a link from the morning digest (`15e`): its name and its issue, open or
+   * closed, so that the page can say why the article is not on it. Only one that was handed over,
+   * as only those were ever in a digest: an ID tried by hand learns nothing of the closed issues.
+   */
+  findForQueue(
+    id: number,
+  ): Promise<{ isIssueClosed: boolean; issueName: string; name: string } | null>
   /**
    * Hands the article over to proofreading (`12k`), unless it was handed over meanwhile or a
    * proofreader took it. A cancelled handover is replaced by this one.
@@ -126,6 +165,10 @@ export type ArticleStore = {
   restoreHandover(id: number, cancelledAt: Temporal.Instant): Promise<HandoverOutcome>
   /** Every article the morning digest may speak of, the oldest handover first (`12n`). */
   listForDigest(): Promise<DigestCandidate[]>
+  /** Every created article of every open issue, for the page Korektura (`15a`). */
+  listForQueue(): Promise<QueueArticle[]>
+  /** The articles in _Dopsáno_ of open issues: the number beside _Korektura_ in the panel. */
+  queueCount(): Promise<number>
   /** Records what a digest the Mailer confirmed told, where nothing changed since. */
   markAnnounced(digest: AnnouncedDigest, at: Temporal.Instant): Promise<void>
   /** The issue's created articles, newest first. */
@@ -137,14 +180,37 @@ export type ArticleStore = {
   /** The folders the app found missing; one already recorded keeps the time it was found. */
   markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
   /**
-   * Records proofreading while nothing is recorded yet. `false` when the article had it already:
-   * a second click, or two proofreaders at once, writes nothing.
+   * _Vzít si korekturu_ (`15d`), while nobody has the article and its issue is open. A cancelled
+   * take is replaced. `shown` is the state the card showed: taken from _Dopsáno_, it writes only
+   * while the handover stands, because the proofreader chose a handed-over text. Taken from
+   * _Píše se_, a handover made meanwhile does not stop it: they wanted the text either way.
    */
-  markProofread(
+  takeProofreading(
     id: number,
     by: { email: string; name: string | null },
     at: Temporal.Instant,
-  ): Promise<boolean>
+    shown: 'handedOver' | 'writing',
+  ): Promise<ProofreadingOutcome>
+  /**
+   * _Zrušit korekturu_ (`15d`). With `proofreadAt`, only that very take: _Vrátit_ after a take
+   * must not cancel one somebody made since. With `owner`, only a take of that account: a
+   * proofreader cancels their own, an editor-in-chief passes none.
+   */
+  cancelProofreading(
+    id: number,
+    at: Temporal.Instant,
+    options?: { owner?: string; proofreadAt?: Temporal.Instant },
+  ): Promise<ProofreadingOutcome>
+  /**
+   * _Vrátit_ after a cancellation (`15d`): the cancelled take stands again, with whoever had it
+   * and its own time, if it is still the one cancelled at `cancelledAt` and nobody took the
+   * article since. With `owner`, only a take of that account.
+   */
+  restoreProofreading(
+    id: number,
+    cancelledAt: Temporal.Instant,
+    options?: { owner?: string },
+  ): Promise<ProofreadingOutcome>
   markWelcome(
     articleId: number,
     position: number,
@@ -206,16 +272,24 @@ function toRow(row: Row, authors: ArticleAuthor[]): ArticleRow {
       licences: parseStamp(row['licences_folder_missing_at']),
     },
     name: String(row['name']),
-    proofreading: toProofreading(row),
+    proofreading: toProofreading(row, false),
+    cancelledProofreading: toCancelledProofreading(row),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
   }
 }
 
-function toProofreading(row: Row): Proofreading | null {
+function toProofreading(row: Row, isCancelled: boolean): Proofreading | null {
   let at = parseStamp(row['proofread_at'])
   let email = text(row['proofread_by_email'])
   if (at === null || email === null) return null
+  if ((parseStamp(row['proofreading_cancelled_at']) !== null) !== isCancelled) return null
   return { at, email, name: text(row['proofread_by_name']) }
+}
+
+function toCancelledProofreading(row: Row): ArticleRow['cancelledProofreading'] {
+  let take = toProofreading(row, true)
+  let cancelledAt = parseStamp(row['proofreading_cancelled_at'])
+  return take === null || cancelledAt === null ? null : { ...take, cancelledAt }
 }
 
 function toHandover(row: Row, isCancelled: boolean): ArticleStep | null {
@@ -239,6 +313,24 @@ function refusalOf(row: ArticleRow | null): HandoverOutcome {
   if (row.handover !== null) return { kind: 'handed-over', step: row.handover }
   return { kind: 'not-handed-over' }
 }
+
+/** Where a step on the take left the article, read from it as it now is, its issue included. */
+async function proofreadingRefusalOf(db: Database, id: number): Promise<ProofreadingOutcome> {
+  let row = await byId(db, id)
+  if (row === null || row.createdAt === null) return { kind: 'gone' }
+  let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
+  let issueRow = issue.rows?.[0]
+  if (issueRow === undefined) return { kind: 'gone' }
+  if (issueRow['closed_at'] !== null) return { issueName: String(issueRow['name']), kind: 'closed' }
+  if (row.proofreading !== null) return { kind: 'proofreading', step: row.proofreading }
+  return { isHandedOver: row.handover !== null, kind: 'not-proofreading' }
+}
+
+/** Nobody has the article: never taken, or the take was cancelled. */
+const NO_TAKE = sql`(proofread_at IS NULL OR proofreading_cancelled_at IS NOT NULL)`
+
+/** The article belongs to an issue that is still open. */
+const IN_OPEN_ISSUE = sql`issue_id IN (SELECT id FROM issues WHERE closed_at IS NULL)`
 
 function asArticle(row: ArticleRow): Article {
   if (row.createdAt === null || row.docId === null || row.folderId === null) {
@@ -343,12 +435,20 @@ export function createArticleStore(database: Database): ArticleStore {
       return byId(database, id)
     },
 
-    async findCreatedByDocId(docId) {
+    async findForQueue(id) {
       let result = await database.exec(
-        sql`SELECT * FROM articles WHERE doc_id = ${docId} AND created_at IS NOT NULL`,
+        sql`SELECT articles.name, issues.name AS issue_name, issues.closed_at FROM articles
+            JOIN issues ON issues.id = articles.issue_id
+            WHERE articles.id = ${id} AND articles.created_at IS NOT NULL
+              AND articles.handed_over_at IS NOT NULL`,
       )
-      let [row] = await withAuthors(database, result.rows ?? [])
-      return row === undefined ? null : asArticle(row)
+      let row = result.rows?.[0]
+      if (row === undefined) return null
+      return {
+        isIssueClosed: row['closed_at'] !== null,
+        issueName: String(row['issue_name']),
+        name: String(row['name']),
+      }
     },
 
     handOver(id, by, at) {
@@ -359,7 +459,7 @@ export function createArticleStore(database: Database): ArticleStore {
           sql`UPDATE articles
               SET handed_over_at = ${stamp(at)}, handed_over_by_email = ${by.email},
                   handed_over_by_name = ${by.name}, handover_cancelled_at = NULL
-              WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+              WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
                 AND (handed_over_at IS NULL OR handover_cancelled_at IS NOT NULL)`,
         )
         if ((result.affectedRows ?? 0) > 0) return { at, kind: 'done' }
@@ -373,12 +473,12 @@ export function createArticleStore(database: Database): ArticleStore {
           handedOverAt === undefined
             ? await db.exec(
                 sql`UPDATE articles SET handover_cancelled_at = ${stamp(at)}
-                    WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+                    WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
                       AND handed_over_at IS NOT NULL AND handover_cancelled_at IS NULL`,
               )
             : await db.exec(
                 sql`UPDATE articles SET handover_cancelled_at = ${stamp(at)}
-                    WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+                    WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
                       AND handed_over_at = ${stamp(handedOverAt)}
                       AND handover_cancelled_at IS NULL`,
               )
@@ -391,7 +491,7 @@ export function createArticleStore(database: Database): ArticleStore {
       return database.transaction(async (db) => {
         let result = await db.exec(
           sql`UPDATE articles SET handover_cancelled_at = NULL
-              WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+              WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
                 AND handover_cancelled_at = ${stamp(cancelledAt)}`,
         )
         let row = await byId(db, id)
@@ -407,7 +507,8 @@ export function createArticleStore(database: Database): ArticleStore {
         sql`SELECT articles.*, issues.name AS issue_name FROM articles
             JOIN issues ON issues.id = articles.issue_id
             WHERE issues.closed_at IS NULL AND articles.created_at IS NOT NULL
-              AND articles.proofread_at IS NULL AND articles.handed_over_at IS NOT NULL
+              AND (articles.proofread_at IS NULL OR articles.proofreading_cancelled_at IS NOT NULL)
+              AND articles.handed_over_at IS NOT NULL
               AND (articles.handover_cancelled_at IS NULL
                    OR articles.handover_announced_at IS NOT NULL)
             ORDER BY articles.handed_over_at, articles.id`,
@@ -423,6 +524,37 @@ export function createArticleStore(database: Database): ArticleStore {
         issueName: String(row['issue_name']),
         name: String(row['name']),
       }))
+    },
+
+    async listForQueue() {
+      let result = await database.exec(
+        sql`SELECT articles.*, issues.name AS issue_name FROM articles
+            JOIN issues ON issues.id = articles.issue_id
+            WHERE issues.closed_at IS NULL AND articles.created_at IS NOT NULL
+            ORDER BY articles.created_at, articles.id`,
+      )
+      let rows = result.rows ?? []
+      let withNames = await withAuthors(database, rows)
+      return withNames.map((article, index) => ({
+        authors: article.authors.map((author) => author.name),
+        cancelledProofreading: article.cancelledProofreading,
+        createdAt: article.createdAt ?? EPOCH,
+        docId: article.docId ?? '',
+        handover: article.handover,
+        id: article.id,
+        issueName: String(rows[index]?.['issue_name']),
+        name: article.name,
+        proofreading: article.proofreading,
+      }))
+    },
+
+    async queueCount() {
+      let result = await database.exec(
+        sql`SELECT count(*) AS count FROM articles
+            WHERE created_at IS NOT NULL AND ${NO_TAKE} AND ${IN_OPEN_ISSUE}
+              AND handed_over_at IS NOT NULL AND handover_cancelled_at IS NULL`,
+      )
+      return Number(result.rows?.[0]?.['count'] ?? 0)
     },
 
     markAnnounced(digest, at) {
@@ -485,14 +617,63 @@ export function createArticleStore(database: Database): ArticleStore {
       }
     },
 
-    async markProofread(id, by, at) {
-      let result = await database.exec(
-        sql`UPDATE articles
-            SET proofread_at = ${stamp(at)}, proofread_by_email = ${by.email},
-                proofread_by_name = ${by.name}
-            WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL`,
-      )
-      return (result.affectedRows ?? 0) > 0
+    takeProofreading(id, by, at, shown) {
+      return database.transaction(async (db) => {
+        let standingHandover =
+          shown === 'handedOver'
+            ? sql`AND handed_over_at IS NOT NULL AND handover_cancelled_at IS NULL`
+            : sql``
+        let result = await db.exec(
+          sql`UPDATE articles
+              SET proofread_at = ${stamp(at)}, proofread_by_email = ${by.email},
+                  proofread_by_name = ${by.name}, proofreading_cancelled_at = NULL
+              WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE} AND ${IN_OPEN_ISSUE}
+                ${standingHandover}`,
+        )
+        if ((result.affectedRows ?? 0) > 0) {
+          let row = await byId(db, id)
+          return { at, isHandedOver: row?.handover != null, kind: 'done' }
+        }
+        return proofreadingRefusalOf(db, id)
+      })
+    },
+
+    cancelProofreading(id, at, options = {}) {
+      return database.transaction(async (db) => {
+        let take =
+          options.proofreadAt === undefined
+            ? sql``
+            : sql`AND proofread_at = ${stamp(options.proofreadAt)}`
+        let owner =
+          options.owner === undefined ? sql`` : sql`AND proofread_by_email = ${options.owner}`
+        let result = await db.exec(
+          sql`UPDATE articles SET proofreading_cancelled_at = ${stamp(at)}
+              WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NOT NULL
+                AND proofreading_cancelled_at IS NULL AND ${IN_OPEN_ISSUE} ${take} ${owner}`,
+        )
+        if ((result.affectedRows ?? 0) > 0) {
+          let row = await byId(db, id)
+          return { at, isHandedOver: row?.handover != null, kind: 'done' }
+        }
+        return proofreadingRefusalOf(db, id)
+      })
+    },
+
+    restoreProofreading(id, cancelledAt, options = {}) {
+      return database.transaction(async (db) => {
+        let owner =
+          options.owner === undefined ? sql`` : sql`AND proofread_by_email = ${options.owner}`
+        let result = await db.exec(
+          sql`UPDATE articles SET proofreading_cancelled_at = NULL
+              WHERE id = ${id} AND created_at IS NOT NULL
+                AND proofreading_cancelled_at = ${stamp(cancelledAt)} AND ${IN_OPEN_ISSUE} ${owner}`,
+        )
+        let row = await byId(db, id)
+        if ((result.affectedRows ?? 0) > 0 && row?.proofreading != null) {
+          return { at: row.proofreading.at, isHandedOver: row.handover !== null, kind: 'done' }
+        }
+        return proofreadingRefusalOf(db, id)
+      })
     },
 
     async markWelcome(articleId, position, outcome, at) {
