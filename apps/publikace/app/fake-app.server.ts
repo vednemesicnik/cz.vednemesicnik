@@ -5,6 +5,7 @@ import { appOrigin } from './auth/environment.server.ts'
 import { createSessionCookie } from './auth/session.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
+import { clauseState } from './domain/approvals.ts'
 import { batchState } from './domain/artwork.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
@@ -264,6 +265,41 @@ export async function createFakeApp(): Promise<FakeApp> {
           </td>
         </tr>`,
     )
+    /* Every clause a final version sent, with what a run of the job could find for its reply. */
+    let clauseResult = await app.database.exec(
+      sql`SELECT c.*, a.name AS article_name FROM article_clauses c
+          JOIN final_versions f ON f.id = c.final_version_id
+          JOIN articles a ON a.id = c.article_id
+          WHERE f.cancelled_at IS NULL AND a.issue_id = ${issueId} AND c.state != 'pending'
+          ORDER BY c.id`,
+    )
+    let clauseRows = (clauseResult.rows ?? []).map((row) => {
+      let id = String(row['id'])
+      let status = {
+        approvedAt: parseStamp(row['approved_at']),
+        archiveFailedAt: parseStamp(row['archive_failed_at']),
+        consentVerifiedAt: parseStamp(row['consent_verified_at']),
+        isExactConsent: Number(row['is_exact_consent']) === 1,
+        replyMessageId:
+          typeof row['reply_message_id'] === 'string' ? row['reply_message_id'] : null,
+        state: row['state'] === 'failed' ? ('failed' as const) : ('sent' as const),
+      }
+      return html`<tr>
+        <td>${String(row['article_name'])}</td>
+        <td>${String(row['author_name'])}</td>
+        <td>${clauseState(status)}</td>
+        <td>
+          ${button('/approvals/replies', 'Reply “ok, souhlas”', { id, kind: 'other' })}
+          ${button('/approvals/replies', 'Reply “Souhlasím”', { id, kind: 'exact' })}
+          ${button('/approvals/replies', '“Souhlasím”, archive fails', { id, kind: 'exact-fail' })}
+          ${
+            status.consentVerifiedAt === null
+              ? ''
+              : button('/approvals/replies', 'Archive the decided consent', { id, kind: 'archive' })
+          }
+        </td>
+      </tr>`
+    })
     let mailRows = app.mail.map(
       (message) =>
         html`<tr>
@@ -348,7 +384,7 @@ export async function createFakeApp(): Promise<FakeApp> {
 
       <h2>Approval send</h2>
       <p>
-        One run of <code>Approval_Send</code> through the app's API, as its trigger makes it: it
+        One run of <code>Article_Approvals</code> through the app's API, as its trigger makes it: it
         claims every clause of a final version waiting to be sent, and reports them all as sent or
         all as failed. A marking whose clause was claimed can no longer be cancelled.
       </p>
@@ -356,6 +392,14 @@ export async function createFakeApp(): Promise<FakeApp> {
         ${button('/approvals', 'Claim and report sent', { outcome: 'sent' })}
         ${button('/approvals', 'Claim and report failed', { outcome: 'failed' })}
       </p>
+      <p>
+        The reply half of the same run: it claims every clause sent before and reports the chosen
+        one; any clause still waiting to be sent is reported sent in the same run.
+        <a href="${routes.review.index.href()}">Ke kontrole</a> shows the replies to decide.
+      </p>
+      <table>
+        ${clauseRows}
+      </table>
 
       <h2>Proofreaders' digest</h2>
       <p>
@@ -435,6 +479,63 @@ export async function createFakeApp(): Promise<FakeApp> {
           },
     )
     return job(routes.api.artworkReplies.report.href(), { outcome: 'ok', results, runKey })
+  }
+
+  /**
+   * One run of `Article_Approvals` that reports a reply for the chosen clause, as its trigger
+   * makes it: every other clause it asked about has no reply, and what waited to be sent went.
+   */
+  async function runClauseReplies(
+    id: number,
+    kind: 'archive' | 'exact' | 'exact-fail' | 'other',
+  ): Promise<Response> {
+    await app.database.exec(sql`UPDATE article_clauses SET claimed_at = NULL`)
+    let row = (await app.database.exec(sql`SELECT * FROM article_clauses WHERE id = ${id}`))
+      .rows?.[0]
+    if (row === undefined) return new Response('No clause', { status: 400 })
+    let claimed = await job(routes.api.approvals.claim.href(), { intervalMinutes: 30 })
+    if (claimed.status !== 200) return claimed
+    let { clauses, replies, runKey } = (await claimed.json()) as {
+      clauses: { clauseKey: string }[]
+      replies: { clauseKey: string }[]
+      runKey: string
+    }
+    let text =
+      kind === 'other'
+        ? 'Souhlasím, jen prosím v podpisu i třídu.'
+        : kind === 'archive'
+          ? String(row['reply_text'] ?? '')
+          : 'Souhlasím'
+    let reply = {
+      messageId:
+        kind === 'archive'
+          ? String(row['reply_message_id'] ?? 'fake-message-decided')
+          : `fake-message-${crypto.randomUUID()}`,
+      receivedAt: now().toString(),
+      text,
+      threadId: `fake-thread-clause-${id}`,
+    }
+    let archive =
+      kind === 'exact' || kind === 'archive'
+        ? { fileId: `fake-clause-consent-${id}` }
+        : kind === 'exact-fail'
+          ? { error: 'The fake Drive refused the conversation PDF.' }
+          : null
+    return job(routes.api.approvals.report.href(), {
+      outcome: 'ok',
+      replies: replies.map((item) =>
+        item.clauseKey !== row['clause_key']
+          ? { clauseKey: item.clauseKey, state: 'no_reply' }
+          : {
+              archive,
+              clauseKey: item.clauseKey,
+              reply,
+              state: kind === 'other' || kind === 'archive' ? 'other_reply' : 'reply_matches',
+            },
+      ),
+      results: clauses.map((clause) => ({ clauseKey: clause.clauseKey, outcome: 'sent' })),
+      runKey,
+    })
   }
 
   /**
@@ -579,6 +680,16 @@ export async function createFakeApp(): Promise<FakeApp> {
           results,
           runKey,
         })
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
+        return backToControls()
+      }
+      case '/approvals/replies': {
+        let id = Number(fileId)
+        let kind = form?.get('kind') ?? null
+        if (kind !== 'other' && kind !== 'exact' && kind !== 'exact-fail' && kind !== 'archive') {
+          return new Response('Unknown kind', { status: 400 })
+        }
+        let answer = await runClauseReplies(id, kind)
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()
       }

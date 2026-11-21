@@ -25,6 +25,7 @@ import {
   UNCONFIRMED_CALLOUT_TEXT,
   UNCONFIRMED_CALLOUT_TITLE,
 } from './proofreading-digest.ts'
+import { APPROVAL_SEND_JOB, APPROVAL_SEND_JOB_NAME } from './approvals.ts'
 import { REPLY_CHECK_JOB, REPLY_CHECK_JOB_NAME } from './reply-check.ts'
 import { atTime, clockTime, formatDate, formatDay, formatDayMonth, pragueYear } from './time.ts'
 import { NBSP, tied } from './public/typography.ts'
@@ -66,6 +67,16 @@ export type Job = {
  * here: it never reports, and _Zatím se neohlásila_ would be said of a job that runs.
  */
 export const JOBS: readonly Job[] = [
+  {
+    /* A failed run may still have sent some e-mails and archived some consents: it fails when one
+       e-mail went unconfirmed or the replies could not be read at all (`ey9bfcxx`). */
+    failedCallout: tied`Úloha skončila s chybou. Některé žádosti už mohly odejít a některé souhlasy se mohly uložit.`,
+    failedEvent: 'Skončila s chybou',
+    failingBanner: tied`Žádosti a odpovědi u článků se teď nemusí správně promítat do stavu článků.`,
+    key: APPROVAL_SEND_JOB,
+    name: APPROVAL_SEND_JOB_NAME,
+    summary: tied`pošle finální verze autorům, přečte „Souhlasím“, archivuje`,
+  },
   {
     failedCallout: tied`Úloha skončila s chybou. Na dílech se nic nezměnilo.`,
     failedEvent: tied`Skončila s chybou, na dílech se nic nezměnilo`,

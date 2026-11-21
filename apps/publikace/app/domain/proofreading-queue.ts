@@ -5,7 +5,13 @@
  * name, the Doc and the state (`sh0zp1if`).
  */
 
-import { type ArticleProgress, type ArticleStep, articleState, whoOf } from './article.ts'
+import {
+  type ArticleProgress,
+  type ArticleStep,
+  articleState,
+  isMarked as isMarkedState,
+  whoOf,
+} from './article.ts'
 import { alreadyProofreadingToast, type RaceToast } from './handover.ts'
 import { tied } from './public/typography.ts'
 import { formatMoment } from './time.ts'
@@ -94,8 +100,10 @@ export type QueueItem = ArticleProgress & {
 export function partOf(article: QueueItem, viewer: QueueViewer): QueuePart | null {
   let isOwn = viewer.isProofreader && article.proofreading?.email === viewer.email
   switch (articleState(article)) {
+    case 'approved':
     case 'consent':
     case 'error':
+    case 'review':
       return isOwn && article.finalVersion?.isCancellable === true ? 'mine' : null
     case 'proofreading':
       return isOwn ? 'mine' : 'others'
@@ -170,11 +178,11 @@ export function cardActions(
   let state = articleState(article)
   let isOwn = article.proofreading?.email === viewer.email
   let isOwnTake = viewer.isProofreader && isOwn
-  let isMarked = state === 'consent' || state === 'error'
+  let isFinal = isMarkedState(state)
   return {
     canCancel: state === 'proofreading' && (isOwnTake || viewer.isEditor),
     canCancelFinal:
-      isMarked && article.finalVersion?.isCancellable === true && (isOwnTake || viewer.isEditor),
+      isFinal && article.finalVersion?.isCancellable === true && (isOwnTake || viewer.isEditor),
     canMarkFinal: state === 'proofreading' && isOwnTake,
     canMarkFinalForOther: state === 'proofreading' && !isOwnTake && viewer.isEditor,
     canTake: state === 'writing' || state === 'handedOver' ? viewer.isProofreader : false,

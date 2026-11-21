@@ -1,6 +1,8 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { type ClauseCounts, type ClauseState } from './approvals.ts'
+
 import {
   articleMeta,
   articleState,
@@ -19,6 +21,21 @@ import {
   MISSING_AT_MESSAGE,
   summaryTitle,
 } from './article.ts'
+
+/** Clauses of one final version, by state; the rest are none. */
+function clauses(counts: Partial<Record<ClauseState, number>>): ClauseCounts {
+  let all = {
+    approved: 0,
+    pending: 0,
+    review: 0,
+    unarchived: 0,
+    unsent: 0,
+    verified: 0,
+    waiting: 0,
+    ...counts,
+  }
+  return { ...all, total: Object.values(all).reduce((sum, count) => sum + count, 0) }
+}
 
 const TEREZA = { email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }
 const ONDREJ = { email: 'ondrej.benes@external.test', name: 'Ondřej Beneš' }
@@ -179,9 +196,10 @@ describe('the state of an article (01a)', () => {
   it('is K souhlasu once marked, and Chyba once a clause was not sent', () => {
     let finalVersion = {
       ...MARIE,
-      clauses: { failed: 0, pending: 2, sent: 0, total: 2 },
+      clauses: clauses({ pending: 2 }),
       isCancellable: true,
       pdfFileId: 'pdf-1',
+      reviewAuthor: null,
     }
     let marked = { createdAt: CREATED, finalVersion, handover: MARIE, proofreading: JAKUB }
     assert.equal(articleState(marked), 'consent')
@@ -190,14 +208,11 @@ describe('the state of an article (01a)', () => {
       label: 'K souhlasu',
       tone: 'running',
     })
-    let sent = {
-      ...marked,
-      finalVersion: { ...finalVersion, clauses: { failed: 0, pending: 0, sent: 2, total: 2 } },
-    }
+    let sent = { ...marked, finalVersion: { ...finalVersion, clauses: clauses({ waiting: 2 }) } }
     assert.equal(articleStateTag(sent).detail, 'souhlas 0 ze 2 autorů')
     let failed = {
       ...marked,
-      finalVersion: { ...finalVersion, clauses: { failed: 1, pending: 0, sent: 1, total: 2 } },
+      finalVersion: { ...finalVersion, clauses: clauses({ unsent: 1, waiting: 1 }) },
     }
     assert.equal(articleState(failed), 'error')
     assert.deepEqual(articleStateTag(failed), {
@@ -205,6 +220,53 @@ describe('the state of an article (01a)', () => {
       label: 'Chyba',
       tone: 'problem',
     })
+  })
+
+  it('follows the replies in the order of 01a: Chyba, Ke kontrole, Schváleno, K souhlasu', () => {
+    let finalVersion = {
+      ...MARIE,
+      clauses: clauses({ approved: 1, waiting: 1 }),
+      isCancellable: false,
+      pdfFileId: 'pdf-1',
+      reviewAuthor: null,
+    }
+    let marked = { createdAt: CREATED, finalVersion, handover: MARIE, proofreading: JAKUB }
+    let withClauses = (
+      counts: Partial<Record<ClauseState, number>>,
+      reviewAuthor = null as string | null,
+    ) => ({
+      ...marked,
+      finalVersion: { ...finalVersion, clauses: clauses(counts), reviewAuthor },
+    })
+
+    assert.equal(articleStateTag(marked).detail, 'souhlas 1 ze 2 autorů')
+    assert.deepEqual(articleStateTag(withClauses({ approved: 1, verified: 1 })), {
+      detail: 'souhlas zaznamenán',
+      label: 'K souhlasu',
+      tone: 'running',
+    })
+    let review = withClauses({ approved: 1, review: 1 }, 'Petr Malý')
+    assert.equal(articleState(review), 'review')
+    assert.deepEqual(articleStateTag(review), {
+      detail: 'Jiná odpověď · Petr Malý',
+      label: 'Ke kontrole',
+      tone: 'waiting',
+    })
+    let approved = withClauses({ approved: 2 })
+    assert.equal(articleState(approved), 'approved')
+    assert.deepEqual(articleStateTag(approved), {
+      detail: 'konverzace v\u00a0Licencích',
+      label: 'Schváleno',
+      tone: 'done',
+    })
+    let unarchived = withClauses({ review: 1, unarchived: 1 }, 'Petr Malý')
+    assert.equal(articleState(unarchived), 'error')
+    assert.equal(articleStateTag(unarchived).detail, 'konverzace se neuložila')
+    /* An e-mail that did not go waits on the editors-in-chief; the archive only on the next run. */
+    assert.equal(
+      articleStateTag(withClauses({ unarchived: 1, unsent: 1 })).detail,
+      'e-mail se nedoručil',
+    )
   })
 
   it('counts consents with z or ze, and autora or autorů', () => {

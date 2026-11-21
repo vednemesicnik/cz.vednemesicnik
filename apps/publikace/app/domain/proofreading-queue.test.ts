@@ -83,9 +83,19 @@ describe('the final version on the page Korektura', () => {
     return {
       ...MARIE,
       at: at(2),
-      clauses: { failed, pending: 1 - failed, sent: 0, total: 1 },
+      clauses: {
+        approved: 0,
+        pending: 1 - failed,
+        review: 0,
+        total: 1,
+        unarchived: 0,
+        unsent: failed,
+        verified: 0,
+        waiting: 0,
+      },
       isCancellable,
       pdfFileId: 'pdf-1',
+      reviewAuthor: null,
     }
   }
 

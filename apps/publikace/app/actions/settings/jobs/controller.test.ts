@@ -301,7 +301,7 @@ describe('the history of a job (14e)', () => {
     try {
       let html = await (await browser.get('/settings/jobs/artwork-replies')).text()
       assert.match(html, /Úloha Odpovědi k\u00a0obrazovým dílům se zatím neohlásila\./)
-      assert.equal((await browser.get('/settings/jobs/approval-send')).status, 404)
+      assert.equal((await browser.get('/settings/jobs/comment-digest')).status, 404)
     } finally {
       await app.close()
     }

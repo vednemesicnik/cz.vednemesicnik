@@ -3,8 +3,10 @@ import { createController } from 'remix/router'
 import { Session } from 'remix/session'
 
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
+import type { ArticleStore, QueuedClause } from '../../data/articles.server.ts'
 import type { ArtworkStore, QueuedBatch } from '../../data/artworks.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
+import { APPROVAL_SEND_JOB } from '../../domain/approvals.ts'
 import { batchStateDetail, replyExcerpt } from '../../domain/artwork.ts'
 import { type JobHealth, jobHealth } from '../../domain/job-run.ts'
 import { REPLY_CHECK_JOB } from '../../domain/reply-check.ts'
@@ -12,6 +14,8 @@ import {
   ARCHIVE_FAILED_TAG,
   ARCHIVE_STOPPED_TITLE,
   archiveFailedText,
+  ARTICLE_ARCHIVE_STOPPED_TITLE,
+  articleKindLine,
   discardedBatchText,
   isLongReply,
   kindLine,
@@ -36,28 +40,50 @@ import type { QueueCardView } from './queue-card.tsx'
 import { ReviewPage } from './review-page.tsx'
 
 export type ReviewDependencies = {
+  articles: ArticleStore
   artworks: ArtworkStore
   runs: JobRunStore
 }
 
 /*
  * The card just decided, kept for one load so it stays where it was and the queue does not move
- * under the hand (`13b`). By the batch's ID, and taken once.
+ * under the hand (`13b`). By the card's anchor, which says the kind, and taken once.
  */
 const SETTLED_SESSION_KEY = 'reviewSettled'
 
-function takeSettled(session: Session | undefined): number | null {
+function takeSettled(session: Session | undefined): string | null {
   let value = session?.get(SETTLED_SESSION_KEY)
   if (value === undefined) return null
   session?.unset(SETTLED_SESSION_KEY)
-  return typeof value === 'number' ? value : null
+  if (typeof value === 'number') return String(value)
+  return typeof value === 'string' ? value : null
+}
+
+/** A batch's card is its number, an article's clause `clause-{number}`. */
+function clauseAnchor(id: number): string {
+  return `clause-${id}`
+}
+
+/** The ID of the batch or the clause a settled anchor names, of that kind only. */
+function settledIdOf(anchor: string | null, kind: 'batch' | 'clause'): number | undefined {
+  if (anchor === null) return undefined
+  let match = kind === 'clause' ? /^clause-(\d+)$/.exec(anchor) : /^(\d+)$/.exec(anchor)
+  return match?.[1] === undefined ? undefined : Number(match[1])
 }
 
 /** The queue at the card, so a page drawn without script does not jump to the top. */
-function cardHref(id: number): string {
-  return Number.isSafeInteger(id)
-    ? `${routes.review.index.href()}#reply-${id}`
-    : routes.review.index.href()
+function cardHref(anchor: string | null): string {
+  return anchor === null
+    ? routes.review.index.href()
+    : `${routes.review.index.href()}#reply-${anchor}`
+}
+
+/** The time a card orders by: when the reply arrived, or when its archive failed. */
+function cardTime(item: {
+  archiveFailedAt: Temporal.Instant | null
+  replyReceivedAt: Temporal.Instant | null
+}): Temporal.Instant {
+  return item.replyReceivedAt ?? item.archiveFailedAt ?? Temporal.Instant.fromEpochMilliseconds(0)
 }
 
 /** The issue's detail with its artworks filtered to _Ke kontrole_ (`12a`). */
@@ -71,7 +97,7 @@ function cardOf(
 ): QueueCardView {
   let { health, today } = options
   let base = {
-    id: batch.id,
+    id: String(batch.id),
     kind: kindLine(batch.artworks.length, batch.issueName),
     title: batch.articleName,
   }
@@ -170,45 +196,151 @@ function cardOf(
 }
 
 /**
- * `/review`, _Ke kontrole_ (`13a`–`13c`): every reply the reply check did not take for a consent,
- * from every issue that is not closed, the oldest first, and every consent whose archive failed.
- * _Je to souhlas_ records the decision at once and the job archives it on its next run; _Vrátit_
- * takes it back until then. Both answer back at the card, so the queue does not move (`13b`).
+ * An author's clause as its card (`13a`–`13c`): the article's final version, the author and the
+ * reply. Unlike a batch it has no „⋯“: `13a` draws none for an article, whose clauses the issue's
+ * detail shows (`12b`), and the title leads there.
+ */
+function clauseCardOf(
+  clause: QueuedClause,
+  options: { health: JobHealth; isSettled: boolean; isWhole: boolean; today: Temporal.Instant },
+): QueueCardView {
+  let { health, today } = options
+  let anchor = clauseAnchor(clause.id)
+  let ids = { id: String(clause.id) }
+  let base = {
+    id: anchor,
+    kind: articleKindLine(clause.issueName),
+    menu: null,
+    title: clause.articleName,
+  }
+
+  if (options.isSettled && clause.consentVerifiedAt !== null && clause.archiveFailedAt === null) {
+    return {
+      ...base,
+      callout: null,
+      consentAction: null,
+      consentReplyId: null,
+      isSettled: true,
+      jobsHref: null,
+      meta: settledLine(clause.authorName, replyExcerpt(clause.replyText ?? '')),
+      quote: null,
+      tag: { detail: verifiedTagDetail(health), label: VERIFIED_TAG, tone: 'running' },
+      titleHref: null,
+      undoAction: routes.review.clauseUndo.href(ids),
+    }
+  }
+
+  if (clause.archiveFailedAt !== null) {
+    return {
+      ...base,
+      callout: {
+        text: archiveFailedText(health),
+        title: health.kind === 'stopped' ? ARTICLE_ARCHIVE_STOPPED_TITLE : null,
+        tone: 'error',
+      },
+      consentAction: null,
+      consentReplyId: null,
+      isSettled: false,
+      jobsHref: routes.settings.jobs.index.href(),
+      meta:
+        clause.consentVerifiedAt === null
+          ? receivedLine(
+              clause.authorName,
+              clause.authorEmail,
+              clause.replyReceivedAt ?? clause.archiveFailedAt,
+              today,
+            )
+          : verifiedLine(clause.authorName, clause.consentVerifiedAt, today),
+      quote: null,
+      tag: { detail: 'konverzace se neuložila', label: ARCHIVE_FAILED_TAG, tone: 'problem' },
+      titleHref: null,
+      undoAction: null,
+    }
+  }
+
+  let text = clause.replyText ?? ''
+  let isClamped = !options.isWhole && isLongReply(text)
+  return {
+    ...base,
+    callout: null,
+    consentAction: routes.review.clauseVerify.href(ids),
+    consentReplyId: clause.replyMessageId,
+    isSettled: false,
+    jobsHref: null,
+    meta: receivedLine(
+      clause.authorName,
+      clause.authorEmail,
+      clause.replyReceivedAt ?? today,
+      today,
+    ),
+    quote: {
+      isClamped,
+      moreHref: isClamped ? `${routes.review.index.href()}?whole=${anchor}#reply-${anchor}` : null,
+      text,
+    },
+    tag: { label: 'Ke kontrole', tone: 'waiting' },
+    titleHref: routes.issues.show.href({ name: clause.issueName }),
+    undoAction: null,
+  }
+}
+
+/**
+ * `/review`, _Ke kontrole_ (`13a`–`13c`): every reply a reply check did not take for a consent,
+ * of artworks and of articles' final versions, from every issue that is not closed, the oldest
+ * first, and every consent whose archive failed. _Je to souhlas_ records the decision at once and
+ * the job archives it on its next run; _Vrátit_ takes it back until then. Both answer back at the
+ * card, so the queue does not move (`13b`). Each kind's card speaks of its own job.
  */
 export default function createReviewController(
   signedInUntil: SignedInUntilCookie,
   dependencies: ReviewDependencies,
 ) {
-  async function healthNow(): Promise<JobHealth> {
-    return jobHealth(await dependencies.runs.latest(REPLY_CHECK_JOB), now())
+  async function healthOf(job: string): Promise<JobHealth> {
+    return jobHealth(await dependencies.runs.latest(job), now())
   }
 
   return createController(routes.review, {
     middleware: [requireEditor(signedInUntil)],
     actions: {
       async index(context) {
-        let settledId = takeSettled(context.get(Session))
-        let whole = Number(context.url.searchParams.get('whole'))
-        let [batches, health, driveAccount] = await Promise.all([
-          dependencies.artworks.reviewQueue(settledId ?? undefined),
-          healthNow(),
+        let settled = takeSettled(context.get(Session))
+        let whole = context.url.searchParams.get('whole')
+        let [batches, clauses, artworksHealth, articlesHealth, driveAccount] = await Promise.all([
+          dependencies.artworks.reviewQueue(settledIdOf(settled, 'batch')),
+          dependencies.articles.reviewQueue(settledIdOf(settled, 'clause')),
+          healthOf(REPLY_CHECK_JOB),
+          healthOf(APPROVAL_SEND_JOB),
           driveView(context),
         ])
         let today = now()
-        let cards = batches.map((batch) =>
-          cardOf(batch, {
-            health,
-            isSettled: batch.id === settledId,
-            isWhole: batch.id === whole,
-            today,
-          }),
-        )
+        let items = [
+          ...batches.map((batch) => ({
+            at: cardTime(batch),
+            card: cardOf(batch, {
+              health: artworksHealth,
+              isSettled: String(batch.id) === settled,
+              isWhole: String(batch.id) === whole,
+              today,
+            }),
+          })),
+          ...clauses.map((clause) => ({
+            at: cardTime(clause),
+            card: clauseCardOf(clause, {
+              health: articlesHealth,
+              isSettled: clauseAnchor(clause.id) === settled,
+              isWhole: clauseAnchor(clause.id) === whole,
+              today,
+            }),
+          })),
+        ]
+        /* Stable, so each kind keeps its own order where two replies came at the same moment. */
+        items.sort((a, b) => Temporal.Instant.compare(a.at, b.at))
         return context.render(
           <ReviewPage
-            cards={cards}
+            cards={items.map((item) => item.card)}
             driveAccount={driveAccount}
             person={context.auth.identity}
-            readLine={readLine(health, today)}
+            readLine={readLine({ articles: articlesHealth, artworks: artworksHealth }, today)}
             toasts={context.get(Toasts) as readonly ToastMessage[]}
           />,
         )
@@ -222,19 +354,42 @@ export default function createReviewController(
           typeof reply === 'string' &&
           (await dependencies.artworks.verifyConsent(id, reply, context.auth.identity, now()))
         if (isRecorded) {
-          context.get(Session)?.flash(SETTLED_SESSION_KEY, id)
-          flashToast(context, verifiedToast(await healthNow()), 'neutral', {
+          context.get(Session)?.flash(SETTLED_SESSION_KEY, String(id))
+          flashToast(context, verifiedToast(await healthOf(REPLY_CHECK_JOB)), 'neutral', {
             action: routes.review.undo.href({ id: String(id) }),
             label: UNDO_LABEL,
           })
         }
-        return redirect(cardHref(id), 303)
+        return redirect(cardHref(Number.isSafeInteger(id) ? String(id) : null), 303)
       },
 
       async undo(context) {
         let id = Number(context.params.id)
         if (Number.isSafeInteger(id)) await dependencies.artworks.undoVerification(id)
-        return redirect(cardHref(id), 303)
+        return redirect(cardHref(Number.isSafeInteger(id) ? String(id) : null), 303)
+      },
+
+      async clauseVerify(context) {
+        let id = Number(context.params.id)
+        let reply = (context.get(FormData) as FormData).get('reply')
+        let isRecorded =
+          Number.isSafeInteger(id) &&
+          typeof reply === 'string' &&
+          (await dependencies.articles.verifyClause(id, reply, context.auth.identity, now()))
+        if (isRecorded) {
+          context.get(Session)?.flash(SETTLED_SESSION_KEY, clauseAnchor(id))
+          flashToast(context, verifiedToast(await healthOf(APPROVAL_SEND_JOB)), 'neutral', {
+            action: routes.review.clauseUndo.href({ id: String(id) }),
+            label: UNDO_LABEL,
+          })
+        }
+        return redirect(cardHref(Number.isSafeInteger(id) ? clauseAnchor(id) : null), 303)
+      },
+
+      async clauseUndo(context) {
+        let id = Number(context.params.id)
+        if (Number.isSafeInteger(id)) await dependencies.articles.undoClauseVerification(id)
+        return redirect(cardHref(Number.isSafeInteger(id) ? clauseAnchor(id) : null), 303)
       },
     },
   })

@@ -282,6 +282,34 @@ run within that window skips it.
    archived.
 7. Call `claim` with `curl` and a made-up bearer: 401, and nothing changes.
 
+## The article approvals
+
+`SCRIPT__Publication__Article_Approvals`, a standalone project under `publikace.app@` (#89), sends
+the final versions of issues made in the app and reads their authors' replies. Each run makes one
+`/api/v1/approvals/claim`, which hands it the clauses to send and the clauses to ask about, and one
+`/api/v1/approvals/report` with both. The token is checked as the reply check's is, so the same
+`testConfiguration` step applies, and the run goes behind the same tunnel. The old
+`SCRIPT__Publication__Approval_Send` under `publikace@` keeps sending the clauses of the issues
+made before the app, from their Evidence; the two never see each other's clauses.
+
+1. Mark the final version of an article with two authors, whose mailboxes you can read, and run
+   `runApprovals` by hand. Each author gets _Žádost o potvrzení finální verze článku „‹název›“ –
+   ‹vydání› [clause_…]_ from `publikace@`, with the PDF attached as `‹sha256›.pdf` and the clause
+   word for word as the old job sends it. The issue's page shows _K souhlasu · souhlas 0 ze 2
+   autorů_, and _Zrušit finální verzi_ is gone.
+2. Run the job again at once: no second e-mail, and the run log says it claimed two replies.
+3. Answer exactly _Souhlasím_ from the first author and _Souhlasím, jen prosím jiný podpis._ from
+   the second, and run the job. `Licence` holds one PDF, `‹autor› - redakční doložka ‹sha256›.pdf`.
+   `/review` shows the second reply as _Finální verze článku · ‹vydání›_ beside any artwork's, the
+   panel counts it, and the issue's page shows _Ke kontrole · Jiná odpověď · ‹autor›_.
+4. _Je to souhlas_, then run the job. `Licence` holds the second PDF with the note _Odpověď autora
+   byla ručně posouzena jako souhlas._, and the issue's page shows _Schváleno · konverzace
+   v Licencích_.
+5. On another article, stop the app as the run opens, with the shell loop of the reply check's
+   step 5. Start it again, wait ten minutes and run the job: each author has one e-mail, not two,
+   because the Mailer's key is the clause's.
+6. `/settings/jobs` lists _Žádosti a odpovědi u článků_ with its last run.
+
 ## The proofreaders' digest
 
 The morning digest is one call, `/api/v1/proofreading-digest/run`, from

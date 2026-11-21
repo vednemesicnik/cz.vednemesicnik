@@ -4,6 +4,7 @@
  * loads too, and are re-exported here.
  */
 
+import type { ClauseCounts } from './approvals.ts'
 import type { Author } from './public/article-form.ts'
 import { formatDayMonth } from './time.ts'
 import { NBSP, tied } from './public/typography.ts'
@@ -121,13 +122,22 @@ export function coauthorLine(coauthors: readonly string[]): string | null {
 }
 
 /**
- * Where an article is, as far as the app records it (`01a`). A standing final version wins: the
- * article is _K souhlasu_, or _Chyba_ once the job could not send one of its clauses. Without
- * one, _Korektura_ wins while a proofreader's take stands, whatever was handed over; _Dopsáno_
- * is a handover the editors-in-chief made and no proofreader has taken yet. A proofreader may
- * take an article straight from _Píše se_ too, on the page Korektura (`01d`, `15a`).
+ * Where an article is, as far as the app records it (`01a`). A standing final version wins, and
+ * its clauses decide in the order of precedence `01a` gives: _Chyba_ when the job could not send a
+ * clause or archive a consent, _Ke kontrole_ while a reply waits on the editors-in-chief,
+ * _Schváleno_ once every author's conversation is in `Licence`, else _K souhlasu_. Without one,
+ * _Korektura_ wins while a proofreader's take stands, whatever was handed over; _Dopsáno_ is a
+ * handover the editors-in-chief made and no proofreader has taken yet. A proofreader may take an
+ * article straight from _Píše se_ too, on the page Korektura (`01d`, `15a`).
  */
-export type ArticleState = 'consent' | 'error' | 'handedOver' | 'proofreading' | 'writing'
+export type ArticleState =
+  | 'approved'
+  | 'consent'
+  | 'error'
+  | 'handedOver'
+  | 'proofreading'
+  | 'review'
+  | 'writing'
 
 /** Somebody's step on an article: when, and who, by address and by the name Google gave. */
 export type ArticleStep = { at: Temporal.Instant; email: string; name: string | null }
@@ -135,12 +145,14 @@ export type ArticleStep = { at: Temporal.Instant; email: string; name: string | 
 /**
  * The final version that stands (`15f`): who marked it and when, its PDF, and its clauses per
  * state. `isCancellable` while no run of the job has taken a clause: from then on an e-mail may
- * be on its way (`15g`).
+ * be on its way (`15g`). `reviewAuthor` is the author whose reply has waited longest in
+ * _Ke kontrole_, the name under that tag.
  */
 export type FinalVersion = ArticleStep & {
-  clauses: { failed: number; pending: number; sent: number; total: number }
+  clauses: ClauseCounts
   isCancellable: boolean
   pdfFileId: string
+  reviewAuthor: string | null
 }
 
 export type ArticleProgress = {
@@ -152,11 +164,24 @@ export type ArticleProgress = {
   proofreading: ArticleStep | null
 }
 
+/** Whether a final version stands for the article, whatever its clauses say. */
+export function isMarked(state: ArticleState): boolean {
+  return state === 'approved' || state === 'consent' || state === 'error' || state === 'review'
+}
+
+function finalVersionState(finalVersion: FinalVersion): ArticleState {
+  let { clauses } = finalVersion
+  if (clauses.unsent > 0 || clauses.unarchived > 0) return 'error'
+  if (clauses.review > 0) return 'review'
+  if (clauses.total > 0 && clauses.approved === clauses.total) return 'approved'
+  return 'consent'
+}
+
 export function articleState(
   article: Pick<ArticleProgress, 'finalVersion' | 'handover' | 'proofreading'>,
 ): ArticleState {
   let finalVersion = article.finalVersion ?? null
-  if (finalVersion !== null) return finalVersion.clauses.failed > 0 ? 'error' : 'consent'
+  if (finalVersion !== null) return finalVersionState(finalVersion)
   if (article.proofreading !== null) return 'proofreading'
   return article.handover === null ? 'writing' : 'handedOver'
 }
@@ -164,19 +189,24 @@ export function articleState(
 /**
  * The order of the states in the articles table (`12k`, `01a`): from the farthest along to the
  * nearest the start, so what proofreaders work on comes before what waits for them and what is
- * still being written. _Chyba_ is not a step on the way: it sorts with _K souhlasu_, and the
- * row stands among what waits for the editors-in-chief anyway (`12a`).
+ * still being written. _Chyba_ and _Ke kontrole_ are not steps on the way: they sort with
+ * _K souhlasu_, and the row stands among what waits for the editors-in-chief anyway (`12a`).
  */
 export const STATE_ORDER: Readonly<Record<ArticleState, number>> = {
-  consent: 0,
-  error: 0,
-  handedOver: 2,
-  proofreading: 1,
-  writing: 3,
+  approved: 0,
+  consent: 1,
+  error: 1,
+  handedOver: 3,
+  proofreading: 2,
+  review: 1,
+  writing: 4,
 }
 
-/** The tones of `01a` this state can take: grey nobody waits, blue in progress, red a problem. */
-export type ArticleStateTone = 'neutral' | 'problem' | 'running'
+/**
+ * The tones of `01a` this state can take: grey nobody waits, blue in progress, amber waits on the
+ * editors-in-chief, red a problem, green done.
+ */
+export type ArticleStateTone = 'done' | 'neutral' | 'problem' | 'running' | 'waiting'
 
 /**
  * _souhlas N z M autorů_ (`01a`): _ze_ where the number's genitive starts with _s_ or _č_ in
@@ -193,6 +223,46 @@ export function whoOf(step: Pick<ArticleStep, 'email' | 'name'>): string {
   return step.name ?? step.email
 }
 
+/**
+ * A marked article's tag (`01a`). An e-mail that did not go wins over an archive that failed: it
+ * waits on the editors-in-chief, the archive only on the next run. The lines under _Schváleno_ and
+ * under a failed archive are the copywriter's (`ey9bfcxx`): the job that fills the podklady pro
+ * tisk still reads only the sheets, so an article of the app is never in them yet, and the line
+ * says where its proof is instead, as for artworks (`13f`).
+ */
+function finalVersionTag(finalVersion: FinalVersion): {
+  detail: string
+  label: string
+  tone: ArticleStateTone
+} {
+  let { clauses } = finalVersion
+  switch (finalVersionState(finalVersion)) {
+    case 'error':
+      return {
+        detail: clauses.unsent > 0 ? 'e-mail se nedoručil' : 'konverzace se neuložila',
+        label: 'Chyba',
+        tone: 'problem',
+      }
+    case 'review':
+      return {
+        detail: `Jiná odpověď · ${finalVersion.reviewAuthor ?? ''}`,
+        label: 'Ke kontrole',
+        tone: 'waiting',
+      }
+    case 'approved':
+      return { detail: tied`konverzace v Licencích`, label: 'Schváleno', tone: 'done' }
+    default: {
+      let detail =
+        clauses.pending > 0
+          ? 'e-mail autorům čeká na odeslání'
+          : clauses.waiting === 0 && clauses.verified > 0
+            ? 'souhlas zaznamenán'
+            : consentLine(clauses.approved, clauses.total)
+      return { detail, label: 'K souhlasu', tone: 'running' }
+    }
+  }
+}
+
 /** The article's tag in the detail (`12a`) and the one fact under it (`01a`). */
 export function articleStateTag(article: ArticleProgress): {
   detail: string
@@ -200,20 +270,7 @@ export function articleStateTag(article: ArticleProgress): {
   tone: ArticleStateTone
 } {
   let finalVersion = article.finalVersion ?? null
-  if (finalVersion !== null) {
-    if (finalVersion.clauses.failed > 0) {
-      return { detail: 'e-mail se nedoručil', label: 'Chyba', tone: 'problem' }
-    }
-    /* Nobody has agreed yet: replies to a final version are read once #89 reads them. */
-    return {
-      detail:
-        finalVersion.clauses.pending > 0
-          ? 'e-mail autorům čeká na odeslání'
-          : consentLine(0, finalVersion.clauses.total),
-      label: 'K souhlasu',
-      tone: 'running',
-    }
-  }
+  if (finalVersion !== null) return finalVersionTag(finalVersion)
   if (article.proofreading !== null) {
     return {
       detail: `od ${formatDayMonth(article.proofreading.at)} · ${whoOf(article.proofreading)}`,

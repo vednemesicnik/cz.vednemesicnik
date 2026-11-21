@@ -302,7 +302,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         setup: articleSetup,
       }),
       skipWithoutSession(loadAuth()),
-      skipWithoutSession(loadReviewCount(artworksSetup.artworks)),
+      skipWithoutSession(loadReviewCount(artworksSetup.artworks, articleSetup.articles)),
       skipWithoutSession(loadProofreadingCount(articleSetup.articles)),
       skipWithoutSession(loadFailingJobs(jobRuns, now)),
       skipWithoutSession(
@@ -369,6 +369,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   router.map(
     routes.review,
     createReviewController(signedInUntil, {
+      articles: articleSetup.articles,
       artworks: artworksSetup.artworks,
       runs: jobRuns,
     }),

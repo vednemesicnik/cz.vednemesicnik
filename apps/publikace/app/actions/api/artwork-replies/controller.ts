@@ -9,10 +9,9 @@ import {
   CLAIM_LIMIT,
   EXPECTED_REPLY,
   REPLY_CHECK_JOB,
-  type ReportedArchive,
-  type ReportedReply,
 } from '../../../domain/reply-check.ts'
 import { routes } from '../../../routes.ts'
+import { readConsentReport } from '../consent-report.ts'
 
 /**
  * The API the reply check of artworks calls (#31): `SCRIPT__Publication__Artwork_Replies`, a
@@ -41,8 +40,6 @@ export type ArtworkRepliesDependencies = {
 /* A trigger fires at most once a minute and at least once a day. */
 const MAX_INTERVAL_MINUTES = 24 * 60
 const MAX_ID_LENGTH = 200
-/* Reply_Check returns the reply's own text; more than this is not a reply anybody wrote. */
-const MAX_TEXT_LENGTH = 50_000
 const MAX_ERROR_LENGTH = 2000
 
 const NO_STORE = { 'Cache-Control': 'no-store' }
@@ -71,40 +68,13 @@ function isText(value: unknown, max: number): value is string {
   return typeof value === 'string' && value !== '' && value.length <= max
 }
 
-function readReply(value: unknown): ReportedReply | null {
-  if (typeof value !== 'object' || value === null) return null
-  let { messageId, receivedAt, text, threadId } = value as Record<string, unknown>
-  if (!isText(messageId, MAX_ID_LENGTH) || !isText(threadId, MAX_ID_LENGTH)) return null
-  if (typeof text !== 'string' || text.length > MAX_TEXT_LENGTH) return null
-  if (typeof receivedAt !== 'string') return null
-  try {
-    return { messageId, receivedAt: Temporal.Instant.from(receivedAt), text, threadId }
-  } catch {
-    return null
-  }
-}
-
-function readArchive(value: unknown): ReportedArchive | null | undefined {
-  if (value === undefined || value === null) return null
-  if (typeof value !== 'object') return undefined
-  let { error, fileId } = value as Record<string, unknown>
-  if (fileId !== undefined) return isText(fileId, MAX_ID_LENGTH) ? { fileId } : undefined
-  return isText(error, MAX_ERROR_LENGTH) ? { error } : undefined
-}
-
 function readResult(value: unknown): { batchId: number; report: BatchReport } | null {
   if (typeof value !== 'object' || value === null) return null
-  let { archive, batchId, reply, state } = value as Record<string, unknown>
+  let fields = value as Record<string, unknown>
+  let { batchId } = fields
   if (typeof batchId !== 'number' || !Number.isSafeInteger(batchId) || batchId < 1) return null
-  if (state === 'failed' || state === 'no_reply') return { batchId, report: { state } }
-  if (state !== 'other_reply' && state !== 'reply_matches') return null
-  let readReplyValue = readReply(reply)
-  let readArchiveValue = readArchive(archive)
-  if (readReplyValue === null || readArchiveValue === undefined) return null
-  return {
-    batchId,
-    report: { archive: readArchiveValue, reply: readReplyValue, state },
-  }
+  let report = readConsentReport(fields)
+  return report === null ? null : { batchId, report }
 }
 
 /** One batch as the job gets it: what Reply_Check is asked, and what the archived PDF says. */

@@ -74,8 +74,9 @@ export const routes = route({
     proofreadingDigest: {
       run: post('/api/v1/proofreading-digest/run'),
     },
-    /* `SCRIPT__Publication__Approval_Send` for the issues made in the app (#88, #89): it claims
-       the clauses of final versions to send, mails each author, and reports what the Mailer did. */
+    /* `SCRIPT__Publication__Article_Approvals` for the issues made in the app (#88, #89): it
+       claims the clauses of final versions to send and those whose reply to read, mails each
+       author, archives a consent, and reports both halves of the run. */
     approvals: {
       claim: post('/api/v1/approvals/claim'),
       report: post('/api/v1/approvals/report'),
@@ -106,6 +107,8 @@ export const routes = route({
     index: get('/review'),
     verify: post('/review/batches/:id/consent'),
     undo: post('/review/batches/:id/consent/undo'),
+    clauseVerify: post('/review/clauses/:id/consent'),
+    clauseUndo: post('/review/clauses/:id/consent/undo'),
   },
 
   auth: {

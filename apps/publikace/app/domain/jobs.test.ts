@@ -21,7 +21,7 @@ import {
 const LAST = Temporal.Instant.from('2026-11-19T08:00:00Z')
 const NEXT = Temporal.Instant.from('2026-11-19T08:30:00Z')
 const TODAY = Temporal.Instant.from('2026-11-19T08:13:00Z')
-const JOB = JOBS[0]!
+const JOB = JOBS.find((job) => job.key === 'artwork-replies')!
 
 /** The lines keep their parts whole with no-break spaces; the assertions read them as spaces. */
 function spaced(tag: JobTag): JobTag {
@@ -31,7 +31,8 @@ function spaced(tag: JobTag): JobTag {
 describe('the jobs that report', () => {
   it('finds a job by its key and nothing else', () => {
     assert.equal(jobByKey('artwork-replies')?.name, 'Odpovědi k\u00a0obrazovým dílům')
-    assert.equal(jobByKey('approval-send'), null)
+    assert.equal(jobByKey('approval-send')?.name, 'Žádosti a\u00a0odpovědi u\u00a0článků')
+    assert.equal(jobByKey('comment-digest'), null)
     assert.equal(jobByKey(undefined), null)
   })
 

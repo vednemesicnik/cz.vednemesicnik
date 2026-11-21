@@ -1,26 +1,36 @@
 import { createController } from 'remix/router'
 
 import type { IdentityTokenVerifier } from '../../../auth/identity-token.server.ts'
-import type { ArticleStore, ClaimedClause } from '../../../data/articles.server.ts'
+import type { ArticleStore, ClaimedClause, ClaimedReply } from '../../../data/articles.server.ts'
 import type { JobRunStore } from '../../../data/job-runs.server.ts'
 import {
   APPROVAL_SEND_JOB,
+  APPROVAL_SUBJECT_PREFIX,
   CLAIM_LIMIT,
   type ClauseOutcome,
   ERROR_TEXT_LIMIT,
+  REPLY_CLAIM_LIMIT,
+  VERIFIED_CONSENT_NOTE,
 } from '../../../domain/approvals.ts'
+import { type BatchReport, EXPECTED_REPLY } from '../../../domain/reply-check.ts'
 import { routes } from '../../../routes.ts'
+import { readConsentReport } from '../consent-report.ts'
 
 /**
- * The API that `SCRIPT__Publication__Approval_Send` sends the final versions of issues made in
- * the app through (#88, #89): a standalone Apps Script project running as `publikace.app@` on its
- * own trigger. A run makes two calls:
+ * The API that `SCRIPT__Publication__Article_Approvals` sends the final versions of issues made in
+ * the app through and reads their authors' replies through (#88, #89): a standalone Apps Script
+ * project running as `publikace.app@` on its own trigger. One run, _Žádosti a odpovědi u článků_
+ * (`14d`), makes two calls:
  *
- * 1. `claim` with the trigger's interval opens the run and takes the clauses _K odeslání_, each
- *    with what its e-mail needs: the author, the signature, the article and the PDF on Drive.
- *    Taking a clause ends the way back of its marking (`15g`);
- * 2. `report` with the run's key gives, per clause, whether the Mailer sent it, and closes the
- *    run.
+ * 1. `claim` with the trigger's interval opens the run and takes two lists. `clauses` are the
+ *    clauses _K odeslání_, each with what its e-mail needs: the author, the signature, the article
+ *    and the PDF on Drive; taking one ends the way back of its marking (`15g`). `replies` are the
+ *    clauses sent before, each with what Reply_Check needs to find the author's reply and where
+ *    the archived conversation goes. A clause is in one list or the other, never both.
+ * 2. `report` with the run's key gives, per clause sent, whether the Mailer sent it, and per reply
+ *    what Reply_Check answered and what the job archived into the article's `Licence`, and closes
+ *    the run. A reply answered `superseded` is a consent taken back while the job archived it: the
+ *    job bins that PDF.
  *
  * Every call carries the job's Google identity token as a bearer, and only the account in
  * `SCRIPT_JOB_ACCOUNT` is let in, as for the reply check of artworks. A path or a field is never
@@ -66,6 +76,15 @@ function isText(value: unknown, max: number): value is string {
   return typeof value === 'string' && value !== '' && value.length <= max
 }
 
+function readReply(value: unknown): { clauseKey: string; report: BatchReport } | null {
+  if (typeof value !== 'object' || value === null) return null
+  let fields = value as Record<string, unknown>
+  let { clauseKey } = fields
+  if (!isText(clauseKey, MAX_ID_LENGTH)) return null
+  let report = readConsentReport(fields)
+  return report === null ? null : { clauseKey, report }
+}
+
 function readResult(value: unknown): { clauseKey: string; outcome: ClauseOutcome } | null {
   if (typeof value !== 'object' || value === null) return null
   let { clauseKey, error, outcome } = value as Record<string, unknown>
@@ -75,7 +94,7 @@ function readResult(value: unknown): { clauseKey: string; outcome: ClauseOutcome
   return { clauseKey, outcome: { error, kind: 'failed' } }
 }
 
-/** One clause as the job gets it. */
+/** One clause to send as the job gets it. The subject's tag is the clause's key. */
 function claimedItem(clause: ClaimedClause) {
   return {
     articleName: clause.articleName,
@@ -85,7 +104,27 @@ function claimedItem(clause: ClaimedClause) {
     docId: clause.docId,
     issueName: clause.issueName,
     pdfFileId: clause.pdfFileId,
+    pdfHash: clause.pdfHash,
     signature: clause.signature,
+    subjectPrefix: APPROVAL_SUBJECT_PREFIX,
+  }
+}
+
+/** One reply to ask about: what Reply_Check is asked, and what the archived PDF says. */
+function claimedReply(clause: ClaimedReply) {
+  return {
+    articleName: clause.articleName,
+    authorName: clause.authorName,
+    clauseKey: clause.clauseKey,
+    expectedReply: EXPECTED_REPLY,
+    isVerified: clause.isVerified,
+    issueName: clause.issueName,
+    licencesFolderId: clause.licencesFolderId,
+    sender: clause.authorEmail,
+    subjectContains: [clause.articleName],
+    subjectPrefix: APPROVAL_SUBJECT_PREFIX,
+    subjectTag: clause.clauseKey,
+    verifiedConsentNote: VERIFIED_CONSENT_NOTE,
   }
 }
 
@@ -129,8 +168,14 @@ export default function createApprovalsController(dependencies: ApprovalsDepende
           job: APPROVAL_SEND_JOB,
           runKey,
         })
+        /* Disjoint: a clause is asked about only once it left _K odeslání_. */
+        let replies = await dependencies.articles.claimForReplies(runKey, at)
         let clauses = await dependencies.articles.claimForSending(runKey, at)
-        return json({ clauses: clauses.map(claimedItem), runKey })
+        return json({
+          clauses: clauses.map(claimedItem),
+          replies: replies.map(claimedReply),
+          runKey,
+        })
       },
 
       async report(context) {
@@ -142,17 +187,25 @@ export default function createApprovalsController(dependencies: ApprovalsDepende
         /* An empty text says nothing, as no text does. */
         let error = body?.['error'] === '' ? null : body?.['error']
         let results = body?.['results']
+        /* A run with no reply to report may leave the list out. */
+        let replies = body?.['replies'] ?? []
         if (
           !isText(runKey, MAX_ID_LENGTH) ||
           (outcome !== 'ok' && outcome !== 'failed') ||
           (error !== undefined && error !== null && !isText(error, ERROR_TEXT_LIMIT)) ||
           !Array.isArray(results) ||
-          results.length > CLAIM_LIMIT
+          results.length > CLAIM_LIMIT ||
+          !Array.isArray(replies) ||
+          replies.length > REPLY_CLAIM_LIMIT
         ) {
           return json({ error: 'invalid_request' }, 400)
         }
         let read = results.map(readResult)
         if (read.some((result) => result === null)) return json({ error: 'invalid_request' }, 400)
+        let readReplies = replies.map(readReply)
+        if (readReplies.some((reply) => reply === null)) {
+          return json({ error: 'invalid_request' }, 400)
+        }
         if (!(await dependencies.runs.isOpen(APPROVAL_SEND_JOB, runKey))) {
           return json({ error: 'unknown_run' }, 409)
         }
@@ -169,12 +222,23 @@ export default function createApprovalsController(dependencies: ApprovalsDepende
           )
           answers.push({ answer, clauseKey: result.clauseKey })
         }
+        let replyAnswers = []
+        for (let reply of readReplies) {
+          if (reply === null) continue
+          let answer = await dependencies.articles.recordReply(
+            runKey,
+            reply.clauseKey,
+            reply.report,
+            at,
+          )
+          replyAnswers.push({ answer, clauseKey: reply.clauseKey })
+        }
         await dependencies.runs.finish(APPROVAL_SEND_JOB, runKey, {
           at,
           error: typeof error === 'string' ? error : null,
           outcome,
         })
-        return json({ results: answers })
+        return json({ replies: replyAnswers, results: answers })
       },
     },
   })

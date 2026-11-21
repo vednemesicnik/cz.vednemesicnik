@@ -1,9 +1,10 @@
 /**
- * What a run of the reply check reports about one batch, and what that does to it (#31).
+ * What a run of a reply check reports about one consent request, and what that does to it: a
+ * batch of artworks (#31) or an author's clause of a final version (#89), which are decided alike.
  *
- * The job asks `SCRIPT__Mail__Reply_Check` about the provider's latest reply, archives the
- * conversation into the article's `Licence` where it may, and reports both at once. The app keeps
- * the reply's own text and the IDs; Gmail and the PDF keep the conversation.
+ * The job asks `SCRIPT__Mail__Reply_Check` about the latest reply, archives the conversation into
+ * the article's `Licence` where it may, and reports both at once. The app keeps the reply's own
+ * text and the IDs; Gmail and the PDF keep the conversation.
  */
 
 import { type BatchStatus, mayArchive } from './artwork.ts'
@@ -43,7 +44,13 @@ export type BatchReport =
   | { archive: ReportedArchive | null; reply: ReportedReply; state: 'other_reply' }
   | { archive: ReportedArchive | null; reply: ReportedReply; state: 'reply_matches' }
 
-/** What changes on the batch. Every field left out stays as it is. */
+/** What a report reads of the request it is about: a clause passes `discardedAt: null`. */
+export type ConsentStatus = Pick<
+  BatchStatus,
+  'approvedAt' | 'consentVerifiedAt' | 'discardedAt' | 'isExactConsent' | 'replyMessageId'
+>
+
+/** What changes on the batch or the clause. Every field left out stays as it is. */
 export type BatchPatch = {
   approved?: { at: Temporal.Instant; fileId: string }
   archiveFailed?: { at: Temporal.Instant; error: string }
@@ -72,7 +79,7 @@ export const NO_CONVERSATION_ERROR =
  * retraction is never archived on the strength of an older decision.
  */
 export function decideReport(
-  batch: BatchStatus,
+  batch: ConsentStatus,
   report: BatchReport,
   at: Temporal.Instant,
 ): ReportDecision {
@@ -92,10 +99,9 @@ export function decideReport(
   let patch: BatchPatch = { checkedAt: at, reply: { ...report.reply, isExactConsent } }
   if (isNewReply) patch.isDecisionReset = true
   let isArchivable = mayArchive({
-    ...batch,
     consentVerifiedAt: isNewReply ? null : batch.consentVerifiedAt,
+    discardedAt: batch.discardedAt,
     isExactConsent,
-    replyMessageId: report.reply.messageId,
   })
 
   if (report.archive === null) return { answer: 'accepted', patch }

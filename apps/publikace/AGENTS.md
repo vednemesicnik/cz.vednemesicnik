@@ -14,9 +14,11 @@ public page `/l/{key}/article` creates an article with its Doc and mails its aut
 handover to proofreading in the issue detail, which the proofreaders hear of in one digest a
 morning, and the page `/proofreading`, where they sign in to take a text, give it back, and mark
 its final version: a PDF in the article folder and one clause per author, which
-`SCRIPT__Publication__Approval_Send` is to claim through `/api/v1/approvals` (#89).
-Nothing runs on Fly.io yet, and the background jobs still read the sheets, except the
-artwork reply check and the proofreaders' digest, which go through the app's API and whose runs
+`SCRIPT__Publication__Article_Approvals` claims through `/api/v1/approvals`, mails to the
+author and reads the reply to, so that one not exactly „Souhlasím“ reaches _Ke kontrole_ beside
+the artworks' (#89). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+except the artwork reply check, the article approvals and the proofreaders' digest, which go
+through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
 digest). What the app does on Drive and through the Mailer
 is tried against the real services by hand, as
@@ -120,15 +122,19 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   across every open issue, and every screen of the editors-in-chief refuses them with 403
   (`10d`); a person may be both. Everybody else arrives through a shared link that can do one thing in one issue
   (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
-- **The background jobs stay in Apps Script and talk to the app.** `SCRIPT__Publication__Approval_Send`,
-  `…__Comment_Digest`, `…__Designer_Handoff`, the artwork reply check
-  (`SCRIPT__Publication__Artwork_Replies`, the first of them) and the proofreaders' morning
-  digest (`SCRIPT__Publication__Proofreading_Digest`, which only calls the app) run as `publikace.app@`
+- **The background jobs stay in Apps Script and talk to the app.** `…__Comment_Digest`,
+  `…__Designer_Handoff`, the artwork reply check (`SCRIPT__Publication__Artwork_Replies`, the
+  first of them), the article approvals (`SCRIPT__Publication__Article_Approvals`, which sends
+  the final versions and reads the replies) and the proofreaders' morning digest
+  (`SCRIPT__Publication__Proofreading_Digest`, which only calls the app) run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report
   every run to the app with the interval of their trigger, and the app shows the last one and can
   start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a
   next run the app shows is an estimate, never a promise. The app reaches Gmail only through the
-  Mailer and the reply check, never with a token of its own.
+  Mailer and the reply check, never with a token of its own. A job the app replaces stays on the
+  sheets beside the one that talks to the app, each with its own issues, until no issue made
+  before the app is open: `SCRIPT__Publication__Approval_Send` under `publikace@` keeps sending
+  the old issues' clauses, and `Artwork_Upload` keeps reading their artworks' replies.
 - **The Doc carries only the text; the app carries every state.** Nothing goes into an article
   Doc: no menu, no link, no add-on. A bound script in a template is copied into every Doc and asks
   each person to authorize it in each one, so the steps on an article (the handover, taking and

@@ -4,14 +4,13 @@ import { sql } from 'remix/data-table'
 import type { ArtworkCounts, ArtworkState, BatchStatus } from '../domain/artwork.ts'
 import { batchState, batchTag, isWaiting, NO_ARTWORKS } from '../domain/artwork.ts'
 import {
-  type BatchPatch,
   type BatchReport,
   CLAIM_LIMIT,
   CLAIM_MINUTES,
   decideReport,
-  REPLY_TEXT_LIMIT,
 } from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
+import { applyConsentPatch } from './consent-patch.server.ts'
 
 /**
  * Artworks in the app's database, the source of truth for them, and the batches that send them.
@@ -298,49 +297,6 @@ const QUEUE_CANDIDATES = sql`SELECT b.*, ar.name AS article_name, i.name AS issu
   WHERE b.created_at IS NOT NULL AND b.approved_at IS NULL AND i.closed_at IS NULL
     AND (b.reply_message_id IS NOT NULL OR b.archive_failed_at IS NOT NULL)
   ORDER BY coalesce(b.reply_received_at, b.archive_failed_at), b.id`
-
-/** A report's patch. The caller's transaction keeps a batch from ever showing half of it. */
-async function applyPatch(db: Database, id: number, patch: BatchPatch): Promise<void> {
-  if (patch.isDecisionReset === true) {
-    await db.exec(
-      sql`UPDATE artwork_batches SET consent_verified_at = NULL,
-            consent_verified_by_email = NULL, consent_verified_by_name = NULL,
-            archive_failed_at = NULL, archive_error = NULL
-          WHERE id = ${id}`,
-    )
-  }
-  if (patch.reply !== undefined) {
-    let reply = patch.reply
-    await db.exec(
-      sql`UPDATE artwork_batches SET reply_thread_id = ${reply.threadId},
-            reply_message_id = ${reply.messageId}, reply_received_at = ${stamp(reply.receivedAt)},
-            reply_text = ${reply.text.slice(0, REPLY_TEXT_LIMIT)},
-            is_exact_consent = ${reply.isExactConsent ? 1 : 0}
-          WHERE id = ${id}`,
-    )
-  }
-  if (patch.checkedAt !== undefined) {
-    await db.exec(
-      sql`UPDATE artwork_batches SET checked_at = ${stamp(patch.checkedAt)} WHERE id = ${id}`,
-    )
-  }
-  if (patch.archiveFailed !== undefined) {
-    await db.exec(
-      sql`UPDATE artwork_batches SET archive_failed_at = ${stamp(patch.archiveFailed.at)},
-            archive_error = ${patch.archiveFailed.error.slice(0, 2000)}
-          WHERE id = ${id}`,
-    )
-  }
-  /* The PDF in `Licence` is the proof from here on, so the reply's text goes. */
-  if (patch.approved !== undefined) {
-    await db.exec(
-      sql`UPDATE artwork_batches SET approved_at = ${stamp(patch.approved.at)},
-            consent_file_id = ${patch.approved.fileId}, reply_text = NULL,
-            archive_failed_at = NULL, archive_error = NULL
-          WHERE id = ${id}`,
-    )
-  }
-}
 
 async function withArtworks(db: Database, rows: readonly Row[]): Promise<BatchRow[]> {
   if (rows.length === 0) return []
@@ -682,7 +638,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
         let batch = await batchById(db, batchId)
         if (batch === null || batch.claimKey !== runKey) return 'unknown'
         let decision = decideReport(batch, report, at)
-        await applyPatch(db, batchId, decision.patch)
+        await applyConsentPatch(db, 'batches', batchId, decision.patch)
         /* Reported, so the next run may take it; the key stays for a repeat of this report. */
         await db.exec(sql`UPDATE artwork_batches SET claimed_at = NULL WHERE id = ${batchId}`)
         return decision.answer

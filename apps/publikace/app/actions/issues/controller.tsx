@@ -304,7 +304,8 @@ async function linkAndArticles(
     Number(
       (row.artworks.line?.isWaiting ?? false) ||
         row.missing !== null ||
-        row.state.tone === 'problem',
+        row.state.tone === 'problem' ||
+        row.state.tone === 'waiting',
     )
   rows.sort(
     (a, b) =>

@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 import type { JobHealth } from './job-run.ts'
 import {
   archiveFailedText,
+  articleKindLine,
   discardedBatchText,
   kindLine,
   readLine,
@@ -38,27 +39,65 @@ describe('the queue’s lines', () => {
     )
   })
 
-  it('reads the job: the time and the estimate, the passed estimate, a stopped job and none', () => {
-    assert.deepEqual(readLine(RUNNING, TODAY), {
+  it('reads the jobs: the time and the estimate, the passed estimate, a stopped job and none', () => {
+    let both = (health: JobHealth) => ({ articles: health, artworks: health })
+    assert.deepEqual(readLine(both(RUNNING), TODAY), {
       after: '',
       before: 'Odpovědi čteny v\u00a09:00 · další běh kolem 9:30',
       link: null,
     })
-    assert.deepEqual(readLine(PASSED, TODAY), {
+    assert.deepEqual(readLine(both(PASSED), TODAY), {
       after: '',
       before: 'Odpovědi čteny v\u00a09:00',
       link: null,
     })
-    assert.deepEqual(readLine(STOPPED, TODAY), {
+    assert.deepEqual(readLine({ articles: RUNNING, artworks: STOPPED }, TODAY), {
       after: '',
       before: '',
       link: 'Čtení odpovědí k\u00a0obrazovým dílům teď neběží.',
     })
-    assert.deepEqual(readLine(NEVER, TODAY), {
+    assert.deepEqual(readLine({ articles: STOPPED, artworks: NEVER }, TODAY), {
+      after: '',
+      before: '',
+      link: 'Čtení odpovědí u\u00a0článků teď neběží.',
+    })
+    assert.deepEqual(readLine(both(STOPPED), TODAY), {
+      after: '',
+      before: '',
+      link: 'Čtení odpovědí u\u00a0článků i\u00a0obrazových děl teď neběží.',
+    })
+    assert.deepEqual(readLine({ articles: RUNNING, artworks: NEVER }, TODAY), {
       after: ' se zatím neohlásila.',
       before: 'Úloha ',
       link: 'Odpovědi k\u00a0obrazovým dílům',
     })
+    assert.deepEqual(readLine({ articles: NEVER, artworks: RUNNING }, TODAY), {
+      after: ' se zatím neohlásila.',
+      before: 'Úloha ',
+      link: 'Žádosti a\u00a0odpovědi u\u00a0článků',
+    })
+    assert.deepEqual(readLine(both(NEVER), TODAY), {
+      after: '',
+      before: '',
+      link: 'Žádná z\u00a0úloh pro čtení odpovědí se zatím neohlásila.',
+    })
+  })
+
+  it('gives the older of two runs, and an estimate only when both jobs share it', () => {
+    let later: JobHealth = {
+      kind: 'running',
+      lastStartedAt: LAST.add({ minutes: 12 }),
+      next: NEXT.add({ minutes: 10 }),
+    }
+    assert.deepEqual(readLine({ articles: later, artworks: RUNNING }, TODAY), {
+      after: '',
+      before: 'Odpovědi čteny v\u00a09:00',
+      link: null,
+    })
+  })
+
+  it('names an article’s final version and its issue', () => {
+    assert.equal(articleKindLine('VDM_2026_5'), 'Finální verze článku · VDM_2026_5')
   })
 
   it('promises an archive only while there is an estimate', () => {

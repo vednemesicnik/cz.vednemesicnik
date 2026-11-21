@@ -1,11 +1,22 @@
 import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
-import { CLAIM_LIMIT, CLAIM_MINUTES, clauseKey, type ClauseOutcome } from '../domain/approvals.ts'
+import {
+  CLAIM_LIMIT,
+  CLAIM_MINUTES,
+  clauseKey,
+  type ClauseOutcome,
+  clauseState,
+  type ClauseStatus,
+  countClauses,
+  REPLY_CLAIM_LIMIT,
+} from '../domain/approvals.ts'
 import type { ArticleStep, Author, FinalVersion } from '../domain/article.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
 import type { DigestCandidate } from '../domain/proofreading-digest.ts'
+import { type BatchReport, decideReport } from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
+import { applyConsentPatch } from './consent-patch.server.ts'
 import { insertLink } from './links.server.ts'
 
 /**
@@ -104,7 +115,7 @@ export type CancelFinalOutcome =
   | { issueName: string; kind: 'closed' }
   | { kind: 'gone' }
 
-/** A clause a run of `Approval_Send` took: what its e-mail needs (#89). */
+/** A clause a run of `Article_Approvals` took to send: what its e-mail needs (#89). */
 export type ClaimedClause = {
   articleName: string
   authorEmail: string
@@ -113,8 +124,39 @@ export type ClaimedClause = {
   docId: string
   issueName: string
   pdfFileId: string
+  /** The PDF's sha256, which names the attachment as the old job names it. */
+  pdfHash: string
   signature: string
 }
+
+/** A clause a run took to ask about its reply, and where its archive goes (#89). */
+export type ClaimedReply = {
+  articleName: string
+  authorEmail: string
+  authorName: string
+  clauseKey: string
+  /** A person decided the reply is a consent (_Je to souhlas_), so any reply is archived. */
+  isVerified: boolean
+  issueName: string
+  /** `null` when the article's `Licence` was found missing: the job then reports a failed archive. */
+  licencesFolderId: string | null
+}
+
+/** One author's clause as _Ke kontrole_ shows it (`13a`–`13c`). */
+export type QueuedClause = ClauseStatus & {
+  archiveError: string | null
+  articleId: number
+  articleName: string
+  authorEmail: string
+  authorName: string
+  consentVerifiedByName: string | null
+  id: number
+  issueName: string
+  replyReceivedAt: Temporal.Instant | null
+  replyText: string | null
+}
+
+export type ReplyAnswer = 'accepted' | 'superseded' | 'unknown'
 
 /** The PDF a marking stored, and the tag it carries on Drive. */
 export type FinalVersionPdf = { attemptKey: string; fileId: string; hash: string }
@@ -305,6 +347,39 @@ export type ArticleStore = {
     outcome: ClauseOutcome,
     at: Temporal.Instant,
   ): Promise<'done' | 'unknown'>
+  /**
+   * The clauses whose reply a run asks about, under the run's key: sent, or not confirmed by the
+   * Mailer (a copy may have arrived after all), not yet approved, of a standing marking in an
+   * open issue, and not claimed by another run in the last `CLAIM_MINUTES`. The least recently
+   * checked first.
+   */
+  claimForReplies(runKey: string, at: Temporal.Instant): Promise<ClaimedReply[]>
+  /** What one report of a reply does to a clause the run claimed; `unknown` for one it did not. */
+  recordReply(
+    runKey: string,
+    key: string,
+    report: BatchReport,
+    at: Temporal.Instant,
+  ): Promise<ReplyAnswer>
+  /**
+   * _Je to souhlas_ on the reply the card showed, `replyMessageId`; `false` when the clause is not
+   * in _Ke kontrole_ any more, its issue was closed, or a newer reply arrived meanwhile.
+   */
+  verifyClause(
+    id: number,
+    replyMessageId: string,
+    editor: { displayName: string; email: string },
+    at: Temporal.Instant,
+  ): Promise<boolean>
+  /** _Vrátit_ until the job archives (`13b`); `false` once it has or failed to, or with nothing to take back. */
+  undoClauseVerification(id: number): Promise<boolean>
+  /**
+   * The clauses of _Ke kontrole_, the oldest reply first, and the clause `including` names where
+   * it stands, decided or not: the card just decided keeps its place until the next load (`13b`).
+   */
+  reviewQueue(including?: number): Promise<QueuedClause[]>
+  /** How many cards of articles _Ke kontrole_ has, for the panel. */
+  reviewCount(): Promise<number>
   markWelcome(
     articleId: number,
     position: number,
@@ -312,8 +387,8 @@ export type ArticleStore = {
     at: Temporal.Instant,
   ): Promise<void>
   /**
-   * Created articles with a missing folder, or with a clause the job could not send (_Chyba_), per
-   * issue: each is one item of _Čeká na vás_ (`11a`, `01d`).
+   * Created articles with a missing folder, or with a clause that waits on the editors-in-chief
+   * (_Chyba_, _Ke kontrole_), per issue: each is one item of _Čeká na vás_ (`11a`, `01d`).
    */
   missingCountsByIssue(): Promise<Map<number, number>>
   /** Attempts whose cleanup failed, safe to take while other requests run. */
@@ -515,40 +590,103 @@ async function withAuthors(db: Database, rows: readonly Row[]): Promise<ArticleR
   })
 }
 
-/** The standing marking of each article, with its clauses counted by state. */
+/** What `clauseState` reads of a clause's row. */
+function toClauseStatus(row: Row): ClauseStatus {
+  let state = String(row['state'])
+  return {
+    approvedAt: parseStamp(row['approved_at']),
+    archiveFailedAt: parseStamp(row['archive_failed_at']),
+    consentVerifiedAt: parseStamp(row['consent_verified_at']),
+    isExactConsent: Number(row['is_exact_consent']) === 1,
+    replyMessageId: text(row['reply_message_id']),
+    state: state === 'failed' || state === 'sent' ? state : 'pending',
+  }
+}
+
+/**
+ * The standing marking of each article, with its clauses counted by state. The states come from
+ * `clauseState`, so the tag, the queue and the counts read a clause the same way.
+ */
 async function standingFinalVersions(
   db: Database,
   ids: readonly number[],
 ): Promise<Map<number, FinalVersion>> {
-  let result = await db.exec(
-    sql`SELECT f.article_id, f.marked_at, f.marked_by_email, f.marked_by_name, f.pdf_file_id,
-          count(c.id) AS total,
-          coalesce(sum(c.state = 'pending'), 0) AS pending,
-          coalesce(sum(c.state = 'sent'), 0) AS sent,
-          coalesce(sum(c.state = 'failed'), 0) AS failed,
-          coalesce(max(c.first_claimed_at IS NOT NULL), 0) AS is_claimed
-        FROM final_versions f LEFT JOIN article_clauses c ON c.final_version_id = f.id
-        WHERE f.cancelled_at IS NULL
-          AND f.article_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))
-        GROUP BY f.id`,
+  let versions = await db.exec(
+    sql`SELECT id, article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id
+        FROM final_versions
+        WHERE cancelled_at IS NULL
+          AND article_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))`,
   )
+  let versionIds = (versions.rows ?? []).map((row) => Number(row['id']))
+  let clauses = await db.exec(
+    sql`SELECT * FROM article_clauses
+        WHERE final_version_id IN (SELECT value FROM json_each(${JSON.stringify(versionIds)}))
+        ORDER BY coalesce(reply_received_at, ''), position`,
+  )
+  let byVersion = new Map<number, Row[]>()
+  for (let row of clauses.rows ?? []) {
+    let id = Number(row['final_version_id'])
+    byVersion.set(id, [...(byVersion.get(id) ?? []), row])
+  }
   let byArticle = new Map<number, FinalVersion>()
-  for (let row of result.rows ?? []) {
+  for (let row of versions.rows ?? []) {
+    let rows = byVersion.get(Number(row['id'])) ?? []
+    let reviewed = rows.find((clause) => clauseState(toClauseStatus(clause)) === 'review')
     byArticle.set(Number(row['article_id']), {
       at: parseStamp(row['marked_at']) ?? EPOCH,
-      clauses: {
-        failed: Number(row['failed']),
-        pending: Number(row['pending']),
-        sent: Number(row['sent']),
-        total: Number(row['total']),
-      },
+      clauses: countClauses(rows.map(toClauseStatus)),
       email: String(row['marked_by_email']),
-      isCancellable: Number(row['is_claimed']) === 0,
+      isCancellable: !rows.some((clause) => clause['first_claimed_at'] !== null),
       name: text(row['marked_by_name']),
       pdfFileId: String(row['pdf_file_id']),
+      reviewAuthor: reviewed === undefined ? null : String(reviewed['author_name']),
     })
   }
   return byArticle
+}
+
+/**
+ * The clauses that wait on the editors-in-chief, as `clauseState` reads them: an e-mail the Mailer
+ * did not confirm with no reply since (`unsent`), a reply in _Ke kontrole_ (`review`) and a
+ * failed archive (`unarchived`). Written out for SQL; the tests hold it to `clauseState`.
+ */
+const WAITS_ON_EDITORS = sql`c.approved_at IS NULL AND c.state != 'pending' AND (
+    c.archive_failed_at IS NOT NULL
+    OR (c.reply_message_id IS NULL AND c.state = 'failed')
+    OR (c.reply_message_id IS NOT NULL AND c.consent_verified_at IS NULL
+        AND c.is_exact_consent = 0)
+  )`
+
+/* The clauses that could be in the queue; `isQueuedClause` decides. */
+const CLAUSE_QUEUE_CANDIDATES = sql`SELECT c.*, a.name AS article_name, i.name AS issue_name
+  FROM article_clauses c
+  JOIN final_versions f ON f.id = c.final_version_id
+  JOIN articles a ON a.id = c.article_id
+  JOIN issues i ON i.id = a.issue_id
+  WHERE f.cancelled_at IS NULL AND i.closed_at IS NULL AND c.approved_at IS NULL
+    AND (c.reply_message_id IS NOT NULL OR c.archive_failed_at IS NOT NULL)
+  ORDER BY coalesce(c.reply_received_at, c.archive_failed_at), c.id`
+
+/** What _Ke kontrole_ holds of articles: a reply that waits on a person, and a failed archive. */
+function isQueuedClause(row: Row): boolean {
+  let state = clauseState(toClauseStatus(row))
+  return state === 'review' || state === 'unarchived'
+}
+
+function toQueuedClause(row: Row): QueuedClause {
+  return {
+    ...toClauseStatus(row),
+    archiveError: text(row['archive_error']),
+    articleId: Number(row['article_id']),
+    articleName: String(row['article_name'] ?? ''),
+    authorEmail: String(row['author_email']),
+    authorName: String(row['author_name']),
+    consentVerifiedByName: text(row['consent_verified_by_name']),
+    id: Number(row['id']),
+    issueName: String(row['issue_name'] ?? ''),
+    replyReceivedAt: parseStamp(row['reply_received_at']),
+    replyText: text(row['reply_text']),
+  }
 }
 
 /** The article has no standing marking. */
@@ -957,7 +1095,8 @@ export function createArticleStore(database: Database): ArticleStore {
               WHERE id IN (SELECT value FROM json_each(${ids}))`,
         )
         let claimed = await db.exec(
-          sql`SELECT c.*, a.name AS article_name, a.doc_id, i.name AS issue_name, f.pdf_file_id
+          sql`SELECT c.*, a.name AS article_name, a.doc_id, i.name AS issue_name, f.pdf_file_id,
+                f.pdf_hash
               FROM article_clauses c
               JOIN final_versions f ON f.id = c.final_version_id
               JOIN articles a ON a.id = c.article_id
@@ -973,6 +1112,7 @@ export function createArticleStore(database: Database): ArticleStore {
           docId: String(row['doc_id']),
           issueName: String(row['issue_name']),
           pdfFileId: String(row['pdf_file_id']),
+          pdfHash: String(row['pdf_hash']),
           signature: String(row['signature']),
         }))
       })
@@ -981,19 +1121,22 @@ export function createArticleStore(database: Database): ArticleStore {
     recordSending(runKey, key, outcome, at) {
       return database.transaction(async (db) => {
         /* Reported, so the lease ends. A clause already sent stays sent: a clause reported twice
-           in one report cannot turn it into a failure. */
+           in one report cannot turn it into a failure. A clause with a reply was claimed to be
+           asked about, not sent, so a sending result does not touch it. */
         let result =
           outcome.kind === 'sent'
             ? await db.exec(
                 sql`UPDATE article_clauses
                     SET state = 'sent', sent_at = coalesce(sent_at, ${stamp(at)}), error = NULL,
                         claimed_at = NULL
-                    WHERE clause_key = ${key} AND claim_key = ${runKey}`,
+                    WHERE clause_key = ${key} AND claim_key = ${runKey}
+                      AND reply_message_id IS NULL`,
               )
             : await db.exec(
                 sql`UPDATE article_clauses
                     SET state = 'failed', error = ${outcome.error}, claimed_at = NULL
-                    WHERE clause_key = ${key} AND claim_key = ${runKey} AND state != 'sent'`,
+                    WHERE clause_key = ${key} AND claim_key = ${runKey} AND state != 'sent'
+                      AND reply_message_id IS NULL`,
               )
         if ((result.affectedRows ?? 0) > 0) return 'done'
         let found = await db.exec(
@@ -1001,6 +1144,123 @@ export function createArticleStore(database: Database): ArticleStore {
         )
         return (found.rows ?? []).length > 0 ? 'done' : 'unknown'
       })
+    },
+
+    claimForReplies(runKey, at) {
+      let lease = stamp(at.subtract({ minutes: CLAIM_MINUTES }))
+      return database.transaction(async (db) => {
+        let result = await db.exec(
+          sql`SELECT c.id FROM article_clauses c
+              JOIN final_versions f ON f.id = c.final_version_id
+              JOIN articles a ON a.id = c.article_id
+              JOIN issues i ON i.id = a.issue_id
+              WHERE c.state != 'pending' AND c.approved_at IS NULL AND f.cancelled_at IS NULL
+                AND i.closed_at IS NULL
+                AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
+              ORDER BY coalesce(c.checked_at, ''), c.id
+              LIMIT ${REPLY_CLAIM_LIMIT}`,
+        )
+        let ids = JSON.stringify((result.rows ?? []).map((row) => Number(row['id'])))
+        await db.exec(
+          sql`UPDATE article_clauses SET claim_key = ${runKey}, claimed_at = ${stamp(at)}
+              WHERE id IN (SELECT value FROM json_each(${ids}))`,
+        )
+        let claimed = await db.exec(
+          sql`SELECT c.*, a.name AS article_name, i.name AS issue_name,
+                CASE WHEN a.licences_folder_missing_at IS NULL THEN a.licences_folder_id END
+                  AS licences_folder_id
+              FROM article_clauses c
+              JOIN articles a ON a.id = c.article_id
+              JOIN issues i ON i.id = a.issue_id
+              WHERE c.id IN (SELECT value FROM json_each(${ids}))
+              ORDER BY coalesce(c.checked_at, ''), c.id`,
+        )
+        return (claimed.rows ?? []).map((row) => ({
+          articleName: String(row['article_name']),
+          authorEmail: String(row['author_email']),
+          authorName: String(row['author_name']),
+          clauseKey: String(row['clause_key']),
+          isVerified: row['consent_verified_at'] !== null,
+          issueName: String(row['issue_name']),
+          licencesFolderId: text(row['licences_folder_id']),
+        }))
+      })
+    },
+
+    recordReply(runKey, key, report, at) {
+      return database.transaction(async (db) => {
+        let result = await db.exec(
+          sql`SELECT * FROM article_clauses
+              WHERE clause_key = ${key} AND claim_key = ${runKey} AND state != 'pending'`,
+        )
+        /* A clause still to send was claimed for sending, and has no reply to report. */
+        let row = result.rows?.[0]
+        if (row === undefined) return 'unknown'
+        let id = Number(row['id'])
+        let decision = decideReport({ ...toClauseStatus(row), discardedAt: null }, report, at)
+        await applyConsentPatch(db, 'clauses', id, decision.patch)
+        /* A reply to an e-mail the Mailer did not confirm shows that it went after all, by the
+           time the reply came at the latest. */
+        if (decision.patch.reply !== undefined && row['state'] === 'failed') {
+          await db.exec(
+            sql`UPDATE article_clauses SET state = 'sent', error = NULL,
+                  sent_at = coalesce(sent_at, reply_received_at)
+                WHERE id = ${id}`,
+          )
+        }
+        /* Reported, so the next run may take it; the key stays for a repeat of this report. */
+        await db.exec(sql`UPDATE article_clauses SET claimed_at = NULL WHERE id = ${id}`)
+        return decision.answer
+      })
+    },
+
+    verifyClause(id, replyMessageId, editor, at) {
+      return database.transaction(async (db) => {
+        let result = await db.exec(
+          sql`SELECT c.*, i.closed_at, f.cancelled_at FROM article_clauses c
+              JOIN final_versions f ON f.id = c.final_version_id
+              JOIN articles a ON a.id = c.article_id
+              JOIN issues i ON i.id = a.issue_id
+              WHERE c.id = ${id}`,
+        )
+        let row = result.rows?.[0]
+        if (row === undefined || row['closed_at'] !== null || row['cancelled_at'] !== null) {
+          return false
+        }
+        if (clauseState(toClauseStatus(row)) !== 'review') return false
+        /* The reply the editor read, not one that arrived after the page was drawn. */
+        if (row['reply_message_id'] !== replyMessageId) return false
+        await db.exec(
+          sql`UPDATE article_clauses SET consent_verified_at = ${stamp(at)},
+                consent_verified_by_email = ${editor.email},
+                consent_verified_by_name = ${editor.displayName}
+              WHERE id = ${id}`,
+        )
+        return true
+      })
+    },
+
+    async undoClauseVerification(id) {
+      /* Only in the window `13b` gives it: once the archive failed, the decision stands (`13c`). */
+      let result = await database.exec(
+        sql`UPDATE article_clauses SET consent_verified_at = NULL,
+              consent_verified_by_email = NULL, consent_verified_by_name = NULL
+            WHERE id = ${id} AND approved_at IS NULL AND archive_failed_at IS NULL
+              AND consent_verified_at IS NOT NULL`,
+      )
+      return (result.affectedRows ?? 0) === 1
+    },
+
+    async reviewQueue(including) {
+      let result = await database.exec(CLAUSE_QUEUE_CANDIDATES)
+      return (result.rows ?? [])
+        .filter((row) => Number(row['id']) === including || isQueuedClause(row))
+        .map(toQueuedClause)
+    },
+
+    async reviewCount() {
+      let result = await database.exec(CLAUSE_QUEUE_CANDIDATES)
+      return (result.rows ?? []).filter(isQueuedClause).length
     },
 
     async markWelcome(articleId, position, outcome, at) {
@@ -1026,7 +1286,7 @@ export function createArticleStore(database: Database): ArticleStore {
               OR licences_folder_missing_at IS NOT NULL
               OR id IN (SELECT c.article_id FROM article_clauses c
                         JOIN final_versions f ON f.id = c.final_version_id
-                        WHERE f.cancelled_at IS NULL AND c.state = 'failed')
+                        WHERE f.cancelled_at IS NULL AND ${WAITS_ON_EDITORS})
             )
             GROUP BY issue_id`,
       )

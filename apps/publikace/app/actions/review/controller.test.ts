@@ -2,9 +2,11 @@ import * as assert from 'remix/assert'
 import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
+import { createArticleStore } from '../../data/articles.server.ts'
 import { createArtworkStore } from '../../data/artworks.server.ts'
 import type { BatchRow } from '../../data/artworks.server.ts'
 import { createJobRunStore } from '../../data/job-runs.server.ts'
+import { APPROVAL_SEND_JOB } from '../../domain/approvals.ts'
 import { REPLY_CHECK_JOB, type ReportedArchive } from '../../domain/reply-check.ts'
 import {
   createTestApp,
@@ -111,7 +113,7 @@ describe('Ke kontrole', () => {
       assert.match(html, /Nic ke kontrole/)
       assert.match(
         html,
-        /Úloha <a href="\/settings\/jobs">Odpovědi k\u00a0obrazovým dílům<\/a> se zatím neohlásila\./,
+        /<a href="\/settings\/jobs">Žádná z\u00a0úloh pro čtení odpovědí se zatím neohlásila\.<\/a>/,
       )
       assert.match(html, /href="\/review"[^>]*>\s*Ke kontrole\s*</)
     } finally {
@@ -135,7 +137,11 @@ describe('Ke kontrole', () => {
       )
       assert.match(html, /Další akce pro odpověď \(Klára Šimková\)/)
       assert.match(html, />Ke kontrole<span[^>]*>1<\/span>/)
-      assert.match(html, /Odpovědi čteny (?:ve |v\u00a0)\d+:\d\d/)
+      /* The artworks' job reported its run; the articles' never did, so the line names it. */
+      assert.match(
+        html,
+        /Úloha <a href="\/settings\/jobs">Žádosti a\u00a0odpovědi u\u00a0článků<\/a> se zatím neohlásila\./,
+      )
 
       let detail = await (await browser.get('/issues/VDM_2026_5')).text()
       assert.match(detail, /odpověď „Můžu se zeptat, kde přesně fotka vyjde\?“/)
@@ -295,6 +301,104 @@ describe('Ke kontrole', () => {
       )
       await consent(app, browser, batch)
       assert.equal((await store.findBatch(batch.id))?.consentVerifiedAt, null)
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+/**
+ * An article's final version whose one author answered something other than „Souhlasím“, as the
+ * job leaves it: marked, sent, and its reply reported.
+ */
+async function articleReply(app: TestApp, articleId: number, text: string): Promise<number> {
+  let articles = createArticleStore(app.database)
+  let runs = createJobRunStore(app.database)
+  /* To the millisecond, as the database keeps a take: the marking must find the same one. */
+  let at = Temporal.Instant.fromEpochMilliseconds(Date.now())
+  let taker = { email: 'lenka@vednemesicnik.test', name: 'Lenka Svobodová' }
+  await articles.takeProofreading(articleId, taker, at, 'writing')
+  await articles.markFinalVersion({
+    at,
+    by: taker,
+    id: articleId,
+    pdf: { attemptKey: `a-${articleId}`, fileId: `pdf-${articleId}`, hash: 'h' },
+    takenAt: at,
+  })
+  let sending = crypto.randomUUID()
+  await runs.start({ at, intervalMinutes: 30, job: APPROVAL_SEND_JOB, runKey: sending })
+  let [clause] = await articles.claimForSending(sending, at)
+  await articles.recordSending(sending, clause?.clauseKey ?? '', { kind: 'sent' }, at)
+  let reading = crypto.randomUUID()
+  await articles.claimForReplies(reading, at)
+  await articles.recordReply(
+    reading,
+    clause?.clauseKey ?? '',
+    {
+      archive: null,
+      reply: {
+        messageId: 'm-article',
+        receivedAt: RECEIVED.add({ hours: 1 }),
+        text,
+        threadId: 't',
+      },
+      state: 'other_reply',
+    },
+    at,
+  )
+  let [queued] = await articles.reviewQueue()
+  return queued?.id ?? 0
+}
+
+describe('Ke kontrole for articles', () => {
+  it('shows an author’s reply beside the artworks’, by when each arrived, and counts both', async () => {
+    let { app, article, batch, browser } = await setup()
+    try {
+      await replyTo(app, batch, 'ok, souhlas')
+      await articleReply(app, article.articleId, 'Souhlasím, jen prosím jiný podpis.')
+      let html = await (await browser.get('/review')).text()
+      assert.match(html, />Ke kontrole<span[^>]*>2<\/span>/)
+      let artworks = html.indexOf('Obrazová díla · 2 díla · VDM_2026_5')
+      let final = html.indexOf('Finální verze článku · VDM_2026_5')
+      assert.ok(artworks !== -1 && final > artworks)
+      assert.match(html, /Tereza Vlková · tereza\.vlkova@external\.test · přijato 14\. 11\./)
+      assert.match(html, /Souhlasím, jen prosím jiný podpis\./)
+      assert.match(html, /action="\/review\/clauses\/\d+\/consent"/)
+
+      let detail = await (await browser.get('/issues/VDM_2026_5')).text()
+      assert.match(detail, /Jiná odpověď · Tereza Vlková/)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('records Je to souhlas on a clause, keeps the card with Vrátit, and takes it back', async () => {
+    let { app, article, browser } = await setup()
+    try {
+      let id = await articleReply(app, article.articleId, 'ok')
+      let wrong = await browser.post(
+        `/review/clauses/${id}/consent`,
+        { reply: 'm-other' },
+        '/review',
+      )
+      assert.equal(wrong.status, 303)
+      let articles = createArticleStore(app.database)
+      assert.equal(await articles.reviewCount(), 1)
+
+      let response = await browser.post(
+        `/review/clauses/${id}/consent`,
+        { reply: 'm-article' },
+        '/review',
+      )
+      assert.equal(response.headers.get('Location'), `/review#reply-clause-${id}`)
+      assert.equal(await articles.reviewCount(), 0)
+      let html = await (await browser.get('/review')).text()
+      assert.match(html, /vdm-queue-item--settled/)
+      assert.match(html, new RegExp(`action="/review/clauses/${id}/consent/undo"`))
+      assert.match(await (await browser.get('/issues/VDM_2026_5')).text(), /souhlas zaznamenán/)
+
+      await browser.post(`/review/clauses/${id}/consent/undo`, {}, '/review')
+      assert.equal(await articles.reviewCount(), 1)
     } finally {
       await app.close()
     }

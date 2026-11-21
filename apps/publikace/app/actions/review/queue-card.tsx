@@ -14,7 +14,8 @@ export type QueueCardView = {
   consentAction: string | null
   /** The reply _Je to souhlas_ confirms, so a newer one that came meanwhile is not. */
   consentReplyId: string | null
-  id: number
+  /** The card's anchor, `reply-{id}`: a batch's number, or `clause-{number}` for an article. */
+  id: string
   isSettled: boolean
   /** _Úlohy na pozadí_ under an archive that failed (`13c`): the way to the job that retries it. */
   jobsHref: string | null

@@ -108,7 +108,9 @@ export type BatchStatus = {
  * except on a discarded batch, whose every reply goes to _Ke kontrole_ (`01b`), or a decision of
  * the editors-in-chief.
  */
-export function mayArchive(batch: BatchStatus): boolean {
+export function mayArchive(
+  batch: Pick<BatchStatus, 'consentVerifiedAt' | 'discardedAt' | 'isExactConsent'>,
+): boolean {
   return batch.consentVerifiedAt !== null || (batch.isExactConsent && batch.discardedAt === null)
 }
 
