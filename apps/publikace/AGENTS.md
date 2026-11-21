@@ -117,9 +117,11 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a
   next run the app shows is an estimate, never a promise. The app reaches Gmail only through the
   Mailer and the reply check, never with a token of its own.
-- **The article Doc's menu calls the app.** `SCRIPT__Publication__Article_Approve` is bound to the
-  article template, so every Doc carries a copy and anyone who edits the Doc, authors included,
-  can read it. It sends the app the Doc's ID and `ScriptApp.getIdentityToken()` of whoever
+- **The article Doc's menu calls the app.** `SCRIPT__Publication__Article_Menu` is bound to the
+  app's article template and deploys as `publikace.app@`, so every Doc the app creates carries a
+  copy and anyone who edits the Doc, authors included, can read it. It holds only the steps the
+  app records. `SCRIPT__Publication__Article_Approve`, bound to the scripts' template, serves the
+  issues made before the app and is never changed for it. It sends the app the Doc's ID and `ScriptApp.getIdentityToken()` of whoever
   clicked, and the app decides by that e-mail whether they may. **No secret goes into a bound
   script.** A dialog never calls the script's server with `google.script.run`, which runs as the
   browser's default Google account rather than the one that clicked: the menu item writes its
