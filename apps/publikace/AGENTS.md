@@ -10,10 +10,12 @@ what it does; this file is about working in it without breaking something expens
 `03 K rozhodnutí`. Built so far, on Remix 3 with a SQLite database that migrates on startup:
 Google sign-in and Přístup in `/settings` with the `publikace.app@` account, the issues (`/`,
 `/issues/new`, `/issues/{name}`) with their folders on Drive, and the newsroom's link, whose
-public page `/l/{key}/article` creates an article with its Doc and mails its authors. Nothing
-runs on Fly.io yet, and the background jobs still read the sheets, except the artwork reply
-check, which goes through the app's API and whose runs `/settings/jobs` shows, with a banner
-over every screen once two in a row failed. What the app does on Drive and through the Mailer
+public page `/l/{key}/article` creates an article with its Doc and mails its authors, and the
+handover to proofreading in the issue detail, which the proofreaders hear of in one digest a
+morning. Nothing runs on Fly.io yet, and the background jobs still read the sheets, except the
+artwork reply check and the proofreaders' digest, which go through the app's API and whose runs
+`/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
+digest). What the app does on Drive and through the Mailer
 is tried against the real services by hand, as
 [docs/real-drive-round-trip.md](docs/real-drive-round-trip.md) lays out, before the scripts are
 switched off. Beside it sits the setup shared with `cz.vednemesicnik` and
@@ -112,8 +114,9 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   account. Everybody else arrives through a shared link that can do one thing in one issue
   (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
 - **The background jobs stay in Apps Script and talk to the app.** `SCRIPT__Publication__Approval_Send`,
-  `…__Comment_Digest`, `…__Designer_Handoff` and the artwork reply check
-  (`SCRIPT__Publication__Artwork_Replies`, the first of them) run as `publikace.app@`
+  `…__Comment_Digest`, `…__Designer_Handoff`, the artwork reply check
+  (`SCRIPT__Publication__Artwork_Replies`, the first of them) and the proofreaders' morning
+  digest (`SCRIPT__Publication__Proofreading_Digest`, which only calls the app) run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report
   every run to the app with the interval of their trigger, and the app shows the last one and can
   start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a

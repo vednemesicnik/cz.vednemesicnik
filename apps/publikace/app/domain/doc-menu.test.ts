@@ -131,19 +131,25 @@ describe('the Doc menu’s answer to Označit probíhající korekturu', () => {
 describe('an article’s tag in the issue detail', () => {
   it('is Píše se with its creation day, then Korektura with who and since when', () => {
     let createdAt = Temporal.Instant.from('2026-11-10T08:00:00Z')
-    assert.deepEqual(articleStateTag({ createdAt, proofreading: null }), {
+    assert.deepEqual(articleStateTag({ createdAt, handover: null, proofreading: null }), {
       detail: 'založen 10. 11.',
       label: 'Píše se',
       tone: 'neutral',
     })
-    assert.deepEqual(articleStateTag({ createdAt, proofreading: { at: AT, ...JAKUB } }), {
-      detail: 'od 19. 11. · Jakub Novák',
-      label: 'Korektura',
-      tone: 'running',
-    })
+    assert.deepEqual(
+      articleStateTag({ createdAt, handover: null, proofreading: { at: AT, ...JAKUB } }),
+      {
+        detail: 'od 19. 11. · Jakub Novák',
+        label: 'Korektura',
+        tone: 'running',
+      },
+    )
     assert.equal(
-      articleStateTag({ createdAt, proofreading: { at: AT, email: JAKUB.email, name: null } })
-        .detail,
+      articleStateTag({
+        createdAt,
+        handover: null,
+        proofreading: { at: AT, email: JAKUB.email, name: null },
+      }).detail,
       'od 19. 11. · jakub.novak@vednemesicnik.test',
     )
   })

@@ -453,3 +453,79 @@ describe('settings, Účty Publikace', () => {
     }
   })
 })
+
+describe('settings, Korektura (14a, 14f)', () => {
+  const PATH = '/settings/proofreaders'
+
+  it('shows no address yet, and lets an administrator set one through the dialog', async () => {
+    let app = await editorialBoard()
+    try {
+      let browser = app.browser()
+      await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
+      let page = textOf(await (await browser.get('/settings')).text()).replaceAll(' ', ' ')
+      assert.ok(page.includes('Korektura'))
+      assert.ok(page.includes('Zatím žádná. Přístup přes adresu korektorů není nastavený'))
+      assert.ok(page.includes('Nastavit'))
+
+      let dialog = textOf(await (await browser.get(PATH)).text()).replaceAll(' ', ' ')
+      assert.ok(dialog.includes('Adresa korektorů'))
+      assert.ok(dialog.includes('Další přehled odejde na novou adresu.'))
+
+      let saved = await browser.post(PATH, { email: ' Korektori@Vednemesicnik.test ' }, PATH)
+      assert.equal(saved.status, 303)
+      let after = textOf(await (await browser.get('/settings')).text())
+      assert.ok(after.includes('korektori@vednemesicnik.test'))
+      assert.ok(after.includes('Adresa korektorů je uložená.'))
+      assert.ok(after.includes('Změnit'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps an error in the dialog, and saves nothing', async () => {
+    let app = await editorialBoard()
+    try {
+      let browser = app.browser()
+      await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
+      let cases = [
+        ['', 'Zadejte adresu korektorů.'],
+        ['korektori', 'Zadejte platnou e-mailovou adresu.'],
+        ['korektori@external.test', 'Zadejte adresu na doméně vednemesicnik.test.'],
+      ]
+      for (let [value, message] of cases) {
+        let answer = await browser.post(PATH, { email: value ?? '' }, PATH)
+        assert.equal(answer.status, 400)
+        let text = textOf(await answer.text()).replaceAll(' ', ' ')
+        assert.ok(text.includes(message ?? ''), message)
+      }
+      let page = textOf(await (await browser.get('/settings')).text())
+      assert.ok(page.includes('Zatím žádná'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('shows the address to somebody who is not an administrator, who cannot change it', async () => {
+    let app = await editorialBoard()
+    try {
+      let marie = app.browser()
+      await marie.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
+      await marie.post(PATH, { email: 'korektori@vednemesicnik.test' }, PATH)
+
+      let jakub = app.browser()
+      await jakub.signInAs('jakub@vednemesicnik.test', 'Jakub Novák')
+      let html = await (await jakub.get('/settings')).text()
+      assert.ok(textOf(html).includes('korektori@vednemesicnik.test'))
+      assert.ok(textOf(html).includes('Adresu mění správci.'))
+      assert.ok(!html.includes(`href="${PATH}"`))
+      assert.equal((await jakub.get(PATH)).status, 303)
+
+      let refused = await jakub.post(PATH, { email: 'jini@vednemesicnik.test' }, '/settings')
+      assert.equal(refused.status, 403)
+      let after = textOf(await (await marie.get('/settings')).text())
+      assert.ok(after.includes('korektori@vednemesicnik.test'))
+    } finally {
+      await app.close()
+    }
+  })
+})

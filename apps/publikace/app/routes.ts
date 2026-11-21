@@ -32,6 +32,11 @@ export const routes = route({
     discardBatch: post('/issues/:name/artworks/batches/:id/discard'),
     /* `12j`: _Zkontrolovat znovu_ under an article whose folder was found missing. */
     checkArticleFolders: post('/issues/:name/articles/:id/folders/check'),
+    /* `12k`: _Předat ke korektuře_ and _Zrušit předání_ act at once, with no dialog, and the
+       toast's _Vrátit_ sends the other one (`12l`). With `?undo=` each takes back only the step
+       it was offered for. */
+    handOver: post('/issues/:name/articles/:id/handover'),
+    cancelHandover: post('/issues/:name/articles/:id/handover/cancel'),
   },
 
   /* The pages behind a shared link, without sign-in or cookies (`02a`). `GET` draws the form,
@@ -66,6 +71,11 @@ export const routes = route({
       claim: post('/api/v1/artwork-replies/claim'),
       report: post('/api/v1/artwork-replies/report'),
     },
+    /* The proofreaders' morning digest, a job under `publikace.app@` with a daily trigger (#14):
+       one call, and the app builds, sends and records the digest. */
+    proofreadingDigest: {
+      run: post('/api/v1/proofreading-digest/run'),
+    },
   },
 
   /* _Ke kontrole_ (`13a`): the replies the reply check did not recognise as a consent.
@@ -95,6 +105,9 @@ export const routes = route({
     removeAccount: post('/settings/access/accounts/:id/remove'),
     askRemoveGroup: get('/settings/access/groups/:id/remove'),
     removeGroup: post('/settings/access/groups/:id/remove'),
+    /* _Adresa korektorů_ (`14f`): the dialog at its own address over Nastavení, and saving it. */
+    askProofreaders: get('/settings/proofreaders'),
+    saveProofreaders: post('/settings/proofreaders'),
     /* Connecting publikace.app@ (`14g`, `14h`): a form that sends the browser to Google, and the
        address Google sends it back to. */
     account: {

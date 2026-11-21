@@ -15,6 +15,7 @@ import createHomeController from './actions/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
 import createArtworkRepliesController from './actions/api/artwork-replies/controller.ts'
 import createDocMenuController from './actions/api/doc-menu/controller.ts'
+import createProofreadingDigestController from './actions/api/proofreading-digest/controller.ts'
 import createArtworksController from './actions/links/artworks/controller.tsx'
 import createLinksController from './actions/links/controller.tsx'
 import createReviewController from './actions/review/controller.tsx'
@@ -55,6 +56,7 @@ import { createDriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
 import { createLinkStore } from './data/links.server.ts'
+import { createProofreadersStore } from './data/proofreaders.server.ts'
 import { createPublicMailLog } from './data/public-mail.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
 import { DEFAULT_PUBLIC_MAIL_PER_DAY } from './domain/artwork.ts'
@@ -66,6 +68,7 @@ import { createArtworkFiles } from './drive/artwork-files.server.ts'
 import type { ArtworksSetup } from './drive/artworks-setup.server.ts'
 import { createDriveFolders } from './drive/folders.server.ts'
 import type { IssueSetup } from './drive/issue-setup.server.ts'
+import { createLock } from './drive/one-at-a-time.server.ts'
 import { createMailer, type Mailer, mailerUnavailable } from './mail/mailer.server.ts'
 import { loadAccess } from './middleware/access.server.ts'
 import { loadArticles } from './middleware/articles.server.ts'
@@ -239,6 +242,7 @@ export function createAppRouter(dependencies: AppDependencies) {
     directory.recordGroupName,
   )
   let jobRuns = createJobRunStore(dependencies.database)
+  let proofreaders = createProofreadersStore(dependencies.database)
 
   let router = createRouter({
     /*
@@ -297,6 +301,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         artworks: artworksSetup,
         links: articleSetup.links,
         origin: articleSetup.origin,
+        proofreaders,
         setup: articleSetup,
       }),
       skipWithoutSession(loadAuth()),
@@ -349,6 +354,22 @@ export function createAppRouter(dependencies: AppDependencies) {
     }),
   )
   router.map(
+    routes.api.proofreadingDigest,
+    createProofreadingDigestController({
+      articles: articleSetup.articles,
+      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      lock: createLock(),
+      mailer: articleSetup.mailer,
+      now,
+      origin: articleSetup.origin,
+      proofreaders,
+      runs: jobRuns,
+      verifyIdentityToken:
+        dependencies.verifyJobToken ??
+        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+    }),
+  )
+  router.map(
     routes.review,
     createReviewController(signedInUntil, {
       artworks: artworksSetup.artworks,
@@ -357,9 +378,15 @@ export function createAppRouter(dependencies: AppDependencies) {
   )
   router.map(routes.auth, createAuthController(signedInUntil))
   router.map(routes.auth.google, createGoogleController(signedInUntil))
-  router.map(routes.settings, createSettingsController(signedInUntil, { runs: jobRuns }))
+  router.map(
+    routes.settings,
+    createSettingsController(signedInUntil, { proofreaders, runs: jobRuns }),
+  )
   router.map(routes.settings.account, createDriveAccountController(signedInUntil))
-  router.map(routes.settings.jobs, createJobsController(signedInUntil, { runs: jobRuns }))
+  router.map(
+    routes.settings.jobs,
+    createJobsController(signedInUntil, { proofreaders, runs: jobRuns }),
+  )
 
   return router
 }

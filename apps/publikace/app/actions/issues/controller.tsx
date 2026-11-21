@@ -16,7 +16,31 @@ import {
   parseIssueFilter,
   suggestNextName,
 } from '../../domain/issue.ts'
-import { articleStateTag, authorsLine, documentUrl } from '../../domain/article.ts'
+import {
+  type ArticleState,
+  articleState,
+  articleStateTag,
+  authorsLine,
+  documentUrl,
+  STATE_ORDER,
+} from '../../domain/article.ts'
+import {
+  ALREADY_CANCELLED_TOAST,
+  alreadyHandedOverToast,
+  alreadyProofreadingToast,
+  CANCEL_FAILED_TOAST,
+  cancelTooLateToast,
+  closedCancelToast,
+  closedHandOverToast,
+  HAND_OVER_FAILED_TOAST,
+  HANDED_OVER_TOAST,
+  HANDOVER_CANCELLED_TOAST,
+  MISSING_ADDRESS_ARTICLES_TEXT,
+  missingAddressTitle,
+  type RaceToast,
+  TO_SETTINGS_LABEL,
+} from '../../domain/handover.ts'
+import { UNDO_LABEL } from '../../domain/review.ts'
 import {
   articleArtworksLine,
   type ArtworkFilter,
@@ -59,8 +83,8 @@ import {
   shownUrl,
   usageLine,
 } from '../../domain/link.ts'
-import { now } from '../../domain/time.ts'
-import type { Article, ArticleRow } from '../../data/articles.server.ts'
+import { now, parseStamp, stamp } from '../../domain/time.ts'
+import type { Article, ArticleRow, HandoverOutcome } from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
 import { discardBatch, resendBatch } from '../../drive/artworks-setup.server.ts'
@@ -78,6 +102,7 @@ import {
   DetailPage,
   type DiscardView,
   type LinkBlockView,
+  type MissingAddressView,
   type MissingFoldersView,
 } from './detail-page.tsx'
 import type { NewIssueDialog } from './overview-page.tsx'
@@ -127,6 +152,29 @@ function takeLinkChanged(session: Session | undefined, name: string): boolean {
   if (value === undefined) return false
   session?.unset(LINK_CHANGED_SESSION_KEY)
   return value === name
+}
+
+/*
+ * The article just handed over or back, kept for one load at the place its previous state gave
+ * it, so the next row's button does not move under the hand (`12l`, as `13b`'s settled card). By
+ * the article's ID, with that state and its handover's time, and taken once.
+ */
+const SETTLED_SESSION_KEY = 'handoverSettled'
+
+type SettledArticle = { at: string | null; id: number; state: ArticleState }
+
+function flashSettled(context: PageContext, settled: SettledArticle): void {
+  ;(context.get(Session) as Session | undefined)?.flash(SETTLED_SESSION_KEY, settled)
+}
+
+function takeSettled(session: Session | undefined): SettledArticle | null {
+  let value = session?.get(SETTLED_SESSION_KEY)
+  if (value === undefined) return null
+  session?.unset(SETTLED_SESSION_KEY)
+  if (typeof value !== 'object' || value === null) return null
+  let { at, id, state } = value as Record<string, unknown>
+  if (typeof id !== 'number' || (state !== 'writing' && state !== 'handedOver')) return null
+  return { at: typeof at === 'string' ? at : null, id, state }
 }
 
 function articlesOf(context: PageContext): ArticlesContext {
@@ -196,8 +244,10 @@ async function linkAndArticles(
   context: PageContext,
   issue: Issue,
   isChanged: boolean,
+  settled: SettledArticle | null,
 ): Promise<{ articles: ArticleRowView[]; link: LinkBlockView | undefined }> {
   let { articles, artworks, links, origin } = articlesOf(context)
+  let isOpen = issue.closedAt === null
   let today = now()
   let created = await articles.listCreated(issue.id)
   let counts = await artworks.artworks.countsByArticle(issue.id)
@@ -206,7 +256,23 @@ async function linkAndArticles(
   let rows = created.map((article) => {
     let articleCounts = counts.get(article.id) ?? NO_ARTWORKS
     let artworksLink = artworksLinks.get(article.id)
+    let state = articleState(article)
+    let ids = { id: String(article.id), name: issue.name }
+    /* A settled row stands where its previous state put it until the next load (`12l`). */
+    let isSettled = settled?.id === article.id
+    let sortState = isSettled && settled !== null ? settled.state : state
+    let sortAt =
+      isSettled && settled !== null
+        ? parseStamp(settled.at)
+        : state === 'handedOver'
+          ? (article.handover?.at ?? null)
+          : null
     return {
+      cancelHandoverAction:
+        isOpen && state === 'handedOver' ? routes.issues.cancelHandover.href(ids) : null,
+      handOverAction: isOpen && state === 'writing' ? routes.issues.handOver.href(ids) : null,
+      sortAt,
+      sortState,
       artworks: { count: totalOf(articleCounts), line: articleArtworksLine(articleCounts) },
       artworksUrl:
         artworksLink === undefined ? null : absoluteUrl(origin, artworksLinkPath(artworksLink.key)),
@@ -219,10 +285,17 @@ async function linkAndArticles(
     }
   })
   /* An article with something waiting, among its artworks or a missing folder, stands with what
-     waits (`12a`, `12j`). */
+     waits (`12a`, `12j`); then by state, the oldest handover first among the handed over, so the
+     one waiting since Monday leads them on Friday (`12k`). The sort is stable, so the rest keep
+     the newest first. */
   let isWaitingRow = (row: ArticleRowView) =>
     Number((row.artworks.line?.isWaiting ?? false) || row.missing !== null)
-  rows.sort((a, b) => isWaitingRow(b) - isWaitingRow(a))
+  rows.sort(
+    (a, b) =>
+      isWaitingRow(b) - isWaitingRow(a) ||
+      STATE_ORDER[a.sortState] - STATE_ORDER[b.sortState] ||
+      (a.sortAt !== null && b.sortAt !== null ? Temporal.Instant.compare(a.sortAt, b.sortAt) : 0),
+  )
 
   let link = issue.completedAt === null ? null : await links.articleLinkOf(issue.id)
   if (link === null) return { articles: rows, link: undefined }
@@ -335,10 +408,12 @@ async function renderDetail(
     context,
     issue,
     takeLinkChanged(session, issue.name),
+    takeSettled(session),
   )
   return context.render(
     <DetailPage
       articles={articles}
+      missingAddress={await missingAddressOf(context, articles)}
       artworks={await artworksOf(context, issue, filterOf(context))}
       discarding={options.discarding}
       driveAccount={await driveView(context)}
@@ -351,6 +426,47 @@ async function renderDetail(
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
+}
+
+/**
+ * The warning over _Články_ while the proofreaders have no address and something here waits for
+ * them (`12l`): before the first handover it would warn of nothing.
+ */
+async function missingAddressOf(
+  context: PageContext & { auth: { identity: Editor } },
+  rows: readonly ArticleRowView[],
+): Promise<MissingAddressView | undefined> {
+  if (!rows.some((row) => row.cancelHandoverAction !== null)) return undefined
+  if ((await articlesOf(context).proofreaders.find()) !== null) return undefined
+  let isAdmin = context.auth.identity.isAdmin
+  return {
+    action: isAdmin
+      ? { href: `${routes.settings.index.href()}#proofreading`, label: TO_SETTINGS_LABEL }
+      : undefined,
+    text: MISSING_ADDRESS_ARTICLES_TEXT,
+    title: missingAddressTitle(isAdmin),
+  }
+}
+
+/** A created article of this issue, or `null`: an ID from another issue answers as unknown. */
+async function articleOf(context: PageContext, issue: Issue, id: string): Promise<Article | null> {
+  let articleId = Number(id)
+  if (!Number.isSafeInteger(articleId)) return null
+  let created = await articlesOf(context).articles.listCreated(issue.id)
+  return created.find((each) => each.id === articleId) ?? null
+}
+
+/** What somebody else did meanwhile, as `12l` says it: nothing changed, so no _Vrátit_. */
+function flashRace(
+  context: { get(key: typeof Session): Session | undefined },
+  toast: RaceToast,
+): void {
+  flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+}
+
+/** The undo's stamp from the address, or `null` for a step that is not one. */
+function undoOf(context: PageContext): Temporal.Instant | null {
+  return parseStamp(context.url.searchParams.get('undo'))
 }
 
 /** The question _Zahodit dávku_ over the detail, keeping the artworks' filter (`12o`). */
@@ -501,6 +617,113 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         flashToast(context, RENEWED_TOAST)
         flashLinkChanged(context.get(Session), issue.name)
         return redirect(routes.issues.show.href({ name: issue.name }), 303)
+      },
+
+      /*
+       * `12k`, `12l`: the handover at once, then back to the detail with a toast whose _Vrátit_
+       * cancels this very handover. With `?undo=`, it is that _Vrátit_ after a cancellation: the
+       * cancelled handover stands again whole, its own time and its place in the digest included.
+       */
+      async handOver(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        if (issue === null || article === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        if (issue.closedAt !== null) {
+          flashToast(context, closedHandOverToast(issue.name))
+          return back()
+        }
+        let undo = undoOf(context)
+        let editor = context.auth.identity
+        let outcome: HandoverOutcome
+        try {
+          outcome =
+            undo === null
+              ? await articlesOf(context).articles.handOver(
+                  article.id,
+                  { email: editor.email, name: editor.displayName || null },
+                  now(),
+                )
+              : await articlesOf(context).articles.restoreHandover(article.id, undo)
+        } catch {
+          flashToast(context, HAND_OVER_FAILED_TOAST, 'error')
+          return back()
+        }
+        switch (outcome.kind) {
+          case 'done':
+            /* _Vrátit_ answers with the row itself, as it does in `13b`, and leaves it where it
+               stands: after an undo its own state already puts it there. */
+            if (undo === null) {
+              flashSettled(context, { at: null, id: article.id, state: 'writing' })
+              flashToast(context, HANDED_OVER_TOAST, 'neutral', {
+                action: `${routes.issues.cancelHandover.href({ id: String(article.id), name: issue.name })}?undo=${encodeURIComponent(stamp(outcome.at))}`,
+                label: UNDO_LABEL,
+              })
+            }
+            return back()
+          case 'handed-over':
+            flashRace(context, alreadyHandedOverToast(outcome.step, now()))
+            return back()
+          case 'proofreading':
+            flashRace(context, alreadyProofreadingToast(outcome.step))
+            return back()
+          case 'not-handed-over':
+            flashRace(context, ALREADY_CANCELLED_TOAST)
+            return back()
+          case 'gone':
+            return notFound()
+        }
+      },
+
+      /*
+       * `12k`, `12l`: the cancellation at once, with _Vrátit_ that restores the handover. With
+       * `?undo=`, it is the _Vrátit_ after a handover, and takes back only that one.
+       */
+      async cancelHandover(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        if (issue === null || article === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        if (issue.closedAt !== null) {
+          flashToast(context, closedCancelToast(issue.name))
+          return back()
+        }
+        let undo = undoOf(context)
+        let outcome: HandoverOutcome
+        try {
+          outcome = await articlesOf(context).articles.cancelHandover(
+            article.id,
+            now(),
+            undo ?? undefined,
+          )
+        } catch {
+          flashToast(context, CANCEL_FAILED_TOAST, 'error')
+          return back()
+        }
+        switch (outcome.kind) {
+          case 'done': {
+            if (undo === null) {
+              let at = article.handover === null ? null : stamp(article.handover.at)
+              flashSettled(context, { at, id: article.id, state: 'handedOver' })
+              flashToast(context, HANDOVER_CANCELLED_TOAST, 'neutral', {
+                action: `${routes.issues.handOver.href({ id: String(article.id), name: issue.name })}?undo=${encodeURIComponent(stamp(outcome.at))}`,
+                label: UNDO_LABEL,
+              })
+            }
+            return back()
+          }
+          case 'handed-over':
+            flashRace(context, alreadyHandedOverToast(outcome.step, now()))
+            return back()
+          case 'proofreading':
+            flashRace(context, cancelTooLateToast(outcome.step))
+            return back()
+          case 'not-handed-over':
+            flashRace(context, ALREADY_CANCELLED_TOAST)
+            return back()
+          case 'gone':
+            return notFound()
+        }
       },
 
       /* `12o`: the batch's request again, then back to the same filter with what happened. */

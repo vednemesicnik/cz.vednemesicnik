@@ -2,7 +2,13 @@ import { createController } from 'remix/router'
 
 import type { SignedInUntilCookie } from '../../../auth/session.server.ts'
 import type { JobRunStore } from '../../../data/job-runs.server.ts'
-import { jobState } from '../../../domain/job-run.ts'
+import type { ProofreadersStore } from '../../../data/proofreaders.server.ts'
+import {
+  MISSING_ADDRESS_JOB_TEXT,
+  missingAddressTitle,
+  TO_SETTINGS_LABEL,
+} from '../../../domain/handover.ts'
+import { PROOFREADING_DIGEST_JOB, readDigestRun } from '../../../domain/proofreading-digest.ts'
 import {
   failedCalloutText,
   HISTORY_DAYS,
@@ -14,6 +20,7 @@ import {
   jobTag,
   neverReportedText,
   scheduleText,
+  stateOfJob,
   STOPPED_CALLOUT_TITLE,
   stoppedCalloutText,
 } from '../../../domain/jobs.ts'
@@ -23,10 +30,11 @@ import { Toasts } from '../../../middleware/toasts.server.ts'
 import { routes } from '../../../routes.ts'
 import type { ToastMessage } from '../../../ui/toast/component.tsx'
 import { driveView } from '../../issues/render.tsx'
-import { JobPage } from './job-page.tsx'
+import { type JobCallout, JobPage } from './job-page.tsx'
 import { JobsPage } from './jobs-page.tsx'
 
 export type JobsDependencies = {
+  proofreaders: ProofreadersStore
   runs: JobRunStore
 }
 
@@ -50,16 +58,16 @@ export default function createJobsController(
         ])
         let rows = JOBS.map((job, index) => {
           let run = latest[index] ?? null
-          let state = jobState(run, today)
+          let state = stateOfJob(job, run, today)
           return {
             name: job.name,
-            schedule: run === null ? null : scheduleText(run.intervalMinutes),
+            schedule: run === null ? null : scheduleText(run.intervalMinutes, job.window),
             showHref: isWorthShowing(state)
               ? routes.settings.jobs.show.href({ job: job.key })
               : null,
             state: state.kind,
             summary: job.summary,
-            tag: jobTag(state, today),
+            tag: jobTag(state, today, job, run),
           }
         })
 
@@ -87,16 +95,45 @@ export default function createJobsController(
         /* A job silent for longer than the history reaches still shows when it last reported,
            which is what _Neběží_ sends the editors here to find (`14d`). */
         let runs = recent.length === 0 && latest !== null ? [latest] : recent
-        let state = jobState(latest, today)
-        let failed = failedCalloutText(job, state)
+        let state = stateOfJob(job, latest, today)
+        let callout: JobCallout | null = null
         let stopped =
-          latest === null ? null : stoppedCalloutText(state, latest.intervalMinutes, today)
-        let callout =
-          failed !== null
-            ? { error: latest?.error ?? null, text: failed, title: null }
-            : stopped !== null
-              ? { error: null, text: stopped, title: STOPPED_CALLOUT_TITLE }
-              : null
+          latest === null ? null : stoppedCalloutText(state, latest.intervalMinutes, today, job)
+        if (stopped !== null) {
+          callout = { error: null, text: stopped, title: STOPPED_CALLOUT_TITLE, tone: 'error' }
+        } else if (
+          state.kind === 'failed' &&
+          latest !== null &&
+          job.failedCalloutOf !== undefined
+        ) {
+          let own = job.failedCalloutOf(latest)
+          if (own !== null) callout = { error: latest.error, ...own, tone: 'error' }
+        } else {
+          let failed = failedCalloutText(job, state)
+          if (failed !== null) {
+            callout = { error: latest?.error ?? null, text: failed, title: null, tone: 'error' }
+          }
+        }
+        /* The digest that had nowhere to go: a warning until the address is saved, not until the
+           next run, because saving it is what mends it (`14e`). A job that stopped reporting
+           keeps its _Neběží_, which the banner sent the editors here for. */
+        if (
+          stopped === null &&
+          job.key === PROOFREADING_DIGEST_JOB &&
+          readDigestRun(latest?.summary ?? null)?.kind === 'no-address' &&
+          (await dependencies.proofreaders.find()) === null
+        ) {
+          let isAdmin = context.auth.identity.isAdmin
+          callout = {
+            action: isAdmin
+              ? { href: `${routes.settings.index.href()}#proofreading`, label: TO_SETTINGS_LABEL }
+              : undefined,
+            error: null,
+            text: MISSING_ADDRESS_JOB_TEXT,
+            title: missingAddressTitle(isAdmin),
+            tone: 'warning',
+          }
+        }
 
         return context.render(
           <JobPage

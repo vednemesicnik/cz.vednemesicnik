@@ -1,8 +1,9 @@
 import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
-import type { Author } from '../domain/article.ts'
+import type { ArticleStep, Author } from '../domain/article.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
+import type { DigestCandidate } from '../domain/proofreading-digest.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import { insertLink } from './links.server.ts'
 
@@ -34,6 +35,13 @@ export type ArticleRow = {
   docId: string | null
   folderId: string | null
   formKey: string
+  /** The handover that stands, `null` while there is none or it was cancelled (`01a`). */
+  handover: ArticleStep | null
+  /**
+   * The cancelled handover, kept so that _Vrátit_ restores it whole (`12l`): when it was made, and
+   * when it was cancelled, which is what the restore must find unchanged.
+   */
+  cancelledHandover: { at: Temporal.Instant; cancelledAt: Temporal.Instant } | null
   id: number
   issueId: number
   licencesFolderId: string | null
@@ -46,7 +54,27 @@ export type ArticleRow = {
 }
 
 /** Who marked the article as in proofreading in its Doc, and when (`01a`). Set once, for good. */
-export type Proofreading = { at: Temporal.Instant; email: string; name: string | null }
+export type Proofreading = ArticleStep
+
+/**
+ * What a handover, a cancellation or a restore came to. Anything but `done` wrote nothing: the
+ * article was meanwhile handed over (with that handover), taken by a proofreader (with who and
+ * since when), or has no handover to cancel or restore.
+ */
+export type HandoverOutcome =
+  | { at: Temporal.Instant; kind: 'done' }
+  | { kind: 'handed-over'; step: ArticleStep }
+  | { kind: 'not-handed-over' }
+  | { kind: 'proofreading'; step: ArticleStep }
+  | { kind: 'gone' }
+
+/** What a confirmed digest told, each with the time it carried, so a change since survives. */
+export type { DigestCandidate }
+
+export type AnnouncedDigest = {
+  cancelled: readonly { handedOverAt: Temporal.Instant; id: number }[]
+  handedOver: readonly { handedOverAt: Temporal.Instant; id: number }[]
+}
 
 /** A committed article: its files exist. */
 export type Article = ArticleRow & { createdAt: Temporal.Instant; docId: string; folderId: string }
@@ -73,6 +101,33 @@ export type ArticleStore = {
   findById(id: number): Promise<ArticleRow | null>
   /** The created article whose Doc this is, for the Doc's menu. */
   findCreatedByDocId(docId: string): Promise<Article | null>
+  /**
+   * Hands the article over to proofreading (`12k`), unless it was handed over meanwhile or a
+   * proofreader took it. A cancelled handover is replaced by this one.
+   */
+  handOver(
+    id: number,
+    by: { email: string; name: string | null },
+    at: Temporal.Instant,
+  ): Promise<HandoverOutcome>
+  /**
+   * Cancels the standing handover (`12k`). With `handedOverAt`, only that very handover: _Vrátit_
+   * after a handover must not cancel one somebody made since.
+   */
+  cancelHandover(
+    id: number,
+    at: Temporal.Instant,
+    handedOverAt?: Temporal.Instant,
+  ): Promise<HandoverOutcome>
+  /**
+   * _Vrátit_ after a cancellation (`12l`): the cancelled handover stands again, with its own time
+   * and its own place in the digest, if it is still the one cancelled at `cancelledAt`.
+   */
+  restoreHandover(id: number, cancelledAt: Temporal.Instant): Promise<HandoverOutcome>
+  /** Every article the morning digest may speak of, the oldest handover first (`12n`). */
+  listForDigest(): Promise<DigestCandidate[]>
+  /** Records what a digest the Mailer confirmed told, where nothing changed since. */
+  markAnnounced(digest: AnnouncedDigest, at: Temporal.Instant): Promise<void>
   /** The issue's created articles, newest first. */
   listCreated(issueId: number): Promise<Article[]>
   /** The folders the app reached again: their records go. */
@@ -138,6 +193,8 @@ function toRow(row: Row, authors: ArticleAuthor[]): ArticleRow {
     docId: text(row['doc_id']),
     folderId: text(row['folder_id']),
     formKey: String(row['form_key']),
+    handover: toHandover(row, false),
+    cancelledHandover: toCancelledHandover(row),
     id: Number(row['id']),
     issueId: Number(row['issue_id']),
     licencesFolderId: text(row['licences_folder_id']),
@@ -159,6 +216,28 @@ function toProofreading(row: Row): Proofreading | null {
   let email = text(row['proofread_by_email'])
   if (at === null || email === null) return null
   return { at, email, name: text(row['proofread_by_name']) }
+}
+
+function toHandover(row: Row, isCancelled: boolean): ArticleStep | null {
+  let at = parseStamp(row['handed_over_at'])
+  let email = text(row['handed_over_by_email'])
+  if (at === null || email === null) return null
+  if ((parseStamp(row['handover_cancelled_at']) !== null) !== isCancelled) return null
+  return { at, email, name: text(row['handed_over_by_name']) }
+}
+
+function toCancelledHandover(row: Row): ArticleRow['cancelledHandover'] {
+  let handover = toHandover(row, true)
+  let cancelledAt = parseStamp(row['handover_cancelled_at'])
+  return handover === null || cancelledAt === null ? null : { at: handover.at, cancelledAt }
+}
+
+/** Why a step on the handover wrote nothing, read from the article as it now is. */
+function refusalOf(row: ArticleRow | null): HandoverOutcome {
+  if (row === null || row.createdAt === null) return { kind: 'gone' }
+  if (row.proofreading !== null) return { kind: 'proofreading', step: row.proofreading }
+  if (row.handover !== null) return { kind: 'handed-over', step: row.handover }
+  return { kind: 'not-handed-over' }
 }
 
 function asArticle(row: ArticleRow): Article {
@@ -270,6 +349,102 @@ export function createArticleStore(database: Database): ArticleStore {
       )
       let [row] = await withAuthors(database, result.rows ?? [])
       return row === undefined ? null : asArticle(row)
+    },
+
+    handOver(id, by, at) {
+      return database.transaction(async (db) => {
+        /* The announcement stays: it says what the proofreaders last heard, and a handover newer
+           than it is new to them (`12n`). */
+        let result = await db.exec(
+          sql`UPDATE articles
+              SET handed_over_at = ${stamp(at)}, handed_over_by_email = ${by.email},
+                  handed_over_by_name = ${by.name}, handover_cancelled_at = NULL
+              WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+                AND (handed_over_at IS NULL OR handover_cancelled_at IS NOT NULL)`,
+        )
+        if ((result.affectedRows ?? 0) > 0) return { at, kind: 'done' }
+        return refusalOf(await byId(db, id))
+      })
+    },
+
+    cancelHandover(id, at, handedOverAt) {
+      return database.transaction(async (db) => {
+        let result =
+          handedOverAt === undefined
+            ? await db.exec(
+                sql`UPDATE articles SET handover_cancelled_at = ${stamp(at)}
+                    WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+                      AND handed_over_at IS NOT NULL AND handover_cancelled_at IS NULL`,
+              )
+            : await db.exec(
+                sql`UPDATE articles SET handover_cancelled_at = ${stamp(at)}
+                    WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+                      AND handed_over_at = ${stamp(handedOverAt)}
+                      AND handover_cancelled_at IS NULL`,
+              )
+        if ((result.affectedRows ?? 0) > 0) return { at, kind: 'done' }
+        return refusalOf(await byId(db, id))
+      })
+    },
+
+    restoreHandover(id, cancelledAt) {
+      return database.transaction(async (db) => {
+        let result = await db.exec(
+          sql`UPDATE articles SET handover_cancelled_at = NULL
+              WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NULL
+                AND handover_cancelled_at = ${stamp(cancelledAt)}`,
+        )
+        let row = await byId(db, id)
+        if ((result.affectedRows ?? 0) > 0 && row?.handover != null) {
+          return { at: row.handover.at, kind: 'done' }
+        }
+        return refusalOf(row)
+      })
+    },
+
+    async listForDigest() {
+      let result = await database.exec(
+        sql`SELECT articles.*, issues.name AS issue_name FROM articles
+            JOIN issues ON issues.id = articles.issue_id
+            WHERE issues.closed_at IS NULL AND articles.created_at IS NOT NULL
+              AND articles.proofread_at IS NULL AND articles.handed_over_at IS NOT NULL
+              AND (articles.handover_cancelled_at IS NULL
+                   OR articles.handover_announced_at IS NOT NULL)
+            ORDER BY articles.handed_over_at, articles.id`,
+      )
+      let rows = result.rows ?? []
+      let withNames = await withAuthors(database, rows)
+      return rows.map((row, index) => ({
+        announcedAt: parseStamp(row['handover_announced_at']),
+        authors: (withNames[index]?.authors ?? []).map((author) => author.name),
+        cancelledAt: parseStamp(row['handover_cancelled_at']),
+        handedOverAt: parseStamp(row['handed_over_at']) ?? EPOCH,
+        id: Number(row['id']),
+        issueName: String(row['issue_name']),
+        name: String(row['name']),
+      }))
+    },
+
+    markAnnounced(digest, at) {
+      return database.transaction(async (db) => {
+        /* Each mark is keyed on the handover the digest spoke of, not on whether it is cancelled
+           now: a cancellation or a _Vrátit_ made while the Mailer was sending must still be told
+           in the next digest. A newer handover changes `handed_over_at`, so no mark touches it. */
+        for (let item of digest.handedOver) {
+          await db.exec(
+            sql`UPDATE articles SET handover_announced_at = ${stamp(at)}
+                WHERE id = ${item.id} AND handed_over_at = ${stamp(item.handedOverAt)}`,
+          )
+        }
+        /* The proofreaders now know the cancelled handover is not theirs: nothing is left to
+           tell of it, unless _Vrátit_ brings it back, and then it is new to them. */
+        for (let item of digest.cancelled) {
+          await db.exec(
+            sql`UPDATE articles SET handover_announced_at = NULL
+                WHERE id = ${item.id} AND handed_over_at = ${stamp(item.handedOverAt)}`,
+          )
+        }
+      })
     },
 
     async listCreated(issueId) {

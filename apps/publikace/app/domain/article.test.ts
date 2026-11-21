@@ -3,6 +3,9 @@ import { describe, it } from 'remix/test'
 
 import {
   articleMeta,
+  articleState,
+  articleStateTag,
+  STATE_ORDER,
   AUTHOR_LIMIT_NOTE,
   checkArticle,
   coauthorLine,
@@ -150,5 +153,32 @@ describe('articleMeta', () => {
       issueFolderId: 'f-issue',
       sheetId: null,
     })
+  })
+})
+
+describe('the state of an article (01a)', () => {
+  const CREATED = Temporal.Instant.from('2026-11-10T08:00:00Z')
+  const HANDED = Temporal.Instant.from('2026-11-13T17:04:00Z')
+  const MARIE = { at: HANDED, email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  const JAKUB = { at: HANDED.add({ hours: 20 }), email: 'jakub@vednemesicnik.test', name: null }
+
+  it('is Dopsáno with its handover’s day, and Korektura wins over it', () => {
+    let handedOver = { createdAt: CREATED, handover: MARIE, proofreading: null }
+    assert.equal(articleState(handedOver), 'handedOver')
+    assert.deepEqual(articleStateTag(handedOver), {
+      detail: 'od 13. 11.',
+      label: 'Dopsáno',
+      tone: 'running',
+    })
+    let taken = { ...handedOver, proofreading: JAKUB }
+    assert.equal(articleState(taken), 'proofreading')
+    assert.equal(articleStateTag(taken).detail, 'od 14. 11. · jakub@vednemesicnik.test')
+  })
+
+  it('orders proofreading first, then what waits for a proofreader, then what is written', () => {
+    let states = (['writing', 'proofreading', 'handedOver'] as const).toSorted(
+      (a, b) => STATE_ORDER[a] - STATE_ORDER[b],
+    )
+    assert.deepEqual(states, ['proofreading', 'handedOver', 'writing'])
   })
 })

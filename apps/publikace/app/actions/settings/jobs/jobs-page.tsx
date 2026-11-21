@@ -42,8 +42,9 @@ export type JobsPageProps = {
   toasts?: readonly ToastMessage[]
 }
 
-/* `14d`'s grid: the name takes what is left, the tag's line wraps in its own column. */
-const COLUMNS = 'minmax(260px, 2fr) minmax(130px, 1fr) minmax(170px, 1fr) 110px'
+/* `14d`'s grid, 1.6 : 0.9 : 1.5, so the digest's longer line wraps only after its full stop
+   (`tlb36tk0`); the tag's line wraps in its own column. */
+const COLUMNS = 'minmax(260px, 1.6fr) minmax(130px, 0.9fr) minmax(170px, 1.5fr) 110px'
 
 const pageStyle = css({ display: 'flex', flexDirection: 'column', gap: '20px' })
 

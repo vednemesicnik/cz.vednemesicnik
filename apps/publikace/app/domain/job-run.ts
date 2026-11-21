@@ -22,6 +22,34 @@ export type JobRunRecord = JobRun & {
   error: string | null
   finishedAt: Temporal.Instant | null
   outcome: 'failed' | 'ok' | null
+  /** What the run reported beyond its outcome, as JSON in the job's own shape (`14e`). */
+  summary: string | null
+}
+
+/**
+ * A job that runs once a day and whose trigger Google fires at a minute it picks within an hour
+ * of Prague time (`atHour`, `14d`), as the proofreaders' digest does between 7 and 8.
+ */
+export type DailyWindow = { fromHour: number; toHour: number }
+
+const TIME_ZONE = 'Europe/Prague'
+
+/** The first window that starts after the moment, and where it ends. */
+export function nextWindow(
+  window: DailyWindow,
+  after: Temporal.Instant,
+): { end: Temporal.Instant; start: Temporal.Instant } {
+  let day = after.toZonedDateTimeISO(TIME_ZONE).toPlainDate()
+  let startOn = (date: Temporal.PlainDate) =>
+    date
+      .toZonedDateTime({
+        plainTime: Temporal.PlainTime.from({ hour: window.fromHour }),
+        timeZone: TIME_ZONE,
+      })
+      .toInstant()
+  let start = startOn(day)
+  if (Temporal.Instant.compare(start, after) <= 0) start = startOn(day.add({ days: 1 }))
+  return { end: start.add({ hours: window.toHour - window.fromHour }), start }
 }
 
 /** The tag of a job in `14d`, from its latest run. */
@@ -58,8 +86,30 @@ function roundToFiveMinutes(instant: Temporal.Instant): Temporal.Instant {
   return instant.round({ roundingIncrement: 5, smallestUnit: 'minute' })
 }
 
-export function jobHealth(latest: JobRun | null, now: Temporal.Instant): JobHealth {
+/**
+ * A job with a daily window is _Neběží_ once the window after its last run has passed without a
+ * run, one morning and not two: each missed digest is a day the proofreaders heard nothing
+ * (`14i`, `ojfczb2m`). Its next run is the window's start, shown until the window ends.
+ */
+function windowHealth(latest: JobRun, now: Temporal.Instant, window: DailyWindow): JobHealth {
+  let next = nextWindow(window, latest.startedAt)
+  if (Temporal.Instant.compare(now, next.end.add({ minutes: GRACE_MINUTES })) > 0) {
+    return { kind: 'stopped', lastStartedAt: latest.startedAt }
+  }
+  return {
+    kind: 'running',
+    lastStartedAt: latest.startedAt,
+    next: Temporal.Instant.compare(now, next.end) > 0 ? null : next.start,
+  }
+}
+
+export function jobHealth(
+  latest: JobRun | null,
+  now: Temporal.Instant,
+  window?: DailyWindow,
+): JobHealth {
   if (latest === null) return { kind: 'never' }
+  if (window !== undefined) return windowHealth(latest, now, window)
   let missedTwice = latest.startedAt.add({
     minutes: latest.intervalMinutes * 2 + GRACE_MINUTES,
   })
@@ -84,8 +134,12 @@ export function isOverdue(run: JobRunRecord, now: Temporal.Instant): boolean {
  * The job's tag (`14d`). _Neběží_ wins over what the last run did, as `jobHealth()` decides it;
  * the estimate of the next run is the same one, and _S chybou_ keeps it for the detail (`14e`).
  */
-export function jobState(latest: JobRunRecord | null, now: Temporal.Instant): JobState {
-  let health = jobHealth(latest, now)
+export function jobState(
+  latest: JobRunRecord | null,
+  now: Temporal.Instant,
+  window?: DailyWindow,
+): JobState {
+  let health = jobHealth(latest, now, window)
   if (latest === null || health.kind === 'never') return { kind: 'never' }
   if (health.kind === 'stopped') return health
   if (latest.finishedAt === null && !isOverdue(latest, now)) {
@@ -126,6 +180,14 @@ export function isFailingRepeatedly(runs: readonly JobRunRecord[], now: Temporal
  * that never reported stays out: it has no interval to miss, and until its trigger runs as
  * `publikace.app@` the banner would stand from the deployment on (`r1oqllvb`).
  */
-export function isInJobsBanner(runs: readonly JobRunRecord[], now: Temporal.Instant): boolean {
-  return isFailingRepeatedly(runs, now) || jobHealth(runs[0] ?? null, now).kind === 'stopped'
+export function isInJobsBanner(
+  runs: readonly JobRunRecord[],
+  now: Temporal.Instant,
+  rules: { isAlarm?: (run: JobRunRecord) => boolean; window?: DailyWindow } = {},
+): boolean {
+  if (jobHealth(runs[0] ?? null, now, rules.window).kind === 'stopped') return true
+  if (rules.isAlarm === undefined) return isFailingRepeatedly(runs, now)
+  /* A job with its own rule stands in the banner from the first run that alarms (`14i`). */
+  let latest = runs.find((run) => run.finishedAt !== null || isOverdue(run, now))
+  return latest !== undefined && rules.isAlarm(latest)
 }

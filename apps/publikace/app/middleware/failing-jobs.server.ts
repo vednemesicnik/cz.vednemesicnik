@@ -2,11 +2,12 @@ import { Auth } from 'remix/middleware/auth'
 import { createContextKey, type Middleware } from 'remix/router'
 
 import type { JobRunStore } from '../data/job-runs.server.ts'
-import { FAILURES_FOR_BANNER, isInJobsBanner } from '../domain/job-run.ts'
-import { type Job, JOBS } from '../domain/jobs.ts'
+import { FAILURES_FOR_BANNER } from '../domain/job-run.ts'
+import { isJobInBanner, type Job, JOBS } from '../domain/jobs.ts'
 
 /**
- * The jobs in `JOBS` whose latest runs failed twice in a row or that stopped reporting, each once
+ * The jobs in `JOBS` whose latest runs failed twice in a row, or once for a job whose one failure
+ * already alarms (the proofreaders' digest), or that stopped reporting, each once
  * and in the order of `JOBS`, for the banner over every editor screen (`14i`). Read with
  * `context.get(FailingJobs)`; the banner reads it from the request it is drawn in, as the panel
  * reads `ReviewCount`, so no page has to pass it down.
@@ -30,7 +31,7 @@ export function loadFailingJobs(
       let latest = await Promise.all(JOBS.map((job) => runs.latestRuns(job.key, RUNS_READ)))
       context.set(
         FailingJobs,
-        JOBS.filter((_job, index) => isInJobsBanner(latest[index] ?? [], at)),
+        JOBS.filter((job, index) => isJobInBanner(job, latest[index] ?? [], at)),
       )
     }
     return next()

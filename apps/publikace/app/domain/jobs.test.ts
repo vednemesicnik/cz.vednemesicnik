@@ -107,6 +107,7 @@ describe('the history of a job (14e)', () => {
     intervalMinutes: 30,
     outcome: null,
     startedAt: LAST,
+    summary: null,
   }
 
   it('says how each run ended, or that it never said', () => {

@@ -5,6 +5,7 @@ import {
   addedMessage,
   administratorsSentence,
   checkAddress,
+  checkProofreadersAddress,
   duplicateMessage,
   roleLostMessage,
 } from './access.ts'
@@ -84,5 +85,27 @@ describe('the words of 14b', () => {
       roleLostMessage(2),
       'Obraťte se na správce uvedené níže. Změna se neuložila, protože už nemáte roli správce.',
     )
+  })
+})
+
+describe('the proofreaders’ address (14f)', () => {
+  it('takes an address on the domain, trimmed and lower-cased', () => {
+    assert.deepEqual(
+      checkProofreadersAddress(' Korektori@Vednemesicnik.test ', 'vednemesicnik.test'),
+      {
+        email: 'korektori@vednemesicnik.test',
+        ok: true,
+      },
+    )
+  })
+
+  it('says what is wrong: nothing typed, not an address, another domain', () => {
+    let message = (value: string) => {
+      let check = checkProofreadersAddress(value, 'vednemesicnik.test')
+      return check.ok ? null : check.message
+    }
+    assert.equal(message('  '), 'Zadejte adresu korektorů.')
+    assert.equal(message('korektori'), 'Zadejte platnou e-mailovou adresu.')
+    assert.equal(message('korektori@external.test'), 'Zadejte adresu na doméně vednemesicnik.test.')
   })
 })

@@ -20,16 +20,23 @@ describe('the job run store', () => {
         intervalMinutes: 30,
         outcome: null,
         startedAt: AT,
+        summary: null,
       })
 
       let end = AT.add({ minutes: 2 })
-      await runs.finish('artwork-replies', 'r-1', { at: end, error: 'timeout', outcome: 'failed' })
+      await runs.finish('artwork-replies', 'r-1', {
+        at: end,
+        error: 'timeout',
+        outcome: 'failed',
+        summary: '{"kind":"unconfirmed"}',
+      })
       assert.deepEqual(await runs.latest('artwork-replies'), {
         error: 'timeout',
         finishedAt: end,
         intervalMinutes: 30,
         outcome: 'failed',
         startedAt: AT,
+        summary: '{"kind":"unconfirmed"}',
       })
     } finally {
       await app.close()

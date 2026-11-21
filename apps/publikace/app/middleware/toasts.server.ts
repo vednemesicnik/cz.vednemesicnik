@@ -17,8 +17,11 @@ export function flashToast(
   message: string,
   tone: ToastTone = 'neutral',
   action?: ToastAction,
+  detail?: string,
 ): void {
-  let toast: ToastMessage = action === undefined ? { message, tone } : { action, message, tone }
+  let toast: ToastMessage = { message, tone }
+  if (action !== undefined) toast.action = action
+  if (detail !== undefined) toast.detail = detail
   context.get(Session)?.flash(TOAST_SESSION_KEY, toast)
 }
 
@@ -47,9 +50,15 @@ export function takeToasts(): Middleware<{
 
 function readToast(value: unknown): ToastMessage | null {
   if (typeof value !== 'object' || value === null) return null
-  let { action, message, tone } = value as { action?: unknown; message?: unknown; tone?: unknown }
+  let { action, detail, message, tone } = value as {
+    action?: unknown
+    detail?: unknown
+    message?: unknown
+    tone?: unknown
+  }
   if (typeof message !== 'string' || message === '') return null
   let toast: ToastMessage = { message, tone: tone === 'error' ? 'error' : 'neutral' }
+  if (typeof detail === 'string' && detail !== '') toast.detail = detail
   let read = readAction(action)
   return read === null ? toast : { ...toast, action: read }
 }

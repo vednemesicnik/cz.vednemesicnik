@@ -11,7 +11,16 @@ export type ToastTone = 'error' | 'neutral'
  */
 export type ToastAction = { action: string; label: string }
 
-export type ToastMessage = { action?: ToastAction; message: string; tone: ToastTone }
+/**
+ * `detail` is the line under the message when somebody else got there first: who and when, in the
+ * shape of a tag's line (`12l`, _21. 11. v 9:40 · Jana Veselá_).
+ */
+export type ToastMessage = {
+  action?: ToastAction
+  detail?: string
+  message: string
+  tone: ToastTone
+}
 
 export type ToastsProps = {
   messages: readonly ToastMessage[]
@@ -93,7 +102,12 @@ export function Toasts(handle: Handle<ToastsProps>) {
               keyboard reaches it. */}
           {confirmations.map((toast) => (
             <div class="vdm-toast" mix={toast.action === undefined ? leavingStyle : undefined}>
-              <span class="vdm-toast__text">{toast.message}</span>
+              <span class="vdm-toast__text">
+                {toast.message}
+                {toast.detail === undefined ? null : (
+                  <span class="vdm-toast__detail">{toast.detail}</span>
+                )}
+              </span>
               {toast.action === undefined ? null : (
                 <form action={toast.action.action} method="post" mix={actionFormStyle}>
                   <CsrfField />

@@ -21,17 +21,20 @@ Provází jedno vydání od založení po podklady pro tisk:
 - **Poskytovatel děl** (autor článku, ilustrátor, fotograf) je ten, koho formulář uvádí jménem
   a e-mailem: dává souhlas s licencí odpovědí na e-mail. Díla za něj může nahrát i někdo jiný,
   kdo má odkaz na nahrání obrazových děl, takže věta na stránce nepředpokládá, že nahrává sám.
-- **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Do aplikace se nepřihlašují
-  a nevidí ji. Od aplikace dostanou jen e-mail, když je článek předaný ke korektuře, a další,
-  když šéfredakce předání zruší. Jejich adresu vyplňuje šéfredakce v Nastavení. Dokud ji
-  nevyplní, předání projde, jen e-mail neodejde.
+- **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Do aplikace se zatím
+  nepřihlašují. Od aplikace dostávají jediný e-mail, **ranní přehled**: jednou denně mezi 7:00
+  a 8:00, a jen v den, kdy přibylo nové předání nebo šéfredakce zrušila předání, o kterém už
+  korektoři z přehledu věděli. Přehled pak nese i články, které stále čekají na korekturu.
+  Adresu korektorů nastavuje a mění jen správce v Nastavení › Korektura. Dokud chybí, předání se
+  zapíše, jen přehled neodejde.
 
 Psaní a korektura probíhají v dokumentu Google, mimo aplikaci. Kdo text dopíše (autor nebo
-redaktor), **předá ho ke korektuře**. Návrh na to dává dokumentu položku _Publikace › Předat ke
-korektuře_ a šéfredakci totéž v aplikaci, kde předání umí i zrušit. Ani jedno zatím neexistuje:
-dnes autor **dá vědět šéfredakci** a menu dokumentu _✦ Publikace_ má jen položky korektorů
-_Označit probíhající korekturu_ a _Označit finální verzi_ a dvě položky k metadatům. Text, který
-autor čte dnes, proto žádnou položku k předání nejmenuje.
+redaktor), **dá vědět šéfredakci** a ta článek v detailu vydání **předá ke korektuře**: článek je
+pak _Dopsáno_. Omyl šéfredakce napraví _Zrušit předání_. Po kliknutí nic neodchází, korektoři se
+o předání dozvědí z ranního přehledu, a proto obojí jde hned vrátit. V dokumentu položka
+k předání není a nebude: menu dokumentu _✦ Publikace_ má jen položky korektorů _Označit
+probíhající korekturu_ a _Označit finální verzi_ a dvě položky k metadatům. Text, který autor
+čte, proto žádnou položku k předání nejmenuje.
 
 Souhlas s finální verzí textu i s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail.
 Jiná odpověď jde ke kontrole šéfredakci. Autor článku tím souhlasí s **redakční doložkou**

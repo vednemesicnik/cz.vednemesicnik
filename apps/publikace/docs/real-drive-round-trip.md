@@ -358,6 +358,28 @@ run within that window skips it.
    archived.
 7. Call `claim` with `curl` and a made-up bearer: 401, and nothing changes.
 
+## The proofreaders' digest
+
+The morning digest is one call, `/api/v1/proofreading-digest/run`, from
+`SCRIPT__Publication__Proofreading_Digest`, a standalone project under `publikace.app@` (#14).
+The app builds the digest and sends it through the Mailer. The suite covers what is in it and
+what is recorded; what it cannot cover is how Gmail shows the e-mail and whether a retry keeps to
+one message. The job's token is checked as the reply check's is, so the same `testConfiguration`
+step applies.
+
+1. In Nastavení › Korektura, set the address to a test group whose mailbox you can read.
+2. Hand over two articles in an issue's detail, then run the job once by hand from its project, or
+   call the API with `curl` and the job's token. One e-mail _Ke korektuře – ‹dnešní datum›_ arrives with both
+   under _Nově předané_, each button leading to `/proofreading?article=‹id›`, and the job's
+   history says _Přehled odeslán. Nová předání: 2._
+3. Run it again at once: no e-mail, and the history says _Bez nových nebo zrušených předání
+   k oznámení._
+4. Cancel one of the two and run it: one e-mail with _Zrušená předání_ and _Stále čekají na
+   korekturu_.
+5. Stop the Mailer's deployment or break its secret, hand over a third article and run it: the
+   history says _Odeslání přehledu se nepodařilo potvrdit._, and the banner stands over every
+   screen. Mend it and run again: one e-mail, and the banner goes.
+
 ## After the run
 
 - [ ] put the origin back by pushing the project from CI (`workflow_dispatch` of `deploy.yml`),

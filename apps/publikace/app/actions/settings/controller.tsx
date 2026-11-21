@@ -5,16 +5,18 @@ import { Session } from 'remix/session'
 import type { AccessContext } from '../../auth/access.server.ts'
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
+import type { ProofreadersStore } from '../../data/proofreaders.server.ts'
 import {
   type AccessKind,
   addedMessage,
   checkAddress,
+  checkProofreadersAddress,
   duplicateMessage,
   MEMBERSHIP_UNAVAILABLE_MESSAGE,
+  PROOFREADERS_SAVED,
   unknownGroupMessage,
 } from '../../domain/access.ts'
-import { jobState } from '../../domain/job-run.ts'
-import { JOBS, settingsSummary } from '../../domain/jobs.ts'
+import { JOBS, settingsSummary, stateOfJob } from '../../domain/jobs.ts'
 import { now } from '../../domain/time.ts'
 import { Access } from '../../middleware/access.server.ts'
 import { type Editor, requireEditor } from '../../middleware/auth.server.ts'
@@ -27,7 +29,12 @@ import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
 import type { AppContext } from '../../router.ts'
 import { routes } from '../../routes.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
-import { type AddForm, type RemovalQuestion, SettingsPage } from './settings-page.tsx'
+import {
+  type AddForm,
+  type ProofreadersForm,
+  type RemovalQuestion,
+  SettingsPage,
+} from './settings-page.tsx'
 
 /**
  * What the helpers below read. Every action's context has it; it is written loosely because the
@@ -42,23 +49,27 @@ function accessOf(context: PageContext): AccessContext {
 type PageState = {
   addForm?: AddForm
   isRoleLost?: boolean
+  proofreadersForm?: ProofreadersForm
   question?: RemovalQuestion
 }
 
+type Stores = { proofreaders: ProofreadersStore; runs: JobRunStore }
+
 async function renderSettings(
   context: PageContext,
-  runs: JobRunStore,
+  { proofreaders, runs }: Stores,
   editor: Editor,
   state: PageState,
   init?: ResponseInit,
 ): Promise<Response> {
   let access = accessOf(context)
   let driveAccount = context.get(DriveAccount) as DriveAccountContext
-  let [accounts, groups, driveState, jobs] = await Promise.all([
+  let [accounts, groups, driveState, jobs, proofreadersAddress] = await Promise.all([
     access.directory.listAccounts(),
     access.directory.listGroups(),
     driveAccount.store.state(),
     Promise.all(JOBS.map(async (job) => ({ job, latest: await runs.latest(job.key) }))),
+    proofreaders.find(),
   ])
   let today = now()
 
@@ -76,8 +87,10 @@ async function renderSettings(
       groups={groups}
       isRoleLost={state.isRoleLost}
       jobsSummary={jobs.map(({ job, latest }) =>
-        settingsSummary(job, jobState(latest, today), today),
+        settingsSummary(job, stateOfJob(job, latest, today), today),
       )}
+      proofreaders={proofreadersAddress?.email ?? null}
+      proofreadersForm={state.proofreadersForm}
       question={state.question}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
       today={today}
@@ -90,10 +103,10 @@ async function renderSettings(
  * A change sent by somebody who is not an administrator — by the time it arrived. `14b`: the
  * page comes back read-only with the Callout that says why, and nothing changed.
  */
-function roleLost(context: PageContext, runs: JobRunStore, editor: Editor): Promise<Response> {
+function roleLost(context: PageContext, stores: Stores, editor: Editor): Promise<Response> {
   return renderSettings(
     context,
-    runs,
+    stores,
     { ...editor, isAdmin: false },
     { isRoleLost: true },
     { status: 403 },
@@ -114,25 +127,23 @@ function formText(context: PageContext, name: string): string {
   return typeof value === 'string' ? value : ''
 }
 
-export type SettingsDependencies = {
-  runs: JobRunStore
-}
+export type SettingsDependencies = Stores
 
 export default function createSettingsController(
   signedInUntil: SignedInUntilCookie,
   dependencies: SettingsDependencies,
 ) {
-  let { runs } = dependencies
+  let stores = dependencies
   return createController(routes.settings, {
     middleware: [requireEditor(signedInUntil)],
     actions: {
       index(context) {
-        return renderSettings(context, runs, context.auth.identity, {})
+        return renderSettings(context, stores, context.auth.identity, {})
       },
 
       async addAccess(context) {
         let editor = context.auth.identity
-        if (!editor.isAdmin) return roleLost(context, runs, editor)
+        if (!editor.isAdmin) return roleLost(context, stores, editor)
 
         let { checkMembership, directory, domain } = context.get(Access)
         let kind: AccessKind = formText(context, 'kind') === 'group' ? 'group' : 'account'
@@ -141,7 +152,7 @@ export default function createSettingsController(
         let refuse = (error: string) =>
           renderSettings(
             context,
-            runs,
+            stores,
             editor,
             { addForm: { error, kind, value } },
             { status: 400 },
@@ -168,7 +179,7 @@ export default function createSettingsController(
             : await directory.addGroup(editor.email, address.email, groupName, now())
 
         if (!result.ok) {
-          if (result.reason === 'not-admin') return roleLost(context, runs, editor)
+          if (result.reason === 'not-admin') return roleLost(context, stores, editor)
           return refuse(duplicateMessage(kind, address.email))
         }
 
@@ -185,7 +196,7 @@ export default function createSettingsController(
           .get(Access)
           .directory.setAdmin(editor.email, id, formText(context, 'isAdmin') === '1')
 
-        if (!result.ok && result.reason === 'not-admin') return roleLost(context, runs, editor)
+        if (!result.ok && result.reason === 'not-admin') return roleLost(context, stores, editor)
         // The badge and the menu show the outcome; a refused self or last administrator is the
         // data layer's safeguard and has no message of its own (`14a`).
         return backToSettings()
@@ -208,7 +219,7 @@ export default function createSettingsController(
           return backToSettings()
         }
 
-        return renderSettings(context, runs, editor, { question: { account, kind: 'account' } })
+        return renderSettings(context, stores, editor, { question: { account, kind: 'account' } })
       },
 
       async removeAccount(context) {
@@ -217,7 +228,7 @@ export default function createSettingsController(
         if (id === null) return backToSettings()
 
         let result = await context.get(Access).directory.removeAccount(editor.email, id)
-        if (!result.ok && result.reason === 'not-admin') return roleLost(context, runs, editor)
+        if (!result.ok && result.reason === 'not-admin') return roleLost(context, stores, editor)
         return backToSettings()
       },
 
@@ -230,7 +241,37 @@ export default function createSettingsController(
         let group = groups.find((candidate) => candidate.id === id)
         if (group === undefined) return backToSettings()
 
-        return renderSettings(context, runs, editor, { question: { group, kind: 'group' } })
+        return renderSettings(context, stores, editor, { question: { group, kind: 'group' } })
+      },
+
+      /* `14f`: the dialog over Nastavení. Only an administrator changes the address, since it
+         decides who works as a proofreader (`sh0zp1if`); anybody else goes back to the page. */
+      async askProofreaders(context) {
+        let editor = context.auth.identity
+        if (!editor.isAdmin) return backToSettings()
+        let current = await dependencies.proofreaders.find()
+        return renderSettings(context, stores, editor, {
+          proofreadersForm: { error: null, value: current?.email ?? '' },
+        })
+      },
+
+      async saveProofreaders(context) {
+        let editor = context.auth.identity
+        if (!editor.isAdmin) return roleLost(context, stores, editor)
+        let value = formText(context, 'email')
+        let address = checkProofreadersAddress(value, context.get(Access).domain)
+        if (!address.ok) {
+          return renderSettings(
+            context,
+            stores,
+            editor,
+            { proofreadersForm: { error: address.message, value } },
+            { status: 400 },
+          )
+        }
+        await dependencies.proofreaders.save(address.email, editor.email, now())
+        flashToast(context, PROOFREADERS_SAVED)
+        return backToSettings()
       },
 
       async removeGroup(context) {
@@ -239,7 +280,7 @@ export default function createSettingsController(
         if (id === null) return backToSettings()
 
         let result = await context.get(Access).directory.removeGroup(editor.email, id)
-        if (!result.ok && result.reason === 'not-admin') return roleLost(context, runs, editor)
+        if (!result.ok && result.reason === 'not-admin') return roleLost(context, stores, editor)
         return backToSettings()
       },
     },

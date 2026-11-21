@@ -78,6 +78,14 @@ import { Document } from '../document.tsx'
 import { FinishIssueForm, IssueStateTag } from './issue-parts.tsx'
 import type { DriveStatus } from './overview-page.tsx'
 import { tied } from '../../domain/public/typography.ts'
+import type { ArticleState } from '../../domain/article.ts'
+import {
+  CANCEL_HANDOVER_LABEL,
+  HAND_OVER_LABEL,
+  handOverButtonLabel,
+  HANDING_OVER_LABEL,
+} from '../../domain/handover.ts'
+import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
 export type LinkBlockView = {
@@ -110,12 +118,27 @@ export type ArticleRowView = {
   /** The article's link for artworks, for the `⋯` copy item; `null` once it is revoked. */
   artworksUrl: string | null
   authors: string
+  /** _Zrušit předání_ in `⋯`, only on _Dopsáno_ of an issue still open (`12k`). */
+  cancelHandoverAction: string | null
   documentUrl: string
+  /** _Předat ke korektuře_ in the row, only on _Píše se_ of an issue still open (`12k`). */
+  handOverAction: string | null
   id: number
   missing: MissingFoldersView | null
   name: string
+  /** Where the row stands among the others: a settled row by the state it had (`12l`). */
+  sortAt: Temporal.Instant | null
+  sortState: ArticleState
   /** The article's one tag and the fact under it (`01a`). */
   state: { detail: string; label: string; tone: StatusTone }
+}
+
+/** The warning over _Články_ while the proofreaders have no address (`12l`). */
+export type MissingAddressView = {
+  /** _Do Nastavení_, only for an administrator, who changes the address. */
+  action?: { href: string; label: string }
+  text: string
+  title: string
 }
 
 /**
@@ -174,6 +197,7 @@ const DISCARD_REFUSALS: Record<DiscardRefusal, { text: string; title: string }> 
 
 export type DetailPageProps = {
   articles: readonly ArticleRowView[]
+  missingAddress?: MissingAddressView
   artworks: ArtworksView
   discarding?: DiscardView
   driveAccount: { expectedEmail: string; status: DriveStatus }
@@ -259,9 +283,19 @@ const linkBodyStyle = css({
 
 const linkLabelStyle = css({ fontSize: '15px', fontWeight: 600 })
 
-/* The Doc's title takes most of what is left and the artworks the rest; the tag and `⋯` keep
-   their width (`12a`). */
-const ARTICLE_COLUMNS = 'minmax(180px, 3fr) 160px minmax(110px, 1fr) 44px'
+/* The Doc's title takes most of what is left and the artworks the rest; the tag and the actions
+   keep their width, _Předat ke korektuře_ and `⋯` together 216 px (`12a`, `12k`). */
+const ARTICLE_COLUMNS = 'minmax(180px, 3fr) 160px minmax(110px, 1fr) 216px'
+
+/* A row without the button has only `⋯`, at the far end (`12k`). */
+const actionsCellStyle = css({
+  alignItems: 'center',
+  display: 'flex',
+  gap: '8px',
+  justifyContent: 'flex-end',
+})
+
+const handOverFormStyle = css({ display: 'flex' })
 
 const quietStyle = css({ color: 'var(--text-tertiary)' })
 
@@ -429,9 +463,24 @@ function MissingFoldersBand(handle: Handle<{ isLast: boolean; missing: MissingFo
   }
 }
 
-function ArticleRow(handle: Handle<{ article: ArticleRowView; isLast: boolean }>) {
+function ArticleRow(
+  handle: Handle<{ article: ArticleRowView; csrfToken: string; isLast: boolean }>,
+) {
   return () => {
-    let { article, isLast } = handle.props
+    let { article, csrfToken, isLast } = handle.props
+    let items: ActionMenuItem[] = [
+      { href: article.documentUrl, label: 'Otevřít dokument' },
+      ...(article.artworksUrl === null
+        ? []
+        : [{ copyText: article.artworksUrl, label: COPY_ARTWORKS_LINK_LABEL }]),
+    ]
+    /* The rare step back, after a line, so the main step of the table stays the row's (`12k`). */
+    if (article.cancelHandoverAction !== null) {
+      items.push(
+        { isSeparator: true },
+        { action: article.cancelHandoverAction, csrfToken, label: CANCEL_HANDOVER_LABEL },
+      )
+    }
     return (
       <>
         <TableRow columns={ARTICLE_COLUMNS} isLast={isLast || article.missing !== null}>
@@ -460,16 +509,19 @@ function ArticleRow(handle: Handle<{ article: ArticleRowView; isLast: boolean }>
               )}
             </span>
           )}
-          <span role="cell">
-            <ActionMenu
-              items={[
-                { href: article.documentUrl, label: 'Otevřít dokument' },
-                ...(article.artworksUrl === null
-                  ? []
-                  : [{ copyText: article.artworksUrl, label: COPY_ARTWORKS_LINK_LABEL }]),
-              ]}
-              label={`Další akce článku ${article.name}`}
-            />
+          <span mix={actionsCellStyle} role="cell">
+            {article.handOverAction === null ? null : (
+              <form action={article.handOverAction} method="post" mix={handOverFormStyle}>
+                <CsrfField />
+                <PendingActions
+                  accessibleLabel={handOverButtonLabel(article.name)}
+                  emphasis="outline"
+                  label={HAND_OVER_LABEL}
+                  pendingLabel={HANDING_OVER_LABEL}
+                />
+              </form>
+            )}
+            <ActionMenu items={items} label={`Další akce článku ${article.name}`} />
           </span>
         </TableRow>
         {article.missing === null ? null : (
@@ -480,11 +532,34 @@ function ArticleRow(handle: Handle<{ article: ArticleRowView; isLast: boolean }>
   }
 }
 
-function Articles(handle: Handle<{ articles: readonly ArticleRowView[] }>) {
+function Articles(
+  handle: Handle<{
+    articles: readonly ArticleRowView[]
+    csrfToken: string
+    missingAddress?: MissingAddressView
+  }>,
+) {
   return () => {
-    let { articles } = handle.props
+    let { articles, csrfToken, missingAddress } = handle.props
     return (
       <Section count={articles.length} title="Články">
+        {missingAddress === undefined ? null : (
+          <Callout tone="warning">
+            <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+              {missingAddress.title}
+            </p>
+            <p style={{ margin: missingAddress.action === undefined ? 0 : '0 0 8px' }}>
+              {missingAddress.text}
+            </p>
+            {missingAddress.action === undefined ? null : (
+              <div class="vdm-callout__actions">
+                <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={missingAddress.action.href}>
+                  {missingAddress.action.label}
+                </a>
+              </div>
+            )}
+          </Callout>
+        )}
         {articles.length === 0 ? (
           <p mix={placeholderStyle}>{ARTICLES_EMPTY_TEXT}</p>
         ) : (
@@ -500,6 +575,7 @@ function Articles(handle: Handle<{ articles: readonly ArticleRowView[] }>) {
             {articles.map((article, index) => (
               <ArticleRow
                 article={article}
+                csrfToken={csrfToken}
                 isLast={index === articles.length - 1}
                 key={article.id}
               />
@@ -724,6 +800,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       isRenewing = false,
       issue,
       link,
+      missingAddress,
       person,
       toasts,
     } = handle.props
@@ -788,7 +865,11 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
             ) : (
               <>
                 {link === undefined ? null : <LinkBlock link={link} />}
-                <Articles articles={articles} />
+                <Articles
+                  articles={articles}
+                  csrfToken={getCsrfToken(getContext())}
+                  missingAddress={missingAddress}
+                />
                 <Artworks artworks={artworks} csrfToken={getCsrfToken(getContext())} />
               </>
             )}

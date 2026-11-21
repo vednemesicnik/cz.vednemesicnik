@@ -121,22 +121,47 @@ export function coauthorLine(coauthors: readonly string[]): string | null {
 }
 
 /**
- * Where an article is, as far as the app records it (`01a`). _Korektura_ wins once somebody marked
- * it in the Doc; nothing records a step back (`01d`).
+ * Where an article is, as far as the app records it (`01a`). _Korektura_ wins once a proofreader
+ * marked it, whatever was handed over; _Dopsáno_ is a handover the editors-in-chief made and no
+ * proofreader has taken yet. _Označit probíhající korekturu_ still works straight from _Píše se_
+ * (`01d`).
  */
-export type ArticleState = 'proofreading' | 'writing'
+export type ArticleState = 'handedOver' | 'proofreading' | 'writing'
+
+/** Somebody's step on an article: when, and who, by address and by the name Google gave. */
+export type ArticleStep = { at: Temporal.Instant; email: string; name: string | null }
 
 export type ArticleProgress = {
   createdAt: Temporal.Instant
-  proofreading: { at: Temporal.Instant; email: string; name: string | null } | null
+  /** The handover that stands, `null` while there is none or it was cancelled. */
+  handover: ArticleStep | null
+  proofreading: ArticleStep | null
 }
 
-export function articleState(article: Pick<ArticleProgress, 'proofreading'>): ArticleState {
-  return article.proofreading === null ? 'writing' : 'proofreading'
+export function articleState(
+  article: Pick<ArticleProgress, 'handover' | 'proofreading'>,
+): ArticleState {
+  if (article.proofreading !== null) return 'proofreading'
+  return article.handover === null ? 'writing' : 'handedOver'
+}
+
+/**
+ * The order of the states in the articles table (`12k`): what proofreaders work on, then what
+ * waits for them, then what is still being written.
+ */
+export const STATE_ORDER: Readonly<Record<ArticleState, number>> = {
+  handedOver: 1,
+  proofreading: 0,
+  writing: 2,
 }
 
 /** The tones of `01a` this state can take: grey nobody waits, blue in progress. */
 export type ArticleStateTone = 'neutral' | 'running'
+
+/** The address where Google gave no name: the app knows nothing else of the person. */
+export function whoOf(step: Pick<ArticleStep, 'email' | 'name'>): string {
+  return step.name ?? step.email
+}
 
 /** The article's tag in the detail (`12a`) and the one fact under it (`01a`). */
 export function articleStateTag(article: ArticleProgress): {
@@ -144,19 +169,26 @@ export function articleStateTag(article: ArticleProgress): {
   label: string
   tone: ArticleStateTone
 } {
-  if (article.proofreading === null) {
+  if (article.proofreading !== null) {
     return {
-      detail: `založen ${formatDayMonth(article.createdAt)}`,
-      label: 'Píše se',
-      tone: 'neutral',
+      detail: `od ${formatDayMonth(article.proofreading.at)} · ${whoOf(article.proofreading)}`,
+      label: 'Korektura',
+      tone: 'running',
     }
   }
-  /* The address where Google gave no name: the app knows nothing else of the person. */
-  let who = article.proofreading.name ?? article.proofreading.email
+  /* Only the date: the line answers how long it has waited, and an editor-in-chief always
+     hands over (`12l`). */
+  if (article.handover !== null) {
+    return {
+      detail: `od ${formatDayMonth(article.handover.at)}`,
+      label: 'Dopsáno',
+      tone: 'running',
+    }
+  }
   return {
-    detail: `od ${formatDayMonth(article.proofreading.at)} · ${who}`,
-    label: 'Korektura',
-    tone: 'running',
+    detail: `založen ${formatDayMonth(article.createdAt)}`,
+    label: 'Píše se',
+    tone: 'neutral',
   }
 }
 

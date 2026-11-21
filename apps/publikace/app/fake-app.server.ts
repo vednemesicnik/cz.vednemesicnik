@@ -9,6 +9,8 @@ import { batchState } from './domain/artwork.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
+import { createProofreadersStore } from './data/proofreaders.server.ts'
+import { articleState } from './domain/article.ts'
 import { REPLY_CHECK_JOB } from './domain/reply-check.ts'
 import { now, parseStamp, stamp } from './domain/time.ts'
 import { FAKE_STEPS, type FakeStep } from './drive/fake-drive.server.ts'
@@ -19,6 +21,7 @@ import {
   fakeIdentityToken,
   JOB_TOKEN,
   seedAdmin,
+  seedArticle,
   seedBatch,
   type TestApp,
 } from './test-app.server.ts'
@@ -38,6 +41,7 @@ const TEREZA = { email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }
 const JAKUB = { email: 'jakub.novak@vednemesicnik.test', name: 'Jakub Novák' }
 const ISSUE_NAME = 'VDM_2026_6'
 const ARTICLE_NAME = 'Školní jídelna po roce'
+const PROOFREADERS = 'korektori@vednemesicnik.test'
 
 export const CONTROLS_PATH = '/_fake'
 
@@ -150,16 +154,26 @@ export async function createFakeApp(): Promise<FakeApp> {
     throw new Error(`The fake article was not created (${sent.status}).`)
   }
 
+  /* Two more articles, without the form's welcome e-mails: one handed over, one a proofreader
+     took, so the detail shows all three states (`12k`). */
+  let proofreaders = createProofreadersStore(app.database)
+  await proofreaders.save(PROOFREADERS, MARIE.email, now())
+  let handedOver = await seedArticle(app, issueId, 'Kavárna v knihovně: rok poté')
+  await articles.handOver(handedOver.articleId, MARIE, now().subtract({ hours: 26 }))
+  let taken = await seedArticle(app, issueId, 'Volební kampaň na sítích')
+  await articles.handOver(taken.articleId, MARIE, now().subtract({ hours: 50 }))
+  await articles.markProofread(taken.articleId, JAKUB, now().subtract({ hours: 20 }))
+
   async function articlePath(): Promise<string> {
     let link = await links.articleLinkOf(issueId)
     if (link === null) throw new Error('The fake issue has no link for articles.')
     return routes.links.article.href({ key: link.key })
   }
 
-  /** The artworks page of the oldest article, the seeded one: `listCreated` is newest first. */
+  /** The artworks page of the article made through the form, the first one created. */
   async function artworksPath(): Promise<string> {
     let artworks = await links.artworksLinksOf(issueId)
-    let first = (await articles.listCreated(issueId)).at(-1)
+    let first = (await articles.listCreated(issueId)).find((each) => each.name === ARTICLE_NAME)
     let link = first === undefined ? undefined : artworks.get(first.id)
     if (link === undefined) throw new Error('The fake article has no link for artworks.')
     return routes.links.artworks.show.href({ key: link.key })
@@ -211,6 +225,7 @@ export async function createFakeApp(): Promise<FakeApp> {
               : `Proofreading by ${each.proofreading.name ?? each.proofreading.email}`
           }
         </td>
+        <td>${articleState(each)}</td>
       </tr>`
     })
     /* Every live batch of the issue, with what a run of the reply check could find for it. */
@@ -315,6 +330,19 @@ export async function createFakeApp(): Promise<FakeApp> {
         ${button('/replies/silence', 'Make the job go quiet')} — every run it reported moves two
         hours back, or one that ended well is recorded then: the job is <em>Neběží</em> and the
         banner stands until the next run reports.
+      </p>
+
+      <h2>Proofreaders' digest</h2>
+      <p>
+        Address: ${(await proofreaders.find())?.email ?? 'none'}
+        ${button('/proofreaders/clear', 'Remove the address')}
+        ${button('/proofreaders/set', `Set ${PROOFREADERS}`)}
+      </p>
+      <p>
+        ${button('/digest', 'Run the digest')} — one run of the job through the app's API, as the
+        morning trigger makes it; the digest lands under Mailer below, and
+        <a href="${routes.settings.jobs.show.href({ job: 'proofreading-digest' })}">its history</a>
+        says what came of it. With the Mailer failing it is not confirmed, and the banner stands.
       </p>
 
       <h2>Mailer</h2>
@@ -513,7 +541,7 @@ export async function createFakeApp(): Promise<FakeApp> {
       case '/batch': {
         /* A batch as the artworks page leaves it once the Mailer took the request, without
            uploading files by hand. */
-        let first = (await articles.listCreated(issueId)).at(-1)
+        let first = (await articles.listCreated(issueId)).find((each) => each.name === ARTICLE_NAME)
         let link =
           first === undefined ? undefined : (await links.artworksLinksOf(issueId)).get(first.id)
         if (first === undefined || link === undefined)
@@ -526,6 +554,19 @@ export async function createFakeApp(): Promise<FakeApp> {
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()
       }
+      case '/digest': {
+        let answer = await job(routes.api.proofreadingDigest.run.href(), { intervalMinutes: 1440 })
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
+        return backToControls()
+      }
+      case '/proofreaders/clear':
+        /* Nothing in the app clears the address (`14f`); only this control does, to show the
+           warnings of a deployment where nobody set it yet. */
+        await app.database.exec(sql`DELETE FROM proofreaders`)
+        return backToControls()
+      case '/proofreaders/set':
+        await proofreaders.save(PROOFREADERS, MARIE.email, now())
+        return backToControls()
       case '/replies/silence':
         await silenceReplyCheck()
         return backToControls()

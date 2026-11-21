@@ -2,7 +2,7 @@ import * as assert from 'remix/assert'
 import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
-import { createTestApp, seedIssue, type TestApp } from '../test-app.server.ts'
+import { createTestApp, seedArticle, seedIssue, type TestApp } from '../test-app.server.ts'
 import { createArticleStore } from './articles.server.ts'
 import { createLinkStore } from './links.server.ts'
 
@@ -265,6 +265,204 @@ describe('the article store', () => {
               VALUES (${issueId}, ${link.id}, 'k', 'Článek', '2026-11-18T09:00:00.000Z',
                       '2026-11-18T09:00:00.000Z')`,
         ),
+      )
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('the handover to proofreading', () => {
+  const MARIE = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  const JANA = { email: 'jana.vesela@vednemesicnik.test', name: 'Jana Veselá' }
+  const JAKUB = { email: 'jakub.novak@vednemesicnik.test', name: 'Jakub Novák' }
+  const LATER = AT.add({ hours: 1 })
+
+  it('records the first handover and refuses a second one, with the first in the answer', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let { articleId } = await seedArticle(app, await seedIssue(app))
+
+      assert.deepEqual(await articles.handOver(articleId, MARIE, AT), { at: AT, kind: 'done' })
+      assert.deepEqual(await articles.handOver(articleId, JANA, LATER), {
+        kind: 'handed-over',
+        step: { at: AT, ...MARIE },
+      })
+      assert.deepEqual((await articles.findById(articleId))?.handover, { at: AT, ...MARIE })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses to hand over or cancel an article a proofreader took meanwhile', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let { articleId } = await seedArticle(app, await seedIssue(app))
+      await articles.handOver(articleId, MARIE, AT)
+      await articles.markProofread(articleId, JAKUB, LATER)
+
+      let taken = { kind: 'proofreading', step: { at: LATER, ...JAKUB } }
+      assert.deepEqual(await articles.cancelHandover(articleId, LATER), taken)
+
+      let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? 0, 'B')
+      await articles.markProofread(other.articleId, JAKUB, LATER)
+      assert.deepEqual(await articles.handOver(other.articleId, MARIE, LATER), taken)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('cancels once, and Vrátit brings the very handover back with its own time', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let { articleId } = await seedArticle(app, await seedIssue(app))
+      await articles.handOver(articleId, MARIE, AT)
+
+      assert.deepEqual(await articles.cancelHandover(articleId, LATER), { at: LATER, kind: 'done' })
+      assert.deepEqual(await articles.cancelHandover(articleId, LATER), {
+        kind: 'not-handed-over',
+      })
+      let cancelled = await articles.findById(articleId)
+      assert.equal(cancelled?.handover, null)
+      assert.deepEqual(cancelled?.cancelledHandover, { at: AT, cancelledAt: LATER })
+
+      assert.deepEqual(await articles.restoreHandover(articleId, AT), { kind: 'not-handed-over' })
+      assert.deepEqual(await articles.restoreHandover(articleId, LATER), { at: AT, kind: 'done' })
+      assert.deepEqual((await articles.findById(articleId))?.handover, { at: AT, ...MARIE })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('takes back only the handover Vrátit was offered for', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let { articleId } = await seedArticle(app, await seedIssue(app))
+      await articles.handOver(articleId, MARIE, AT)
+
+      assert.deepEqual(await articles.cancelHandover(articleId, LATER, LATER), {
+        kind: 'handed-over',
+        step: { at: AT, ...MARIE },
+      })
+      assert.deepEqual(await articles.cancelHandover(articleId, LATER, AT), {
+        at: LATER,
+        kind: 'done',
+      })
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('lists for the digest the open issues’ handovers, and the cancelled ones a digest told of', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let told = await seedArticle(app, issueId, 'Oznámený')
+      let quiet = await seedArticle(app, issueId, 'Zrušený bez oznámení')
+      let taken = await seedArticle(app, issueId, 'V korektuře')
+      let closedIssue = await seedIssue(app, 'VDM_2026_5')
+      let closed = await seedArticle(app, closedIssue, 'V uzavřeném')
+      for (let article of [told, quiet, taken, closed]) {
+        await articles.handOver(article.articleId, MARIE, AT)
+      }
+      await articles.markProofread(taken.articleId, JAKUB, LATER)
+      /* Nothing in the app closes an issue yet; the column says what one would. */
+      await app.database.exec(
+        sql`UPDATE issues SET closed_at = ${LATER.toString()} WHERE id = ${closedIssue}`,
+      )
+      await articles.markAnnounced(
+        { cancelled: [], handedOver: [{ handedOverAt: AT, id: told.articleId }] },
+        LATER,
+      )
+      await articles.cancelHandover(told.articleId, LATER)
+      await articles.cancelHandover(quiet.articleId, LATER)
+
+      let listed = await articles.listForDigest()
+      assert.deepEqual(
+        listed.map((each) => [each.name, each.issueName, each.announcedAt, each.cancelledAt]),
+        [['Oznámený', 'VDM_2026_6', LATER, LATER]],
+      )
+      assert.deepEqual(listed[0]?.authors, ['Tereza Vlková'])
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('still tells a cancellation or a restore made while the digest was being sent', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let cancelled = await seedArticle(app, issueId, 'Zrušený během odeslání')
+      let restored = await seedArticle(app, issueId, 'Vrácený během odeslání')
+      await articles.handOver(cancelled.articleId, MARIE, AT)
+      await articles.handOver(restored.articleId, MARIE, AT)
+      await articles.markAnnounced(
+        { cancelled: [], handedOver: [{ handedOverAt: AT, id: restored.articleId }] },
+        AT,
+      )
+      let cancelledAt = AT.add({ minutes: 1 })
+      await articles.cancelHandover(restored.articleId, cancelledAt)
+
+      /* The digest says the first is new and the second cancelled; meanwhile each changes. */
+      await articles.cancelHandover(cancelled.articleId, LATER)
+      await articles.restoreHandover(restored.articleId, cancelledAt)
+      await articles.markAnnounced(
+        {
+          cancelled: [{ handedOverAt: AT, id: restored.articleId }],
+          handedOver: [{ handedOverAt: AT, id: cancelled.articleId }],
+        },
+        LATER,
+      )
+
+      let listed = await articles.listForDigest()
+      assert.deepEqual(
+        listed.map((each) => [each.name, each.announcedAt, each.cancelledAt]),
+        [
+          ['Zrušený během odeslání', LATER, LATER],
+          ['Vrácený během odeslání', null, null],
+        ],
+      )
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('marks as told only what did not change since the digest was made', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let kept = await seedArticle(app, issueId, 'A')
+      let renewed = await seedArticle(app, issueId, 'B')
+      await articles.handOver(kept.articleId, MARIE, AT)
+      await articles.handOver(renewed.articleId, MARIE, AT)
+      /* Cancelled and handed over again while the digest was on its way. */
+      await articles.cancelHandover(renewed.articleId, AT.add({ minutes: 1 }))
+      await articles.handOver(renewed.articleId, JANA, AT.add({ minutes: 2 }))
+
+      await articles.markAnnounced(
+        {
+          cancelled: [],
+          handedOver: [
+            { handedOverAt: AT, id: kept.articleId },
+            { handedOverAt: AT, id: renewed.articleId },
+          ],
+        },
+        LATER,
+      )
+      let listed = await articles.listForDigest()
+      assert.deepEqual(
+        listed.map((each) => [each.name, each.announcedAt]),
+        [
+          ['A', LATER],
+          ['B', null],
+        ],
       )
     } finally {
       await app.close()

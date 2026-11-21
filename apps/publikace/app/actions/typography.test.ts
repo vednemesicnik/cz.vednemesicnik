@@ -85,6 +85,13 @@ describe('one-letter words on the screens', () => {
         'sign-in': await (await visitor.get('/sign-in')).text(),
       }
 
+      /* Handed over through the detail, so the next load shows _Dopsáno_, its toast, and the
+         warning of the missing proofreaders' address (`12l`). */
+      await editor.post(
+        `/issues/${ISSUE}/articles/${article.articleId}/handover`,
+        {},
+        `/issues/${ISSUE}`,
+      )
       for (let path of [
         '/',
         '/issues/new',
@@ -94,11 +101,14 @@ describe('one-letter words on the screens', () => {
         '/settings',
         '/settings/jobs',
         '/settings/jobs/artwork-replies',
+        '/settings/proofreaders',
+        '/settings/jobs/proofreading-digest',
       ]) {
         pages[path] = await (await editor.get(path)).text()
       }
 
       assert.ok(readableText(pages[`/issues/${ISSUE}`] ?? '').includes(SEEDED_ARTICLE))
+      assert.ok(readableText(pages[`/issues/${ISSUE}`] ?? '').includes('Dopsáno'))
       assert.ok(readableText(pages['artworks page'] ?? '').includes(SEEDED_ARTICLE))
       assert.ok(readableText(pages['article created'] ?? '').includes(CREATED_ARTICLE))
       assert.ok(readableText(pages[`/issues/${ISSUE}?artworks=all`] ?? '').includes(PROVIDER))

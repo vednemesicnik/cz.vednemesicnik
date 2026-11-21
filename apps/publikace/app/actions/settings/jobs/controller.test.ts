@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import { createJobRunStore } from '../../../data/job-runs.server.ts'
+import { createProofreadersStore } from '../../../data/proofreaders.server.ts'
 import { REPLY_CHECK_JOB } from '../../../domain/reply-check.ts'
 import { createTestApp, type TestApp } from '../../../test-app.server.ts'
 
@@ -301,6 +302,73 @@ describe('the history of a job (14e)', () => {
       let html = await (await browser.get('/settings/jobs/artwork-replies')).text()
       assert.match(html, /Úloha Odpovědi k\u00a0obrazovým dílům se zatím neohlásila\./)
       assert.equal((await browser.get('/settings/jobs/approval-send')).status, 404)
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('Přehled pro korektory among the jobs (14d, 14e, 14i)', () => {
+  const JOB = 'proofreading-digest'
+
+  async function digestRun(app: TestApp, summary: string, outcome: 'failed' | 'ok') {
+    let runs = createJobRunStore(app.database)
+    let runKey = crypto.randomUUID()
+    let at = Temporal.Now.instant().subtract({ minutes: 5 })
+    await runs.start({ at, intervalMinutes: 1440, job: JOB, runKey })
+    await runs.finish(JOB, runKey, { at, error: null, outcome, summary })
+  }
+
+  it('shows the window as its schedule and says what the last digest did', async () => {
+    let { app, browser } = await setup()
+    try {
+      await digestRun(app, '{"kind":"sent","handedOver":2,"cancelled":1,"waiting":3}', 'ok')
+      let list = textOf(await (await browser.get('/settings/jobs')).text())
+      assert.ok(list.includes('Přehled pro korektory'))
+      assert.ok(list.includes('denně 7:00–8:00'))
+      let history = textOf(await (await browser.get(`/settings/jobs/${JOB}`)).text())
+      assert.ok(
+        history.includes(
+          'Přehled odeslán. Nová předání: 2 · zrušená předání: 1 · čekající články: 3.',
+        ),
+      )
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('raises the banner from the first unconfirmed digest, with its Callout over the history', async () => {
+    let { app, browser } = await setup()
+    try {
+      await digestRun(app, '{"kind":"unconfirmed"}', 'failed')
+      let home = textOf(await (await browser.get('/')).text()).replaceAll(' ', ' ')
+      assert.ok(home.includes('Přehled pro korektory teď nemá potvrzené odeslání.'))
+      let history = textOf(await (await browser.get(`/settings/jobs/${JOB}`)).text())
+      assert.ok(history.replaceAll(' ', ' ').includes('Odeslání přehledu se nepodařilo potvrdit.'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('warns of a missing address without the banner, and stops once the address is saved', async () => {
+    let { app, browser } = await setup()
+    try {
+      await digestRun(app, '{"kind":"no-address"}', 'failed')
+      let home = textOf(await (await browser.get('/')).text())
+      assert.doesNotMatch(home, /nemá potvrzené odeslání/)
+      let html = await (await browser.get(`/settings/jobs/${JOB}`)).text()
+      assert.ok(textOf(html).replaceAll(' ', ' ').includes('Doplňte adresu korektorů.'))
+      assert.ok(html.includes('href="/settings#proofreading"'))
+
+      await createProofreadersStore(app.database).save(
+        'korektori@vednemesicnik.test',
+        MARIE,
+        Temporal.Now.instant(),
+      )
+      assert.doesNotMatch(
+        textOf(await (await browser.get(`/settings/jobs/${JOB}`)).text()),
+        /adresu korektorů\./,
+      )
     } finally {
       await app.close()
     }

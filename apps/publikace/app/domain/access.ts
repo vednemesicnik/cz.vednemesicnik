@@ -94,3 +94,38 @@ export function roleLostMessage(administratorCount: number): string {
   let pointer = administratorCount === 1 ? 'uvedeného' : 'uvedené'
   return `Obraťte se na správce ${pointer} níže. Změna se neuložila, protože už nemáte roli správce.`
 }
+
+/**
+ * Checks the proofreaders' address (`14f`). It can be changed, never cleared: without it the
+ * digest would quietly stop. It must be on the domain, because the digest carries the articles'
+ * names and a typo in the domain would send them out; an account or a group alike, since the app
+ * cannot tell them apart and needs not.
+ */
+export function checkProofreadersAddress(value: string, domain: string): AddressCheck {
+  let email = normalizeEmail(value)
+  if (email === '') return { message: 'Zadejte adresu korektorů.', ok: false }
+  if (!isEmailShaped(email)) return { message: 'Zadejte platnou e-mailovou adresu.', ok: false }
+  if (!isOnDomain(email, domain)) {
+    return { message: tied`Zadejte adresu na doméně ${domain}.`, ok: false }
+  }
+  return { email, ok: true }
+}
+
+/* `14a`, `14f`, as the copywriter worded them (`tlb36tk0`). The sentences name the access to the
+   page _Korektura_ too, which the address decides once proofreaders sign in (#82). */
+export const PROOFREADERS_TITLE = 'Korektura'
+export const PROOFREADERS_LABEL = 'Adresa korektorů'
+
+export function proofreadersSectionText(domain: string): string {
+  return tied`Adresa určuje, kdo má přístup na stránku Korektura. U skupiny Google ho získají jen členové s účtem na doméně ${domain}. Na uvedenou adresu posílá Publikace také ranní přehled.`
+}
+
+export const NO_PROOFREADERS_TEXT = tied`Zatím žádná. Přístup přes adresu korektorů není nastavený a ranní přehled neodejde.`
+export const PROOFREADERS_ADMIN_ONLY = tied`Adresu mění správci.`
+export const PROOFREADERS_FIELD_LABEL = 'Adresa'
+
+export function proofreadersHint(domain: string): string {
+  return tied`Zadejte adresu účtu nebo skupiny Google na doméně ${domain}. U skupiny získají přístup jen členové s účtem na této doméně. Přístup se změní do 10 minut. Další přehled odejde na novou adresu.`
+}
+
+export const PROOFREADERS_SAVED = tied`Adresa korektorů je uložená.`

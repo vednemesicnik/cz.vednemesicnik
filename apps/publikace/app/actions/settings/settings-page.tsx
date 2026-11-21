@@ -3,7 +3,18 @@ import { css } from 'remix/component'
 
 import type { AccessAccount, AccessGroup } from '../../data/access.server.ts'
 import type { DriveAccountState } from '../../data/drive-account.server.ts'
-import { type AccessKind, administratorsSentence, roleLostMessage } from '../../domain/access.ts'
+import {
+  type AccessKind,
+  administratorsSentence,
+  NO_PROOFREADERS_TEXT,
+  PROOFREADERS_ADMIN_ONLY,
+  PROOFREADERS_FIELD_LABEL,
+  PROOFREADERS_LABEL,
+  PROOFREADERS_TITLE,
+  proofreadersHint,
+  proofreadersSectionText,
+  roleLostMessage,
+} from '../../domain/access.ts'
 import {
   accountDomain,
   CONNECTED_CARD_TEXT,
@@ -37,6 +48,9 @@ export type AddForm = {
   value: string
 }
 
+/** The dialog _Adresa korektorů_ over the page (`14f`), with what was typed and its error. */
+export type ProofreadersForm = { error: string | null; value: string }
+
 /** The removal asked at its own address, drawn over the page. */
 export type RemovalQuestion =
   | { account: AccessAccount; kind: 'account' }
@@ -61,6 +75,9 @@ export type SettingsPageProps = {
   isRoleLost?: boolean
   /** The line under _Úlohy na pozadí_, one per job that reports (`14a`). */
   jobsSummary: readonly string[]
+  /** The proofreaders' address, `null` until it is first set (`14a`, `14f`). */
+  proofreaders: string | null
+  proofreadersForm?: ProofreadersForm
   question?: RemovalQuestion
   toasts?: readonly ToastMessage[]
   today: Temporal.Instant
@@ -682,9 +699,130 @@ function MailboxCard(handle: Handle<{ email: string }>) {
   )
 }
 
+/* `14a`'s row of the address: what it is, the button at the far end. */
+const addressRowStyle = css({
+  alignItems: 'center',
+  borderBottom: '1px solid var(--border)',
+  borderTop: '1px solid var(--border)',
+  display: 'flex',
+  flexWrap: 'wrap',
+  fontSize: '14px',
+  gap: '8px',
+  justifyContent: 'space-between',
+  padding: '10px 0',
+})
+
+const addressTextStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  minWidth: 0,
+  overflowWrap: 'anywhere',
+})
+
+const addressLabelStyle = css({ color: 'var(--text-secondary)' })
+
+/**
+ * `14a`, `14f`: the proofreaders' address and where it can be changed. Only an administrator
+ * sets or changes it; everybody else sees it with the sentence that says so.
+ */
+function ProofreadersPart(
+  handle: Handle<{ address: string | null; domain: string; isAdmin: boolean }>,
+) {
+  return () => {
+    let { address, domain, isAdmin } = handle.props
+    return (
+      <section aria-labelledby="proofreading-title" id="proofreading" mix={partStyle}>
+        <h2 id="proofreading-title">{PROOFREADERS_TITLE}</h2>
+        <p mix={metaStyle}>{proofreadersSectionText(domain)}</p>
+        <div mix={addressRowStyle}>
+          <span mix={addressTextStyle}>
+            <span mix={addressLabelStyle}>{PROOFREADERS_LABEL}</span>
+            <span>{address ?? NO_PROOFREADERS_TEXT}</span>
+            {isAdmin ? null : <span mix={metaStyle}>{PROOFREADERS_ADMIN_ONLY}</span>}
+          </span>
+          {isAdmin ? (
+            <a
+              class={
+                address === null
+                  ? 'vdm-btn vdm-btn--outline vdm-btn--sm'
+                  : 'vdm-btn vdm-btn--ghost vdm-btn--sm'
+              }
+              href={routes.settings.askProofreaders.href()}
+            >
+              {address === null ? 'Nastavit' : 'Změnit'}
+              <span class="vdm-sr-only"> {PROOFREADERS_LABEL.toLowerCase()}</span>
+            </a>
+          ) : null}
+        </div>
+      </section>
+    )
+  }
+}
+
+/** `14f`: one field, its error kept in the dialog; _Zrušit_ changes nothing. */
+function ProofreadersDialog(handle: Handle<{ domain: string; form: ProofreadersForm }>) {
+  return () => {
+    let { domain, form } = handle.props
+    let { error } = form
+    return (
+      <Dialog maxWidth="360px">
+        <DialogTitle>{PROOFREADERS_LABEL}</DialogTitle>
+        <form
+          action={routes.settings.saveProofreaders.href()}
+          data-rmx-document
+          method="post"
+          noValidate
+        >
+          <CsrfField />
+          <div class="vdm-dialog__body">
+            <div class="vdm-field">
+              <label class="vdm-field__label" for="proofreaders-email">
+                {PROOFREADERS_FIELD_LABEL}
+              </label>
+              <input
+                aria-describedby="proofreaders-email-hint"
+                aria-invalid={error === null ? undefined : 'true'}
+                autocapitalize="none"
+                autocomplete="off"
+                autocorrect="off"
+                autofocus
+                class={
+                  error === null ? 'vdm-field__input' : 'vdm-field__input vdm-field__input--error'
+                }
+                id="proofreaders-email"
+                name="email"
+                spellcheck={false}
+                type="email"
+                value={form.value}
+              />
+              <span
+                class={
+                  error === null ? 'vdm-field__hint' : 'vdm-field__hint vdm-field__hint--error'
+                }
+                id="proofreaders-email-hint"
+              >
+                {error ?? proofreadersHint(domain)}
+              </span>
+            </div>
+          </div>
+          <div class="vdm-dialog__actions">
+            <a class="vdm-btn vdm-btn--ghost vdm-btn--sm" href={routes.settings.index.href()}>
+              Zrušit
+            </a>
+            <button class="vdm-btn vdm-btn--primary vdm-btn--sm" type="submit">
+              Uložit
+            </button>
+          </div>
+        </form>
+      </Dialog>
+    )
+  }
+}
+
 /**
  * `/settings`: Nastavení with Přístup (`14a`, `14b`), Účty Publikace (`14a`, `14g`, `14h`,
- * `14c`) and the way to Úlohy na pozadí (`14a`, `14d`).
+ * `14c`), Korektura (`14a`, `14f`) and the way to Úlohy na pozadí (`14a`, `14d`).
  *
  * The lead sentence under the title waits for the parts it names — files and proofreading arrive
  * with their own issues.
@@ -700,6 +838,8 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
       groups,
       isRoleLost = false,
       jobsSummary,
+      proofreaders,
+      proofreadersForm,
       question,
       toasts,
       today,
@@ -714,7 +854,7 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
             expectedEmail: driveAccount.expectedEmail,
             status: driveAccount.state.status,
           }}
-          isInert={question !== undefined}
+          isInert={question !== undefined || proofreadersForm !== undefined}
           person={editor}
           title="Nastavení"
           toasts={toasts}
@@ -775,6 +915,8 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
               </div>
             </section>
 
+            <ProofreadersPart address={proofreaders} domain={domain} isAdmin={editor.isAdmin} />
+
             <section aria-labelledby="jobs-title" mix={partStyle}>
               <div mix={partBarStyle}>
                 <h2 id="jobs-title">{JOBS_TITLE}</h2>
@@ -789,6 +931,9 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
           </div>
         </Layout>
         {question === undefined ? null : <RemovalDialog question={question} />}
+        {proofreadersForm === undefined ? null : (
+          <ProofreadersDialog domain={domain} form={proofreadersForm} />
+        )}
       </Document>
     )
   }

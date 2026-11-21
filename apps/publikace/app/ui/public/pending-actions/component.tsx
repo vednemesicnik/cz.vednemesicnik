@@ -2,6 +2,11 @@ import type { Handle } from 'remix/component'
 import { clientEntry, ref } from 'remix/component'
 
 export type PendingActionsProps = {
+  /**
+   * The submit's name when its label alone does not say what it acts on, as in a row: it starts
+   * with the visible label (_Předat ke korektuře článek ‹název›_, `12k`).
+   */
+  accessibleLabel?: string
   /** The way back, as a link. Left out where the action has none (_Dokončit vydání_ in a row). */
   cancel?: { href: string; label: string }
   /** `primary` in the dialog, `outline` beside a Callout or in a row. */
@@ -37,7 +42,7 @@ export const PendingActions = clientEntry(
     )
 
     return () => {
-      let { cancel, emphasis, label, pendingLabel } = handle.props
+      let { accessibleLabel, cancel, emphasis, label, pendingLabel } = handle.props
 
       return (
         <>
@@ -51,6 +56,7 @@ export const PendingActions = clientEntry(
             </a>
           )}
           <button
+            aria-label={isPending ? undefined : accessibleLabel}
             class={`vdm-btn vdm-btn--${emphasis} vdm-btn--sm`}
             disabled={isPending}
             mix={ref((node, signal) => {

@@ -40,8 +40,14 @@ describe('jobHealth', () => {
 })
 
 describe('jobState', () => {
-  const OPEN = { ...RUN, error: null, finishedAt: null, outcome: null }
-  const OK = { ...RUN, error: null, finishedAt: START.add({ minutes: 2 }), outcome: 'ok' as const }
+  const OPEN = { ...RUN, error: null, finishedAt: null, outcome: null, summary: null }
+  const OK = {
+    ...RUN,
+    error: null,
+    finishedAt: START.add({ minutes: 2 }),
+    outcome: 'ok' as const,
+    summary: null,
+  }
   const FAILED = { ...OK, error: 'Reply check failed: timeout', outcome: 'failed' as const }
 
   it('knows nothing before the first run', () => {
@@ -91,7 +97,14 @@ const NOW = START.add({ hours: 3 })
 function run(minutesAgo: number, outcome?: 'failed' | 'ok'): JobRunRecord {
   let startedAt = NOW.subtract({ minutes: minutesAgo })
   if (outcome === undefined) {
-    return { error: null, finishedAt: null, intervalMinutes: 30, outcome: null, startedAt }
+    return {
+      error: null,
+      finishedAt: null,
+      intervalMinutes: 30,
+      outcome: null,
+      startedAt,
+      summary: null,
+    }
   }
   return {
     error: outcome === 'failed' ? 'Reply check failed: timeout' : null,
@@ -99,6 +112,7 @@ function run(minutesAgo: number, outcome?: 'failed' | 'ok'): JobRunRecord {
     intervalMinutes: 30,
     outcome,
     startedAt,
+    summary: null,
   }
 }
 

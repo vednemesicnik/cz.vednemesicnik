@@ -20,7 +20,12 @@ export type JobRunStore = {
   finish(
     job: string,
     runKey: string,
-    result: { at: Temporal.Instant; error: string | null; outcome: 'failed' | 'ok' },
+    result: {
+      at: Temporal.Instant
+      error: string | null
+      outcome: 'failed' | 'ok'
+      summary?: string | null
+    },
   ): Promise<boolean>
   /** Whether that job has an open run under that key. */
   isOpen(job: string, runKey: string): Promise<boolean>
@@ -37,12 +42,14 @@ function recordOf(row: Record<string, unknown> | undefined): JobRunRecord | null
   if (row === undefined || startedAt === null) return null
   let outcome = row['outcome']
   let error = row['error_text']
+  let summary = row['summary']
   return {
     error: typeof error === 'string' ? error : null,
     finishedAt: parseStamp(row['finished_at']),
     intervalMinutes: Number(row['interval_minutes']),
     outcome: outcome === 'ok' || outcome === 'failed' ? outcome : null,
     startedAt,
+    summary: typeof summary === 'string' ? summary : null,
   }
 }
 
@@ -58,7 +65,8 @@ export function createJobRunStore(database: Database): JobRunStore {
     async finish(job, runKey, result) {
       let updated = await database.exec(
         sql`UPDATE job_runs SET finished_at = ${stamp(result.at)}, outcome = ${result.outcome},
-              error_text = ${result.error === null ? null : result.error.slice(0, 2000)}
+              error_text = ${result.error === null ? null : result.error.slice(0, 2000)},
+              summary = ${result.summary ?? null}
             WHERE job = ${job} AND run_key = ${runKey} AND finished_at IS NULL`,
       )
       return (updated.affectedRows ?? 0) === 1
@@ -74,7 +82,7 @@ export function createJobRunStore(database: Database): JobRunStore {
 
     async latest(job) {
       let result = await database.exec(
-        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text FROM job_runs
+        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text, summary FROM job_runs
             WHERE job = ${job} ORDER BY started_at DESC, id DESC LIMIT 1`,
       )
       return recordOf(result.rows?.[0])
@@ -82,7 +90,7 @@ export function createJobRunStore(database: Database): JobRunStore {
 
     async latestRuns(job, limit) {
       let result = await database.exec(
-        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text FROM job_runs
+        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text, summary FROM job_runs
             WHERE job = ${job} ORDER BY started_at DESC, id DESC LIMIT ${limit}`,
       )
       return (result.rows ?? []).flatMap((row) => recordOf(row) ?? [])
@@ -90,7 +98,7 @@ export function createJobRunStore(database: Database): JobRunStore {
 
     async history(job, since) {
       let result = await database.exec(
-        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text FROM job_runs
+        sql`SELECT started_at, interval_minutes, finished_at, outcome, error_text, summary FROM job_runs
             WHERE job = ${job} AND started_at >= ${stamp(since)}
             ORDER BY started_at DESC, id DESC`,
       )

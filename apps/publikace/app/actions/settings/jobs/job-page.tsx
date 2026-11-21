@@ -12,12 +12,21 @@ import { Document } from '../../document.tsx'
 
 export type JobHistoryItem = { event: string; time: string }
 
+/**
+ * While the job is _S chybou_: what holds, and the technical text when the job sent one. While
+ * it is _Neběží_: the step as the title, and what the app knows of the job. A warning for what is
+ * mended in the app, with the way there (`14e`).
+ */
+export type JobCallout = {
+  action?: { href: string; label: string }
+  error: string | null
+  text: string
+  title: string | null
+  tone: 'error' | 'warning'
+}
+
 export type JobPageProps = {
-  /**
-   * While the job is _S chybou_: what holds, and the technical text when the job sent one. While
-   * it is _Neběží_: the step as the title, and what the app knows of the job (`14e`).
-   */
-  callout: { error: string | null; text: string; title: string | null } | null
+  callout: JobCallout | null
   driveAccount: { expectedEmail: string; status: DriveStatus }
   /** The runs, newest first; empty only for a job that never reported. */
   history: readonly JobHistoryItem[]
@@ -77,7 +86,7 @@ export function JobPage(handle: Handle<JobPageProps>) {
               {name}
             </h1>
             {callout === null ? null : (
-              <Callout tone="error">
+              <Callout tone={callout.tone}>
                 {/* Inline, as the other Callouts write it: `css()` would lose to the design
                     system's own rules for a paragraph in the body. */}
                 {callout.title === null ? null : (
@@ -85,7 +94,16 @@ export function JobPage(handle: Handle<JobPageProps>) {
                     {callout.title}
                   </p>
                 )}
-                <p style={{ margin: 0 }}>{callout.text}</p>
+                <p style={{ margin: callout.action === undefined ? 0 : '0 0 8px' }}>
+                  {callout.text}
+                </p>
+                {callout.action === undefined ? null : (
+                  <div class="vdm-callout__actions">
+                    <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={callout.action.href}>
+                      {callout.action.label}
+                    </a>
+                  </div>
+                )}
                 {callout.error === null ? null : (
                   <details mix={detailsStyle}>
                     <summary>{DETAILS_LABEL}</summary>
