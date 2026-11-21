@@ -109,10 +109,12 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
   mluví za časopis: tón je slušný, reprezentativní a trochu formální, ne úřední. Začínají „Dobrý
   den“ jako e-maily v návrhu: uvítání autorů, žádost o souhlas s díly, e-maily korektorům,
   finální verze s redakční doložkou.
-- **E-mail nese jen nejbližší krok.** Říká, co se právě stalo a co čtenář udělá teď. Pozdější
-  krok neohlašuje: má vlastní e-mail, který přijde, až je na řadě, a sám řekne, proč přišel.
+- **Každý text nese jen nejbližší krok.** Platí pro e-mail, obrazovku, stránku z odkazu, toast
+  i nápovědu u pole. Text říká, co se právě stalo a co čtenář udělá teď. Podrobnosti, se kterými
+  se čtenář setká později jinde v aplikaci nebo v dalším e-mailu, neohlašuje: pozdější krok má
+  vlastní místo nebo vlastní e-mail, který přijde, až je na řadě, a sám řekne, proč přišel.
   Uvítání autora proto nepopisuje finální verzi ani odpověď „Souhlasím“; o tu požádá až e-mail
-  s finální verzí.
+  s finální verzí. Toast po kliknutí neslibuje e-mail, který odejde až zítra.
 - **Dialog v dokumentu Google mluví hlasem aplikace.** Co se ukáže po kliknutí v menu
   _Publikace_, vrací aplikace, takže dialog vyká a nemá _my_. Čte ho autor nebo redaktor, který
   v aplikaci nic nenastaví: věta mu říká, co udělat sám, ne co má opravit šéfredakce.
