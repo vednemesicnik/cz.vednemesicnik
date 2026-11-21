@@ -42,7 +42,7 @@ async function withHarness(
   let app = await createTestApp()
   try {
     let drive = createFakeDrive()
-    drive.seedTemplate(TEMPLATE, 'Šablona článku')
+    drive.seedTemplate(TEMPLATE, 'TEMPLATE__Publication__Article')
     let issues = createIssueStore(app.database)
     let created = await createIssue(
       {

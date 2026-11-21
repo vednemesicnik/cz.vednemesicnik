@@ -120,7 +120,7 @@ export async function createTestApp(): Promise<TestApp> {
     answers.get(group)?.(email) ?? { status: 'unknown-group' }
 
   let drive = createFakeDrive()
-  drive.seedTemplate(TEST_TEMPLATE, 'Šablona článku')
+  drive.seedTemplate(TEST_TEMPLATE, 'TEMPLATE__Publication__Article')
   let mail: MailMessage[] = []
   let isMailFailing = false
   let router = createAppRouter({

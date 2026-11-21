@@ -95,9 +95,11 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   `publikace.app@vednemesicnik.cz` runs everything else and is a Content manager of the shared
   drive _Publikace_, where every new issue lives, and a member of no other shared drive, because
   it holds the full `drive` scope. Files on a shared drive belong to the drive, not to an account.
-  The article template is the one exception and lives in `publikace.app@`'s own _Můj disk →
-  Šablony_: on the shared drive every member who writes could change or bin it and its bound
-  script, while there only that account edits it and the app copies it as its owner. The
+  The article template is the one exception: `TEMPLATE__Publication__Article` lives in
+  `publikace.app@`'s own _Můj disk → Templates_, beside _Scripts_ for its standalone projects.
+  On the shared drive every member who writes could change or bin it and its bound script,
+  while there only that account edits it and the app copies it as its owner. The names on that
+  drive are English, as the scripts' are, because nobody but that account reads them. The
   scripts' template stays in `publikace@`'s drive until the switch.
 - **Two kinds of visitor.** Editors-in-chief sign in with Google, for seven days from the sign-in:
   an account on the domain `AUTHORIZED_DOMAIN` names, listed by name in Settings or a member of
@@ -127,7 +129,7 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   browser's default Google account rather than the one that clicked: the menu item writes its
   token into the dialog, and the dialog's buttons send it to the app with `fetch`.
 - **The link to a Doc is the right to edit it.** The issues folder on the shared drive is shared
-  as _Kdokoli s odkazem: Editor_, and the drive allows people outside the organisation, so every
+  as _Každý, kdo má odkaz · Přispěvatel_ (an editor, in a shared drive’s words), and the drive allows people outside the organisation, so every
   issue, article folder and Doc inherits it, as on _Redakce_. Authors outside the domain edit
   through the link; nothing in the app or the scripts shares a file with a person.
 
