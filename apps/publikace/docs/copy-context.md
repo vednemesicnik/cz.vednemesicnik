@@ -109,12 +109,17 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
   mluví za časopis: tón je slušný, reprezentativní a trochu formální, ne úřední. Začínají „Dobrý
   den“ jako e-maily v návrhu: uvítání autorů, žádost o souhlas s díly, e-maily korektorům,
   finální verze s redakční doložkou.
-- **Každý text nese jen nejbližší krok.** Platí pro e-mail, obrazovku, stránku z odkazu, toast
-  i nápovědu u pole. Text říká, co se právě stalo a co čtenář udělá teď. Podrobnosti, se kterými
-  se čtenář setká později jinde v aplikaci nebo v dalším e-mailu, neohlašuje: pozdější krok má
-  vlastní místo nebo vlastní e-mail, který přijde, až je na řadě, a sám řekne, proč přišel.
-  Uvítání autora proto nepopisuje finální verzi ani odpověď „Souhlasím“; o tu požádá až e-mail
-  s finální verzí. Toast po kliknutí neslibuje e-mail, který odejde až zítra.
+- **Text nese to, co čtenář potřebuje teď.** Platí pro e-mail, obrazovku, stránku z odkazu,
+  toast i nápovědu u pole. Teď potřebuje dvojí: co ovlivní rozhodnutí, které právě dělá, a co ho
+  dovede k místu, kde dostane další informace. O tom, co ho čeká dál, rozhoduje jedna otázka:
+  **řekne mu to později jiné místo, až to bude potřebovat?**
+  - **Ano** (další e-mail, jiná obrazovka, krok, na který teprve dojde): text to neohlašuje.
+    Pozdější místo to řekne samo, až je na řadě. Uvítání autora proto nepopisuje finální verzi
+    ani odpověď „Souhlasím“; o tu požádá až e-mail s finální verzí. Toast po kliknutí neslibuje
+    e-mail, který odejde až zítra.
+  - **Ne**: text to řekne celé hned, protože jinde to čtenář neuslyší. Hláška u _Spustit teď_
+    proto říká, že opakovaný přehled může přijít podruhé, a nápověda u adresy korektorů, že
+    další přehled jde na novou adresu, i když se spustí ručně.
 - **Dialog v dokumentu Google mluví hlasem aplikace.** Co se ukáže po kliknutí v menu
   _Publikace_, vrací aplikace, takže dialog vyká a nemá _my_. Čte ho autor nebo redaktor, který
   v aplikaci nic nenastaví: věta mu říká, co udělat sám, ne co má opravit šéfredakce.
