@@ -21,6 +21,8 @@ export type StatusTagProps = {
   children?: RemixNode
   /** The line under the tag: _založen 10. 11._ (`12a`). */
   detail?: string
+  /** The line beside the tag rather than under it: an author's clause in the open row (`12b`). */
+  isInline?: boolean
   /** On a tinted surface, such as a decided card of _Ke kontrole_ (`13b`): filled with the page. */
   isOnTint?: boolean
   tone: StatusTone
@@ -33,7 +35,7 @@ export type StatusTagProps = {
 export function StatusTag(handle: Handle<StatusTagProps>) {
   return () => (
     <span
-      class={`vdm-status vdm-status--${TONE_CLASSES[handle.props.tone]}${handle.props.isOnTint === true ? ' vdm-status--on-tint' : ''}`}
+      class={`vdm-status vdm-status--${TONE_CLASSES[handle.props.tone]}${handle.props.isOnTint === true ? ' vdm-status--on-tint' : ''}${handle.props.isInline === true ? ' vdm-status--inline' : ''}`}
     >
       <span class="vdm-status__tag">{handle.props.children}</span>
       {handle.props.detail === undefined ? null : (

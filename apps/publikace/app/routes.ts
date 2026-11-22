@@ -39,6 +39,9 @@ export const routes = route({
     cancelHandover: post('/issues/:name/articles/:id/handover/cancel'),
     /* _Zrušit finální verzi_ from the row's „⋯“ (`12q`), with the marking's time as `?marked=`. */
     cancelFinalVersion: post('/issues/:name/articles/:id/final-version/cancel'),
+    /* _Poslat žádost znovu_ in the article's open row (`12b`), with the marking's time as
+       `?marked=`; back to the detail with the row still open. */
+    resendClauses: post('/issues/:name/articles/:id/clauses/resend'),
   },
 
   /* The pages behind a shared link, without sign-in or cookies (`02a`). `GET` draws the form,

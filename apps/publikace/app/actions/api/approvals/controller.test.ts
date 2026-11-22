@@ -19,7 +19,13 @@ const LENKA = { email: 'lenka.svobodova@vednemesicnik.test', name: 'Lenka Svobod
 const AT = Temporal.Instant.from('2026-11-21T08:00:00Z')
 
 type Claimed = {
-  clauses: { authorEmail: string; clauseKey: string; pdfFileId: string; signature: string }[]
+  clauses: {
+    authorEmail: string
+    clauseKey: string
+    pdfFileId: string
+    sendKey: string
+    signature: string
+  }[]
   runKey: string
 }
 
@@ -426,6 +432,88 @@ describe('the replies of Article_Approvals', () => {
         await reportReply(app, runKey, { clauseKey: 'clause_0_0_0', state: 'no_reply' }),
         'unknown',
       )
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('Poslat žádost znovu', () => {
+  const MARKED_AT = AT.add({ hours: 1 })
+
+  it('hands a clause the Mailer did not confirm to the next run, under a new Mailer key', async () => {
+    let app = await createTestApp()
+    try {
+      let { articleId, clauseKey } = await sent(app, 'failed')
+      let articles = createArticleStore(app.database)
+      assert.deepEqual(await articles.resendClauses(articleId, MARKED_AT), {
+        count: 1,
+        kind: 'done',
+      })
+      assert.equal((await articles.findById(articleId))?.finalVersion?.clauses.pending, 1)
+      let again = await claim(app)
+      assert.deepEqual(
+        again.clauses.map((clause) => [clause.clauseKey, clause.sendKey]),
+        [[clauseKey, `${clauseKey}_2`]],
+      )
+      let report = { clauseKey, outcome: 'sent' }
+      let response = await call(app, REPORT, {
+        outcome: 'ok',
+        results: [report],
+        runKey: again.runKey,
+      })
+      assert.equal(response.status, 200)
+      let [author] = (await articles.findById(articleId))?.finalVersion?.authors ?? []
+      assert.equal(author?.state, 'waiting')
+      assert.equal(author?.error, null)
+      assert.equal((await articles.findById(articleId))?.finalVersion?.isCancellable, false)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('sends a clause nobody answered again, and only once per press', async () => {
+    let app = await createTestApp()
+    try {
+      let { articleId, clauseKey } = await sent(app)
+      let articles = createArticleStore(app.database)
+      assert.equal((await articles.resendClauses(articleId, MARKED_AT)).kind, 'done')
+      assert.deepEqual(await articles.resendClauses(articleId, MARKED_AT), { kind: 'nothing' })
+      assert.equal((await claim(app)).clauses[0]?.sendKey, `${clauseKey}_2`)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('leaves a clause with a reply alone, and writes nothing for another marking or a closed issue', async () => {
+    let app = await createTestApp()
+    try {
+      let { articleId, clauseKey } = await sent(app)
+      let articles = createArticleStore(app.database)
+      let first = await claimReplies(app)
+      let reply = replyOf('m-1', 'Souhlasím, jen prosím jiný podpis.')
+      assert.equal(
+        await reportReply(app, first.runKey, { clauseKey, reply, state: 'other_reply' }),
+        'accepted',
+      )
+      assert.deepEqual(await articles.resendClauses(articleId, MARKED_AT), { kind: 'nothing' })
+
+      let otherId = await marked(app, 'VDM_2026_7')
+      let second = await claim(app)
+      let results = second.clauses.map((clause) => ({
+        clauseKey: clause.clauseKey,
+        outcome: 'sent',
+      }))
+      await call(app, REPORT, { outcome: 'ok', results, runKey: second.runKey })
+      assert.deepEqual(await articles.resendClauses(otherId, AT), { kind: 'nothing' })
+      let issueId = (await articles.findById(otherId))?.issueId ?? 0
+      await app.database.exec(
+        sql`UPDATE issues SET closed_at = ${AT.toString()} WHERE id = ${issueId}`,
+      )
+      assert.deepEqual(await articles.resendClauses(otherId, MARKED_AT), {
+        issueName: 'VDM_2026_7',
+        kind: 'closed',
+      })
     } finally {
       await app.close()
     }

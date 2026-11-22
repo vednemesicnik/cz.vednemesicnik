@@ -5,10 +5,12 @@ import {
   CLAIM_LIMIT,
   CLAIM_MINUTES,
   clauseKey,
+  type ClauseDetail,
   type ClauseOutcome,
   clauseState,
   type ClauseStatus,
   countClauses,
+  sendKey,
   REPLY_CLAIM_LIMIT,
 } from '../domain/approvals.ts'
 import type { ArticleStep, Author, FinalVersion } from '../domain/article.ts'
@@ -126,8 +128,21 @@ export type ClaimedClause = {
   pdfFileId: string
   /** The PDF's sha256, which names the attachment as the old job names it. */
   pdfHash: string
+  /** The Mailer's key for this sending, a new one after _Poslat žádost znovu_ (`sendKey`). */
+  sendKey: string
   signature: string
 }
+
+/**
+ * What _Poslat žádost znovu_ came to (`12b`). `done` gives how many clauses went back to
+ * _K odeslání_; `nothing` is a row whose clauses all changed meanwhile, or a marking that is no
+ * longer the one it showed.
+ */
+export type ResendClausesOutcome =
+  | { count: number; kind: 'done' }
+  | { kind: 'nothing' }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
 
 /** A clause a run took to ask about its reply, and where its archive goes (#89). */
 export type ClaimedReply = {
@@ -340,6 +355,12 @@ export type ArticleStore = {
    * marking's way back for good.
    */
   claimForSending(runKey: string, at: Temporal.Instant): Promise<ClaimedClause[]>
+  /**
+   * _Poslat žádost znovu_ on the marking made at `markedAt` (`12b`): every clause of it the Mailer
+   * did not confirm, or sent with no reply since, goes back to _K odeslání_ for the next run, under
+   * a new attempt. `first_claimed_at` stays, so the marking stays past its way back.
+   */
+  resendClauses(id: number, markedAt: Temporal.Instant): Promise<ResendClausesOutcome>
   /** What the run did with a clause it claimed; `unknown` for one it did not claim. */
   recordSending(
     runKey: string,
@@ -603,6 +624,23 @@ function toClauseStatus(row: Row): ClauseStatus {
   }
 }
 
+/** One clause as the open row of the issue detail reads it (`12b`). */
+function toClauseDetail(row: Row): ClauseDetail {
+  return {
+    approvedAt: parseStamp(row['approved_at']),
+    archiveError: text(row['archive_error']),
+    authorEmail: String(row['author_email']),
+    authorName: String(row['author_name']),
+    error: text(row['error']),
+    id: Number(row['id']),
+    replyReceivedAt: parseStamp(row['reply_received_at']),
+    replyText: text(row['reply_text']),
+    sentAt: parseStamp(row['sent_at']),
+    signature: String(row['signature']),
+    state: clauseState(toClauseStatus(row)),
+  }
+}
+
 /**
  * The standing marking of each article, with its clauses counted by state. The states come from
  * `clauseState`, so the tag, the queue and the counts read a clause the same way.
@@ -634,6 +672,9 @@ async function standingFinalVersions(
     let reviewed = rows.find((clause) => clauseState(toClauseStatus(clause)) === 'review')
     byArticle.set(Number(row['article_id']), {
       at: parseStamp(row['marked_at']) ?? EPOCH,
+      authors: rows
+        .toSorted((a, b) => Number(a['position']) - Number(b['position']))
+        .map(toClauseDetail),
       clauses: countClauses(rows.map(toClauseStatus)),
       email: String(row['marked_by_email']),
       isCancellable: !rows.some((clause) => clause['first_claimed_at'] !== null),
@@ -1113,8 +1154,36 @@ export function createArticleStore(database: Database): ArticleStore {
           issueName: String(row['issue_name']),
           pdfFileId: String(row['pdf_file_id']),
           pdfHash: String(row['pdf_hash']),
+          sendKey: sendKey(String(row['clause_key']), Number(row['send_attempt'])),
           signature: String(row['signature']),
         }))
+      })
+    },
+
+    resendClauses(id, markedAt) {
+      return database.transaction(async (db) => {
+        let found = await withIssue(db, id)
+        if (found === null) return { kind: 'gone' }
+        let { isClosed, issueName, row } = found
+        if (isClosed) return { issueName, kind: 'closed' }
+        if (row.finalVersion === null || !row.finalVersion.at.equals(markedAt)) {
+          return { kind: 'nothing' }
+        }
+        /* `isResendable` for SQL: sent or not confirmed, with no reply, consent or failed archive.
+           The lease goes too, so the next run takes it; a reply run that held it and reports
+           after this is answered `unknown`, and the next one reads the same reply again. */
+        let result = await db.exec(
+          sql`UPDATE article_clauses
+              SET state = 'pending', error = NULL, sent_at = NULL, claimed_at = NULL,
+                  send_attempt = send_attempt + 1
+              WHERE final_version_id = (SELECT id FROM final_versions
+                                        WHERE article_id = ${id} AND cancelled_at IS NULL
+                                          AND marked_at = ${stamp(markedAt)})
+                AND state != 'pending' AND approved_at IS NULL AND archive_failed_at IS NULL
+                AND reply_message_id IS NULL`,
+        )
+        let count = result.affectedRows ?? 0
+        return count === 0 ? { kind: 'nothing' } : { count, kind: 'done' }
       })
     },
 

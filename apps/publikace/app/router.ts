@@ -299,6 +299,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         links: articleSetup.links,
         origin: articleSetup.origin,
         proofreaders,
+        runs: jobRuns,
         setup: articleSetup,
       }),
       skipWithoutSession(loadAuth()),

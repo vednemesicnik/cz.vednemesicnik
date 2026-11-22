@@ -22,7 +22,9 @@ import {
   articleStateTag,
   authorsLine,
   documentUrl,
+  type FinalVersion,
   STATE_ORDER,
+  whoOf,
 } from '../../domain/article.ts'
 import {
   ALREADY_CANCELLED_TOAST,
@@ -40,6 +42,19 @@ import {
   type RaceToast,
   TO_SETTINGS_LABEL,
 } from '../../domain/handover.ts'
+import {
+  APPROVAL_SEND_JOB,
+  CLAUSE_JOB_LINK_LABEL,
+  CLAUSE_REVIEW_LINK_LABEL,
+  clauseRowTag,
+  isResendable as isClauseResendable,
+  RESEND_NOTHING_TOAST,
+  resendClosedToast,
+  resendLabel,
+  resentClausesToast,
+} from '../../domain/approvals.ts'
+import { type JobHealth, jobHealth } from '../../domain/job-run.ts'
+import { tied } from '../../domain/public/typography.ts'
 import { UNDO_LABEL } from '../../domain/review.ts'
 import {
   articleArtworksLine,
@@ -83,7 +98,7 @@ import {
   shownUrl,
   usageLine,
 } from '../../domain/link.ts'
-import { now, parseStamp, stamp } from '../../domain/time.ts'
+import { formatMoment, now, parseStamp, stamp } from '../../domain/time.ts'
 import type { Article, ArticleRow, HandoverOutcome } from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
@@ -93,6 +108,7 @@ import {
   CANCEL_FINAL_FAILED_TOAST,
   cancelFinalRefusalToast,
   FINAL_CANCELLED_TOAST,
+  signaturesLabel,
 } from '../../domain/proofreading-queue.ts'
 import { createIssue, finishIssue } from '../../drive/issue-setup.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
@@ -105,6 +121,7 @@ import {
   type ArticleRowView,
   type ArtworkRowView,
   type ArtworksView,
+  type ClausesView,
   DetailPage,
   type DiscardView,
   type LinkBlockView,
@@ -246,6 +263,59 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<void>
 }
 
 /** The block for the link and the rows of _Články_, from what the database has (`12a`). */
+/**
+ * The open row of an article with a final version (`12b`, `12q`): each author's clause, who
+ * marked the version and when, the names the clauses carry, and _Poslat žádost znovu_ while a
+ * clause is one it would send again and the issue is open.
+ */
+function clausesView(
+  issue: Issue,
+  article: Article & { finalVersion: FinalVersion },
+  health: JobHealth,
+  filter: ArtworkFilter,
+  today: Temporal.Instant,
+): ClausesView {
+  let { finalVersion } = article
+  let ids = { id: String(article.id), name: issue.name }
+  let recipients = finalVersion.authors.filter((clause) => isClauseResendable(clause.state)).length
+  let marked = encodeURIComponent(stamp(finalVersion.at))
+  return {
+    authors: finalVersion.authors.map((clause) => {
+      let tag = clauseRowTag(clause, health, today)
+      return {
+        email: clause.authorEmail,
+        link:
+          tag.link === 'review'
+            ? {
+                href: `${routes.review.index.href()}#reply-clause-${clause.id}`,
+                label: CLAUSE_REVIEW_LINK_LABEL,
+              }
+            : tag.link === 'jobs'
+              ? {
+                  href: routes.settings.jobs.show.href({ job: APPROVAL_SEND_JOB }),
+                  label: CLAUSE_JOB_LINK_LABEL,
+                }
+              : null,
+        name: clause.authorName,
+        quote: tag.quote,
+        tag: { detail: tag.detail ?? undefined, label: tag.label, tone: tag.tone },
+      }
+    }),
+    documentUrl: documentUrl(article.docId),
+    markedLine: tied`Finální verze z ${formatMoment(finalVersion.at, today)} · Označení: ${whoOf(finalVersion)}`,
+    names: finalVersion.authors.map((clause) => clause.signature),
+    namesLabel: signaturesLabel(finalVersion.authors.length),
+    pdfUrl: driveFileUrl(finalVersion.pdfFileId),
+    resend:
+      issue.closedAt === null && recipients > 0
+        ? {
+            action: `${routes.issues.resendClauses.href(ids)}?marked=${marked}${filter === 'all' ? '' : `&artworks=${filter}`}`,
+            label: resendLabel(recipients, finalVersion.authors.length),
+          }
+        : null,
+  }
+}
+
 async function linkAndArticles(
   context: PageContext,
   issue: Issue,
@@ -259,6 +329,9 @@ async function linkAndArticles(
   let counts = await artworks.artworks.countsByArticle(issue.id)
   let artworksLinks = await links.artworksLinksOf(issue.id)
   let batches = await artworks.artworks.listByIssue(issue.id)
+  let filter = filterOf(context)
+  let openId = Number(context.url.searchParams.get('article'))
+  let health = jobHealth(await articlesOf(context).runs.latest(APPROVAL_SEND_JOB), today)
   let rows = created.map((article) => {
     let articleCounts = counts.get(article.id) ?? NO_ARTWORKS
     let artworksLink = artworksLinks.get(article.id)
@@ -274,7 +347,25 @@ async function linkAndArticles(
           ? (article.handover?.at ?? null)
           : null
     let finalVersion = article.finalVersion
+    /* The tag opens the row and closes it again, through the address, so it works with no
+       script and survives the redirect of _Poslat žádost znovu_; one row is open at a time. */
+    let isRowOpen = finalVersion !== null && openId === article.id
     return {
+      clauses:
+        isRowOpen && finalVersion !== null
+          ? clausesView(issue, { ...article, finalVersion }, health, filter, today)
+          : null,
+      isOpen: isRowOpen,
+      showReplyHref:
+        finalVersion !== null && state === 'review' && !isRowOpen
+          ? detailHref(issue, filter, article.id)
+          : null,
+      stateHref:
+        finalVersion === null
+          ? null
+          : isRowOpen
+            ? detailHref(issue, filter)
+            : detailHref(issue, filter, article.id),
       cancelFinalAction:
         isOpen && finalVersion !== null && finalVersion.isCancellable
           ? `${routes.issues.cancelFinalVersion.href(ids)}?marked=${encodeURIComponent(stamp(finalVersion.at))}`
@@ -331,10 +422,17 @@ async function linkAndArticles(
   }
 }
 
-/** The address of the detail with the artworks' filter, as `12a` keeps it. */
-function detailHref(issue: Issue, filter: ArtworkFilter): string {
+/**
+ * The address of the detail with the artworks' filter, as `12a` keeps it, and the article whose
+ * row is open (`12b`), scrolled to.
+ */
+function detailHref(issue: Issue, filter: ArtworkFilter, openArticle?: number): string {
+  let query = new URLSearchParams()
+  if (filter !== 'all') query.set('artworks', filter)
+  if (openArticle !== undefined) query.set('article', String(openArticle))
   let href = routes.issues.show.href({ name: issue.name })
-  return filter === 'all' ? href : `${href}?artworks=${filter}`
+  let search = query.size === 0 ? '' : `?${query}`
+  return openArticle === undefined ? `${href}${search}` : `${href}${search}#article-${openArticle}`
 }
 
 /** _Obrazová díla_ of the issue: every artwork of its live batches, filtered and in order. */
@@ -652,6 +750,20 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         if (outcome.refusal.kind === 'gone') return notFound()
         flashRace(context, cancelFinalRefusalToast(outcome.refusal, now()))
         return back()
+      },
+
+      async resendClauses(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        let markedAt = parseStamp(context.url.searchParams.get('marked'))
+        if (issue === null || article === null || markedAt === null) return notFound()
+        let outcome = await articlesOf(context).articles.resendClauses(article.id, markedAt)
+        if (outcome.kind === 'gone') return notFound()
+        if (outcome.kind === 'done') flashToast(context, resentClausesToast(outcome.count))
+        else if (outcome.kind === 'closed')
+          flashToast(context, resendClosedToast(outcome.issueName))
+        else flashToast(context, RESEND_NOTHING_TOAST)
+        return redirect(detailHref(issue, filterOf(context), article.id), 303)
       },
 
       async renewLink(context) {

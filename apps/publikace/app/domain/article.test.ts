@@ -197,6 +197,7 @@ describe('the state of an article (01a)', () => {
     let finalVersion = {
       ...MARIE,
       clauses: clauses({ pending: 2 }),
+      authors: [],
       isCancellable: true,
       pdfFileId: 'pdf-1',
       reviewAuthor: null,
@@ -226,6 +227,7 @@ describe('the state of an article (01a)', () => {
     let finalVersion = {
       ...MARIE,
       clauses: clauses({ approved: 1, waiting: 1 }),
+      authors: [],
       isCancellable: false,
       pdfFileId: 'pdf-1',
       reviewAuthor: null,

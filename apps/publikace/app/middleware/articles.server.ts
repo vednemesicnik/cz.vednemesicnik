@@ -1,6 +1,7 @@
 import { createContextKey, type Middleware } from 'remix/router'
 
 import type { ArticleStore } from '../data/articles.server.ts'
+import type { JobRunStore } from '../data/job-runs.server.ts'
 import type { LinkStore } from '../data/links.server.ts'
 import type { ProofreadersStore } from '../data/proofreaders.server.ts'
 import type { ArticleSetup } from '../drive/article-setup.server.ts'
@@ -18,6 +19,8 @@ export type ArticlesContext = {
   origin: string
   /** The proofreaders' address, which the detail warns of while it is missing (`12l`). */
   proofreaders: ProofreadersStore
+  /** The runs of the jobs, for the next run an author's clause waits on (`12b`). */
+  runs: JobRunStore
   setup: ArticleSetup
 }
 

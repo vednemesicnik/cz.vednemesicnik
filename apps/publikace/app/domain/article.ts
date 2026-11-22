@@ -4,7 +4,7 @@
  * loads too, and are re-exported here.
  */
 
-import type { ClauseCounts } from './approvals.ts'
+import type { ClauseCounts, ClauseDetail } from './approvals.ts'
 import type { Author } from './public/article-form.ts'
 import { formatDayMonth } from './time.ts'
 import { NBSP, tied } from './public/typography.ts'
@@ -149,6 +149,8 @@ export type ArticleStep = { at: Temporal.Instant; email: string; name: string | 
  * _Ke kontrole_, the name under that tag.
  */
 export type FinalVersion = ArticleStep & {
+  /** Each author's clause in the order of the article's authors, for the open row (`12b`). */
+  authors: readonly ClauseDetail[]
   clauses: ClauseCounts
   isCancellable: boolean
   pdfFileId: string

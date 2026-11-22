@@ -325,4 +325,54 @@ describe('the final version (15f, 15g)', () => {
       await app.close()
     }
   })
+  it('opens the row from the tag, with each author, and sends a failed clause again', async () => {
+    let { app, articleId, editor, proofreader } = await newsroom()
+    try {
+      await mark(proofreader, articleId)
+      let articles = createArticleStore(app.database)
+      let at = Temporal.Now.instant()
+      let [claimed] = await articles.claimForSending('run-1', at)
+      assert.ok(claimed !== undefined)
+      let outcome = { error: 'Mailer answered 503', kind: 'failed' as const }
+      await articles.recordSending('run-1', claimed.clauseKey, outcome, at)
+
+      let detail = await (await editor.get(`/issues/${ISSUE}`)).text()
+      let open = `/issues/${ISSUE}?article=${articleId}#article-${articleId}`
+      assert.ok(detail.includes(`href="${open.replace('&', '&amp;')}"`), 'the tag opens the row')
+      assert.ok(!textOf(detail).includes('Mailer answered 503'), 'a closed row shows no clause')
+
+      let row = await (await editor.get(`/issues/${ISSUE}?article=${articleId}`)).text()
+      let text = textOf(row)
+      assert.ok(row.includes('vdm-row vdm-row--last vdm-row--selected'))
+      assert.ok(text.includes('Chyba Mailer answered 503'), text)
+      assert.ok(text.includes('Úloha Žádosti a odpovědi u článků'))
+      assert.ok(text.includes(`Označení: ${LENKA.name}`))
+      assert.ok(text.includes('Jméno v doložce'))
+      assert.ok(row.includes('href="/settings/jobs/approval-send"'))
+      let resend = new RegExp(
+        `<form action="(/issues/${ISSUE}/articles/${articleId}/clauses/resend\\?marked=[^"]*)"`,
+      ).exec(row)?.[1]
+      assert.ok(resend !== undefined, 'the row offers Poslat žádost znovu')
+      assert.ok(text.includes('Poslat žádost znovu'))
+
+      let response = await editor.post(resend.replaceAll('&amp;', '&'), {}, `/issues/${ISSUE}`)
+      assert.equal(response.status, 303)
+      assert.equal(response.headers.get('Location'), open)
+      let after = await (await editor.get(`/issues/${ISSUE}?article=${articleId}`)).text()
+      assert.equal(statusText(after), 'Žádost čeká na odeslání.')
+      assert.ok(textOf(after).includes('K souhlasu e-mail autorům čeká na odeslání'))
+      assert.ok(textOf(after).includes('Čeká na odeslání'))
+      assert.ok(!after.includes('/clauses/resend'), 'nothing is left to send again')
+      assert.equal(
+        (await articles.claimForSending('run-2', at))[0]?.sendKey,
+        `${claimed.clauseKey}_2`,
+      )
+
+      await editor.post(resend.replaceAll('&amp;', '&'), {}, `/issues/${ISSUE}`)
+      let twice = await (await editor.get(`/issues/${ISSUE}`)).text()
+      assert.equal(statusText(twice), 'Žádnou žádost teď nelze poslat znovu.')
+    } finally {
+      await app.close()
+    }
+  })
 })

@@ -94,7 +94,11 @@ function readResult(value: unknown): { clauseKey: string; outcome: ClauseOutcome
   return { clauseKey, outcome: { error, kind: 'failed' } }
 }
 
-/** One clause to send as the job gets it. The subject's tag is the clause's key. */
+/**
+ * One clause to send as the job gets it. The subject's tag and the report's key are the clause's
+ * key; `sendKey` is the Mailer's key for this sending, the clause's key until _Poslat žádost
+ * znovu_ asked for another (`12b`), because the Mailer answers a key it sent as sent, unsent.
+ */
 function claimedItem(clause: ClaimedClause) {
   return {
     articleName: clause.articleName,
@@ -105,6 +109,7 @@ function claimedItem(clause: ClaimedClause) {
     issueName: clause.issueName,
     pdfFileId: clause.pdfFileId,
     pdfHash: clause.pdfHash,
+    sendKey: clause.sendKey,
     signature: clause.signature,
     subjectPrefix: APPROVAL_SUBJECT_PREFIX,
   }
