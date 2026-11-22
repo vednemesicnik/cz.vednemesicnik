@@ -22,6 +22,8 @@ import {
   readLine,
   receivedLine,
   replyMenuLabel,
+  type ReviewKind,
+  reviewKindOf,
   settledLine,
   SHOW_ARTWORKS_LABEL,
   UNDO_LABEL,
@@ -71,11 +73,30 @@ function settledIdOf(anchor: string | null, kind: 'batch' | 'clause'): number | 
   return match?.[1] === undefined ? undefined : Number(match[1])
 }
 
-/** The queue at the card, so a page drawn without script does not jump to the top. */
-function cardHref(anchor: string | null): string {
-  return anchor === null
-    ? routes.review.index.href()
-    : `${routes.review.index.href()}#reply-${anchor}`
+/**
+ * The queue under its filter (`13a`), at the card when one is named, so a page drawn without
+ * script does not jump to the top. _Vše_ is the bare address, as `?artworks=` omits it.
+ */
+function reviewHref(
+  kind: ReviewKind,
+  options: { anchor?: string | null; whole?: string } = {},
+): string {
+  let query = new URLSearchParams()
+  if (options.whole !== undefined) query.set('whole', options.whole)
+  if (kind !== 'all') query.set('kind', kind)
+  let search = query.size === 0 ? '' : `?${query}`
+  let hash =
+    options.anchor === undefined || options.anchor === null ? '' : `#reply-${options.anchor}`
+  return `${routes.review.index.href()}${search}${hash}`
+}
+
+/** An action on a card, carrying the filter so its redirect comes back under it. */
+function withKind(href: string, kind: ReviewKind): string {
+  return kind === 'all' ? href : `${href}?kind=${kind}`
+}
+
+function kindOf(context: { url: URL }): ReviewKind {
+  return reviewKindOf(context.url.searchParams.get('kind'))
 }
 
 /** The time a card orders by: when the reply arrived, or when its archive failed. */
@@ -93,9 +114,15 @@ function artworksHref(batch: QueuedBatch): string {
 
 function cardOf(
   batch: QueuedBatch,
-  options: { health: JobHealth; isSettled: boolean; isWhole: boolean; today: Temporal.Instant },
+  options: {
+    health: JobHealth
+    isSettled: boolean
+    isWhole: boolean
+    kind: ReviewKind
+    today: Temporal.Instant
+  },
 ): QueueCardView {
-  let { health, today } = options
+  let { health, kind, today } = options
   let base = {
     id: String(batch.id),
     kind: kindLine(batch.artworks.length, batch.issueName),
@@ -118,7 +145,7 @@ function cardOf(
       quote: null,
       tag: { detail: verifiedTagDetail(health), label: VERIFIED_TAG, tone: 'running' },
       titleHref: null,
-      undoAction: routes.review.undo.href(ids),
+      undoAction: withKind(routes.review.undo.href(ids), kind),
     }
   }
 
@@ -161,7 +188,7 @@ function cardOf(
       batch.discardedAt === null
         ? null
         : { text: discardedBatchText(batch.discardedAt, today), title: null, tone: 'info' },
-    consentAction: routes.review.verify.href(ids),
+    consentAction: withKind(routes.review.verify.href(ids), kind),
     consentReplyId: batch.replyMessageId,
     isSettled: false,
     jobsHref: null,
@@ -181,7 +208,7 @@ function cardOf(
     quote: {
       isClamped,
       moreHref: isClamped
-        ? `${routes.review.index.href()}?whole=${batch.id}#reply-${batch.id}`
+        ? reviewHref(kind, { anchor: String(batch.id), whole: String(batch.id) })
         : null,
       text,
     },
@@ -202,9 +229,15 @@ function cardOf(
  */
 function clauseCardOf(
   clause: QueuedClause,
-  options: { health: JobHealth; isSettled: boolean; isWhole: boolean; today: Temporal.Instant },
+  options: {
+    health: JobHealth
+    isSettled: boolean
+    isWhole: boolean
+    kind: ReviewKind
+    today: Temporal.Instant
+  },
 ): QueueCardView {
-  let { health, today } = options
+  let { health, kind, today } = options
   let anchor = clauseAnchor(clause.id)
   let ids = { id: String(clause.id) }
   let base = {
@@ -226,7 +259,7 @@ function clauseCardOf(
       quote: null,
       tag: { detail: verifiedTagDetail(health), label: VERIFIED_TAG, tone: 'running' },
       titleHref: null,
-      undoAction: routes.review.clauseUndo.href(ids),
+      undoAction: withKind(routes.review.clauseUndo.href(ids), kind),
     }
   }
 
@@ -263,7 +296,7 @@ function clauseCardOf(
   return {
     ...base,
     callout: null,
-    consentAction: routes.review.clauseVerify.href(ids),
+    consentAction: withKind(routes.review.clauseVerify.href(ids), kind),
     consentReplyId: clause.replyMessageId,
     isSettled: false,
     jobsHref: null,
@@ -275,7 +308,7 @@ function clauseCardOf(
     ),
     quote: {
       isClamped,
-      moreHref: isClamped ? `${routes.review.index.href()}?whole=${anchor}#reply-${anchor}` : null,
+      moreHref: isClamped ? reviewHref(kind, { anchor, whole: anchor }) : null,
       text,
     },
     tag: { label: 'Ke kontrole', tone: 'waiting' },
@@ -304,6 +337,7 @@ export default function createReviewController(
     actions: {
       async index(context) {
         let settled = takeSettled(context.get(Session))
+        let kind = kindOf(context)
         let whole = context.url.searchParams.get('whole')
         let [batches, clauses, artworksHealth, articlesHealth, driveAccount] = await Promise.all([
           dependencies.artworks.reviewQueue(settledIdOf(settled, 'batch')),
@@ -314,30 +348,55 @@ export default function createReviewController(
         ])
         let today = now()
         let items = [
-          ...batches.map((batch) => ({
-            at: cardTime(batch),
-            card: cardOf(batch, {
-              health: artworksHealth,
-              isSettled: String(batch.id) === settled,
-              isWhole: String(batch.id) === whole,
-              today,
-            }),
-          })),
-          ...clauses.map((clause) => ({
-            at: cardTime(clause),
-            card: clauseCardOf(clause, {
-              health: articlesHealth,
-              isSettled: clauseAnchor(clause.id) === settled,
-              isWhole: clauseAnchor(clause.id) === whole,
-              today,
-            }),
-          })),
+          ...batches.map((batch) => {
+            let isSettled = String(batch.id) === settled
+            return {
+              at: cardTime(batch),
+              card: cardOf(batch, {
+                health: artworksHealth,
+                isSettled,
+                isWhole: String(batch.id) === whole,
+                kind,
+                today,
+              }),
+              isSettled,
+              kind: 'artworks' as const,
+            }
+          }),
+          ...clauses.map((clause) => {
+            let isSettled = clauseAnchor(clause.id) === settled
+            return {
+              at: cardTime(clause),
+              card: clauseCardOf(clause, {
+                health: articlesHealth,
+                isSettled,
+                isWhole: clauseAnchor(clause.id) === whole,
+                kind,
+                today,
+              }),
+              isSettled,
+              kind: 'articles' as const,
+            }
+          }),
         ]
         /* Stable, so each kind keeps its own order where two replies came at the same moment. */
         items.sort((a, b) => Temporal.Instant.compare(a.at, b.at))
+        /* The card just decided stays where it was but no longer waits, so it counts nowhere, as
+           in the panel (`13b`). */
+        let waiting = items.filter((item) => !item.isSettled)
+        let counts: Record<ReviewKind, number> = {
+          all: waiting.length,
+          articles: waiting.filter((item) => item.kind === 'articles').length,
+          artworks: waiting.filter((item) => item.kind === 'artworks').length,
+        }
+        let shown = kind === 'all' ? items : items.filter((item) => item.kind === kind)
         return context.render(
           <ReviewPage
-            cards={items.map((item) => item.card)}
+            cards={shown.map((item) => item.card)}
+            counts={counts}
+            hasCards={items.length > 0}
+            hrefOf={(value) => reviewHref(value)}
+            kind={kind}
             driveAccount={driveAccount}
             person={context.auth.identity}
             readLine={readLine({ articles: articlesHealth, artworks: artworksHealth }, today)}
@@ -348,6 +407,7 @@ export default function createReviewController(
 
       async verify(context) {
         let id = Number(context.params.id)
+        let kind = kindOf(context)
         let reply = (context.get(FormData) as FormData).get('reply')
         let isRecorded =
           Number.isSafeInteger(id) &&
@@ -356,21 +416,28 @@ export default function createReviewController(
         if (isRecorded) {
           context.get(Session)?.flash(SETTLED_SESSION_KEY, String(id))
           flashToast(context, verifiedToast(await healthOf(REPLY_CHECK_JOB)), 'neutral', {
-            action: routes.review.undo.href({ id: String(id) }),
+            action: withKind(routes.review.undo.href({ id: String(id) }), kind),
             label: UNDO_LABEL,
           })
         }
-        return redirect(cardHref(Number.isSafeInteger(id) ? String(id) : null), 303)
+        return redirect(
+          reviewHref(kind, { anchor: Number.isSafeInteger(id) ? String(id) : null }),
+          303,
+        )
       },
 
       async undo(context) {
         let id = Number(context.params.id)
         if (Number.isSafeInteger(id)) await dependencies.artworks.undoVerification(id)
-        return redirect(cardHref(Number.isSafeInteger(id) ? String(id) : null), 303)
+        return redirect(
+          reviewHref(kindOf(context), { anchor: Number.isSafeInteger(id) ? String(id) : null }),
+          303,
+        )
       },
 
       async clauseVerify(context) {
         let id = Number(context.params.id)
+        let kind = kindOf(context)
         let reply = (context.get(FormData) as FormData).get('reply')
         let isRecorded =
           Number.isSafeInteger(id) &&
@@ -379,17 +446,25 @@ export default function createReviewController(
         if (isRecorded) {
           context.get(Session)?.flash(SETTLED_SESSION_KEY, clauseAnchor(id))
           flashToast(context, verifiedToast(await healthOf(APPROVAL_SEND_JOB)), 'neutral', {
-            action: routes.review.clauseUndo.href({ id: String(id) }),
+            action: withKind(routes.review.clauseUndo.href({ id: String(id) }), kind),
             label: UNDO_LABEL,
           })
         }
-        return redirect(cardHref(Number.isSafeInteger(id) ? clauseAnchor(id) : null), 303)
+        return redirect(
+          reviewHref(kind, { anchor: Number.isSafeInteger(id) ? clauseAnchor(id) : null }),
+          303,
+        )
       },
 
       async clauseUndo(context) {
         let id = Number(context.params.id)
         if (Number.isSafeInteger(id)) await dependencies.articles.undoClauseVerification(id)
-        return redirect(cardHref(Number.isSafeInteger(id) ? clauseAnchor(id) : null), 303)
+        return redirect(
+          reviewHref(kindOf(context), {
+            anchor: Number.isSafeInteger(id) ? clauseAnchor(id) : null,
+          }),
+          303,
+        )
       },
     },
   })

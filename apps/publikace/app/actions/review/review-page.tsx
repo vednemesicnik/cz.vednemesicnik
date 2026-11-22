@@ -5,9 +5,15 @@ import {
   EMPTY_ACTION,
   EMPTY_TEXT,
   EMPTY_TITLE,
+  emptyKindTitle,
+  otherKindText,
   type ReadLine,
+  REVIEW_KINDS,
+  REVIEW_KINDS_LABEL,
   REVIEW_LEAD,
   REVIEW_TITLE,
+  type ReviewKind,
+  SHOW_ALL_LABEL,
 } from '../../domain/review.ts'
 import { routes } from '../../routes.ts'
 import { EmptyState } from '../../ui/empty-state/component.tsx'
@@ -17,14 +23,22 @@ import { Layout } from '../../ui/layout/component.tsx'
 import { ListHeader } from '../../ui/list-header/component.tsx'
 import { ListHeaderTitle } from '../../ui/list-header-title/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
+import { StateFilter } from '../../ui/state-filter/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
 import type { DriveStatus } from '../issues/overview-page.tsx'
 import { QueueCard, type QueueCardView } from './queue-card.tsx'
 
 export type ReviewPageProps = {
+  /** The cards of the kind chosen in the filter. */
   cards: readonly QueueCardView[]
+  /** The cards waiting for a decision, per kind: the one just decided counts nowhere (`13b`). */
+  counts: Readonly<Record<ReviewKind, number>>
   driveAccount: { expectedEmail: string; status: DriveStatus }
+  /** Whether the queue holds a card of any kind, the one just decided included. */
+  hasCards: boolean
+  hrefOf(kind: ReviewKind): string
+  kind: ReviewKind
   person: PanelPerson
   /** When the replies were read, or which job is not reading them (`13a`, `13c`). */
   readLine: ReadLine
@@ -43,17 +57,35 @@ const readStyle = css({
   '& a:hover': { color: 'var(--link-hover)' },
 })
 
+/* `13a`'s bar: the filter, and the line of when the replies were read beside it. */
+const barStyle = css({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '12px 20px',
+})
+
 /* The drawing's measure: a card wider than this would make the quote a line nobody reads. */
 const queueStyle = css({ maxWidth: '860px', width: '100%' })
 
 /**
- * _Ke kontrole_ (`13a`): the replies to decide, oldest first, and the consents whose archive
- * failed (`13c`). No filter of kinds yet: only artworks reach the queue until the article
- * consents move to the app (#32).
+ * _Ke kontrole_ (`13a`): the replies to decide, of articles and of artworks, oldest first, and
+ * the consents whose archive failed (`13c`), narrowed to one kind by the filter in the address
+ * (`?kind=`). An empty queue shows no filter, as `13c` draws it.
  */
 export function ReviewPage(handle: Handle<ReviewPageProps>) {
   return () => {
-    let { cards, driveAccount, person, readLine, toasts } = handle.props
+    let { cards, counts, driveAccount, hasCards, hrefOf, kind, person, readLine, toasts } =
+      handle.props
+    let read = (
+      <p mix={readStyle}>
+        {readLine.before}
+        {readLine.link === null ? null : (
+          <a href={routes.settings.jobs.index.href()}>{readLine.link}</a>
+        )}
+        {readLine.after}
+      </p>
+    )
 
     return (
       <Document title={REVIEW_TITLE}>
@@ -69,15 +101,31 @@ export function ReviewPage(handle: Handle<ReviewPageProps>) {
               <ListHeaderTitle>{REVIEW_TITLE}</ListHeaderTitle>
             </ListHeader>
             <p mix={leadStyle}>{REVIEW_LEAD}</p>
-            <p mix={readStyle}>
-              {readLine.before}
-              {readLine.link === null ? null : (
-                <a href={routes.settings.jobs.index.href()}>{readLine.link}</a>
-              )}
-              {readLine.after}
-            </p>
+            {hasCards ? null : read}
           </div>
-          {cards.length === 0 ? (
+          {hasCards ? (
+            <div mix={barStyle}>
+              <StateFilter
+                items={REVIEW_KINDS.map((item) => ({
+                  count: counts[item.value],
+                  href: hrefOf(item.value),
+                  isActive: item.value === kind,
+                  label: item.label,
+                }))}
+                label={REVIEW_KINDS_LABEL}
+              />
+              {read}
+            </div>
+          ) : null}
+          {cards.length === 0 && kind !== 'all' && hasCards ? (
+            <EmptyState>
+              <EmptyStateTitle>{emptyKindTitle(kind)}</EmptyStateTitle>
+              <EmptyStateText>{otherKindText(counts.all)}</EmptyStateText>
+              <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={hrefOf('all')}>
+                {SHOW_ALL_LABEL}
+              </a>
+            </EmptyState>
+          ) : cards.length === 0 ? (
             <EmptyState>
               <EmptyStateTitle>{EMPTY_TITLE}</EmptyStateTitle>
               <EmptyStateText>{EMPTY_TEXT}</EmptyStateText>

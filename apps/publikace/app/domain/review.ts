@@ -172,6 +172,44 @@ export function readLine(jobs: ReadingJobs, today: Temporal.Instant): ReadLine {
   return { after: '', before: text, link: null }
 }
 
+/* `13a`, the filter over the queue, in the address as `?kind=`. */
+export type ReviewKind = 'all' | 'articles' | 'artworks'
+
+export const REVIEW_KINDS: readonly { label: string; value: ReviewKind }[] = [
+  { label: 'Vše', value: 'all' },
+  { label: 'Články', value: 'articles' },
+  { label: 'Obrazová díla', value: 'artworks' },
+]
+
+/** The accessible name of the filter, which narrows kinds where the others narrow states. */
+export const REVIEW_KINDS_LABEL = 'Druh položky'
+
+/** A missing or unknown `?kind=` is _Vše_, as `?artworks=` is in the issue detail. */
+export function reviewKindOf(value: string | null): ReviewKind {
+  return REVIEW_KINDS.some((kind) => kind.value === value) ? (value as ReviewKind) : 'all'
+}
+
+/*
+ * A kind filtered to nothing while the other still has cards, which `13c` does not draw
+ * (`ivq7pax9`). It speaks of items, not replies: a card whose archive failed is counted too, and
+ * its consent is no longer a reply to decide.
+ */
+export function emptyKindTitle(kind: Exclude<ReviewKind, 'all'>): string {
+  return kind === 'articles' ? tied`U článků tu nic není` : tied`U obrazových děl tu nic není`
+}
+
+export function otherKindText(count: number): string {
+  return `Filtr Vše ukáže ${itemsCount(count)}.`
+}
+
+/** `1 položku`, `2 položky`, `5 položek`, as the object of _ukáže_. */
+function itemsCount(count: number): string {
+  if (count === 1) return '1 položku'
+  return count >= 2 && count <= 4 ? `${count} položky` : `${count} položek`
+}
+
+export const SHOW_ALL_LABEL = 'Zobrazit vše'
+
 /* `13c`, the empty queue. */
 export const EMPTY_TITLE = 'Nic ke kontrole'
 export const EMPTY_TEXT = tied`Všechny odpovědi byly přesně „Souhlasím“, nebo jste o nich už rozhodli. Kde co čeká na souhlas, ukazuje detail vydání.`

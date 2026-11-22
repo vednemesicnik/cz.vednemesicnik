@@ -246,6 +246,7 @@ function IssueList(
       <>
         <div>
           <StateFilter
+            label="Stav"
             items={(['all', 'open', 'closed'] as const).map((item) => ({
               count: counts[item],
               href: filterHref(item),

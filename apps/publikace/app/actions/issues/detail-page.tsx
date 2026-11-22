@@ -878,6 +878,7 @@ function Artworks(handle: Handle<{ artworks: ArtworksView; csrfToken: string }>)
           </h2>
           {total === 0 ? null : (
             <StateFilter
+              label="Stav"
               items={ARTWORK_FILTERS.map((filter) => ({
                 count: artworks.counts[filter.value],
                 href: artworks.hrefOf(filter.value),

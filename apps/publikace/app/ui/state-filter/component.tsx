@@ -12,6 +12,8 @@ export type StateFilterItem = {
 
 export type StateFilterProps = {
   items: readonly StateFilterItem[]
+  /** The accessible name of the `<nav>`: what the filter narrows, as _Stav_ or _Druh položky_. */
+  label: string
 }
 
 /* The design system draws the items as buttons; here they are links, so the address carries
@@ -24,7 +26,7 @@ const itemStyle = css({ textDecoration: 'none' })
  */
 export function StateFilter(handle: Handle<StateFilterProps>) {
   return () => (
-    <nav aria-label="Stav" class="vdm-statefilter">
+    <nav aria-label={handle.props.label} class="vdm-statefilter">
       {handle.props.items.map((item) => (
         <a
           aria-current={item.isActive ? 'true' : undefined}

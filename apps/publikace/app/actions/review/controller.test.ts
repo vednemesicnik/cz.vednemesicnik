@@ -404,3 +404,111 @@ describe('Ke kontrole for articles', () => {
     }
   })
 })
+
+describe('Ke kontrole narrowed to one kind', () => {
+  it('counts each kind in the filter and shows only the chosen one', async () => {
+    let { app, article, batch, browser } = await setup()
+    try {
+      await replyTo(app, batch, 'ok, souhlas')
+      await articleReply(app, article.articleId, 'Souhlasím, jen prosím jiný podpis.')
+      let all = await (await browser.get('/review')).text()
+      assert.match(all, /<nav aria-label="Druh položky" class="vdm-statefilter">/)
+      assert.match(all, /aria-current="true"[^>]*href="\/review"[^>]*>Vše<span[^>]*>2<\/span>/)
+      assert.match(all, /href="\/review\?kind=articles"[^>]*>Články<span[^>]*>1<\/span>/)
+      assert.match(all, /href="\/review\?kind=artworks"[^>]*>Obrazová díla<span[^>]*>1<\/span>/)
+
+      let articles = await (await browser.get('/review?kind=articles')).text()
+      assert.match(articles, /Finální verze článku · VDM_2026_5/)
+      assert.doesNotMatch(articles, /Obrazová díla · 2 díla/)
+      assert.match(articles, /aria-current="true"[^>]*href="\/review\?kind=articles"/)
+      assert.match(articles, /action="\/review\/clauses\/\d+\/consent\?kind=articles"/)
+
+      let artworks = await (await browser.get('/review?kind=artworks')).text()
+      assert.match(artworks, /Obrazová díla · 2 díla · VDM_2026_5/)
+      assert.doesNotMatch(artworks, /Finální verze článku/)
+      assert.match(
+        artworks,
+        new RegExp(`action="/review/batches/${batch.id}/consent\\?kind=artworks"`),
+      )
+
+      let unknown = await (await browser.get('/review?kind=batches')).text()
+      assert.match(unknown, /Finální verze článku/)
+      assert.match(unknown, /Obrazová díla · 2 díla/)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps the filter through Je to souhlas and Vrátit, and counts the decided card nowhere', async () => {
+    let { app, article, batch, browser } = await setup()
+    try {
+      await replyTo(app, batch, 'ok, souhlas')
+      await articleReply(app, article.articleId, 'ok')
+      let current = await createArtworkStore(app.database).findBatch(batch.id)
+      let response = await browser.post(
+        `/review/batches/${batch.id}/consent?kind=artworks`,
+        { reply: current?.replyMessageId ?? '' },
+        '/review?kind=artworks',
+      )
+      assert.equal(response.headers.get('Location'), `/review?kind=artworks#reply-${batch.id}`)
+      let html = await (await browser.get('/review?kind=artworks')).text()
+      assert.match(html, /vdm-queue-item--settled/)
+      assert.match(html, /href="\/review"[^>]*>Vše<span[^>]*>1<\/span>/)
+      assert.match(html, /href="\/review\?kind=artworks"[^>]*>Obrazová díla<span[^>]*>0<\/span>/)
+      assert.match(
+        html,
+        new RegExp(`action="/review/batches/${batch.id}/consent/undo\\?kind=artworks"`),
+      )
+
+      let undo = await browser.post(
+        `/review/batches/${batch.id}/consent/undo?kind=artworks`,
+        {},
+        '/review?kind=artworks',
+      )
+      assert.equal(undo.headers.get('Location'), `/review?kind=artworks#reply-${batch.id}`)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps the filter through a clause’s Je to souhlas and Vrátit', async () => {
+    let { app, article, browser } = await setup()
+    try {
+      let id = await articleReply(app, article.articleId, 'ok')
+      let response = await browser.post(
+        `/review/clauses/${id}/consent?kind=articles`,
+        { reply: 'm-article' },
+        '/review?kind=articles',
+      )
+      assert.equal(response.headers.get('Location'), `/review?kind=articles#reply-clause-${id}`)
+      let html = await (await browser.get('/review?kind=articles')).text()
+      assert.match(html, new RegExp(`action="/review/clauses/${id}/consent/undo\\?kind=articles"`))
+      let undo = await browser.post(
+        `/review/clauses/${id}/consent/undo?kind=articles`,
+        {},
+        '/review?kind=articles',
+      )
+      assert.equal(undo.headers.get('Location'), `/review?kind=articles#reply-clause-${id}`)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('says a kind has nothing and points to Vše, and shows no filter on an empty queue', async () => {
+    let { app, batch, browser } = await setup()
+    try {
+      let empty = await (await browser.get('/review?kind=articles')).text()
+      assert.match(empty, /Nic ke kontrole/)
+      assert.doesNotMatch(empty, /vdm-statefilter/)
+
+      await replyTo(app, batch, 'ok, souhlas')
+      let html = await (await browser.get('/review?kind=articles')).text()
+      assert.match(html, /U\u00a0článků tu nic není/)
+      assert.match(html, /Filtr Vše ukáže 1 položku\./)
+      assert.match(html, /href="\/review" class="vdm-btn[^"]*">Zobrazit vše</)
+      assert.doesNotMatch(html, /Obrazová díla · 2 díla/)
+    } finally {
+      await app.close()
+    }
+  })
+})

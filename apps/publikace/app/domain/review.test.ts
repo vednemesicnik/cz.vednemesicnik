@@ -7,10 +7,28 @@ import {
   articleKindLine,
   discardedBatchText,
   kindLine,
+  otherKindText,
   readLine,
   receivedLine,
+  reviewKindOf,
   verifiedToast,
 } from './review.ts'
+
+describe('the filter of kinds', () => {
+  it('reads each kind from the address, and anything else as Vše', () => {
+    assert.equal(reviewKindOf('articles'), 'articles')
+    assert.equal(reviewKindOf('artworks'), 'artworks')
+    assert.equal(reviewKindOf('all'), 'all')
+    assert.equal(reviewKindOf(null), 'all')
+    assert.equal(reviewKindOf('batches'), 'all')
+  })
+
+  it('counts the items Vše would show, with the number’s form', () => {
+    assert.equal(otherKindText(1), 'Filtr Vše ukáže 1 položku.')
+    assert.equal(otherKindText(3), 'Filtr Vše ukáže 3 položky.')
+    assert.equal(otherKindText(5), 'Filtr Vše ukáže 5 položek.')
+  })
+})
 
 const TODAY = Temporal.Instant.from('2026-11-19T09:10:00Z')
 const LAST = Temporal.Instant.from('2026-11-19T08:00:00Z')
