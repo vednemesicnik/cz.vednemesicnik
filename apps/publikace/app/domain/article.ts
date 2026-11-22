@@ -199,6 +199,14 @@ export function isMarked(state: ArticleState): boolean {
   )
 }
 
+/**
+ * The tags that wait on the editors-in-chief, amber and pink (`01d`): what an article adds to
+ * _Čeká na vás_ in the overview (`11a`), as `isWaiting` does for an artwork.
+ */
+export function waitsOnEditors(state: ArticleState): boolean {
+  return state === 'error' || state === 'review' || state === 'revised'
+}
+
 function finalVersionState(finalVersion: FinalVersion): ArticleState {
   let { clauses } = finalVersion
   if (clauses.unsent > 0 || clauses.unarchived > 0) return 'error'

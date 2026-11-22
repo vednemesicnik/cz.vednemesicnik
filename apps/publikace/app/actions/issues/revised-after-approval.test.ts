@@ -291,4 +291,24 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       await app.close()
     }
   })
+
+  it('counts in Čeká na vás on the overview once the detail found the edit, without Drive, and not once closed', async () => {
+    let { app, docId, editor, issueId } = await approved()
+    try {
+      app.drive.reviseDoc(docId, EDITED_AT)
+      assert.match(textOf(await (await editor.get('/')).text()), /VDM_2026_7 .* Aktivní 1 0 — /)
+
+      await editor.get(DETAIL)
+      let calls = revisionCalls(app)
+      assert.match(textOf(await (await editor.get('/')).text()), /VDM_2026_7 .* Aktivní 1 0 1 /)
+      assert.equal(revisionCalls(app), calls)
+
+      await app.database.exec(
+        sql`UPDATE issues SET closed_at = ${stamp(EDITED_AT)} WHERE id = ${issueId}`,
+      )
+      assert.match(textOf(await (await editor.get('/')).text()), /VDM_2026_7 .* Uzavřené 1 0 — /)
+    } finally {
+      await app.close()
+    }
+  })
 })

@@ -408,14 +408,14 @@ describe('the replies of Article_Approvals', () => {
       })
       let article = await articles.findById(articleId)
       assert.equal(article?.finalVersion?.clauses.unarchived, 1)
-      assert.equal((await articles.missingCountsByIssue()).get(article?.issueId ?? 0), 1)
+      assert.equal((await articles.waitingCountsByIssue()).get(article?.issueId ?? 0), 1)
       assert.equal(await articles.reviewCount(), 1)
       /* A clause that only waits for a reply waits on nobody. */
       await app.database.exec(
         sql`UPDATE article_clauses SET archive_failed_at = NULL, archive_error = NULL,
               reply_message_id = NULL, is_exact_consent = 0`,
       )
-      assert.equal((await articles.missingCountsByIssue()).get(article?.issueId ?? 0), undefined)
+      assert.equal((await articles.waitingCountsByIssue()).get(article?.issueId ?? 0), undefined)
     } finally {
       await app.close()
     }

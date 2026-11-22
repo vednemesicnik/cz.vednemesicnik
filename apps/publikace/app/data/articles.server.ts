@@ -496,10 +496,12 @@ export type ArticleStore = {
     at: Temporal.Instant,
   ): Promise<void>
   /**
-   * Created articles with a missing folder, or with a clause that waits on the editors-in-chief
-   * (_Chyba_, _Ke kontrole_), per issue: each is one item of _Čeká na vás_ (`11a`, `01d`).
+   * What the issue's articles add to _Čeká na vás_ (`11a`): one for each article whose tag waits
+   * on the editors-in-chief (_Chyba_, _Ke kontrole_, _Upraveno po schválení_, `01d`) and one for
+   * each article with a missing folder, however many of its three (`12j`). An issue with nothing
+   * waiting is absent.
    */
-  missingCountsByIssue(): Promise<Map<number, number>>
+  waitingCountsByIssue(): Promise<Map<number, number>>
   /** Attempts whose cleanup failed, safe to take while other requests run. */
   pendingCleanups(): Promise<ArticleRow[]>
   /**
@@ -834,6 +836,17 @@ const WAITS_ON_EDITORS = sql`c.approved_at IS NULL AND c.state != 'pending' AND 
     OR (c.reply_message_id IS NOT NULL AND c.consent_verified_at IS NULL
         AND c.is_exact_consent = 0)
   )`
+
+/**
+ * The standing markings `f` that are _Upraveno po schválení_, as `articleState` reads them: every
+ * clause approved and a revision of the Doc recorded after the PDF (#101). The revision is what
+ * the issue detail last found on Drive, so the overview asks nobody. Written out for SQL; the
+ * tests hold it to `articleState`.
+ */
+const REVISED_AFTER_APPROVAL_F = sql`f.doc_revised_at IS NOT NULL
+  AND EXISTS (SELECT 1 FROM article_clauses c WHERE c.final_version_id = f.id)
+  AND NOT EXISTS (SELECT 1 FROM article_clauses c
+                  WHERE c.final_version_id = f.id AND c.approved_at IS NULL)`
 
 /* The clauses that could be in the queue; `isQueuedClause` decides. */
 const CLAUSE_QUEUE_CANDIDATES = sql`SELECT c.*, a.name AS article_name, i.name AS issue_name
@@ -1656,18 +1669,26 @@ export function createArticleStore(database: Database): ArticleStore {
       }
     },
 
-    async missingCountsByIssue() {
+    async waitingCountsByIssue() {
+      /* The tag and the missing folder are two items, as `01d` adds them: an article in _Chyba_
+         whose folder is in the bin waits on two steps, a reply and a restore. An article has one
+         tag, and a waiting clause rules out every clause approved, so the two sets of tags never
+         meet. */
       let result = await database.exec(
-        sql`SELECT issue_id, count(*) AS count FROM articles
-            WHERE created_at IS NOT NULL AND (
-              folder_missing_at IS NOT NULL
-              OR artworks_folder_missing_at IS NOT NULL
-              OR licences_folder_missing_at IS NOT NULL
-              OR id IN (SELECT c.article_id FROM article_clauses c
+        sql`SELECT issue_id, sum(is_missing) + sum(is_tagged) AS count FROM (
+              SELECT issue_id,
+                (folder_missing_at IS NOT NULL
+                  OR artworks_folder_missing_at IS NOT NULL
+                  OR licences_folder_missing_at IS NOT NULL) AS is_missing,
+                (id IN (SELECT c.article_id FROM article_clauses c
                         JOIN final_versions f ON f.id = c.final_version_id
                         WHERE ${STANDING_F} AND ${WAITS_ON_EDITORS})
+                  OR id IN (SELECT f.article_id FROM final_versions f
+                            WHERE ${STANDING_F} AND ${REVISED_AFTER_APPROVAL_F})) AS is_tagged
+              FROM articles WHERE created_at IS NOT NULL
             )
-            GROUP BY issue_id`,
+            GROUP BY issue_id
+            HAVING count > 0`,
       )
       let counts = new Map<number, number>()
       for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))

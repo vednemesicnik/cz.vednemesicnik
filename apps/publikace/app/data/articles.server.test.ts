@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
+import { articleState, waitsOnEditors } from '../domain/article.ts'
 import { createTestApp, seedArticle, seedIssue, type TestApp } from '../test-app.server.ts'
 import { createArticleStore } from './articles.server.ts'
 import { createLinkStore } from './links.server.ts'
@@ -193,7 +194,7 @@ describe('the article store', () => {
         artworks: later,
         licences: AT,
       })
-      assert.equal((await articles.missingCountsByIssue()).get(issueId), 1)
+      assert.equal((await articles.waitingCountsByIssue()).get(issueId), 1)
 
       await articles.clearMissing(attempt.id, ['artworks', 'licences'])
       assert.deepEqual((await articles.findById(attempt.id))?.missing, {
@@ -201,7 +202,7 @@ describe('the article store', () => {
         artworks: null,
         licences: null,
       })
-      assert.equal((await articles.missingCountsByIssue()).get(issueId), undefined)
+      assert.equal((await articles.waitingCountsByIssue()).get(issueId), undefined)
     } finally {
       await app.close()
     }
@@ -586,6 +587,109 @@ describe('taking proofreading', () => {
         issueName: 'VDM_2026_6',
         name: 'Školní jídelna po roce',
       })
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('what the articles add to Čeká na vás (11a, 01d, 12j)', () => {
+  const LENKA = { email: 'lenka.svobodova@vednemesicnik.test', name: 'Lenka Svobodová' }
+  const SENT = AT.add({ hours: 2 }).toString()
+
+  /** The clause states of `clauseState`, written straight onto the marking's one clause. */
+  const CLAUSES = {
+    approved: sql`state = 'sent', sent_at = ${SENT}, reply_message_id = 'm-' || id,
+      reply_received_at = ${SENT}, is_exact_consent = 1, approved_at = ${SENT},
+      consent_file_id = 'c-' || id`,
+    consent: sql`state = 'sent', sent_at = ${SENT}`,
+    error: sql`state = 'failed'`,
+    review: sql`state = 'sent', sent_at = ${SENT}, reply_message_id = 'm-' || id,
+      reply_received_at = ${SENT}, reply_text = 'Souhlasím, ale…'`,
+  }
+
+  /** A created article in the issue with a final version marked and its clause as given. */
+  async function marked(
+    app: TestApp,
+    issueId: number,
+    clause: keyof typeof CLAUSES,
+    options: { isDocRevised?: boolean; isFolderMissing?: boolean } = {},
+  ): Promise<number> {
+    let articles = createArticleStore(app.database)
+    let { articleId } = await seedArticle(app, issueId)
+    await articles.takeProofreading(articleId, LENKA, AT, 'writing')
+    let outcome = await articles.markFinalVersion({
+      at: AT.add({ hours: 1 }),
+      by: LENKA,
+      id: articleId,
+      pdf: {
+        attemptKey: `a-${articleId}`,
+        docModifiedAt: AT,
+        fileId: `pdf-${articleId}`,
+        hash: `h-${articleId}`,
+      },
+      takenAt: AT,
+    })
+    assert.equal(outcome.kind, 'done')
+    await app.database.exec(
+      sql`UPDATE article_clauses SET ${CLAUSES[clause]} WHERE article_id = ${articleId}`,
+    )
+    if (options.isDocRevised === true) {
+      await app.database.exec(
+        sql`UPDATE final_versions SET doc_revised_at = ${AT.add({ hours: 24 }).toString()}
+            WHERE article_id = ${articleId}`,
+      )
+    }
+    if (options.isFolderMissing === true) await articles.markMissing(articleId, ['article'], AT)
+    return articleId
+  }
+
+  it('counts each waiting tag and each article with a missing folder, as the domain reads them', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let ids = [
+        (await seedArticle(app, issueId)).articleId,
+        await marked(app, issueId, 'consent'),
+        await marked(app, issueId, 'error'),
+        await marked(app, issueId, 'review'),
+        await marked(app, issueId, 'approved'),
+        await marked(app, issueId, 'approved', { isDocRevised: true }),
+        await marked(app, issueId, 'approved', { isFolderMissing: true }),
+        await marked(app, issueId, 'error', { isFolderMissing: true }),
+      ]
+      /* A revision recorded against a version whose clauses still wait for a reply is not
+         _Upraveno po schválení_: it is _K souhlasu_, which waits on nobody. */
+      ids.push(await marked(app, issueId, 'consent', { isDocRevised: true }))
+
+      let expected = 0
+      for (let id of ids) {
+        let article = await articles.findById(id)
+        if (article === null) throw new Error('No article.')
+        let isMissing = Object.values(article.missing).some((at) => at !== null)
+        expected += (waitsOnEditors(articleState(article)) ? 1 : 0) + (isMissing ? 1 : 0)
+      }
+      let counts = await articles.waitingCountsByIssue()
+      assert.equal(counts.get(issueId), expected)
+      assert.equal(counts.get(issueId), 6)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('leaves out a revised version that was cancelled, and an issue with nothing waiting', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let articleId = await marked(app, issueId, 'approved', { isDocRevised: true })
+      assert.equal((await articles.waitingCountsByIssue()).get(issueId), 1)
+
+      await app.database.exec(
+        sql`UPDATE final_versions SET cancelled_at = ${SENT} WHERE article_id = ${articleId}`,
+      )
+      assert.equal((await articles.waitingCountsByIssue()).get(issueId), undefined)
     } finally {
       await app.close()
     }
