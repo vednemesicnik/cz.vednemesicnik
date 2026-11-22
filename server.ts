@@ -26,7 +26,12 @@ const handler = createHostHandler({
   webHandler,
 })
 
-const server = http.createServer(createRequestListener(handler))
+// The Fly proxy speaks plain HTTP to the machine, but the browser's Origin is the public
+// one. Taking the protocol from BASE_URL (checked by the build import above) lets React
+// Router's action origin check match without trusting X-Forwarded-* headers.
+const protocol = new URL(process.env.BASE_URL).protocol
+
+const server = http.createServer(createRequestListener(handler, { protocol }))
 
 const onListen = () => console.log(`[server] http://localhost:${port}`)
 
