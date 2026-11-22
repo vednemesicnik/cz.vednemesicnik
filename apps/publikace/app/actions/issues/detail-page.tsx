@@ -37,6 +37,9 @@ import {
 import {
   ARTICLES_EMPTY_TEXT,
   ARTWORKS_EMPTY_TEXT,
+  CLOSE_ISSUE_LABEL,
+  CLOSED_LINK_META,
+  closedCalloutText,
   detailStartedLine,
   folderGoneMessage,
   folderUrl,
@@ -44,6 +47,10 @@ import {
   issueState,
   LINK_PLACEHOLDER_TEXT,
   missingFolders,
+  OPEN_FOLDER_LABEL,
+  OPEN_PRINT_FOLDER_LABEL,
+  REOPEN_CONFIRM_LABEL,
+  REOPEN_ISSUE_LABEL,
   unfinishedText,
   unfinishedTitle,
 } from '../../domain/issue.ts'
@@ -77,7 +84,13 @@ import { TableRow } from '../../ui/table-row/component.tsx'
 import { TableRowTitle } from '../../ui/table-row-title/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
-import { FinishIssueForm, IssueStateTag } from './issue-parts.tsx'
+import {
+  FinishIssueForm,
+  IssueStateTag,
+  IssueStepDialog,
+  type IssueStepDialogView,
+  stepDialogHref,
+} from './issue-parts.tsx'
 import type { DriveStatus } from './overview-page.tsx'
 import { tied } from '../../domain/public/typography.ts'
 import type { ArticleState } from '../../domain/article.ts'
@@ -100,6 +113,8 @@ import { SHOW_REPLY_LABEL } from '../../domain/approvals.ts'
 export type LinkBlockView = {
   /** Highlighted with focus on _Kopírovat_ until the next load: a fresh or renewed link. */
   isChanged: boolean
+  /** The issue is closed: the link stands struck through, with nothing to copy or renew (`12h`). */
+  isClosed: boolean
   /** The form as the newsroom sees it, for _Otevřít formulář_. */
   openHref: string
   renewHref: string
@@ -111,8 +126,8 @@ export type LinkBlockView = {
 
 /** The Callout under an article's row whose folder, or a folder in it, is missing (`12j`). */
 export type MissingFoldersView = {
-  /** Where _Zkontrolovat znovu_ posts. */
-  checkAction: string
+  /** Where _Zkontrolovat znovu_ posts; `null` in a closed issue, whose detail is for reading. */
+  checkAction: string | null
   /** The step, the subfolders' names in it linking to the very folder on Drive. */
   heading: readonly HeadingPart[]
   /** What the row cannot do and when the app found it, in one paragraph. */
@@ -289,6 +304,8 @@ export type DetailPageProps = {
   person: PanelPerson
   /** The dialog of a new final version over the detail (`12r`). */
   replacing?: FinalVersionDialogProps
+  /** _Uzavřít vydání_ or _Znovu otevřít_ over the detail (`12g`, `12h`). */
+  step?: IssueStepDialogView
   toasts: readonly ToastMessage[]
 }
 
@@ -302,6 +319,16 @@ const titleBarStyle = css({
   flexWrap: 'wrap',
   gap: '12px',
   justifyContent: 'space-between',
+})
+
+/* The folder's button and the issue's „⋯“ side by side, as `12a` draws them. */
+const headActionsStyle = css({ alignItems: 'center', display: 'flex', gap: '8px' })
+
+/* `12h`: the link is shown, not hidden, so the editors see what the newsroom holds. */
+const closedLinkStyle = css({
+  color: 'var(--text-tertiary)',
+  overflowWrap: 'anywhere',
+  textDecoration: 'line-through',
 })
 
 const titleStyle = css({
@@ -546,6 +573,24 @@ function Section(handle: Handle<{ children?: RemixNode; count?: number; title: s
 function LinkBlock(handle: Handle<{ link: LinkBlockView }>) {
   return () => {
     let { link } = handle.props
+    if (link.isClosed) {
+      return (
+        <section aria-labelledby="link-title" mix={sectionStyle}>
+          <div mix={linkHeadStyle}>
+            <h2 id="link-title">{LINK_SECTION_TITLE}</h2>
+          </div>
+          <div mix={linkBoxStyle}>
+            <div mix={linkBodyStyle}>
+              <span mix={linkLabelStyle}>{ARTICLE_LINK_LABEL}</span>
+              <span>
+                <del mix={closedLinkStyle}>{link.shown}</del>
+              </span>
+              <span mix={metaStyle}>{CLOSED_LINK_META}</span>
+            </div>
+          </div>
+        </section>
+      )
+    }
     let items: ActionMenuItem[] = [
       { href: link.openHref, label: OPEN_FORM_LABEL },
       { href: link.renewHref, isSameTab: true, label: RENEW_LINK_LABEL },
@@ -625,13 +670,15 @@ function MissingFoldersBand(handle: Handle<{ isLast: boolean; missing: MissingFo
         <div role="cell">
           <Callout tone="error">
             <FolderHeading heading={missing.heading} urls={missing.urls} />
-            <p style={{ margin: '0 0 8px' }}>{missing.text}</p>
-            <form action={missing.checkAction} class="vdm-callout__actions" method="post">
-              <CsrfField />
-              <button class="vdm-btn vdm-btn--outline vdm-btn--sm" type="submit">
-                {CHECK_AGAIN_LABEL}
-              </button>
-            </form>
+            <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
+            {missing.checkAction === null ? null : (
+              <form action={missing.checkAction} class="vdm-callout__actions" method="post">
+                <CsrfField />
+                <button class="vdm-btn vdm-btn--outline vdm-btn--sm" type="submit">
+                  {CHECK_AGAIN_LABEL}
+                </button>
+              </form>
+            )}
           </Callout>
         </div>
       </div>
@@ -1110,6 +1157,36 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
   }
 }
 
+/**
+ * The issue's „⋯“ in the header. Active (`12a`): the print folder, then after a line
+ * _Uzavřít vydání…_. Closed (`12h`): the issue folder, then _Znovu otevřít vydání…_. Unfinished,
+ * none. _Otevřít Evidenci_ waits for the app to write an Evidence.
+ */
+function issueMenuItems(issue: Issue): ActionMenuItem[] {
+  let state = issueState(issue)
+  if (state === 'unfinished') return []
+  let isClosed = state === 'closed'
+  let folderId = isClosed ? issue.folderIds.issue : issue.folderIds.print
+  let folder: ActionMenuItem[] =
+    folderId === null
+      ? []
+      : [
+          {
+            href: folderUrl(folderId),
+            label: isClosed ? OPEN_FOLDER_LABEL : OPEN_PRINT_FOLDER_LABEL,
+          },
+          { isSeparator: true },
+        ]
+  return [
+    ...folder,
+    {
+      href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'detail'),
+      isSameTab: true,
+      label: isClosed ? REOPEN_ISSUE_LABEL : CLOSE_ISSUE_LABEL,
+    },
+  ]
+}
+
 /** `02d`: renewing takes the link from everybody who has it, so it is asked first. */
 function RenewDialog(handle: Handle<{ issue: Issue }>) {
   return () => {
@@ -1166,17 +1243,21 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       missingAddress,
       person,
       replacing,
+      step,
       toasts,
     } = handle.props
     let state = issueState(issue)
     let folderId = issue.folderIds.issue
+    let issueItems = issueMenuItems(issue)
 
     return (
       <Document title={issue.name}>
         <Layout
           active="issues"
           driveAccount={driveAccount}
-          isInert={isRenewing || discarding !== undefined || replacing !== undefined}
+          isInert={
+            isRenewing || discarding !== undefined || replacing !== undefined || step !== undefined
+          }
           person={person}
           title={issue.name}
           toasts={toasts}
@@ -1192,20 +1273,40 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
                   <h1 class="vdm-page-title">{issue.name}</h1>
                   <IssueStateTag state={state} />
                 </div>
-                {folderId === null ? null : (
-                  <a
-                    class="vdm-btn vdm-btn--outline vdm-btn--sm"
-                    href={folderUrl(folderId)}
-                    rel="noopener"
-                    target="_blank"
-                  >
-                    Složka na Disku
-                    <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
-                  </a>
-                )}
+                <div mix={headActionsStyle}>
+                  {/* A closed issue has the folder in „⋯“, as `12h` draws it. */}
+                  {folderId === null || state === 'closed' ? null : (
+                    <a
+                      class="vdm-btn vdm-btn--outline vdm-btn--sm"
+                      href={folderUrl(folderId)}
+                      rel="noopener"
+                      target="_blank"
+                    >
+                      Složka na Disku
+                      <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
+                    </a>
+                  )}
+                  {issueItems.length === 0 ? null : (
+                    <ActionMenu items={issueItems} label="Další akce vydání" />
+                  )}
+                </div>
               </div>
               <p mix={metaStyle}>{detailStartedLine(issue)}</p>
             </div>
+
+            {state === 'closed' && issue.closedAt !== null ? (
+              <Callout tone="info">
+                <p style={{ margin: '0 0 8px' }}>{closedCalloutText(issue.closedAt)}</p>
+                <div class="vdm-callout__actions">
+                  <a
+                    class="vdm-btn vdm-btn--outline vdm-btn--sm"
+                    href={stepDialogHref('reopen', issue, 'detail')}
+                  >
+                    {REOPEN_CONFIRM_LABEL}
+                  </a>
+                </div>
+              </Callout>
+            ) : null}
 
             {state === 'unfinished' ? (
               <>
@@ -1242,6 +1343,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
         {isRenewing ? <RenewDialog issue={issue} /> : null}
         {discarding === undefined ? null : <DiscardDialog discarding={discarding} />}
         {replacing === undefined ? null : <FinalVersionDialog {...replacing} />}
+        {step === undefined ? null : <IssueStepDialog step={step} />}
       </Document>
     )
   }

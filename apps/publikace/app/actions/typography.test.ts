@@ -97,6 +97,7 @@ describe('one-letter words on the screens', () => {
         '/issues/new',
         `/issues/${ISSUE}`,
         `/issues/${ISSUE}?artworks=all`,
+        `/issues/${ISSUE}/close`,
         '/review',
         '/settings',
         '/settings/jobs',
@@ -121,6 +122,12 @@ describe('one-letter words on the screens', () => {
       )
       pages['proofreading'] = await (await proofreader.get('/proofreading')).text()
       pages['editors only'] = await (await proofreader.get('/review')).text()
+
+      /* Closed last, so the pages above see the issue open: the read-only detail with its
+         Callout and the dialog that reopens it (`12h`). */
+      await editor.post(`/issues/${ISSUE}/close`, { returnTo: 'detail' }, `/issues/${ISSUE}/close`)
+      pages['closed issue'] = await (await editor.get(`/issues/${ISSUE}`)).text()
+      pages['reopen'] = await (await editor.get(`/issues/${ISSUE}/reopen`)).text()
       assert.ok(readableText(pages['proofreading'] ?? '').includes(SEEDED_ARTICLE))
 
       assert.ok(readableText(pages[`/issues/${ISSUE}`] ?? '').includes(SEEDED_ARTICLE))

@@ -22,6 +22,12 @@ export const routes = route({
     create: post('/issues/new'),
     show: get('/issues/:name'),
     finish: post('/issues/:name/finish'),
+    /* _Uzavřít vydání…_ (`12g`) and _Znovu otevřít vydání…_ (`12h`) ask at an address of their
+       own, over the detail or, with `?from=overview`, over the overview and its filter. */
+    askClose: get('/issues/:name/close'),
+    close: post('/issues/:name/close'),
+    askReopen: get('/issues/:name/reopen'),
+    reopen: post('/issues/:name/reopen'),
     /* _Vydat nový odkaz_ asks at an address of its own, as a removal does (`02d`). */
     askRenewLink: get('/issues/:name/link/renew'),
     renewLink: post('/issues/:name/link/renew'),

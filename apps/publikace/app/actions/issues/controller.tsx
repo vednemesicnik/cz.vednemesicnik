@@ -6,6 +6,8 @@ import type { SignedInUntilCookie } from '../../auth/session.server.ts'
 import { disconnectedBanner } from '../../domain/drive-account.ts'
 import {
   checkIssueName,
+  closedToast,
+  closeWarningText,
   createdToast,
   duplicateNameMessage,
   FINISH_UNAVAILABLE_TOAST,
@@ -14,6 +16,7 @@ import {
   issueFilterSearch,
   notConnectedToast,
   parseIssueFilter,
+  reopenedToast,
   suggestNextName,
 } from '../../domain/issue.ts'
 import {
@@ -23,6 +26,7 @@ import {
   authorsLine,
   documentUrl,
   type FinalVersion,
+  lacksConsent,
   type ReplacedVersion,
   STATE_ORDER,
   whoOf,
@@ -173,6 +177,7 @@ import {
   type MissingFoldersView,
   type ReplacedVersionView,
 } from './detail-page.tsx'
+import { type IssueStepDialogView, type ReturnTo, stepBackHref } from './issue-parts.tsx'
 import type { NewIssueDialog } from './overview-page.tsx'
 import {
   driveView,
@@ -280,10 +285,11 @@ function missingView(
     (batch) => batch.articleId === article.id && isResendable(batch),
   )
   return {
-    checkAction: routes.issues.checkArticleFolders.href({
-      id: String(article.id),
-      name: issue.name,
-    }),
+    /* A closed issue's detail is for reading (`12h`); its records stand as they are. */
+    checkAction:
+      issue.closedAt === null
+        ? routes.issues.checkArticleFolders.href({ id: String(article.id), name: issue.name })
+        : null,
     heading: missingFoldersHeading(missing),
     text: missingFoldersLines({ foundAt, hasBatchToResend, missing }).join(' '),
     urls: subfolderUrls(article),
@@ -490,8 +496,11 @@ async function linkAndArticles(
       sortAt,
       sortState,
       artworks: { count: totalOf(articleCounts), line: articleArtworksLine(articleCounts) },
+      /* A closed issue's link answers `02f`, so it is not handed out (`12h`). */
       artworksUrl:
-        artworksLink === undefined ? null : absoluteUrl(origin, artworksLinkPath(artworksLink.key)),
+        artworksLink === undefined || !isOpen
+          ? null
+          : absoluteUrl(origin, artworksLinkPath(artworksLink.key)),
       authors: authorsLine(article.authors),
       documentUrl: documentUrl(article.docId),
       id: article.id,
@@ -526,6 +535,7 @@ async function linkAndArticles(
     articles: rows,
     link: {
       isChanged,
+      isClosed: !isOpen,
       openHref: articleLinkPath(link.key),
       renewHref: routes.issues.askRenewLink.href({ name: issue.name }),
       shareText: shareText(issue.name, url),
@@ -631,6 +641,7 @@ async function renderDetail(
     isRenewing?: boolean
     replacing?: FinalVersionDialogProps
     status?: number
+    step?: IssueStepDialogView
   } = {},
 ): Promise<Response> {
   let session = context.get(Session) as Session | undefined
@@ -653,6 +664,7 @@ async function renderDetail(
       link={link}
       person={context.auth.identity}
       replacing={options.replacing}
+      step={options.step}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
     />,
     options.status === undefined ? undefined : { status: options.status },
@@ -773,6 +785,55 @@ function replaceRefusalToast(
   }
 }
 
+/**
+ * What the warning of _Uzavřít vydání_ counts (`12g`): the articles whose authors have not all
+ * agreed, and the artworks of the batches still without consent, discarded ones aside.
+ */
+async function missingConsentOf(
+  context: PageContext,
+  issue: Issue,
+): Promise<{ articles: number; artworks: number }> {
+  let { articles, artworks } = articlesOf(context)
+  let [created, batches] = await Promise.all([
+    articles.listCreated(issue.id),
+    artworks.artworks.listByIssue(issue.id),
+  ])
+  return {
+    articles: created.filter((article) => lacksConsent(articleState(article))).length,
+    artworks: batches
+      .filter((batch) => batchState(batch) !== 'approved')
+      .reduce((sum, batch) => sum + batch.artworks.length, 0),
+  }
+}
+
+/** Where a dialog of `12g`, `12h` was asked from: `?from=overview` and its filter, or the detail. */
+function askedFrom(context: PageContext): { filter: IssueFilter; returnTo: ReturnTo } {
+  let isOverview = context.url.searchParams.get('from') === 'overview'
+  return {
+    filter: isOverview ? overviewFilterOf(context) : 'all',
+    returnTo: isOverview ? 'overview' : 'detail',
+  }
+}
+
+/** The same, from the dialog's form. */
+function answeredFrom(context: PageContext): { filter: IssueFilter; returnTo: ReturnTo } {
+  let isOverview = formText(context, 'returnTo') === 'overview'
+  return {
+    filter: isOverview ? parseIssueFilter(formText(context, 'state')) : 'all',
+    returnTo: isOverview ? 'overview' : 'detail',
+  }
+}
+
+/** The dialog over the page it was asked from. */
+function renderStep(
+  context: PageContext & { auth: { identity: Person } },
+  step: IssueStepDialogView,
+): Promise<Response> {
+  return step.returnTo === 'overview'
+    ? renderOverview(context, context.auth.identity, step.filter, step)
+    : renderDetail(context, step.issue, { step })
+}
+
 function notFound(): Response {
   return new Response('Not Found', { status: 404 })
 }
@@ -883,6 +944,59 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let toast = checkedToast(checked, check.missing)
         flashToast(context, toast.text, toast.tone === 'error' ? 'error' : undefined)
         return back()
+      },
+
+      /*
+       * `12g`: the dialog, with the warning while something still lacks consent. An issue closed
+       * meanwhile goes back to the page, which shows it closed; an unfinished one cannot be.
+       */
+      async askClose(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null || issue.completedAt === null) return notFound()
+        let from = askedFrom(context)
+        if (issue.closedAt !== null) {
+          return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
+        }
+        let counts = await missingConsentOf(context, issue)
+        return renderStep(context, {
+          ...from,
+          issue,
+          kind: 'close',
+          warning: closeWarningText(counts.articles, counts.artworks),
+        })
+      },
+
+      /*
+       * The state alone, nothing on Drive and no sheet: the links and the jobs read it (`12g`).
+       * A second answer to a dialog drawn twice changes nothing and says nothing.
+       */
+      async close(context) {
+        let { store } = issuesOf(context)
+        let issue = await store.findByName(context.params.name)
+        if (issue === null || issue.completedAt === null) return notFound()
+        let from = answeredFrom(context)
+        if (await store.close(issue.id, now())) flashToast(context, closedToast(issue.name))
+        return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
+      },
+
+      async askReopen(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null || issue.completedAt === null) return notFound()
+        let from = askedFrom(context)
+        if (issue.closedAt === null) {
+          return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
+        }
+        return renderStep(context, { ...from, issue, kind: 'reopen', warning: null })
+      },
+
+      /* `12h`: the same keys work again, so the links in the newsroom's conversations do too. */
+      async reopen(context) {
+        let { store } = issuesOf(context)
+        let issue = await store.findByName(context.params.name)
+        if (issue === null || issue.completedAt === null) return notFound()
+        let from = answeredFrom(context)
+        if (await store.reopen(issue.id)) flashToast(context, reopenedToast(issue.name))
+        return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
       },
 
       async askRenewLink(context) {

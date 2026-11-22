@@ -23,6 +23,11 @@ export type InsertResult = { existingName: string; ok: false } | { issue: Issue;
 
 export type IssueStore = {
   /**
+   * _Uzavřít vydání_ (`12g`): `false` when the issue was closed already or is not finished, so a
+   * dialog drawn before somebody else's step changes nothing.
+   */
+  close(id: number, at: Temporal.Instant): Promise<boolean>
+  /**
    * Marks the issue finished and gives it its link for new articles. Refused by the table while
    * a folder is still missing.
    */
@@ -36,6 +41,11 @@ export type IssueStore = {
   list(): Promise<Issue[]>
   /** Only while Drive refused the issue folder itself, so nothing of the issue exists. */
   remove(id: number): Promise<void>
+  /**
+   * _Znovu otevřít_ (`12h`): the same links and jobs work again, because they read the issue's
+   * state and never their own copy of it. `false` when the issue was open already.
+   */
+  reopen(id: number): Promise<boolean>
   /** Stores a folder's ID once; a folder already stored is never replaced. */
   setFolder(id: number, kind: FolderKind, folderId: string): Promise<void>
 }
@@ -73,6 +83,14 @@ export function createIssueStore(database: Database): IssueStore {
   }
 
   return {
+    async close(id, at) {
+      let result = await database.exec(
+        sql`UPDATE issues SET closed_at = ${stamp(at)}
+            WHERE id = ${id} AND completed_at IS NOT NULL AND closed_at IS NULL`,
+      )
+      return (result.affectedRows ?? 0) === 1
+    },
+
     /* The link for the newsroom comes into being in the same transaction, so a complete issue
        never stands without one (`12c`), whichever of creating and finishing completed it. */
     async complete(id, when) {
@@ -130,6 +148,13 @@ export function createIssueStore(database: Database): IssueStore {
 
     async remove(id) {
       await database.exec(sql`DELETE FROM issues WHERE id = ${id}`)
+    },
+
+    async reopen(id) {
+      let result = await database.exec(
+        sql`UPDATE issues SET closed_at = NULL WHERE id = ${id} AND closed_at IS NOT NULL`,
+      )
+      return (result.affectedRows ?? 0) === 1
     },
 
     async setFolder(id, kind, folderId) {

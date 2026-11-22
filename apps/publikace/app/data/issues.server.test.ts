@@ -115,4 +115,42 @@ describe('the issue store', () => {
       await app.close()
     }
   })
+
+  it('closes a finished issue once, and reopens it once', async () => {
+    let app = await createTestApp()
+    try {
+      let store = createIssueStore(app.database)
+      let result = await store.insert({ ...STARTED, at: at(14), name: 'VDM_2026_6' })
+      if (!result.ok) throw new Error('not inserted')
+      let id = result.issue.id
+      for (let kind of ['issue', 'articles', 'print'] as const) {
+        await store.setFolder(id, kind, `f-${kind}`)
+      }
+      await store.complete(id, at(14))
+
+      assert.equal(await store.close(id, at(20)), true)
+      assert.equal(await store.close(id, at(21)), false)
+      assert.deepEqual((await store.findById(id))?.closedAt, at(20))
+
+      assert.equal(await store.reopen(id), true)
+      assert.equal(await store.reopen(id), false)
+      assert.equal((await store.findById(id))?.closedAt, null)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses to close an unfinished issue', async () => {
+    let app = await createTestApp()
+    try {
+      let store = createIssueStore(app.database)
+      let result = await store.insert({ ...STARTED, at: at(14), name: 'VDM_2026_6' })
+      if (!result.ok) throw new Error('not inserted')
+
+      assert.equal(await store.close(result.issue.id, at(20)), false)
+      assert.equal((await store.findById(result.issue.id))?.closedAt, null)
+    } finally {
+      await app.close()
+    }
+  })
 })

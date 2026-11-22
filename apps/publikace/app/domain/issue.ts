@@ -226,6 +226,65 @@ function czechPlural(count: number, one: string, few: string, many: string): str
   return count >= 2 && count <= 4 ? few : many
 }
 
+/* `12g`, `12h`: closing and reopening an issue, from the detail's „⋯“ and the overview row's. */
+export const CLOSE_ISSUE_LABEL = 'Uzavřít vydání…'
+export const REOPEN_ISSUE_LABEL = 'Znovu otevřít vydání…'
+export const OPEN_FOLDER_LABEL = 'Otevřít složku na Disku'
+export const OPEN_PRINT_FOLDER_LABEL = 'Otevřít podklady pro tisk'
+
+export function closeDialogTitle(name: string): string {
+  return `Uzavřít vydání ${name}?`
+}
+
+/* As drawn, without _Složka pro grafika se přestane sdílet._: nothing in the app shares that
+   folder yet, so the sentence would promise a step that does not happen. */
+export const CLOSE_DIALOG_TEXT = tied`Odkazy pro redakci přestanou platit a úlohy na pozadí vydání přeskočí.`
+export const CLOSE_DIALOG_NOTE = tied`Soubory na Disku zůstanou. Vydání jde kdykoli znovu otevřít.`
+export const CLOSE_CONFIRM_LABEL = 'Uzavřít vydání'
+export const CLOSE_ANYWAY_LABEL = 'Přesto uzavřít'
+
+/**
+ * The warning of `12g` while articles or artworks still lack consent, or `null` when nothing
+ * does: _U 2 článků a 3 děl zatím chybí souhlas._ The counts stand in the genitive, so no verb
+ * has to agree with them.
+ *
+ * The drawn _a do podkladů se nedostanou_ is left out: nothing of an issue made in the app
+ * reaches the material for print, closed or not, so closing would be blamed for something it
+ * does not cause.
+ */
+export function closeWarningText(articles: number, artworks: number): string | null {
+  if (articles === 0 && artworks === 0) return null
+  let counts = [
+    ...(articles === 0 ? [] : [`${articles} ${articles === 1 ? 'článku' : 'článků'}`]),
+    ...(artworks === 0 ? [] : [`${artworks} ${artworks === 1 ? 'díla' : 'děl'}`]),
+  ]
+  return tied`U ${counts.join(tied` a `)} zatím chybí souhlas. Dokud je vydání uzavřené, aplikace neodesílá žádosti o souhlas ani nečte odpovědi.`
+}
+
+export function reopenDialogTitle(name: string): string {
+  return `Znovu otevřít ${name}?`
+}
+
+export const REOPEN_DIALOG_TEXT = tied`Původní odkazy pro redakci začnou znovu platit a úlohy na pozadí vydání zase zpracují.`
+export const REOPEN_CONFIRM_LABEL = 'Znovu otevřít'
+
+/** The Callout over a closed issue's detail (`12h`), with _Znovu otevřít_ under it. */
+export function closedCalloutText(closedAt: Temporal.Instant): string {
+  return tied`Vydání je uzavřené od ${formatDate(closedAt)}. Odkazy neplatí, úlohy ho přeskakují.`
+}
+
+/** Under the struck-through link of a closed issue (`12h`). */
+export const CLOSED_LINK_META = tied`Neplatí od uzavření`
+
+/* Not drawn: after `finishedToast`, through `/ask-copy`. */
+export function closedToast(name: string): string {
+  return `Vydání ${name} je uzavřené.`
+}
+
+export function reopenedToast(name: string): string {
+  return `Vydání ${name} je znovu otevřené.`
+}
+
 /** The second line of a row on a phone, where the counts stand in one line (`11e`). */
 export function phoneRowLine(issue: Issue, articles: number, artworks: number): string {
   let state = issueState(issue)

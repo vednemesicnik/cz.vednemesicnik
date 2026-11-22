@@ -1,6 +1,6 @@
 /**
- * The overview drawn at `/` and, with the dialog over it, at `/issues/new`, and what the actions
- * of both read from their context.
+ * The overview drawn at `/` and, with a dialog over it, at `/issues/new` and at the closing and
+ * reopening asked from a row, and what the actions of both read from their context.
  */
 
 import type { Person } from '../../middleware/auth.server.ts'
@@ -11,6 +11,7 @@ import { Toasts } from '../../middleware/toasts.server.ts'
 import type { AppContext } from '../../router.ts'
 import type { IssueFilter } from '../../domain/issue.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
+import type { IssueStepDialogView } from './issue-parts.tsx'
 import { type NewIssueDialog, OverviewPage } from './overview-page.tsx'
 
 /**
@@ -45,7 +46,7 @@ export async function renderOverview(
   context: PageContext,
   editor: Person,
   filter: IssueFilter,
-  dialog?: NewIssueDialog,
+  dialog?: NewIssueDialog | IssueStepDialogView,
   init?: ResponseInit,
 ): Promise<Response> {
   let articles = context.get(Articles) as ArticlesContext

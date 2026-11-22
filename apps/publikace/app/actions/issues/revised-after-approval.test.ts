@@ -157,7 +157,8 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
         ),
       )
       assert.ok(open.includes('Souhlasí s verzí z 21. 11. v 10:12'))
-      assert.ok(!open.includes('podklad'))
+      /* Nothing on the row speaks of the material for print; the header's „⋯“ opens its folder. */
+      assert.ok(!open.replace('Otevřít podklady pro tisk', '').includes('podklad'))
     } finally {
       await app.close()
     }

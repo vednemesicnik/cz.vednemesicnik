@@ -207,6 +207,15 @@ export function waitsOnEditors(state: ArticleState): boolean {
   return state === 'error' || state === 'review' || state === 'revised'
 }
 
+/**
+ * An article that still lacks its authors' consent, as the warning of _Uzavřít vydání_ counts it
+ * (`12g`). _Upraveno po schválení_ is not one: its consent stands for the PDF it was given for,
+ * and no request is out whose reply the jobs would stop reading.
+ */
+export function lacksConsent(state: ArticleState): boolean {
+  return state !== 'approved' && state !== 'revised'
+}
+
 function finalVersionState(finalVersion: FinalVersion): ArticleState {
   let { clauses } = finalVersion
   if (clauses.unsent > 0 || clauses.unarchived > 0) return 'error'

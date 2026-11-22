@@ -17,6 +17,7 @@ import {
   EMPTY_AUTHOR_NAME_MESSAGE,
   INVALID_EMAIL_MESSAGE,
   joinNames,
+  lacksConsent,
   LONG_ARTICLE_NAME_MESSAGE,
   MISSING_AT_MESSAGE,
   summaryTitle,
@@ -287,5 +288,30 @@ describe('the state of an article (01a)', () => {
       (a, b) => STATE_ORDER[a] - STATE_ORDER[b],
     )
     assert.deepEqual(states, ['proofreading', 'handedOver', 'writing'])
+  })
+})
+
+describe('lacksConsent (12g)', () => {
+  it('counts every state but Schváleno and Upraveno po schválení', () => {
+    let lacking = (
+      [
+        'approved',
+        'consent',
+        'error',
+        'handedOver',
+        'proofreading',
+        'review',
+        'revised',
+        'writing',
+      ] as const
+    ).filter(lacksConsent)
+    assert.deepEqual(lacking, [
+      'consent',
+      'error',
+      'handedOver',
+      'proofreading',
+      'review',
+      'writing',
+    ])
   })
 })

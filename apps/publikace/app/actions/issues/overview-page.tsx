@@ -6,6 +6,7 @@ import {
   CREATE_UNAVAILABLE_TEXT,
   CREATE_UNAVAILABLE_TITLE,
   EMPTY_TEXT,
+  CLOSE_ISSUE_LABEL,
   EMPTY_TITLE,
   emptyFilterTitle,
   FILTER_LABELS,
@@ -18,8 +19,10 @@ import {
   NAME_HINT,
   NEW_ISSUE_TEXT,
   notConnectedDialogMessage,
+  OPEN_FOLDER_LABEL,
   otherFilterText,
   phoneRowLine,
+  REOPEN_ISSUE_LABEL,
   rowSubtitle,
   unfinishedText,
   unfinishedTitle,
@@ -38,7 +41,7 @@ import { ListHeader } from '../../ui/list-header/component.tsx'
 import { ListHeaderAction } from '../../ui/list-header-action/component.tsx'
 import { ListHeaderTitle } from '../../ui/list-header-title/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
-import { ActionMenu } from '../../ui/public/action-menu/component.tsx'
+import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 import { SelectedField } from '../../ui/public/selected-field/component.tsx'
 import { StateFilter } from '../../ui/state-filter/component.tsx'
@@ -46,7 +49,13 @@ import { TableRow } from '../../ui/table-row/component.tsx'
 import { TableRowTitle } from '../../ui/table-row-title/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
-import { FinishIssueForm, IssueStateTag } from './issue-parts.tsx'
+import {
+  FinishIssueForm,
+  IssueStateTag,
+  IssueStepDialog,
+  type IssueStepDialogView,
+  stepDialogHref,
+} from './issue-parts.tsx'
 
 export type DriveStatus = 'connected' | 'disconnected' | 'not-connected'
 
@@ -63,7 +72,8 @@ export type OverviewPageProps = {
   articleCounts: ReadonlyMap<number, number>
   /** The sent artworks by issue ID. */
   artworkCounts: ReadonlyMap<number, number>
-  dialog?: NewIssueDialog
+  /** _Nové vydání_ (`11d`), or closing and reopening asked from a row (`12g`, `12h`). */
+  dialog?: NewIssueDialog | IssueStepDialogView
   driveAccount: { expectedEmail: string; status: DriveStatus }
   filter: IssueFilter
   issues: readonly Issue[]
@@ -129,6 +139,11 @@ const spanCountsStyle = css({ gridColumn: 'span 3', justifySelf: 'start' })
    while the dialog's own gaps still fall between them. */
 const dialogFormStyle = css({ display: 'contents' })
 
+/* A guard, because a discriminant of two literals on one member does not narrow the other out. */
+function isStepDialog(dialog: NewIssueDialog | IssueStepDialogView): dialog is IssueStepDialogView {
+  return dialog.kind === 'close' || dialog.kind === 'reopen'
+}
+
 function filterHref(filter: IssueFilter): string {
   return `${routes.home.href()}?state=${filter}`
 }
@@ -137,9 +152,26 @@ function issueHref(issue: Issue): string {
   return routes.issues.show.href({ name: issue.name })
 }
 
-function folderItems(issue: Issue) {
+/**
+ * The row's „⋯“ (`11a`): the folder, then after a line closing an active issue or reopening a
+ * closed one, each a dialog over the overview. An unfinished issue can be neither.
+ */
+function rowItems(issue: Issue, filter: IssueFilter): ActionMenuItem[] {
   let folderId = issue.folderIds.issue
-  return folderId === null ? [] : [{ href: folderUrl(folderId), label: 'Otevřít složku na Disku' }]
+  let items: ActionMenuItem[] =
+    folderId === null ? [] : [{ href: folderUrl(folderId), label: OPEN_FOLDER_LABEL }]
+  let state = issueState(issue)
+  if (state === 'unfinished') return items
+  let isClosed = state === 'closed'
+  return [
+    ...items,
+    ...(items.length === 0 ? [] : [{ isSeparator: true } as const]),
+    {
+      href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'overview', filter),
+      isSameTab: true,
+      label: isClosed ? REOPEN_ISSUE_LABEL : CLOSE_ISSUE_LABEL,
+    },
+  ]
 }
 
 /* What waits on the editors, in the ink of _Čeká na vás_ (`01d`). */
@@ -193,7 +225,7 @@ function IssueRow(
           </>
         )}
         <span role="cell">
-          <ActionMenu items={folderItems(issue)} label={`Další akce ${issue.name}`} />
+          <ActionMenu items={rowItems(issue, filter)} label={`Další akce ${issue.name}`} />
         </span>
       </TableRow>
     )
@@ -478,7 +510,9 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
             />
           )}
         </Layout>
-        {dialog === undefined ? null : (
+        {dialog === undefined ? null : isStepDialog(dialog) ? (
+          <IssueStepDialog step={dialog} />
+        ) : (
           <NewIssueDialogView dialog={dialog} driveAccount={driveAccount} filter={filter} />
         )}
       </Document>
