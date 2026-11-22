@@ -92,8 +92,8 @@ export const createEventStreamResponse = (
 
   return new Response(stream, {
     headers: {
-      // `no-transform` keeps @react-router/serve's compression() and Cloudflare
-      // from buffering the stream; without it events stall in production only.
+      // `no-transform` keeps the server's compression and Cloudflare from
+      // buffering the stream; without it events stall in production only.
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
       'Content-Type': 'text/event-stream',
