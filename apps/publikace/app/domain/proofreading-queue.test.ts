@@ -95,6 +95,7 @@ describe('the final version on the page Korektura', () => {
       },
       authors: [],
       isCancellable,
+      isReplacement: false,
       pdfFileId: 'pdf-1',
       reviewAuthor: null,
     }

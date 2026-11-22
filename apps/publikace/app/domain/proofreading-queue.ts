@@ -95,7 +95,8 @@ export type QueueItem = ArticleProgress & {
  * Where an article stands on the page for this viewer, from its state alone, or `null` where it
  * does not stand at all. An article past its final version stays in the _Moje korektury_ of the
  * proofreader whose take it was while the marking can still be cancelled, and nobody else sees
- * it (`15g`).
+ * it (`15g`). A new version that replaced one is the editors-in-chief's step, so it never comes
+ * back here (`12s`).
  */
 export function partOf(article: QueueItem, viewer: QueueViewer): QueuePart | null {
   let isOwn = viewer.isProofreader && article.proofreading?.email === viewer.email
@@ -103,8 +104,11 @@ export function partOf(article: QueueItem, viewer: QueueViewer): QueuePart | nul
     case 'approved':
     case 'consent':
     case 'error':
-    case 'review':
-      return isOwn && article.finalVersion?.isCancellable === true ? 'mine' : null
+    case 'review': {
+      let finalVersion = article.finalVersion ?? null
+      let isOwnMarking = finalVersion?.isCancellable === true && !finalVersion.isReplacement
+      return isOwn && isOwnMarking ? 'mine' : null
+    }
     case 'proofreading':
       return isOwn ? 'mine' : 'others'
     case 'handedOver':
@@ -294,6 +298,23 @@ export const FINAL_FOLDER_PROOFREADER: DialogError = {
 export const FINAL_DOC_PROOFREADER: DialogError = {
   text: tied`Na Disku chybí dokument článku. Nic se neuložilo.`,
   title: tied`Dejte vědět šéfredakci.`,
+}
+
+/** The Callout for what Drive stopped, worded for the editors-in-chief or for a proofreader. */
+export function finalDialogError(
+  kind: 'account' | 'doc-missing' | 'folder-missing' | 'unavailable',
+  isEditor: boolean,
+): DialogError {
+  switch (kind) {
+    case 'account':
+      return isEditor ? FINAL_ACCOUNT_EDITOR : FINAL_ACCOUNT_PROOFREADER
+    case 'doc-missing':
+      return isEditor ? FINAL_DOC_EDITOR : FINAL_DOC_PROOFREADER
+    case 'folder-missing':
+      return isEditor ? FINAL_FOLDER_EDITOR : FINAL_FOLDER_PROOFREADER
+    case 'unavailable':
+      return FINAL_DRIVE_DOWN
+  }
 }
 
 export const FINAL_SAVED_TOAST = tied`Finální verze je uložená.`

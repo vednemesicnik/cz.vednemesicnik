@@ -165,7 +165,7 @@ describe('the API of Article_Approvals', () => {
         AT.add({ hours: 2 }),
         AT.add({ hours: 1 }),
       )
-      assert.deepEqual(cancelled, { kind: 'done', pdfFileId: `pdf-${articleId}` })
+      assert.deepEqual(cancelled, { kind: 'done', pdfFileId: `pdf-${articleId}`, restored: null })
       assert.equal((await articles.findById(articleId))?.proofreading?.email, LENKA.email)
       assert.deepEqual((await claim(app)).clauses, [])
 

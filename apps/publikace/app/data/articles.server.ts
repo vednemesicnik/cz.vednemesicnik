@@ -13,8 +13,9 @@ import {
   sendKey,
   REPLY_CLAIM_LIMIT,
 } from '../domain/approvals.ts'
-import type { ArticleStep, Author, FinalVersion } from '../domain/article.ts'
+import type { ArticleStep, Author, FinalVersion, ReplacedVersion } from '../domain/article.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
+import { isReplaceable } from '../domain/final-version-replacement.ts'
 import type { DigestCandidate } from '../domain/proofreading-digest.ts'
 import { type BatchReport, decideReport } from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
@@ -106,14 +107,29 @@ export type FinalVersionOutcome =
   | { kind: 'gone' }
 
 /**
- * What cancelling the final version came to (`15g`). `done` gives the PDF's ID, for the bin.
+ * What cancelling the final version came to (`15g`). `done` gives the PDF's ID, for the bin, and
+ * the time of the marking that stands again when the cancelled one had replaced it (`12s`).
  * `too-late` is a marking whose clause a run of the job has taken; `not-final` one that is no
  * longer the marking the card showed, or never was.
  */
 export type CancelFinalOutcome =
-  | { kind: 'done'; pdfFileId: string }
+  | { kind: 'done'; pdfFileId: string; restored: Temporal.Instant | null }
   | { kind: 'not-final' }
   | { kind: 'too-late' }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
+
+/**
+ * What marking a new version in place of the standing one came to (`12r`, `12s`). Only `done`
+ * wrote anything. Otherwise the article now stands as the outcome says: another marking than the
+ * row showed stands (`replaced`, with it), none stands (`not-final`), every author agreed
+ * meanwhile, the issue was closed, or the article is gone or its marking may still be cancelled.
+ */
+export type ReplaceFinalOutcome =
+  | { at: Temporal.Instant; kind: 'done' }
+  | { kind: 'replaced'; step: ArticleStep }
+  | { kind: 'not-final' }
+  | { kind: 'all-approved' }
   | { issueName: string; kind: 'closed' }
   | { kind: 'gone' }
 
@@ -128,6 +144,11 @@ export type ClaimedClause = {
   pdfFileId: string
   /** The PDF's sha256, which names the attachment as the old job names it. */
   pdfHash: string
+  /**
+   * The clause replaces the same author's clause of an earlier marking that a run once took, so an
+   * e-mail may have reached the author, and this one says it replaces it (`20f`, #90).
+   */
+  replacesEarlier: boolean
   /** The Mailer's key for this sending, a new one after _Poslat žádost znovu_ (`sendKey`). */
   sendKey: string
   signature: string
@@ -349,6 +370,33 @@ export type ArticleStore = {
     markedAt: Temporal.Instant,
     owner?: string,
   ): Promise<CancelFinalOutcome>
+  /**
+   * Whether a new version may be marked in place of the one marked at `markedAt` (`12r`), read
+   * before Drive is asked to store anything: `null` when it may, else what stands in the way.
+   */
+  checkReplaceFinalVersion(
+    id: number,
+    markedAt: Temporal.Instant,
+  ): Promise<Exclude<ReplaceFinalOutcome, { kind: 'done' }> | null>
+  /**
+   * Records the new version and one clause _K odeslání_ per author in place of the marking made at
+   * `markedAt`, which stops standing, in one transaction and with the same checks made again.
+   * Anything else wrote nothing, and the PDF is the caller's to put in the bin.
+   */
+  replaceFinalVersion(input: {
+    at: Temporal.Instant
+    by: { email: string; name: string | null }
+    id: number
+    markedAt: Temporal.Instant
+    pdf: FinalVersionPdf
+  }): Promise<ReplaceFinalOutcome>
+  /** The article's replaced markings, the newest first, each with its clauses (`12s`). */
+  replacedVersions(id: number): Promise<ReplacedVersion[]>
+  /**
+   * The marking that stands in place of the one this clause belongs to, once that one was
+   * replaced, for the toast of `13a`; `null` while the clause's own marking stands.
+   */
+  replacingVersionOf(clauseId: number): Promise<ArticleStep | null>
   /**
    * The clauses _K odeslání_ of standing markings in open issues, for one run of the job: each
    * taken under `runKey` and not handed to another run for `CLAIM_MINUTES`. Taking one ends the
@@ -575,7 +623,29 @@ async function cancelFinalRefusalOf(
   let finalVersion = row.finalVersion
   if (finalVersion === null || !finalVersion.at.equals(markedAt)) return { kind: 'not-final' }
   if (owner !== undefined && row.proofreading?.email !== owner) return { kind: 'not-final' }
+  /* A new version is the editors-in-chief's step: a proofreader never cancels one (`12s`). */
+  if (owner !== undefined && finalVersion.isReplacement) return { kind: 'not-final' }
   if (!finalVersion.isCancellable) return { kind: 'too-late' }
+  return null
+}
+
+/** What stands in the way of marking a new version in place of the one made at `markedAt`. */
+async function replaceFinalRefusalOf(
+  db: Database,
+  id: number,
+  markedAt: Temporal.Instant,
+): Promise<Exclude<ReplaceFinalOutcome, { kind: 'done' }> | null> {
+  let found = await withIssue(db, id)
+  if (found === null) return { kind: 'gone' }
+  let { isClosed, issueName, row } = found
+  if (isClosed) return { issueName, kind: 'closed' }
+  let finalVersion = row.finalVersion
+  if (finalVersion === null) return { kind: 'not-final' }
+  if (!finalVersion.at.equals(markedAt)) return { kind: 'replaced', step: finalVersion }
+  /* Every author agreed meanwhile: a change now is _Upraveno po schválení_ (`12s`). */
+  if (finalVersion.clauses.approved === finalVersion.clauses.total) return { kind: 'all-approved' }
+  /* Not offered before a run takes a clause, where cancelling is the way: a crafted request. */
+  if (!isReplaceable(finalVersion)) return { kind: 'gone' }
   return null
 }
 
@@ -584,6 +654,13 @@ const NO_TAKE = sql`(proofread_at IS NULL OR proofreading_cancelled_at IS NOT NU
 
 /** The article belongs to an issue that is still open. */
 const IN_OPEN_ISSUE = sql`issue_id IN (SELECT id FROM issues WHERE closed_at IS NULL)`
+
+/**
+ * A marking that stands: neither cancelled nor replaced by a newer one (`15g`, `12s`). `STANDING`
+ * for `final_versions` alone, `STANDING_F` where it is joined as `f`.
+ */
+const STANDING = sql`cancelled_at IS NULL AND replaced_at IS NULL`
+const STANDING_F = sql`f.cancelled_at IS NULL AND f.replaced_at IS NULL`
 
 function asArticle(row: ArticleRow): Article {
   if (row.createdAt === null || row.docId === null || row.folderId === null) {
@@ -650,9 +727,10 @@ async function standingFinalVersions(
   ids: readonly number[],
 ): Promise<Map<number, FinalVersion>> {
   let versions = await db.exec(
-    sql`SELECT id, article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id
+    sql`SELECT id, article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id,
+          replaces_version_id
         FROM final_versions
-        WHERE cancelled_at IS NULL
+        WHERE ${STANDING}
           AND article_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))`,
   )
   let versionIds = (versions.rows ?? []).map((row) => Number(row['id']))
@@ -678,6 +756,7 @@ async function standingFinalVersions(
       clauses: countClauses(rows.map(toClauseStatus)),
       email: String(row['marked_by_email']),
       isCancellable: !rows.some((clause) => clause['first_claimed_at'] !== null),
+      isReplacement: row['replaces_version_id'] !== null,
       name: text(row['marked_by_name']),
       pdfFileId: String(row['pdf_file_id']),
       reviewAuthor: reviewed === undefined ? null : String(reviewed['author_name']),
@@ -704,7 +783,7 @@ const CLAUSE_QUEUE_CANDIDATES = sql`SELECT c.*, a.name AS article_name, i.name A
   JOIN final_versions f ON f.id = c.final_version_id
   JOIN articles a ON a.id = c.article_id
   JOIN issues i ON i.id = a.issue_id
-  WHERE f.cancelled_at IS NULL AND i.closed_at IS NULL AND c.approved_at IS NULL
+  WHERE ${STANDING_F} AND i.closed_at IS NULL AND c.approved_at IS NULL
     AND (c.reply_message_id IS NOT NULL OR c.archive_failed_at IS NOT NULL)
   ORDER BY coalesce(c.reply_received_at, c.archive_failed_at), c.id`
 
@@ -731,7 +810,7 @@ function toQueuedClause(row: Row): QueuedClause {
 }
 
 /** The article has no standing marking. */
-const NO_FINAL_VERSION = sql`id NOT IN (SELECT article_id FROM final_versions WHERE cancelled_at IS NULL)`
+const NO_FINAL_VERSION = sql`id NOT IN (SELECT article_id FROM final_versions WHERE ${STANDING})`
 
 async function byFormKey(db: Database, formKey: string): Promise<ArticleRow | null> {
   let result = await db.exec(sql`SELECT * FROM articles WHERE form_key = ${formKey}`)
@@ -818,7 +897,7 @@ export function createArticleStore(database: Database): ArticleStore {
       let result = await database.exec(
         sql`SELECT articles.name, issues.name AS issue_name, issues.closed_at,
               EXISTS (SELECT 1 FROM final_versions f
-                      WHERE f.article_id = articles.id AND f.cancelled_at IS NULL) AS has_final
+                      WHERE f.article_id = articles.id AND ${STANDING_F}) AS has_final
             FROM articles
             JOIN issues ON issues.id = articles.issue_id
             WHERE articles.id = ${id} AND articles.created_at IS NOT NULL
@@ -1101,18 +1180,124 @@ export function createArticleStore(database: Database): ArticleStore {
         if (refusal !== null) return refusal
         let result = await db.exec(
           sql`UPDATE final_versions SET cancelled_at = ${stamp(at)}
-              WHERE article_id = ${id} AND cancelled_at IS NULL AND marked_at = ${stamp(markedAt)}
+              WHERE article_id = ${id} AND ${STANDING} AND marked_at = ${stamp(markedAt)}
                 AND id NOT IN (SELECT final_version_id FROM article_clauses
                                WHERE first_claimed_at IS NOT NULL)
-              RETURNING id, pdf_file_id`,
+              RETURNING id, pdf_file_id, replaces_version_id`,
         )
         let cancelled = result.rows?.[0]
         if (cancelled === undefined) return { kind: 'too-late' }
         await db.exec(
           sql`DELETE FROM article_clauses WHERE final_version_id = ${Number(cancelled['id'])}`,
         )
-        return { kind: 'done', pdfFileId: String(cancelled['pdf_file_id']) }
+        /* Nobody heard of the new version yet: the one it replaced stands again as it was, its
+           clauses where they were (`12s`). */
+        let restored = null
+        if (cancelled['replaces_version_id'] !== null) {
+          let back = await db.exec(
+            sql`UPDATE final_versions SET replaced_at = NULL
+                WHERE id = ${Number(cancelled['replaces_version_id'])}
+                RETURNING marked_at`,
+          )
+          restored = parseStamp(back.rows?.[0]?.['marked_at'])
+        }
+        return { kind: 'done', pdfFileId: String(cancelled['pdf_file_id']), restored }
       })
+    },
+
+    checkReplaceFinalVersion(id, markedAt) {
+      return replaceFinalRefusalOf(database, id, markedAt)
+    },
+
+    replaceFinalVersion(input) {
+      return database.transaction(async (db) => {
+        let refusal = await replaceFinalRefusalOf(db, input.id, input.markedAt)
+        if (refusal !== null) return refusal
+        let row = await byId(db, input.id)
+        if (row === null) return { kind: 'gone' }
+        /* The old marking stops standing first: one standing marking per article. */
+        let replaced = await db.exec(
+          sql`UPDATE final_versions SET replaced_at = ${stamp(input.at)}
+              WHERE article_id = ${input.id} AND ${STANDING}
+                AND marked_at = ${stamp(input.markedAt)}
+              RETURNING id`,
+        )
+        let replacedId = Number(replaced.rows?.[0]?.['id'])
+        let inserted = await db.exec(
+          sql`INSERT INTO final_versions
+                (article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id, pdf_hash,
+                 attempt_key, replaces_version_id)
+              VALUES (${input.id}, ${stamp(input.at)}, ${input.by.email}, ${input.by.name},
+                      ${input.pdf.fileId}, ${input.pdf.hash}, ${input.pdf.attemptKey},
+                      ${replacedId})
+              RETURNING id`,
+        )
+        let versionId = Number(inserted.rows?.[0]?.['id'])
+        let earlier = await db.exec(
+          sql`SELECT id, author_email FROM article_clauses WHERE final_version_id = ${replacedId}`,
+        )
+        /* The same author by address: the authors are the article's as they are now, and one
+           added since has no earlier request to replace. */
+        let earlierOf = new Map<string, number>()
+        for (let clause of earlier.rows ?? []) {
+          earlierOf.set(String(clause['author_email']).toLowerCase(), Number(clause['id']))
+        }
+        for (let author of row.authors) {
+          await db.exec(
+            sql`INSERT INTO article_clauses
+                  (final_version_id, article_id, position, author_name, author_email, signature,
+                   clause_key, replaces_clause_id)
+                VALUES (${versionId}, ${input.id}, ${author.position}, ${author.name},
+                        ${author.email}, ${author.name},
+                        ${clauseKey(input.id, author.position, input.at)},
+                        ${earlierOf.get(author.email.toLowerCase()) ?? null})`,
+          )
+        }
+        return { at: input.at, kind: 'done' }
+      })
+    },
+
+    async replacedVersions(id) {
+      let versions = await database.exec(
+        sql`SELECT * FROM final_versions
+            WHERE article_id = ${id} AND replaced_at IS NOT NULL
+            ORDER BY marked_at DESC`,
+      )
+      let rows = versions.rows ?? []
+      let ids = JSON.stringify(rows.map((row) => Number(row['id'])))
+      let clauses = await database.exec(
+        sql`SELECT * FROM article_clauses
+            WHERE final_version_id IN (SELECT value FROM json_each(${ids}))
+            ORDER BY position`,
+      )
+      return rows.map((row) => ({
+        at: parseStamp(row['marked_at']) ?? EPOCH,
+        authors: (clauses.rows ?? [])
+          .filter((clause) => Number(clause['final_version_id']) === Number(row['id']))
+          .map(toClauseDetail),
+        email: String(row['marked_by_email']),
+        name: text(row['marked_by_name']),
+        pdfFileId: String(row['pdf_file_id']),
+        replacedAt: parseStamp(row['replaced_at']) ?? EPOCH,
+      }))
+    },
+
+    async replacingVersionOf(clauseId) {
+      let result = await database.exec(
+        sql`SELECT s.marked_at, s.marked_by_email, s.marked_by_name
+            FROM article_clauses c
+            JOIN final_versions f ON f.id = c.final_version_id
+            JOIN final_versions s ON s.article_id = f.article_id
+            WHERE c.id = ${clauseId} AND f.replaced_at IS NOT NULL
+              AND s.cancelled_at IS NULL AND s.replaced_at IS NULL`,
+      )
+      let row = result.rows?.[0]
+      if (row === undefined) return null
+      return {
+        at: parseStamp(row['marked_at']) ?? EPOCH,
+        email: String(row['marked_by_email']),
+        name: text(row['marked_by_name']),
+      }
     },
 
     claimForSending(runKey, at) {
@@ -1123,7 +1308,7 @@ export function createArticleStore(database: Database): ArticleStore {
               JOIN final_versions f ON f.id = c.final_version_id
               JOIN articles a ON a.id = c.article_id
               JOIN issues i ON i.id = a.issue_id
-              WHERE c.state = 'pending' AND f.cancelled_at IS NULL AND i.closed_at IS NULL
+              WHERE c.state = 'pending' AND ${STANDING_F} AND i.closed_at IS NULL
                 AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
               ORDER BY f.marked_at, c.id
               LIMIT ${CLAIM_LIMIT}`,
@@ -1137,7 +1322,10 @@ export function createArticleStore(database: Database): ArticleStore {
         )
         let claimed = await db.exec(
           sql`SELECT c.*, a.name AS article_name, a.doc_id, i.name AS issue_name, f.pdf_file_id,
-                f.pdf_hash
+                f.pdf_hash,
+                EXISTS (SELECT 1 FROM article_clauses p
+                        WHERE p.id = c.replaces_clause_id AND p.first_claimed_at IS NOT NULL)
+                  AS replaces_earlier
               FROM article_clauses c
               JOIN final_versions f ON f.id = c.final_version_id
               JOIN articles a ON a.id = c.article_id
@@ -1154,6 +1342,7 @@ export function createArticleStore(database: Database): ArticleStore {
           issueName: String(row['issue_name']),
           pdfFileId: String(row['pdf_file_id']),
           pdfHash: String(row['pdf_hash']),
+          replacesEarlier: Number(row['replaces_earlier']) === 1,
           sendKey: sendKey(String(row['clause_key']), Number(row['send_attempt'])),
           signature: String(row['signature']),
         }))
@@ -1177,7 +1366,7 @@ export function createArticleStore(database: Database): ArticleStore {
               SET state = 'pending', error = NULL, sent_at = NULL, claimed_at = NULL,
                   send_attempt = send_attempt + 1
               WHERE final_version_id = (SELECT id FROM final_versions
-                                        WHERE article_id = ${id} AND cancelled_at IS NULL
+                                        WHERE article_id = ${id} AND ${STANDING}
                                           AND marked_at = ${stamp(markedAt)})
                 AND state != 'pending' AND approved_at IS NULL AND archive_failed_at IS NULL
                 AND reply_message_id IS NULL`,
@@ -1223,7 +1412,7 @@ export function createArticleStore(database: Database): ArticleStore {
               JOIN final_versions f ON f.id = c.final_version_id
               JOIN articles a ON a.id = c.article_id
               JOIN issues i ON i.id = a.issue_id
-              WHERE c.state != 'pending' AND c.approved_at IS NULL AND f.cancelled_at IS NULL
+              WHERE c.state != 'pending' AND c.approved_at IS NULL AND ${STANDING_F}
                 AND i.closed_at IS NULL
                 AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
               ORDER BY coalesce(c.checked_at, ''), c.id
@@ -1259,13 +1448,25 @@ export function createArticleStore(database: Database): ArticleStore {
     recordReply(runKey, key, report, at) {
       return database.transaction(async (db) => {
         let result = await db.exec(
-          sql`SELECT * FROM article_clauses
-              WHERE clause_key = ${key} AND claim_key = ${runKey} AND state != 'pending'`,
+          sql`SELECT c.*, f.replaced_at FROM article_clauses c
+              JOIN final_versions f ON f.id = c.final_version_id
+              WHERE c.clause_key = ${key} AND c.claim_key = ${runKey} AND c.state != 'pending'`,
         )
         /* A clause still to send was claimed for sending, and has no reply to report. */
         let row = result.rows?.[0]
         if (row === undefined) return 'unknown'
         let id = Number(row['id'])
+        /* A newer version replaced this one while the run held it: the clause stays as it stood
+           then, and a conversation the job archived for it is binned, as nothing counts it. */
+        if (row['replaced_at'] !== null) {
+          await db.exec(sql`UPDATE article_clauses SET claimed_at = NULL WHERE id = ${id}`)
+          return report.state !== 'failed' &&
+            report.state !== 'no_reply' &&
+            report.archive !== null &&
+            'fileId' in report.archive
+            ? 'superseded'
+            : 'accepted'
+        }
         let decision = decideReport({ ...toClauseStatus(row), discardedAt: null }, report, at)
         await applyConsentPatch(db, 'clauses', id, decision.patch)
         /* A reply to an e-mail the Mailer did not confirm shows that it went after all, by the
@@ -1286,14 +1487,19 @@ export function createArticleStore(database: Database): ArticleStore {
     verifyClause(id, replyMessageId, editor, at) {
       return database.transaction(async (db) => {
         let result = await db.exec(
-          sql`SELECT c.*, i.closed_at, f.cancelled_at FROM article_clauses c
+          sql`SELECT c.*, i.closed_at, f.cancelled_at, f.replaced_at FROM article_clauses c
               JOIN final_versions f ON f.id = c.final_version_id
               JOIN articles a ON a.id = c.article_id
               JOIN issues i ON i.id = a.issue_id
               WHERE c.id = ${id}`,
         )
         let row = result.rows?.[0]
-        if (row === undefined || row['closed_at'] !== null || row['cancelled_at'] !== null) {
+        if (
+          row === undefined ||
+          row['closed_at'] !== null ||
+          row['cancelled_at'] !== null ||
+          row['replaced_at'] !== null
+        ) {
           return false
         }
         if (clauseState(toClauseStatus(row)) !== 'review') return false
@@ -1315,7 +1521,8 @@ export function createArticleStore(database: Database): ArticleStore {
         sql`UPDATE article_clauses SET consent_verified_at = NULL,
               consent_verified_by_email = NULL, consent_verified_by_name = NULL
             WHERE id = ${id} AND approved_at IS NULL AND archive_failed_at IS NULL
-              AND consent_verified_at IS NOT NULL`,
+              AND consent_verified_at IS NOT NULL
+              AND final_version_id IN (SELECT id FROM final_versions WHERE ${STANDING})`,
       )
       return (result.affectedRows ?? 0) === 1
     },
@@ -1355,7 +1562,7 @@ export function createArticleStore(database: Database): ArticleStore {
               OR licences_folder_missing_at IS NOT NULL
               OR id IN (SELECT c.article_id FROM article_clauses c
                         JOIN final_versions f ON f.id = c.final_version_id
-                        WHERE f.cancelled_at IS NULL AND ${WAITS_ON_EDITORS})
+                        WHERE ${STANDING_F} AND ${WAITS_ON_EDITORS})
             )
             GROUP BY issue_id`,
       )

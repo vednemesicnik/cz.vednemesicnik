@@ -89,6 +89,11 @@ import {
 } from '../../domain/handover.ts'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 import { CANCEL_FINAL_LABEL, OPEN_PDF_LABEL } from '../../domain/proofreading-queue.ts'
+import { REPLACE_FINAL_LABEL } from '../../domain/final-version-replacement.ts'
+import {
+  FinalVersionDialog,
+  type FinalVersionDialogProps,
+} from '../../ui/final-version-dialog/component.tsx'
 import { SHOW_REPLY_LABEL } from '../../domain/approvals.ts'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
@@ -136,8 +141,30 @@ export type ClausesView = {
   /** _Jména v doložkách_, or _Jméno v doložce_ for one author. */
   namesLabel: string
   pdfUrl: string
+  /** The markings a newer one replaced, the newest first, each a closed record (`12s`). */
+  replaced: readonly ReplacedVersionView[]
   /** _Poslat žádost znovu_ while a clause waits on no reply or was not confirmed (`12b`). */
   resend: { action: string; label: string } | null
+}
+
+/** A replaced marking in the open row (`12s`): grey tags, no steps, and its own PDF. */
+export type ReplacedVersionView = {
+  authors: readonly {
+    detail: string | null
+    email: string
+    label: string
+    name: string
+    quote: string | null
+  }[]
+  /** _Stav doložek při nahrazení verze_. */
+  clausesLabel: string
+  /** _Označení: ‹kdo› · neplatí od ‹čas›_. */
+  markedLine: string
+  /** Read after _Otevřít PDF_: which version, and that it opens a new tab. */
+  pdfHint: string
+  pdfUrl: string
+  /** _Nahrazená verze z ‹čas›_, the line that opens it. */
+  summary: string
 }
 
 /** One row of _Články_ (`12a`), with what exists of an article so far. */
@@ -159,6 +186,11 @@ export type ArticleRowView = {
   name: string
   /** _Otevřít PDF_ in `⋯`, for an article with a final version (`12q`). */
   pdfUrl: string | null
+  /**
+   * The dialog _Označit novou finální verzi…_ from `⋯`, once a run took a clause and while not
+   * every author agreed, of an issue still open (`12r`). Where _Zrušit finální verzi_ stood.
+   */
+  replaceFinalAction: string | null
   /** Where the row stands among the others: a settled row by the state it had (`12l`). */
   sortAt: Temporal.Instant | null
   sortState: ArticleState
@@ -248,6 +280,8 @@ export type DetailPageProps = {
   issue: Issue
   link?: LinkBlockView
   person: PanelPerson
+  /** The dialog of a new final version over the detail (`12r`). */
+  replacing?: FinalVersionDialogProps
   toasts: readonly ToastMessage[]
 }
 
@@ -428,6 +462,22 @@ const namesStyle = css({
   padding: 0,
 })
 const clauseActionsStyle = css({ display: 'flex', flexWrap: 'wrap', gap: '8px' })
+const replacedBodyStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '12px',
+  minWidth: 0,
+  paddingTop: '8px',
+})
+/* A replaced version's reply is read whole: there is no card in `13a` to open it on any more. */
+const replacedQuoteStyle = css({
+  color: 'var(--text-secondary)',
+  fontSize: '13px',
+  gridColumn: '1 / -1',
+  minWidth: 0,
+  overflowWrap: 'anywhere',
+  '& blockquote': { margin: 0, whiteSpace: 'pre-line' },
+})
 
 /* The Callout of a missing folder belongs to the row above it, inside the same table (`12j`). */
 const bandStyle = css({ padding: '0 20px 16px' })
@@ -609,6 +659,12 @@ function ArticleRow(
         { action: article.cancelFinalAction, csrfToken, label: CANCEL_FINAL_LABEL },
       )
     }
+    if (article.replaceFinalAction !== null) {
+      items.push(
+        { isSeparator: true },
+        { href: article.replaceFinalAction, isSameTab: true, label: REPLACE_FINAL_LABEL },
+      )
+    }
     return (
       <>
         <TableRow
@@ -750,8 +806,61 @@ function ClauseBand(handle: Handle<{ clauses: ClausesView }>) {
               </form>
             )}
           </div>
+          {clauses.replaced.map((version) => (
+            <ReplacedVersion version={version} />
+          ))}
         </div>
       </div>
+    )
+  }
+}
+
+/**
+ * A replaced marking under the one that stands (`12s`), closed, in the shape of the earlier
+ * replies on a card of `13`: with ten authors each version would add ten rows nobody acts on.
+ * A reply is quoted whole, as it often says why the new version was marked.
+ */
+function ReplacedVersion(handle: Handle<{ version: ReplacedVersionView }>) {
+  return () => {
+    let { version } = handle.props
+    return (
+      <details class="vdm-queue-item__sent">
+        <summary>{version.summary}</summary>
+        <div mix={replacedBodyStyle}>
+          <span mix={clauseMetaStyle}>{version.markedLine}</span>
+          <p mix={namesLabelStyle}>{version.clausesLabel}</p>
+          <div mix={clausePeopleStyle}>
+            {version.authors.map((author) => (
+              <div key={author.email} mix={clauseAuthorStyle}>
+                <span mix={clausePersonStyle}>
+                  {author.name}
+                  <span mix={clauseMetaStyle}>{author.email}</span>
+                </span>
+                <StatusTag isInline isOnTint tone="neutral">
+                  {author.label}
+                </StatusTag>
+                <span mix={clauseMetaStyle}>{author.detail ?? ''}</span>
+                {author.quote === null ? null : (
+                  <span mix={replacedQuoteStyle}>
+                    <blockquote>{author.quote}</blockquote>
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div mix={clauseActionsStyle}>
+            <a
+              class="vdm-btn vdm-btn--outline vdm-btn--sm"
+              href={version.pdfUrl}
+              rel="noopener"
+              target="_blank"
+            >
+              {OPEN_PDF_LABEL}
+              <span class="vdm-sr-only">{version.pdfHint}</span>
+            </a>
+          </div>
+        </div>
+      </details>
     )
   }
 }
@@ -1031,6 +1140,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       link,
       missingAddress,
       person,
+      replacing,
       toasts,
     } = handle.props
     let state = issueState(issue)
@@ -1041,7 +1151,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
         <Layout
           active="issues"
           driveAccount={driveAccount}
-          isInert={isRenewing || discarding !== undefined}
+          isInert={isRenewing || discarding !== undefined || replacing !== undefined}
           person={person}
           title={issue.name}
           toasts={toasts}
@@ -1106,6 +1216,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
         </Layout>
         {isRenewing ? <RenewDialog issue={issue} /> : null}
         {discarding === undefined ? null : <DiscardDialog discarding={discarding} />}
+        {replacing === undefined ? null : <FinalVersionDialog {...replacing} />}
       </Document>
     )
   }

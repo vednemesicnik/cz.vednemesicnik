@@ -20,14 +20,8 @@ import {
   cardActions,
   closedArticleCallout,
   type DialogError,
-  FINAL_ACCOUNT_EDITOR,
-  FINAL_ACCOUNT_PROOFREADER,
   FINAL_CANCELLED_TOAST,
-  FINAL_DOC_EDITOR,
-  FINAL_DOC_PROOFREADER,
-  FINAL_DRIVE_DOWN,
-  FINAL_FOLDER_EDITOR,
-  FINAL_FOLDER_PROOFREADER,
+  finalDialogError,
   FINAL_SAVED_TOAST,
   type FinalRefusal,
   finishedArticleCallout,
@@ -52,11 +46,7 @@ import {
 } from '../../domain/proofreading-queue.ts'
 import { UNDO_LABEL } from '../../domain/review.ts'
 import { now, parseStamp, stamp } from '../../domain/time.ts'
-import {
-  cancelFinalVersion,
-  type MarkFinalOutcome,
-  markFinalVersion,
-} from '../../drive/final-version.server.ts'
+import { cancelFinalVersion, markFinalVersion } from '../../drive/final-version.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { type Person, requireProofreading } from '../../middleware/auth.server.ts'
 import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
@@ -243,25 +233,6 @@ function finalRefusalOf(
  * The Callout a failed marking keeps in the dialog (`15f`): the account and a missing file are
  * mended only by an editor-in-chief, so a proofreader is told whom to tell.
  */
-function dialogErrorOf(
-  outcome: Extract<
-    MarkFinalOutcome,
-    { kind: 'account' | 'doc-missing' | 'folder-missing' | 'unavailable' }
-  >,
-  isEditor: boolean,
-): DialogError {
-  switch (outcome.kind) {
-    case 'account':
-      return isEditor ? FINAL_ACCOUNT_EDITOR : FINAL_ACCOUNT_PROOFREADER
-    case 'doc-missing':
-      return isEditor ? FINAL_DOC_EDITOR : FINAL_DOC_PROOFREADER
-    case 'folder-missing':
-      return isEditor ? FINAL_FOLDER_EDITOR : FINAL_FOLDER_PROOFREADER
-    case 'unavailable':
-      return FINAL_DRIVE_DOWN
-  }
-}
-
 type QueueContext = PageContext & { auth: { identity: Person } }
 
 /**
@@ -549,7 +520,7 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
         let article = queue.find((each) => each.id === id)
         if (article === undefined) return notFound()
         return renderQueue(context, {
-          dialog: dialogOf(article, takenAt, dialogErrorOf(outcome, person.isEditor)),
+          dialog: dialogOf(article, takenAt, finalDialogError(outcome.kind, person.isEditor)),
           init: { status: IN_THE_WAY },
           queue,
         })

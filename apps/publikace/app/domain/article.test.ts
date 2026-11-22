@@ -199,6 +199,7 @@ describe('the state of an article (01a)', () => {
       clauses: clauses({ pending: 2 }),
       authors: [],
       isCancellable: true,
+      isReplacement: false,
       pdfFileId: 'pdf-1',
       reviewAuthor: null,
     }
@@ -229,6 +230,7 @@ describe('the state of an article (01a)', () => {
       clauses: clauses({ approved: 1, waiting: 1 }),
       authors: [],
       isCancellable: false,
+      isReplacement: false,
       pdfFileId: 'pdf-1',
       reviewAuthor: null,
     }

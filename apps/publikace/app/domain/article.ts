@@ -153,8 +153,23 @@ export type FinalVersion = ArticleStep & {
   authors: readonly ClauseDetail[]
   clauses: ClauseCounts
   isCancellable: boolean
+  /**
+   * It replaced a marking whose clauses a run had taken (`12r`): an editor-in-chief's step, so it
+   * stays out of the proofreaders' queue, and its cancel brings that marking back (`12s`).
+   */
+  isReplacement: boolean
   pdfFileId: string
   reviewAuthor: string | null
+}
+
+/**
+ * A marking a newer one replaced (`12s`): who marked it and when, its PDF, and each author's clause
+ * as it stood at that moment, a record nothing is sent, asked about or archived from any more.
+ */
+export type ReplacedVersion = ArticleStep & {
+  authors: readonly ClauseDetail[]
+  pdfFileId: string
+  replacedAt: Temporal.Instant
 }
 
 export type ArticleProgress = {

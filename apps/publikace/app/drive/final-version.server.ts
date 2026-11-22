@@ -1,12 +1,18 @@
 import { createHash, randomUUID } from 'node:crypto'
 
-import type { CancelFinalOutcome, FinalVersionOutcome } from '../data/articles.server.ts'
+import type {
+  CancelFinalOutcome,
+  FinalVersionOutcome,
+  FinalVersionPdf,
+  ReplaceFinalOutcome,
+} from '../data/articles.server.ts'
 import type { ArtworksSetup } from './artworks-setup.server.ts'
 import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
 
 /**
- * _Označit finální verzi_ and its cancel on Drive (`15f`, `15g`, #88): the article's Doc as it is,
+ * _Označit finální verzi_, a new version in its place (`12r`, #90) and the cancel on Drive (`15f`,
+ * `15g`, #88): the article's Doc as it is,
  * exported to PDF and stored as `<sha256>.pdf` in the article folder, as `mark-for-finalization.gs`
  * does for the issues made before the app. The database is written only once the PDF exists, and
  * the PDF goes to the bin when the database refuses it: all or nothing (`11c`).
@@ -22,16 +28,23 @@ export type FinalVersionSetup = Pick<ArtworksSetup, 'articles' | 'files' | 'now'
  * refused (somebody changed the article meanwhile), the account is not connected, the article
  * folder or the Doc is gone, or Drive did not answer.
  */
-export type MarkFinalOutcome =
+export type StoreFinalOutcome<Refusal> =
   | { at: Temporal.Instant; kind: 'done' }
-  | { kind: 'refused'; refusal: Exclude<FinalVersionOutcome, { kind: 'done' }> }
+  | { kind: 'refused'; refusal: Refusal }
   | { kind: 'account' }
   | { kind: 'doc-missing' }
   | { kind: 'folder-missing' }
   | { kind: 'unavailable' }
 
+export type MarkFinalOutcome = StoreFinalOutcome<Exclude<FinalVersionOutcome, { kind: 'done' }>>
+
+export type ReplaceFinalStepOutcome = StoreFinalOutcome<
+  Exclude<ReplaceFinalOutcome, { kind: 'done' }>
+>
+
+/** `restored` is the time of the marking that stands again, once the cancelled one replaced it. */
 export type CancelFinalStepOutcome =
-  | { kind: 'done' }
+  | { kind: 'done'; restored: Temporal.Instant | null }
   | { kind: 'refused'; refusal: Exclude<CancelFinalOutcome, { kind: 'done' }> }
   | { kind: 'unavailable' }
 
@@ -46,18 +59,69 @@ export function markFinalVersion(
     takenAt: Temporal.Instant
   },
 ): Promise<MarkFinalOutcome> {
-  return lock(`final-version:${input.id}`, () => mark(setup, input))
+  return lock(`final-version:${input.id}`, () =>
+    storeFinalVersion(setup, input.id, {
+      check: () => setup.articles.checkFinalVersion(input.id, input.takenAt, input.owner),
+      gone: { kind: 'gone' },
+      record: (pdf, at) =>
+        setup.articles.markFinalVersion({
+          at,
+          by: input.by,
+          id: input.id,
+          owner: input.owner,
+          pdf,
+          takenAt: input.takenAt,
+        }),
+    }),
+  )
 }
 
-async function mark(
+/**
+ * _Označit novou finální verzi_ (`12r`): a new PDF of the Doc and new clauses in place of the
+ * marking made at `markedAt`, all or nothing as the first marking is (`11c`).
+ */
+export function replaceFinalVersion(
   setup: FinalVersionSetup,
-  input: Parameters<typeof markFinalVersion>[1],
-): Promise<MarkFinalOutcome> {
-  let refusal = await setup.articles.checkFinalVersion(input.id, input.takenAt, input.owner)
+  input: { by: { email: string; name: string | null }; id: number; markedAt: Temporal.Instant },
+): Promise<ReplaceFinalStepOutcome> {
+  return lock(`final-version:${input.id}`, () =>
+    storeFinalVersion(setup, input.id, {
+      check: () => setup.articles.checkReplaceFinalVersion(input.id, input.markedAt),
+      gone: { kind: 'gone' },
+      record: (pdf, at) =>
+        setup.articles.replaceFinalVersion({
+          at,
+          by: input.by,
+          id: input.id,
+          markedAt: input.markedAt,
+          pdf,
+        }),
+    }),
+  )
+}
+
+/**
+ * The PDF of the Doc as it is, stored in the article folder, then the record. `check` is read
+ * before Drive is asked for anything and `record` makes the same checks again in its transaction.
+ */
+async function storeFinalVersion<Refusal extends { kind: string }>(
+  setup: FinalVersionSetup,
+  id: number,
+  steps: {
+    check: () => Promise<Refusal | null>
+    /** What an article that is no longer there answers. */
+    gone: Refusal
+    record: (
+      pdf: FinalVersionPdf,
+      at: Temporal.Instant,
+    ) => Promise<{ at: Temporal.Instant; kind: 'done' } | Refusal>
+  },
+): Promise<StoreFinalOutcome<Refusal>> {
+  let refusal = await steps.check()
   if (refusal !== null) return { kind: 'refused', refusal }
-  let article = await setup.articles.findById(input.id)
+  let article = await setup.articles.findById(id)
   if (article === null || article.docId === null || article.folderId === null) {
-    return { kind: 'refused', refusal: { kind: 'gone' } }
+    return { kind: 'refused', refusal: steps.gone }
   }
   if (article.missing.article !== null) return { kind: 'folder-missing' }
 
@@ -70,7 +134,7 @@ async function mark(
   let folder = await files.placeOf(article.folderId)
   if (folder.kind === 'unavailable') return { kind: 'unavailable' }
   if (folder.kind === 'gone') {
-    await setup.articles.markMissing(input.id, ['article'], setup.now())
+    await setup.articles.markMissing(id, ['article'], setup.now())
     return { kind: 'folder-missing' }
   }
   let doc = await files.placeOf(article.docId)
@@ -80,7 +144,7 @@ async function mark(
   let pdf = await files.exportPdf(article.docId)
   if (pdf === null) return { kind: 'unavailable' }
   let hash = createHash('sha256').update(pdf).digest('hex')
-  let attemptKey = `final-version:${input.id}:${randomUUID()}`
+  let attemptKey = `final-version:${id}:${randomUUID()}`
   let stored = await files.upload(
     article.folderId,
     `${hash}.pdf`,
@@ -94,27 +158,26 @@ async function mark(
   }
 
   /* A record that refuses or throws leaves no PDF behind it: all or nothing (`11c`). */
-  let outcome: FinalVersionOutcome
+  let outcome: { at: Temporal.Instant; kind: 'done' } | Refusal
   try {
-    outcome = await setup.articles.markFinalVersion({
-      at: setup.now(),
-      by: input.by,
-      id: input.id,
-      owner: input.owner,
-      pdf: { attemptKey, fileId: stored.id, hash },
-      takenAt: input.takenAt,
-    })
+    outcome = await steps.record({ attemptKey, fileId: stored.id, hash }, setup.now())
   } catch (error) {
     /* A transaction that throws is rolled back; the read makes sure before the PDF goes. */
-    let after = await setup.articles.findById(input.id)
+    let after = await setup.articles.findById(id)
     if (after?.finalVersion?.pdfFileId !== stored.id) {
       await binAttempt(setup, article.folderId, attemptKey, stored.id)
     }
     throw error
   }
-  if (outcome.kind === 'done') return outcome
+  if (isDone(outcome)) return outcome
   await binAttempt(setup, article.folderId, attemptKey, stored.id)
   return { kind: 'refused', refusal: outcome }
+}
+
+function isDone<Refusal extends { kind: string }>(
+  outcome: { at: Temporal.Instant; kind: 'done' } | Refusal,
+): outcome is { at: Temporal.Instant; kind: 'done' } {
+  return outcome.kind === 'done'
 }
 
 /**
@@ -177,5 +240,5 @@ async function cancel(
   if (!isBinned) {
     logDriveFailure('a cancelled final version PDF was not moved to the bin', outcome.pdfFileId)
   }
-  return { kind: 'done' }
+  return { kind: 'done', restored: outcome.restored }
 }

@@ -270,7 +270,8 @@ export async function createFakeApp(): Promise<FakeApp> {
       sql`SELECT c.*, a.name AS article_name FROM article_clauses c
           JOIN final_versions f ON f.id = c.final_version_id
           JOIN articles a ON a.id = c.article_id
-          WHERE f.cancelled_at IS NULL AND a.issue_id = ${issueId} AND c.state != 'pending'
+          WHERE f.cancelled_at IS NULL AND f.replaced_at IS NULL AND a.issue_id = ${issueId}
+            AND c.state != 'pending'
           ORDER BY c.id`,
     )
     let clauseRows = (clauseResult.rows ?? []).map((row) => {

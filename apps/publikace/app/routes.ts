@@ -39,6 +39,10 @@ export const routes = route({
     cancelHandover: post('/issues/:name/articles/:id/handover/cancel'),
     /* _Zrušit finální verzi_ from the row's „⋯“ (`12q`), with the marking's time as `?marked=`. */
     cancelFinalVersion: post('/issues/:name/articles/:id/final-version/cancel'),
+    /* _Označit novou finální verzi…_ from the row's „⋯“ (`12r`): the dialog at its own address over
+       the detail, and the new version in place of the marking the row showed, as `?marked=`. */
+    askReplaceFinalVersion: get('/issues/:name/articles/:id/final-version/replace'),
+    replaceFinalVersion: post('/issues/:name/articles/:id/final-version/replace'),
     /* _Poslat žádost znovu_ in the article's open row (`12b`), with the marking's time as
        `?marked=`; back to the detail with the row still open. */
     resendClauses: post('/issues/:name/articles/:id/clauses/resend'),

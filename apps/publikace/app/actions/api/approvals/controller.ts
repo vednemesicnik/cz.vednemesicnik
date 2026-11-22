@@ -98,6 +98,8 @@ function readResult(value: unknown): { clauseKey: string; outcome: ClauseOutcome
  * One clause to send as the job gets it. The subject's tag and the report's key are the clause's
  * key; `sendKey` is the Mailer's key for this sending, the clause's key until _Poslat žádost
  * znovu_ asked for another (`12b`), because the Mailer answers a key it sent as sent, unsent.
+ * `replacesEarlier` picks the e-mail's opening that says it replaces an earlier request (`20f`,
+ * #90): a field added beside the others, so a job that does not read it sends the plain one.
  */
 function claimedItem(clause: ClaimedClause) {
   return {
@@ -109,6 +111,7 @@ function claimedItem(clause: ClaimedClause) {
     issueName: clause.issueName,
     pdfFileId: clause.pdfFileId,
     pdfHash: clause.pdfHash,
+    replacesEarlier: clause.replacesEarlier,
     sendKey: clause.sendKey,
     signature: clause.signature,
     subjectPrefix: APPROVAL_SUBJECT_PREFIX,

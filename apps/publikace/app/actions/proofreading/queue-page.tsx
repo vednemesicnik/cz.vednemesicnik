@@ -29,11 +29,10 @@ import { UNDO_LABEL } from '../../domain/review.ts'
 import { routes } from '../../routes.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
-import { Dialog } from '../../ui/dialog/component.tsx'
-import { DialogTitle } from '../../ui/dialog-title/component.tsx'
 import { EmptyState } from '../../ui/empty-state/component.tsx'
 import { EmptyStateText } from '../../ui/empty-state-text/component.tsx'
 import { EmptyStateTitle } from '../../ui/empty-state-title/component.tsx'
+import { FinalVersionDialog } from '../../ui/final-version-dialog/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
 import { ListHeader } from '../../ui/list-header/component.tsx'
 import { ListHeaderTitle } from '../../ui/list-header-title/component.tsx'
@@ -122,23 +121,6 @@ const countStyle = css({ color: 'var(--text-tertiary)', fontWeight: 400, marginL
 const noteStyle = css({ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 })
 
 const newTabIconStyle = css({ marginLeft: '2px', verticalAlign: '-0.125em' })
-
-/* One name per cell, at least 140 px wide: ten authors stay within the dialog's height on a
-   phone, where one per line would push it past a messenger's window (`15f`). */
-const signaturesStyle = css({
-  display: 'grid',
-  gap: '4px 12px',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-  listStyle: 'none',
-  margin: 0,
-  padding: 0,
-})
-
-const signaturesLabelStyle = css({
-  color: 'var(--text-secondary)',
-  fontSize: '13px',
-  margin: '0 0 4px',
-})
 
 /** The icon after a link that opens a new tab, and what a screen reader hears of it. */
 function NewTabMark() {
@@ -303,56 +285,22 @@ function Part(handle: Handle<{ csrfToken: string; part: ProofreadingPartView }>)
   }
 }
 
-/**
- * `15f`: marking sends e-mails to people outside the newsroom, and the way back lasts only until
- * a run of the job takes the clauses, so it is asked first. While it saves, both controls lock.
- */
-function FinalVersionDialog(handle: Handle<{ dialog: FinalDialogView }>) {
+/** `15f`: the dialog of the first marking, over the page. */
+function MarkFinalDialog(handle: Handle<{ dialog: FinalDialogView }>) {
   return () => {
     let { dialog } = handle.props
     return (
-      <Dialog maxWidth="460px">
-        <DialogTitle>{MARK_FINAL_DIALOG_TITLE}</DialogTitle>
-        <div class="vdm-dialog__body">
-          {dialog.error === null ? null : (
-            <div role="alert">
-              <Callout tone="error">
-                {/* The account's address does not break by itself and would widen the dialog
-                    past a phone's screen. */}
-                <p
-                  class="vdm-callout__title"
-                  style={{ margin: '0 0 4px', overflowWrap: 'anywhere' }}
-                >
-                  {dialog.error.title}
-                </p>
-                <p style={{ margin: 0 }}>{dialog.error.text}</p>
-              </Callout>
-            </div>
-          )}
-          <p class="vdm-dialog__text">{markFinalDialogText(dialog.articleName)}</p>
-          <div>
-            <p class="vdm-dialog__text">{MARK_FINAL_DIALOG_MAIL}</p>
-          </div>
-          <div>
-            <p mix={signaturesLabelStyle}>{signaturesLabel(dialog.signatures.length)}</p>
-            <ul mix={signaturesStyle}>
-              {dialog.signatures.map((signature) => (
-                <li>{`„${signature}“`}</li>
-              ))}
-            </ul>
-          </div>
-          <p class="vdm-dialog__text">{MARK_FINAL_DIALOG_CANCEL}</p>
-        </div>
-        <form action={dialog.action} class="vdm-dialog__actions" method="post">
-          <CsrfField />
-          <PendingActions
-            cancel={{ href: dialog.cancelHref, label: DIALOG_CANCEL_LABEL }}
-            emphasis="primary"
-            label={MARK_FINAL_CONFIRM_LABEL}
-            pendingLabel={MARKING_FINAL_LABEL}
-          />
-        </form>
-      </Dialog>
+      <FinalVersionDialog
+        action={dialog.action}
+        after={[MARK_FINAL_DIALOG_CANCEL]}
+        cancel={{ href: dialog.cancelHref, label: DIALOG_CANCEL_LABEL }}
+        confirmLabel={MARK_FINAL_CONFIRM_LABEL}
+        error={dialog.error}
+        lead={[markFinalDialogText(dialog.articleName), MARK_FINAL_DIALOG_MAIL]}
+        pendingLabel={MARKING_FINAL_LABEL}
+        signatures={{ label: signaturesLabel(dialog.signatures.length), names: dialog.signatures }}
+        title={MARK_FINAL_DIALOG_TITLE}
+      />
     )
   }
 }
@@ -409,7 +357,7 @@ export function ProofreadingPage(handle: Handle<ProofreadingPageProps>) {
             </EmptyState>
           )}
         </Layout>
-        {dialog === null ? null : <FinalVersionDialog dialog={dialog} />}
+        {dialog === null ? null : <MarkFinalDialog dialog={dialog} />}
       </Document>
     )
   }

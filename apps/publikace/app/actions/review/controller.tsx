@@ -8,6 +8,7 @@ import type { ArtworkStore, QueuedBatch } from '../../data/artworks.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
 import { APPROVAL_SEND_JOB } from '../../domain/approvals.ts'
 import { batchStateDetail, replyExcerpt } from '../../domain/artwork.ts'
+import { alreadyReplacedToast } from '../../domain/final-version-replacement.ts'
 import { type JobHealth, jobHealth } from '../../domain/job-run.ts'
 import { REPLY_CHECK_JOB } from '../../domain/reply-check.ts'
 import {
@@ -332,6 +333,20 @@ export default function createReviewController(
     return jobHealth(await dependencies.runs.latest(job), now())
   }
 
+  /**
+   * A step on the card of a version a newer one replaced writes nothing and stays in the queue,
+   * where the editor-in-chief was, with which version stands now (`12s`, `13a`).
+   */
+  async function flashIfReplaced(
+    context: Parameters<typeof flashToast>[0],
+    clauseId: number,
+  ): Promise<void> {
+    let standing = await dependencies.articles.replacingVersionOf(clauseId)
+    if (standing === null) return
+    let toast = alreadyReplacedToast(standing, now())
+    flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+  }
+
   return createController(routes.review, {
     middleware: [requireEditor(signedInUntil)],
     actions: {
@@ -449,6 +464,8 @@ export default function createReviewController(
             action: withKind(routes.review.clauseUndo.href({ id: String(id) }), kind),
             label: UNDO_LABEL,
           })
+        } else if (Number.isSafeInteger(id)) {
+          await flashIfReplaced(context, id)
         }
         return redirect(
           reviewHref(kind, { anchor: Number.isSafeInteger(id) ? clauseAnchor(id) : null }),
@@ -458,7 +475,9 @@ export default function createReviewController(
 
       async clauseUndo(context) {
         let id = Number(context.params.id)
-        if (Number.isSafeInteger(id)) await dependencies.articles.undoClauseVerification(id)
+        if (Number.isSafeInteger(id) && !(await dependencies.articles.undoClauseVerification(id))) {
+          await flashIfReplaced(context, id)
+        }
         return redirect(
           reviewHref(kindOf(context), {
             anchor: Number.isSafeInteger(id) ? clauseAnchor(id) : null,

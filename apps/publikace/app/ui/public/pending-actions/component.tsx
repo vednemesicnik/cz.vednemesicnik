@@ -7,8 +7,12 @@ export type PendingActionsProps = {
    * with the visible label (_Předat ke korektuře článek ‹název›_, `12k`).
    */
   accessibleLabel?: string
-  /** The way back, as a link. Left out where the action has none (_Dokončit vydání_ in a row). */
-  cancel?: { href: string; label: string }
+  /**
+   * The way back, as a link. Left out where the action has none (_Dokončit vydání_ in a row).
+   * `hasFocus` where focus starts on it, so Enter on arrival never sends anything, in a dialog
+   * whose step reaches people outside the newsroom (`15f`, `12r`), as _Zahodit dávku_ has it.
+   */
+  cancel?: { hasFocus?: boolean; href: string; label: string }
   /** `primary` in the dialog, `outline` beside a Callout or in a row. */
   emphasis: 'outline' | 'primary'
   label: string
@@ -51,7 +55,11 @@ export const PendingActions = clientEntry(
               {cancel.label}
             </button>
           ) : (
-            <a class="vdm-btn vdm-btn--ghost vdm-btn--sm" href={cancel.href}>
+            <a
+              autofocus={cancel.hasFocus === true}
+              class="vdm-btn vdm-btn--ghost vdm-btn--sm"
+              href={cancel.href}
+            >
               {cancel.label}
             </a>
           )}

@@ -23,6 +23,7 @@ import {
   authorsLine,
   documentUrl,
   type FinalVersion,
+  type ReplacedVersion,
   STATE_ORDER,
   whoOf,
 } from '../../domain/article.ts'
@@ -99,17 +100,50 @@ import {
   usageLine,
 } from '../../domain/link.ts'
 import { formatMoment, now, parseStamp, stamp } from '../../domain/time.ts'
-import type { Article, ArticleRow, HandoverOutcome } from '../../data/articles.server.ts'
+import type {
+  Article,
+  ArticleRow,
+  HandoverOutcome,
+  ReplaceFinalOutcome,
+} from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
 import { discardBatch, resendBatch } from '../../drive/artworks-setup.server.ts'
-import { cancelFinalVersion } from '../../drive/final-version.server.ts'
+import {
+  cancelFinalVersion,
+  replaceFinalVersion,
+  type ReplaceFinalStepOutcome,
+} from '../../drive/final-version.server.ts'
+import {
+  ALL_APPROVED_TOAST,
+  alreadyReplacedToast,
+  isReplaceable,
+  NEW_FINAL_SAVED_TOAST,
+  REPLACE_DIALOG_MAIL,
+  REPLACE_FINAL_CONFIRM_LABEL,
+  REPLACE_FINAL_DIALOG_TITLE,
+  REPLACED_CLAUSES_LABEL,
+  replaceDialogCancel,
+  replaceDialogEarlier,
+  replacedClauseTag,
+  replacedMarkedLine,
+  replacedPdfHint,
+  replacedSummary,
+  restoredToast,
+} from '../../domain/final-version-replacement.ts'
 import {
   CANCEL_FINAL_FAILED_TOAST,
   cancelFinalRefusalToast,
+  DIALOG_CANCEL_LABEL,
+  FINAL_ALREADY_CANCELLED_TOAST,
   FINAL_CANCELLED_TOAST,
+  finalDialogError,
+  markFinalDialogText,
+  markFinalRefusalToast,
+  MARKING_FINAL_LABEL,
   signaturesLabel,
 } from '../../domain/proofreading-queue.ts'
+import type { FinalVersionDialogProps } from '../../ui/final-version-dialog/component.tsx'
 import { createIssue, finishIssue } from '../../drive/issue-setup.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { type Person, requireEditor } from '../../middleware/auth.server.ts'
@@ -127,6 +161,7 @@ import {
   type LinkBlockView,
   type MissingAddressView,
   type MissingFoldersView,
+  type ReplacedVersionView,
 } from './detail-page.tsx'
 import type { NewIssueDialog } from './overview-page.tsx'
 import {
@@ -271,6 +306,7 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<void>
 function clausesView(
   issue: Issue,
   article: Article & { finalVersion: FinalVersion },
+  replaced: readonly ReplacedVersion[],
   health: JobHealth,
   filter: ArtworkFilter,
   today: Temporal.Instant,
@@ -306,6 +342,7 @@ function clausesView(
     names: finalVersion.authors.map((clause) => clause.signature),
     namesLabel: signaturesLabel(finalVersion.authors.length),
     pdfUrl: driveFileUrl(finalVersion.pdfFileId),
+    replaced: replaced.map((version) => replacedVersionView(version, today)),
     resend:
       issue.closedAt === null && recipients > 0
         ? {
@@ -313,6 +350,30 @@ function clausesView(
             label: resendLabel(recipients, finalVersion.authors.length),
           }
         : null,
+  }
+}
+
+/** A replaced marking under the one that stands (`12s`): a record, with its own PDF. */
+function replacedVersionView(
+  version: ReplacedVersion,
+  today: Temporal.Instant,
+): ReplacedVersionView {
+  return {
+    authors: version.authors.map((clause) => {
+      let tag = replacedClauseTag(clause, today)
+      return {
+        detail: tag.detail,
+        email: clause.authorEmail,
+        label: tag.label,
+        name: clause.authorName,
+        quote: tag.quote,
+      }
+    }),
+    clausesLabel: REPLACED_CLAUSES_LABEL,
+    markedLine: replacedMarkedLine(version, today),
+    pdfHint: replacedPdfHint(version.at, today),
+    pdfUrl: driveFileUrl(version.pdfFileId),
+    summary: replacedSummary(version.at, today),
   }
 }
 
@@ -332,6 +393,8 @@ async function linkAndArticles(
   let filter = filterOf(context)
   let openId = Number(context.url.searchParams.get('article'))
   let health = jobHealth(await articlesOf(context).runs.latest(APPROVAL_SEND_JOB), today)
+  /* Only the open row shows the replaced versions, so only its are read. */
+  let replaced = Number.isSafeInteger(openId) ? await articles.replacedVersions(openId) : []
   let rows = created.map((article) => {
     let articleCounts = counts.get(article.id) ?? NO_ARTWORKS
     let artworksLink = artworksLinks.get(article.id)
@@ -353,7 +416,7 @@ async function linkAndArticles(
     return {
       clauses:
         isRowOpen && finalVersion !== null
-          ? clausesView(issue, { ...article, finalVersion }, health, filter, today)
+          ? clausesView(issue, { ...article, finalVersion }, replaced, health, filter, today)
           : null,
       isOpen: isRowOpen,
       showReplyHref:
@@ -369,6 +432,10 @@ async function linkAndArticles(
       cancelFinalAction:
         isOpen && finalVersion !== null && finalVersion.isCancellable
           ? `${routes.issues.cancelFinalVersion.href(ids)}?marked=${encodeURIComponent(stamp(finalVersion.at))}`
+          : null,
+      replaceFinalAction:
+        isOpen && finalVersion !== null && isReplaceable(finalVersion)
+          ? `${routes.issues.askReplaceFinalVersion.href(ids)}?marked=${encodeURIComponent(stamp(finalVersion.at))}${filter === 'all' ? '' : `&artworks=${filter}`}`
           : null,
       cancelHandoverAction:
         isOpen && state === 'handedOver' ? routes.issues.cancelHandover.href(ids) : null,
@@ -515,6 +582,7 @@ async function renderDetail(
     discarding?: DiscardView
     isFolderGone?: boolean
     isRenewing?: boolean
+    replacing?: FinalVersionDialogProps
     status?: number
   } = {},
 ): Promise<Response> {
@@ -537,6 +605,7 @@ async function renderDetail(
       issue={issue}
       link={link}
       person={context.auth.identity}
+      replacing={options.replacing}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
     />,
     options.status === undefined ? undefined : { status: options.status },
@@ -602,6 +671,51 @@ async function batchOf(context: PageContext, issue: Issue, id: string) {
   if (!Number.isSafeInteger(batchId)) return null
   let batches = await articlesOf(context).artworks.artworks.listByIssue(issue.id)
   return batches.find((batch) => batch.id === batchId) ?? null
+}
+
+/**
+ * The dialog of `12r` over the detail, for the marking the row showed. The names are the
+ * article's authors as they are now, whom the new clauses go to.
+ */
+function replaceDialogOf(
+  context: PageContext,
+  issue: Issue,
+  article: Article,
+  markedAt: Temporal.Instant,
+  error: FinalVersionDialogProps['error'],
+): FinalVersionDialogProps {
+  let today = now()
+  let filter = filterOf(context)
+  let names = article.authors.map((author) => author.name)
+  return {
+    action: `${routes.issues.replaceFinalVersion.href({ id: String(article.id), name: issue.name })}?marked=${encodeURIComponent(stamp(markedAt))}${filter === 'all' ? '' : `&artworks=${filter}`}`,
+    after: [replaceDialogEarlier(markedAt, today), replaceDialogCancel(markedAt, today)],
+    cancel: { href: detailHref(issue, filter), label: DIALOG_CANCEL_LABEL },
+    confirmLabel: REPLACE_FINAL_CONFIRM_LABEL,
+    error,
+    lead: [markFinalDialogText(article.name), REPLACE_DIALOG_MAIL],
+    pendingLabel: MARKING_FINAL_LABEL,
+    signatures: { label: signaturesLabel(names.length), names },
+    title: REPLACE_FINAL_DIALOG_TITLE,
+  }
+}
+
+/** Why a new version wrote nothing, for the toast; `null` for an article that is gone. */
+function replaceRefusalToast(
+  refusal: Exclude<ReplaceFinalOutcome, { kind: 'done' }>,
+): RaceToast | null {
+  switch (refusal.kind) {
+    case 'replaced':
+      return alreadyReplacedToast(refusal.step, now())
+    case 'not-final':
+      return { message: FINAL_ALREADY_CANCELLED_TOAST }
+    case 'all-approved':
+      return { message: ALL_APPROVED_TOAST }
+    case 'closed':
+      return markFinalRefusalToast({ issueName: refusal.issueName, kind: 'closed' }, now())
+    case 'gone':
+      return null
+  }
 }
 
 function notFound(): Response {
@@ -740,7 +854,13 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           markedAt,
         })
         if (outcome.kind === 'done') {
-          flashToast(context, FINAL_CANCELLED_TOAST)
+          /* A new version gives way to the one it replaced, not to the proofreading (`12s`). */
+          flashToast(
+            context,
+            outcome.restored === null
+              ? FINAL_CANCELLED_TOAST
+              : restoredToast(outcome.restored, now()),
+          )
           return back()
         }
         if (outcome.kind === 'unavailable') {
@@ -750,6 +870,83 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         if (outcome.refusal.kind === 'gone') return notFound()
         flashRace(context, cancelFinalRefusalToast(outcome.refusal, now()))
         return back()
+      },
+
+      /*
+       * `12r`: the dialog of a new version over the detail, for the marking the row showed
+       * (`?marked=`). A row that no longer offers the step answers with the reason, as the step
+       * itself would.
+       */
+      async askReplaceFinalVersion(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        let markedAt = parseStamp(context.url.searchParams.get('marked'))
+        if (issue === null || article === null || markedAt === null) return notFound()
+        let refusal = await articlesOf(context).articles.checkReplaceFinalVersion(
+          article.id,
+          markedAt,
+        )
+        if (refusal !== null) {
+          let toast = replaceRefusalToast(refusal)
+          if (toast === null) return notFound()
+          flashRace(context, toast)
+          return redirect(detailHref(issue, filterOf(context)), 303)
+        }
+        return renderDetail(context, issue, {
+          replacing: replaceDialogOf(context, issue, article, markedAt, null),
+        })
+      },
+
+      /*
+       * `12r`, `12s`: the new PDF and clauses in place of the marking the row showed. What Drive
+       * stops stays in the dialog to be tried again; what somebody changed meanwhile reloads the
+       * detail with the reason. The toast's _Vrátit_ cancels the new version, while it may.
+       */
+      async replaceFinalVersion(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        let markedAt = parseStamp(context.url.searchParams.get('marked'))
+        if (issue === null || article === null || markedAt === null) return notFound()
+        let editor = context.auth.identity
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        let outcome: ReplaceFinalStepOutcome = await replaceFinalVersion(
+          articlesOf(context).artworks,
+          {
+            by: { email: editor.email, name: editor.displayName || null },
+            id: article.id,
+            markedAt,
+          },
+        )
+        switch (outcome.kind) {
+          case 'done': {
+            let ids = { id: String(article.id), name: issue.name }
+            flashToast(context, NEW_FINAL_SAVED_TOAST, 'neutral', {
+              action: `${routes.issues.cancelFinalVersion.href(ids)}?marked=${encodeURIComponent(stamp(outcome.at))}`,
+              label: UNDO_LABEL,
+            })
+            return back()
+          }
+          case 'refused': {
+            let toast = replaceRefusalToast(outcome.refusal)
+            if (toast === null) return notFound()
+            flashRace(context, toast)
+            return back()
+          }
+          case 'account':
+          case 'doc-missing':
+          case 'folder-missing':
+          case 'unavailable':
+            return renderDetail(context, issue, {
+              replacing: replaceDialogOf(
+                context,
+                issue,
+                article,
+                markedAt,
+                finalDialogError(outcome.kind, true),
+              ),
+              status: IN_THE_WAY,
+            })
+        }
       },
 
       async resendClauses(context) {
