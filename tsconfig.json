@@ -25,6 +25,7 @@
     "app/**/*",
     "app/**/.server/**/*",
     "app/**/.client/**/*",
+    "server.ts",
     "server/**/*",
     "prisma/**/*",
     "scripts/**/*",
