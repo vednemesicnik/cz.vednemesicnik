@@ -238,6 +238,8 @@ Forms use Conform (@conform-to/react + @conform-to/zod) with Zod validation:
 
 - `vite.config.ts` - Dev server on port 3000, React Router plugin, tsconfig paths
 - `react-router.config.ts` - SSR enabled
+- `server.ts` + `server/` - Production server (`app:start`) on Remix 3: static files, gzip, access log
+  without the query, then the React Router build; replaces `react-router-serve`
 - `tsconfig.json` - Path aliases configured (`~/*`, `~~/*`, `@generated/*`, `@constants/*`)
 - `prisma/schema.prisma` - Database schema with SQLite provider
 

@@ -18,3 +18,8 @@ allowBuilds:
   lefthook: true
   prisma: true
   sharp: true
+
+# GHSA-g7r4-m6w7-qqqr (esbuild >= 0.27.3 < 0.28.1). remix's @remix-run/test asks for
+# ^0.27.1, which cannot reach the fix; drop this once it asks for 0.28.x.
+overrides:
+  esbuild: '0.28.2'

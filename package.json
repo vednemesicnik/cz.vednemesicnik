@@ -34,6 +34,7 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-router": "8.5.1",
+    "remix": "3.2.0",
     "sharp": "0.35.5",
     "zod": "4.6.7"
   },
@@ -75,8 +76,8 @@
     "app:build": "react-router build",
     "app:dev": "react-router dev",
     "app:routes:generate": "react-router typegen",
-    "app:start": "react-router-serve ./build/server/index.js",
-    "app:start-with-sentry": "NODE_OPTIONS='--import ./instrument.server.ts' react-router-serve ./build/server/index.js",
+    "app:start": "node --enable-source-maps server.ts",
+    "app:start-with-sentry": "node --enable-source-maps --import ./instrument.server.ts server.ts",
     "app:typecheck": "react-router typegen && tsc",
     "biome:check": "biome check",
     "biome:check:fix": "biome check --write",
