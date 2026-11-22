@@ -87,6 +87,9 @@ COPY --from=build /app/generated /app/generated
 # The statutes the membership application links to.
 COPY --from=build /app/documents /app/documents
 COPY --from=build /app/package.json /app/package.json
+# The host server that serves the build (app:start), run by Node's type stripping.
+COPY --from=build /app/server.ts /app/server.ts
+COPY --from=build /app/server /app/server
 # Sentry instrument — app:start-with-sentry --imports it, so it must be in the image.
 COPY --from=build /app/instrument.server.ts /app/instrument.server.ts
 COPY --from=build /app/app/utils/sentry/scrub-sentry-event.ts /app/app/utils/sentry/scrub-sentry-event.ts

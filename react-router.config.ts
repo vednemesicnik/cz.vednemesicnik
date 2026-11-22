@@ -4,7 +4,7 @@ import type { Config } from '@react-router/dev/config'
 import { sentryOnBuildEnd } from '@sentry/react-router'
 
 export default {
-  // Behind the Fly proxy react-router-serve sees `http://` (no `trust proxy`), so
+  // Behind the Fly proxy server.ts sees `http://` (no `trustProxy`), so
   // RR's action origin check would reject the browser's `https://` Origin.
   allowedActionOrigins: ['vednemesicnik.cz'],
   buildEnd: async (args) => {
