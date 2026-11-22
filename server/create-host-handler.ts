@@ -1,8 +1,8 @@
 import { constants } from 'node:zlib'
-import { compression } from 'remix/middleware/compression'
-import { type LoggerFunction, logger } from 'remix/middleware/logger'
-import { staticFiles } from 'remix/middleware/static'
-import { createRouter } from 'remix/router'
+import { compression } from '@remix-run/compression-middleware'
+import { createRouter } from '@remix-run/fetch-router'
+import { type LoggerFunction, logger } from '@remix-run/logger-middleware'
+import { staticFiles } from '@remix-run/static-middleware'
 
 import { addDefaultCharset } from './add-default-charset.ts'
 import type { FetchHandler } from './create-web-handler.ts'
@@ -23,9 +23,10 @@ type HostHandlerOptions = {
 /**
  * Creates the host's request handler: what `react-router-serve` did in front of the web app.
  *
- * A host the web doesn't answer gets 404 before anything else. Fingerprinted files under `/assets` are cached for a year, the rest of the client build
- * revalidates, everything compressible is compressed, and only requests that reach the web
- * app are logged, as morgan logged them, though without the query.
+ * A host the web doesn't answer gets 404 before anything else. Fingerprinted files under
+ * `/assets` are cached for a year, the rest of the client build revalidates, everything
+ * compressible is compressed, and only requests that reach the web app are logged, as morgan
+ * logged them, though without the query.
  *
  * @param options.clientDirectory The client build (`build/client`).
  * @param options.log Where access-log lines go; `console.log` when left out.

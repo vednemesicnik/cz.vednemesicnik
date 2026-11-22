@@ -5,8 +5,8 @@ import './server/default-node-env.ts'
 
 import * as http from 'node:http'
 import { fileURLToPath } from 'node:url'
+import { createRequestListener } from '@remix-run/node-fetch-server'
 import type { ServerBuild } from 'react-router'
-import { createRequestListener } from 'remix/node-fetch-server'
 
 import { createHostHandler } from './server/create-host-handler.ts'
 import { createWebHandler } from './server/create-web-handler.ts'

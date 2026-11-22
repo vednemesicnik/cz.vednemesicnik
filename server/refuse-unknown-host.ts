@@ -1,4 +1,4 @@
-import type { Middleware } from 'remix/router'
+import type { Middleware } from '@remix-run/fetch-router'
 
 import { isWebHost } from './is-web-host.ts'
 
