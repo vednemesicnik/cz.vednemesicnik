@@ -238,6 +238,10 @@ export async function createFakeApp(): Promise<FakeApp> {
           }
         </td>
         <td>${articleState(each)}</td>
+        <td>
+          ${button('/doc/edit', 'Edit the Doc', { id: each.docId })}
+          ${button('/doc/comment', 'Comment on the Doc', { id: each.docId })}
+        </td>
       </tr>`
     })
     /* Every live batch of the issue, with what a run of the reply check could find for it. */
@@ -632,6 +636,13 @@ export async function createFakeApp(): Promise<FakeApp> {
         if (typeof fileId !== 'string') return new Response('No file', { status: 400 })
         if (path === '/file/trash') app.drive.trash(fileId)
         else app.drive.restore(fileId)
+        return backToControls()
+      /* An edit makes a revision, a comment only moves `modifiedTime` (#101). */
+      case '/doc/edit':
+      case '/doc/comment':
+        if (typeof fileId !== 'string') return new Response('No file', { status: 400 })
+        if (path === '/doc/edit') app.drive.reviseDoc(fileId, now())
+        else app.drive.touch(fileId, now())
         return backToControls()
       case '/account/disconnect':
         await app.driveAccount.markDisconnected(now())

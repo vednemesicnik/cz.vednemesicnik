@@ -32,6 +32,7 @@ export const FAKE_STEPS = [
   'permissions',
   'preview',
   'replace',
+  'revisions',
   'store',
   'trash',
   'upload',
@@ -73,6 +74,13 @@ export type FakeDrive = {
   remove(id: string): void
   /** Takes a file out of the bin, as a person restoring it on Drive would. */
   restore(id: string): void
+  /**
+   * An edit of a Doc's text at `at`: a revision in its history and its `modifiedTime`, as a
+   * person typing in it makes (#101).
+   */
+  reviseDoc(id: string, at: Temporal.Instant): void
+  /** Moves only a file's `modifiedTime`, as a comment or a rename does: no revision. */
+  touch(id: string, at: Temporal.Instant): void
   /** A folder that exists already, as an article's does once the article page made it. */
   seedFolder(id: string, name: string, parentId: string): void
   /** A Doc that exists already, as a copy somebody made of an article's Doc. */
@@ -112,6 +120,9 @@ export function createFakeDrive(): FakeDrive {
   let next = 1
   let calls: string[] = []
   let permissions = new Map<string, FakePermission[]>()
+  /* Kept beside the files: only a Doc somebody edited or touched has them. */
+  let modifiedTimes = new Map<string, Temporal.Instant>()
+  let revisions = new Map<string, Temporal.Instant[]>()
   let sessions = new Map<
     string,
     { appProperties: Record<string, string>; mimeType: string; name: string; parentId: string }
@@ -344,6 +355,16 @@ export function createFakeDrive(): FakeDrive {
       })
     }
 
+    let revised = /^\/drive\/v3\/files\/([^/]+)\/revisions$/.exec(url.pathname)
+    if (method === 'GET' && revised !== null) {
+      let id = decodeURIComponent(revised[1] ?? '')
+      if (!files.has(id)) return failure('File not found', 404)
+      if (failingSteps.has('revisions')) return failure('down')
+      return Response.json({
+        revisions: (revisions.get(id) ?? []).map((at) => ({ modifiedTime: at.toString() })),
+      })
+    }
+
     let listed = /^\/drive\/v3\/files\/([^/]+)\/permissions$/.exec(url.pathname)
     if (method === 'GET' && listed !== null) {
       let id = decodeURIComponent(listed[1] ?? '')
@@ -383,6 +404,7 @@ export function createFakeDrive(): FakeDrive {
         parents: [file.parentId],
         thumbnailLink: isImage ? `https://${THUMBNAIL_HOST}/thumb/${file.id}=s220` : undefined,
         explicitlyTrashed: file.isTrashed,
+        modifiedTime: modifiedTimes.get(file.id)?.toString(),
         trashed: isBinned(file),
       })
     }
@@ -397,6 +419,11 @@ export function createFakeDrive(): FakeDrive {
       isRestoreFailing = true
     },
     failStep: (step) => void failingSteps.add(step),
+    reviseDoc(id, at) {
+      revisions.set(id, [...(revisions.get(id) ?? []), at])
+      modifiedTimes.set(id, at)
+    },
+    touch: (id, at) => void modifiedTimes.set(id, at),
     failTrashOf: (id) => void failingTrashes.add(id),
     fetch,
     files: () => [...files.values()],

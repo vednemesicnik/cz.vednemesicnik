@@ -90,7 +90,7 @@ async function sentToOne(): Promise<{
     at: MARKED_AT,
     by: LENKA,
     id: articleId,
-    pdf: { attemptKey: 'a-1', fileId: 'pdf-old', hash: 'h-old' },
+    pdf: { attemptKey: 'a-1', docModifiedAt: null, fileId: 'pdf-old', hash: 'h-old' },
     takenAt: MARKED_AT.subtract({ hours: 1 }),
   })
   assert.equal(marked.kind, 'done')
@@ -374,7 +374,7 @@ describe('a new final version before every author agreed (12r, 12s)', () => {
 
       let row = textOf(await (await editor.get(`${DETAIL}?article=${articleId}`)).text())
       assert.ok(row.includes('Nahrazená verze z 21. 11. v 10:12'), row)
-      assert.ok(row.includes(`Označení: ${LENKA.name} · neplatí od`))
+      assert.ok(row.includes(`Označení: ${LENKA.name} · nahrazena`))
       assert.ok(row.includes('Stav doložek při nahrazení verze'))
       assert.ok(row.includes('Jiná odpověď'))
       assert.ok(row.includes('V druhém odstavci je špatně jméno paní ředitelky.'))

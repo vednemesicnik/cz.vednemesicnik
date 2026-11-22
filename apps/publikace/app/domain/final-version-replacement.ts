@@ -66,14 +66,15 @@ export function replacedSummary(markedAt: Temporal.Instant, today: Temporal.Inst
 }
 
 /**
- * Who marked it and when it stopped standing. Who replaced it is the _Označení_ of the version
- * just above it, so it is not said twice.
+ * Who marked it and when it was replaced. The time belongs to the replacement, not to the
+ * consents recorded beside it (`znor6hp8`). Who replaced it is the _Označení_ of the version just
+ * above it, so it is not said twice.
  */
 export function replacedMarkedLine(
   version: Pick<ArticleStep, 'email' | 'name'> & { replacedAt: Temporal.Instant },
   today: Temporal.Instant,
 ): string {
-  return tied`Označení: ${whoOf(version)} · neplatí od ${formatMoment(version.replacedAt, today)}`
+  return tied`Označení: ${whoOf(version)} · nahrazena ${formatMoment(version.replacedAt, today)}`
 }
 
 export const REPLACED_CLAUSES_LABEL = 'Stav doložek při nahrazení verze'
@@ -126,4 +127,49 @@ export function replacedClauseTag(
         label: 'Souhlasí',
       }
   }
+}
+
+/*
+ * _Upraveno po schválení_ (#101, `12b`, `12q`): every author agreed and the Doc was edited after
+ * its PDF. The same step as `12r`, from a button in the row, worded as the copywriter settled it
+ * (`znor6hp8`, the button's name for a screen reader `dd5fjcle`). Nothing is said of the
+ * podklady pro tisk: an article of an issue made in the app does not reach them yet.
+ */
+
+/** Short enough for the action cell's 200 px; the dialog's title names the final version. */
+export const MARK_REVISED_LABEL = 'Označit novou verzi…'
+
+/** Starts with the visible words, as its siblings in the row do (`dd5fjcle`). */
+export function markRevisedButtonLabel(articleName: string): string {
+  return tied`Označit novou verzi článku ${articleName}`
+}
+
+export const REVISED_CALLOUT_TITLE = tied`Text dokumentu byl po uložení PDF upraven`
+
+/** The newest revision, then the version the authors agreed to, then the one step. */
+export function revisedCalloutText(
+  revisedAt: Temporal.Instant,
+  markedAt: Temporal.Instant,
+  today: Temporal.Instant,
+): string {
+  return tied`Poslední úprava textu ${formatMoment(revisedAt, today)}. Autoři souhlasili s verzí z ${formatMoment(markedAt, today)}. Až bude text hotový, označte novou finální verzi.`
+}
+
+/** Beside _Souhlasí_ in place of the reply's time: which version the consent belongs to. */
+export function agreedWithLine(markedAt: Temporal.Instant, today: Temporal.Instant): string {
+  return tied`s verzí z ${formatMoment(markedAt, today)}`
+}
+
+export const REVISED_DIALOG_MAIL = tied`Každému autorovi se pošle nové PDF s žádostí o souhlas s redakční doložkou.`
+
+/** In place of `12r`'s requests that stop counting: every request was answered by a consent. */
+export function revisedDialogConsents(markedAt: Temporal.Instant, today: Temporal.Instant): string {
+  return tied`Souhlasy s verzí z ${formatMoment(markedAt, today)} zůstanou v Licencích. Do nové verze se nezapočítají.`
+}
+
+export const REVISED_DIALOG_CANCEL = tied`Do začátku odesílání e-mailů autorům můžete novou verzi zrušit. Obnoví se tím předchozí verze i se souhlasy.`
+
+/** After cancelling a new version that took the place of one every author agreed to. */
+export function revisedRestoredToast(markedAt: Temporal.Instant, today: Temporal.Instant): string {
+  return tied`Verze z ${formatMoment(markedAt, today)} je obnovená i se souhlasy.`
 }

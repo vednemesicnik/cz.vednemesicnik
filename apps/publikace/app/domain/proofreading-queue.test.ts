@@ -94,6 +94,7 @@ describe('the final version on the page Korektura', () => {
         waiting: 0,
       },
       authors: [],
+      docRevisedAt: null,
       isCancellable,
       isReplacement: false,
       pdfFileId: 'pdf-1',

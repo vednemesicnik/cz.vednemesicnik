@@ -141,6 +141,9 @@ async function storeFinalVersion<Refusal extends { kind: string }>(
   if (doc.kind === 'unavailable') return { kind: 'unavailable' }
   if (doc.kind === 'gone') return { kind: 'doc-missing' }
 
+  /* Read before the export: a revision later than this may not be in the PDF, so it counts as
+     an edit after it (#101). */
+  let docModifiedAt = doc.modifiedAt
   let pdf = await files.exportPdf(article.docId)
   if (pdf === null) return { kind: 'unavailable' }
   let hash = createHash('sha256').update(pdf).digest('hex')
@@ -160,7 +163,10 @@ async function storeFinalVersion<Refusal extends { kind: string }>(
   /* A record that refuses or throws leaves no PDF behind it: all or nothing (`11c`). */
   let outcome: { at: Temporal.Instant; kind: 'done' } | Refusal
   try {
-    outcome = await steps.record({ attemptKey, fileId: stored.id, hash }, setup.now())
+    outcome = await steps.record(
+      { attemptKey, docModifiedAt, fileId: stored.id, hash },
+      setup.now(),
+    )
   } catch (error) {
     /* A transaction that throws is rolled back; the read makes sure before the PDF goes. */
     let after = await setup.articles.findById(id)

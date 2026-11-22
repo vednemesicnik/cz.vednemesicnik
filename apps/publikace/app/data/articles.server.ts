@@ -149,6 +149,12 @@ export type ClaimedClause = {
    * e-mail may have reached the author, and this one says it replaces it (`20f`, #90).
    */
   replacesEarlier: boolean
+  /**
+   * The author had given consent to the earlier marking (_Souhlas udělen_, _Souhlas zaznamenán_
+   * or a consent whose archive failed), so the e-mail opens with the 20f lines for an author who
+   * agreed (#101, `znor6hp8`). Implies `replacesEarlier`.
+   */
+  replacesAgreed: boolean
   /** The Mailer's key for this sending, a new one after _Poslat žádost znovu_ (`sendKey`). */
   sendKey: string
   signature: string
@@ -194,8 +200,30 @@ export type QueuedClause = ClauseStatus & {
 
 export type ReplyAnswer = 'accepted' | 'superseded' | 'unknown'
 
-/** The PDF a marking stored, and the tag it carries on Drive. */
-export type FinalVersionPdf = { attemptKey: string; fileId: string; hash: string }
+/**
+ * The PDF a marking stored, and the tag it carries on Drive. `docModifiedAt` is the Doc's
+ * `modifiedTime` read just before the export, the baseline a later revision is measured from
+ * (#101); `null` when Drive gave none, and the marking's own time stands in.
+ */
+export type FinalVersionPdf = {
+  attemptKey: string
+  docModifiedAt: Temporal.Instant | null
+  fileId: string
+  hash: string
+}
+
+/**
+ * A standing marking of an open issue every author agreed to, whose Doc the issue detail asks
+ * Drive about (#101): its Doc, the baseline a revision counts from, and the `modifiedTime` the
+ * last check examined.
+ */
+export type DocCheckTarget = {
+  articleId: number
+  baseline: Temporal.Instant
+  checkedAt: Temporal.Instant
+  docId: string
+  markedAt: Temporal.Instant
+}
 
 /** An article on the page Korektura (`15a`): only what a proofreader needs for the work. */
 export type QueueArticle = {
@@ -397,6 +425,18 @@ export type ArticleStore = {
    * replaced, for the toast of `13a`; `null` while the clause's own marking stands.
    */
   replacingVersionOf(clauseId: number): Promise<ArticleStep | null>
+  /** The markings of the issue the detail asks Drive about, while the issue is open (#101). */
+  listDocCheckTargets(issueId: number): Promise<DocCheckTarget[]>
+  /**
+   * What a check of the Doc found: the `modifiedTime` it examined and, when it found one, the
+   * newest revision after the baseline. Only ever moves forward, and only for the marking made at
+   * `markedAt` while it stands; a revision once recorded is never cleared.
+   */
+  recordDocCheck(
+    articleId: number,
+    markedAt: Temporal.Instant,
+    found: { checkedAt: Temporal.Instant; revisedAt: Temporal.Instant | null },
+  ): Promise<void>
   /**
    * The clauses _K odeslání_ of standing markings in open issues, for one run of the job: each
    * taken under `runKey` and not handed to another run for `CLAIM_MINUTES`. Taking one ends the
@@ -476,6 +516,11 @@ export type ArticleStore = {
 type Row = Record<string, unknown>
 
 const EPOCH = Temporal.Instant.fromEpochMilliseconds(0)
+
+/** The Doc's `modifiedTime` before the export as the schema stores it, `null` when unknown. */
+function docStamp(pdf: FinalVersionPdf): string | null {
+  return pdf.docModifiedAt === null ? null : stamp(pdf.docModifiedAt)
+}
 
 function text(value: unknown): string | null {
   return typeof value === 'string' ? value : null
@@ -642,8 +687,10 @@ async function replaceFinalRefusalOf(
   let finalVersion = row.finalVersion
   if (finalVersion === null) return { kind: 'not-final' }
   if (!finalVersion.at.equals(markedAt)) return { kind: 'replaced', step: finalVersion }
-  /* Every author agreed meanwhile: a change now is _Upraveno po schválení_ (`12s`). */
-  if (finalVersion.clauses.approved === finalVersion.clauses.total) return { kind: 'all-approved' }
+  let isAllApproved = finalVersion.clauses.approved === finalVersion.clauses.total
+  /* Every author agreed and the Doc was not edited since its PDF: nothing to replace (`12s`).
+     Edited, it is _Upraveno po schválení_ and the same step goes through (`12q`, #101). */
+  if (isAllApproved) return finalVersion.docRevisedAt === null ? { kind: 'all-approved' } : null
   /* Not offered before a run takes a clause, where cancelling is the way: a crafted request. */
   if (!isReplaceable(finalVersion)) return { kind: 'gone' }
   return null
@@ -728,7 +775,7 @@ async function standingFinalVersions(
 ): Promise<Map<number, FinalVersion>> {
   let versions = await db.exec(
     sql`SELECT id, article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id,
-          replaces_version_id
+          replaces_version_id, doc_revised_at
         FROM final_versions
         WHERE ${STANDING}
           AND article_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))`,
@@ -754,6 +801,7 @@ async function standingFinalVersions(
         .toSorted((a, b) => Number(a['position']) - Number(b['position']))
         .map(toClauseDetail),
       clauses: countClauses(rows.map(toClauseStatus)),
+      docRevisedAt: parseStamp(row['doc_revised_at']),
       email: String(row['marked_by_email']),
       isCancellable: !rows.some((clause) => clause['first_claimed_at'] !== null),
       isReplacement: row['replaces_version_id'] !== null,
@@ -764,6 +812,16 @@ async function standingFinalVersions(
   }
   return byArticle
 }
+
+/**
+ * An earlier clause `p` whose author gave consent, as `clauseState` reads _Souhlas udělen_,
+ * _Souhlas k archivaci_ and a consent whose archive failed (#101).
+ */
+const GAVE_CONSENT_P = sql`(p.approved_at IS NOT NULL OR (p.state != 'pending' AND (
+    p.archive_failed_at IS NOT NULL
+    OR (p.reply_message_id IS NOT NULL
+        AND (p.consent_verified_at IS NOT NULL OR p.is_exact_consent = 1))
+  )))`
 
 /**
  * The clauses that wait on the editors-in-chief, as `clauseState` reads them: an e-mail the Mailer
@@ -1153,9 +1211,10 @@ export function createArticleStore(database: Database): ArticleStore {
         let inserted = await db.exec(
           sql`INSERT INTO final_versions
                 (article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id, pdf_hash,
-                 attempt_key)
+                 attempt_key, doc_modified_at, doc_checked_at)
               VALUES (${input.id}, ${stamp(input.at)}, ${input.by.email}, ${input.by.name},
-                      ${input.pdf.fileId}, ${input.pdf.hash}, ${input.pdf.attemptKey})
+                      ${input.pdf.fileId}, ${input.pdf.hash}, ${input.pdf.attemptKey},
+                      ${docStamp(input.pdf)}, ${docStamp(input.pdf)})
               RETURNING id`,
         )
         let versionId = Number(inserted.rows?.[0]?.['id'])
@@ -1226,10 +1285,10 @@ export function createArticleStore(database: Database): ArticleStore {
         let inserted = await db.exec(
           sql`INSERT INTO final_versions
                 (article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id, pdf_hash,
-                 attempt_key, replaces_version_id)
+                 attempt_key, replaces_version_id, doc_modified_at, doc_checked_at)
               VALUES (${input.id}, ${stamp(input.at)}, ${input.by.email}, ${input.by.name},
                       ${input.pdf.fileId}, ${input.pdf.hash}, ${input.pdf.attemptKey},
-                      ${replacedId})
+                      ${replacedId}, ${docStamp(input.pdf)}, ${docStamp(input.pdf)})
               RETURNING id`,
         )
         let versionId = Number(inserted.rows?.[0]?.['id'])
@@ -1282,6 +1341,46 @@ export function createArticleStore(database: Database): ArticleStore {
       }))
     },
 
+    async listDocCheckTargets(issueId) {
+      let result = await database.exec(
+        sql`SELECT f.article_id, f.marked_at, f.doc_modified_at, f.doc_checked_at, a.doc_id
+            FROM final_versions f
+            JOIN articles a ON a.id = f.article_id
+            JOIN issues i ON i.id = a.issue_id
+            WHERE ${STANDING_F} AND a.issue_id = ${issueId} AND i.closed_at IS NULL
+              AND a.doc_id IS NOT NULL
+              AND EXISTS (SELECT 1 FROM article_clauses c WHERE c.final_version_id = f.id)
+              AND NOT EXISTS (SELECT 1 FROM article_clauses c
+                              WHERE c.final_version_id = f.id AND c.approved_at IS NULL)`,
+      )
+      return (result.rows ?? []).map((row) => {
+        let markedAt = parseStamp(row['marked_at']) ?? EPOCH
+        let baseline = parseStamp(row['doc_modified_at']) ?? markedAt
+        return {
+          articleId: Number(row['article_id']),
+          baseline,
+          checkedAt: parseStamp(row['doc_checked_at']) ?? baseline,
+          docId: String(row['doc_id']),
+          markedAt,
+        }
+      })
+    },
+
+    async recordDocCheck(articleId, markedAt, found) {
+      let checkedAt = stamp(found.checkedAt)
+      let revisedAt = found.revisedAt === null ? null : stamp(found.revisedAt)
+      /* Text stamps of one length compare in time, so max() keeps the later of the two. */
+      await database.exec(
+        sql`UPDATE final_versions
+            SET doc_checked_at = max(coalesce(doc_checked_at, ''), ${checkedAt}),
+                doc_revised_at = CASE
+                  WHEN ${revisedAt} IS NULL THEN doc_revised_at
+                  ELSE max(coalesce(doc_revised_at, ''), ${revisedAt}) END
+            WHERE article_id = ${articleId} AND ${STANDING}
+              AND marked_at = ${stamp(markedAt)}`,
+      )
+    },
+
     async replacingVersionOf(clauseId) {
       let result = await database.exec(
         sql`SELECT s.marked_at, s.marked_by_email, s.marked_by_name
@@ -1325,7 +1424,10 @@ export function createArticleStore(database: Database): ArticleStore {
                 f.pdf_hash,
                 EXISTS (SELECT 1 FROM article_clauses p
                         WHERE p.id = c.replaces_clause_id AND p.first_claimed_at IS NOT NULL)
-                  AS replaces_earlier
+                  AS replaces_earlier,
+                EXISTS (SELECT 1 FROM article_clauses p
+                        WHERE p.id = c.replaces_clause_id AND ${GAVE_CONSENT_P})
+                  AS replaces_agreed
               FROM article_clauses c
               JOIN final_versions f ON f.id = c.final_version_id
               JOIN articles a ON a.id = c.article_id
@@ -1343,6 +1445,7 @@ export function createArticleStore(database: Database): ArticleStore {
           pdfFileId: String(row['pdf_file_id']),
           pdfHash: String(row['pdf_hash']),
           replacesEarlier: Number(row['replaces_earlier']) === 1,
+          replacesAgreed: Number(row['replaces_agreed']) === 1,
           sendKey: sendKey(String(row['clause_key']), Number(row['send_attempt'])),
           signature: String(row['signature']),
         }))

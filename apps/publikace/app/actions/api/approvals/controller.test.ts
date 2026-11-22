@@ -63,7 +63,12 @@ async function marked(app: TestApp, issueName = 'VDM_2026_6'): Promise<number> {
     at: AT.add({ hours: 1 }),
     by: LENKA,
     id: articleId,
-    pdf: { attemptKey: `a-${articleId}`, fileId: `pdf-${articleId}`, hash: 'h' },
+    pdf: {
+      attemptKey: `a-${articleId}`,
+      docModifiedAt: null,
+      fileId: `pdf-${articleId}`,
+      hash: 'h',
+    },
     takenAt: AT,
   })
   assert.equal(outcome.kind, 'done')

@@ -29,11 +29,14 @@ const DOC_TYPE = 'application/vnd.google-apps.document'
 /** Bytes on their own buffer, which is what a request body takes. */
 export type Bytes = Uint8Array<ArrayBuffer>
 
-/** Where a file is: its parents, or `gone` for one deleted or in the bin. */
+/**
+ * Where a file is: its parents, or `gone` for one deleted or in the bin. `modifiedAt` is Drive's
+ * `modifiedTime`, `null` when it gave none.
+ */
 export type FilePlace =
   | { kind: 'gone' }
   | { kind: 'unavailable' }
-  | { kind: 'here'; parents: string[] }
+  | { kind: 'here'; modifiedAt: Temporal.Instant | null; parents: string[] }
 
 export type Preview = { bytes: Bytes; mimeType: string }
 
@@ -43,6 +46,11 @@ export type ArtworkFiles = Pick<ArticleFiles, 'findTagged' | 'trash'> & {
   /** A Doc made by Drive from HTML, tagged with the key. */
   importHtmlAsDoc(parentId: string, name: string, html: string, key: string): Promise<FileCreated>
   placeOf(fileId: string): Promise<FilePlace>
+  /**
+   * When each revision of a Doc's text was last modified, from its revision history; `null` when
+   * Drive failed. Comments, renames and sharing make no revision (#101).
+   */
+  revisionTimesOf(docId: string): Promise<Temporal.Instant[] | null>
   /**
    * The file's own thumbnail, at most this many pixels on the long side, as Drive renders it for
    * every image type it reads, HEIC and TIFF included. `null` when Drive has none.
@@ -68,6 +76,15 @@ export type ArtworkFiles = Pick<ArticleFiles, 'findTagged' | 'trash'> & {
 export type ArtworkFilesOptions = {
   accessToken: string
   fetch?: typeof globalThis.fetch
+}
+
+/** An RFC 3339 time from Drive, `null` for one that does not parse. */
+function instantOf(value: string): Temporal.Instant | null {
+  try {
+    return Temporal.Instant.from(value)
+  } catch {
+    return null
+  }
 }
 
 function created(id: string | null): FileCreated {
@@ -140,7 +157,7 @@ export function createArtworkFiles(options: ArtworkFilesOptions): ArtworkFiles {
     async placeOf(fileId) {
       let what = 'a file was not checked'
       let url = new URL(`${FILES_ENDPOINT}/${encodeURIComponent(fileId)}`)
-      url.searchParams.set('fields', 'id,parents,trashed')
+      url.searchParams.set('fields', 'id,parents,trashed,modifiedTime')
       url.searchParams.set('supportsAllDrives', 'true')
       let response = await call(what, url)
       if (response === null) return { kind: 'unavailable' }
@@ -154,7 +171,12 @@ export function createArtworkFiles(options: ArtworkFilesOptions): ArtworkFiles {
       let parents = Array.isArray(body['parents'])
         ? body['parents'].filter((id): id is string => typeof id === 'string')
         : []
-      return { kind: 'here', parents }
+      let modified = body['modifiedTime']
+      return {
+        kind: 'here',
+        modifiedAt: typeof modified === 'string' ? instantOf(modified) : null,
+        parents,
+      }
     },
 
     async previewOf(fileId, size) {
@@ -173,6 +195,33 @@ export function createArtworkFiles(options: ArtworkFilesOptions): ArtworkFiles {
       let bytes = await bytesOf(what, image)
       if (image === null || bytes === null) return null
       return { bytes, mimeType: image.headers.get('Content-Type') ?? 'image/png' }
+    },
+
+    async revisionTimesOf(docId) {
+      let what = 'the revisions of a Doc were not read'
+      let times: Temporal.Instant[] = []
+      let pageToken: string | null = null
+      do {
+        let url = new URL(`${FILES_ENDPOINT}/${encodeURIComponent(docId)}/revisions`)
+        url.searchParams.set('fields', 'nextPageToken,revisions(modifiedTime)')
+        url.searchParams.set('pageSize', '1000')
+        if (pageToken !== null) url.searchParams.set('pageToken', pageToken)
+        let response = await call(what, url)
+        if (response === null) return null
+        let body = await readJson(response)
+        if (!response.ok) {
+          logDriveFailure(what, describe(response, body))
+          return null
+        }
+        let revisions = Array.isArray(body['revisions']) ? body['revisions'] : []
+        for (let revision of revisions) {
+          let modified = (revision as Record<string, unknown> | null)?.['modifiedTime']
+          let at = typeof modified === 'string' ? instantOf(modified) : null
+          if (at !== null) times.push(at)
+        }
+        pageToken = typeof body['nextPageToken'] === 'string' ? body['nextPageToken'] : null
+      } while (pageToken !== null)
+      return times
     },
 
     async read(fileId) {

@@ -66,12 +66,12 @@ describe('a new final version (12r)', () => {
 })
 
 describe('a replaced version in the open row (12s)', () => {
-  it('names who marked it and when it stopped standing', () => {
+  it('names who marked it and when it was replaced', () => {
     let line = replacedMarkedLine(
       { email: 'lenka.svobodova@vednemesicnik.test', name: 'Lenka Svobodová', replacedAt: AT },
       TODAY,
     )
-    assert.equal(plain(line), 'Označení: Lenka Svobodová · neplatí od 21. 11. v 9:12')
+    assert.equal(plain(line), 'Označení: Lenka Svobodová · nahrazena 21. 11. v 9:12')
   })
 
   it('shows each clause as a record that promises nothing', () => {

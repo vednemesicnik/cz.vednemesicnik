@@ -322,7 +322,12 @@ async function articleReply(app: TestApp, articleId: number, text: string): Prom
     at,
     by: taker,
     id: articleId,
-    pdf: { attemptKey: `a-${articleId}`, fileId: `pdf-${articleId}`, hash: 'h' },
+    pdf: {
+      attemptKey: `a-${articleId}`,
+      docModifiedAt: null,
+      fileId: `pdf-${articleId}`,
+      hash: 'h',
+    },
     takenAt: at,
   })
   let sending = crypto.randomUUID()

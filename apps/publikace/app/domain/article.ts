@@ -125,7 +125,8 @@ export function coauthorLine(coauthors: readonly string[]): string | null {
  * Where an article is, as far as the app records it (`01a`). A standing final version wins, and
  * its clauses decide in the order of precedence `01a` gives: _Chyba_ when the job could not send a
  * clause or archive a consent, _Ke kontrole_ while a reply waits on the editors-in-chief,
- * _Schváleno_ once every author's conversation is in `Licence`, else _K souhlasu_. Without one,
+ * _Schváleno_ once every author's conversation is in `Licence`, else _K souhlasu_; with every
+ * conversation there and a revision of the Doc after its PDF, _Upraveno po schválení_. Without one,
  * _Korektura_ wins while a proofreader's take stands, whatever was handed over; _Dopsáno_ is a
  * handover the editors-in-chief made and no proofreader has taken yet. A proofreader may take an
  * article straight from _Píše se_ too, on the page Korektura (`01d`, `15a`).
@@ -137,6 +138,7 @@ export type ArticleState =
   | 'handedOver'
   | 'proofreading'
   | 'review'
+  | 'revised'
   | 'writing'
 
 /** Somebody's step on an article: when, and who, by address and by the name Google gave. */
@@ -152,6 +154,11 @@ export type FinalVersion = ArticleStep & {
   /** Each author's clause in the order of the article's authors, for the open row (`12b`). */
   authors: readonly ClauseDetail[]
   clauses: ClauseCounts
+  /**
+   * The newest revision of the Doc after its PDF was exported, as the issue detail last found it
+   * on Drive (#101); `null` while none was found.
+   */
+  docRevisedAt: Temporal.Instant | null
   isCancellable: boolean
   /**
    * It replaced a marking whose clauses a run had taken (`12r`): an editor-in-chief's step, so it
@@ -183,14 +190,22 @@ export type ArticleProgress = {
 
 /** Whether a final version stands for the article, whatever its clauses say. */
 export function isMarked(state: ArticleState): boolean {
-  return state === 'approved' || state === 'consent' || state === 'error' || state === 'review'
+  return (
+    state === 'approved' ||
+    state === 'consent' ||
+    state === 'error' ||
+    state === 'review' ||
+    state === 'revised'
+  )
 }
 
 function finalVersionState(finalVersion: FinalVersion): ArticleState {
   let { clauses } = finalVersion
   if (clauses.unsent > 0 || clauses.unarchived > 0) return 'error'
   if (clauses.review > 0) return 'review'
-  if (clauses.total > 0 && clauses.approved === clauses.total) return 'approved'
+  if (clauses.total > 0 && clauses.approved === clauses.total) {
+    return finalVersion.docRevisedAt === null ? 'approved' : 'revised'
+  }
   return 'consent'
 }
 
@@ -216,6 +231,7 @@ export const STATE_ORDER: Readonly<Record<ArticleState, number>> = {
   handedOver: 3,
   proofreading: 2,
   review: 1,
+  revised: 0,
   writing: 4,
 }
 
@@ -268,6 +284,14 @@ function finalVersionTag(finalVersion: FinalVersion): {
       }
     case 'approved':
       return { detail: tied`konverzace v Licencích`, label: 'Schváleno', tone: 'done' }
+    /* The day of the newest revision, a fact like its neighbours' lines; the step is the button
+       beside it (`01a`, `znor6hp8`). */
+    case 'revised':
+      return {
+        detail: `poslední úprava ${formatDayMonth(finalVersion.docRevisedAt ?? finalVersion.at)}`,
+        label: 'Upraveno po schválení',
+        tone: 'problem',
+      }
     default: {
       let detail =
         clauses.pending > 0

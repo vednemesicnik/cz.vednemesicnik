@@ -109,15 +109,19 @@ import type {
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
 import { discardBatch, resendBatch } from '../../drive/artworks-setup.server.ts'
+import { checkAllDocRevisions } from '../../drive/doc-revisions.server.ts'
 import {
   cancelFinalVersion,
   replaceFinalVersion,
   type ReplaceFinalStepOutcome,
 } from '../../drive/final-version.server.ts'
 import {
+  agreedWithLine,
   ALL_APPROVED_TOAST,
   alreadyReplacedToast,
   isReplaceable,
+  MARK_REVISED_LABEL,
+  markRevisedButtonLabel,
   NEW_FINAL_SAVED_TOAST,
   REPLACE_DIALOG_MAIL,
   REPLACE_FINAL_CONFIRM_LABEL,
@@ -130,6 +134,12 @@ import {
   replacedPdfHint,
   replacedSummary,
   restoredToast,
+  REVISED_CALLOUT_TITLE,
+  REVISED_DIALOG_CANCEL,
+  REVISED_DIALOG_MAIL,
+  revisedCalloutText,
+  revisedDialogConsents,
+  revisedRestoredToast,
 } from '../../domain/final-version-replacement.ts'
 import {
   CANCEL_FINAL_FAILED_TOAST,
@@ -297,6 +307,21 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<void>
   for (let article of marked) await checkArticleFolders(deps, article)
 }
 
+/**
+ * The Docs of the issue's approved articles, asked whether they were edited after their PDF
+ * (#101, `01a`): what Drive said is recorded and the rows read it. Only an open issue, and without
+ * an account the records stand as they are.
+ */
+async function recheckDocRevisions(context: PageContext, issue: Issue): Promise<void> {
+  if (issue.closedAt !== null) return
+  let { articles, artworks } = articlesOf(context)
+  let targets = await articles.listDocCheckTargets(issue.id)
+  if (targets.length === 0) return
+  let token = await artworks.token()
+  if (!token.ok) return
+  await checkAllDocRevisions({ articles, files: artworks.files(token.accessToken) }, targets)
+}
+
 /** The block for the link and the rows of _Články_, from what the database has (`12a`). */
 /**
  * The open row of an article with a final version (`12b`, `12q`): each author's clause, who
@@ -315,9 +340,15 @@ function clausesView(
   let ids = { id: String(article.id), name: issue.name }
   let recipients = finalVersion.authors.filter((clause) => isClauseResendable(clause.state)).length
   let marked = encodeURIComponent(stamp(finalVersion.at))
+  let revisedAt = articleState(article) === 'revised' ? finalVersion.docRevisedAt : null
   return {
     authors: finalVersion.authors.map((clause) => {
-      let tag = clauseRowTag(clause, health, today)
+      let rowTag = clauseRowTag(clause, health, today)
+      /* Under _Upraveno po schválení_ a consent names its version, not its time (`12b`). */
+      let tag =
+        revisedAt !== null && clause.state === 'approved'
+          ? { ...rowTag, detail: agreedWithLine(finalVersion.at, today) }
+          : rowTag
       return {
         email: clause.authorEmail,
         link:
@@ -343,6 +374,13 @@ function clausesView(
     namesLabel: signaturesLabel(finalVersion.authors.length),
     pdfUrl: driveFileUrl(finalVersion.pdfFileId),
     replaced: replaced.map((version) => replacedVersionView(version, today)),
+    revised:
+      revisedAt === null
+        ? null
+        : {
+            text: revisedCalloutText(revisedAt, finalVersion.at, today),
+            title: REVISED_CALLOUT_TITLE,
+          },
     resend:
       issue.closedAt === null && recipients > 0
         ? {
@@ -432,6 +470,15 @@ async function linkAndArticles(
       cancelFinalAction:
         isOpen && finalVersion !== null && finalVersion.isCancellable
           ? `${routes.issues.cancelFinalVersion.href(ids)}?marked=${encodeURIComponent(stamp(finalVersion.at))}`
+          : null,
+      /* `12q`: the row's one step out of _Upraveno po schválení_, the dialog of `12r`. */
+      markRevised:
+        isOpen && finalVersion !== null && state === 'revised'
+          ? {
+              accessibleLabel: markRevisedButtonLabel(article.name),
+              href: `${routes.issues.askReplaceFinalVersion.href(ids)}?marked=${encodeURIComponent(stamp(finalVersion.at))}${filter === 'all' ? '' : `&artworks=${filter}`}`,
+              label: MARK_REVISED_LABEL,
+            }
           : null,
       replaceFinalAction:
         isOpen && finalVersion !== null && isReplaceable(finalVersion)
@@ -687,13 +734,21 @@ function replaceDialogOf(
   let today = now()
   let filter = filterOf(context)
   let names = article.authors.map((author) => author.name)
+  /* After _Upraveno po schválení_ every request was answered by a consent, so the dialog says
+     where the consents stay instead of which requests stop counting (`12q`). */
+  let isRevised = articleState(article) === 'revised'
   return {
     action: `${routes.issues.replaceFinalVersion.href({ id: String(article.id), name: issue.name })}?marked=${encodeURIComponent(stamp(markedAt))}${filter === 'all' ? '' : `&artworks=${filter}`}`,
-    after: [replaceDialogEarlier(markedAt, today), replaceDialogCancel(markedAt, today)],
+    after: isRevised
+      ? [revisedDialogConsents(markedAt, today), REVISED_DIALOG_CANCEL]
+      : [replaceDialogEarlier(markedAt, today), replaceDialogCancel(markedAt, today)],
     cancel: { href: detailHref(issue, filter), label: DIALOG_CANCEL_LABEL },
     confirmLabel: REPLACE_FINAL_CONFIRM_LABEL,
     error,
-    lead: [markFinalDialogText(article.name), REPLACE_DIALOG_MAIL],
+    lead: [
+      markFinalDialogText(article.name),
+      isRevised ? REVISED_DIALOG_MAIL : REPLACE_DIALOG_MAIL,
+    ],
     pendingLabel: MARKING_FINAL_LABEL,
     signatures: { label: signaturesLabel(names.length), names },
     title: REPLACE_FINAL_DIALOG_TITLE,
@@ -787,7 +842,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
 
-        await recheckMissing(context, issue)
+        await Promise.all([recheckMissing(context, issue), recheckDocRevisions(context, issue)])
         return renderDetail(context, issue, {
           isFolderGone: takeFolderGone(context.get(Session), issue.name),
         })
@@ -854,12 +909,17 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           markedAt,
         })
         if (outcome.kind === 'done') {
-          /* A new version gives way to the one it replaced, not to the proofreading (`12s`). */
+          /* A new version gives way to the one it replaced, not to the proofreading (`12s`); one
+             every author agreed to comes back with its consents (`12q`). */
+          let restored = outcome.restored
+          let after = restored === null ? null : await articleOf(context, issue, context.params.id)
           flashToast(
             context,
-            outcome.restored === null
+            restored === null
               ? FINAL_CANCELLED_TOAST
-              : restoredToast(outcome.restored, now()),
+              : after !== null && articleState(after) === 'revised'
+                ? revisedRestoredToast(restored, now())
+                : restoredToast(restored, now()),
           )
           return back()
         }

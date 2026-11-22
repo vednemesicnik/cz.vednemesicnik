@@ -100,6 +100,8 @@ function readResult(value: unknown): { clauseKey: string; outcome: ClauseOutcome
  * znovu_ asked for another (`12b`), because the Mailer answers a key it sent as sent, unsent.
  * `replacesEarlier` picks the e-mail's opening that says it replaces an earlier request (`20f`,
  * #90): a field added beside the others, so a job that does not read it sends the plain one.
+ * `replacesAgreed` narrows it to an author who had agreed to the earlier version, whose opening
+ * says that consent belongs to it (`20f`, #101); added the same way.
  */
 function claimedItem(clause: ClaimedClause) {
   return {
@@ -111,6 +113,7 @@ function claimedItem(clause: ClaimedClause) {
     issueName: clause.issueName,
     pdfFileId: clause.pdfFileId,
     pdfHash: clause.pdfHash,
+    replacesAgreed: clause.replacesAgreed,
     replacesEarlier: clause.replacesEarlier,
     sendKey: clause.sendKey,
     signature: clause.signature,

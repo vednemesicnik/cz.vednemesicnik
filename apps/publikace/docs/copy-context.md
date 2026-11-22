@@ -69,12 +69,16 @@ všemu e-mail říká **připomínky**.
 | **poskytovatel**            | Koho formulář uvádí a kdo dává souhlas. **Autor díla** je jen jméno do podpisu.       |
 | **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.               |
 | **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                   |
-| **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly.                                       |
+| **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly. Viz níže.                             |
 | **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                        |
 | **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                         |
 | **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                     |
 | **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.                |
 | **připojit**, **připojení** | Trvalé spojení aplikace s účtem `publikace.app@`. Ne „přihlásit“: to dělá šéfredakce. |
+
+**Podklady pro tisk** plní úloha na pozadí, která zatím čte jen tabulky vydání založených před
+aplikací. Článek ani dílo z vydání založeného v aplikaci se do nich zatím nedostane, takže věta
+o nich na obrazovce takového vydání nic netvrdí.
 
 **Skupina Google v Přístupu** neznamená, že se přihlásí každý její člen. Přihlásí se jen člen,
 který má účet na doméně redakce; skupina může mít i členy s jinou adresou a ti se nepřihlásí nikdy.

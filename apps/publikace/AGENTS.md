@@ -19,7 +19,9 @@ author and reads the reply to, so that one not exactly „Souhlasím“ reaches 
 the artworks' (#89); the article's row in the issue detail opens to each author's clause, and
 _Poslat žádost znovu_ hands one back to the job under a new Mailer key (#92); once the job took the
 clauses and before every author agreed, _Označit novou finální verzi…_ in the row's „⋯“ puts a new
-PDF and new requests in place of the old ones, which stop counting (#90). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+PDF and new requests in place of the old ones, which stop counting (#90); and once every author
+agreed, a revision of the Doc after its PDF, which the issue detail asks Drive about as it opens,
+makes the article _Upraveno po schválení_ with _Označit novou verzi…_ in its row (#101). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the

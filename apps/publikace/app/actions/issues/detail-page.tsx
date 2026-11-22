@@ -143,6 +143,8 @@ export type ClausesView = {
   pdfUrl: string
   /** The markings a newer one replaced, the newest first, each a closed record (`12s`). */
   replaced: readonly ReplacedVersionView[]
+  /** The Callout over the clauses of _Upraveno po schválení_ (`12b`). */
+  revised: { text: string; title: string } | null
   /** _Poslat žádost znovu_ while a clause waits on no reply or was not confirmed (`12b`). */
   resend: { action: string; label: string } | null
 }
@@ -158,7 +160,7 @@ export type ReplacedVersionView = {
   }[]
   /** _Stav doložek při nahrazení verze_. */
   clausesLabel: string
-  /** _Označení: ‹kdo› · neplatí od ‹čas›_. */
+  /** _Označení: ‹kdo› · nahrazena ‹čas›_. */
   markedLine: string
   /** Read after _Otevřít PDF_: which version, and that it opens a new tab. */
   pdfHint: string
@@ -181,6 +183,11 @@ export type ArticleRowView = {
   documentUrl: string
   /** _Předat ke korektuře_ in the row, only on _Píše se_ of an issue still open (`12k`). */
   handOverAction: string | null
+  /**
+   * _Označit novou verzi…_ in the row, only on _Upraveno po schválení_ of an issue still open:
+   * the dialog of a new version (`12q`).
+   */
+  markRevised: { accessibleLabel: string; href: string; label: string } | null
   id: number
   missing: MissingFoldersView | null
   name: string
@@ -358,8 +365,9 @@ const linkBodyStyle = css({
 const linkLabelStyle = css({ fontSize: '15px', fontWeight: 600 })
 
 /* The Doc's title takes most of what is left and the artworks the rest; the tag and the actions
-   keep their width, _Předat ke korektuře_ and `⋯` together 216 px (`12a`, `12k`). */
-const ARTICLE_COLUMNS = 'minmax(180px, 3fr) 160px minmax(110px, 1fr) 216px'
+   keep their width, the longest button, _Označit novou verzi…_, and `⋯` together 240 px
+   (`12a`, `12k`, `12q`). */
+const ARTICLE_COLUMNS = 'minmax(180px, 3fr) 160px minmax(110px, 1fr) 240px'
 
 /* A row without the button has only `⋯`, at the far end (`12k`). */
 const actionsCellStyle = css({
@@ -711,6 +719,15 @@ function ArticleRow(
             </span>
           )}
           <span mix={actionsCellStyle} role="cell">
+            {article.markRevised === null ? null : (
+              <a
+                aria-label={article.markRevised.accessibleLabel}
+                class="vdm-btn vdm-btn--outline vdm-btn--sm"
+                href={article.markRevised.href}
+              >
+                {article.markRevised.label}
+              </a>
+            )}
             {article.handOverAction === null ? null : (
               <form action={article.handOverAction} method="post" mix={handOverFormStyle}>
                 <CsrfField />
@@ -745,6 +762,14 @@ function ClauseBand(handle: Handle<{ clauses: ClausesView }>) {
     return (
       <div mix={clauseBandStyle} role="row">
         <div mix={clauseBodyStyle} role="cell">
+          {clauses.revised === null ? null : (
+            <Callout tone="error">
+              <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+                {clauses.revised.title}
+              </p>
+              <p style={{ margin: 0 }}>{clauses.revised.text}</p>
+            </Callout>
+          )}
           <div mix={clausePeopleStyle}>
             {clauses.authors.map((author) => (
               <div key={author.email} mix={clauseAuthorStyle}>

@@ -104,7 +104,8 @@ export function partOf(article: QueueItem, viewer: QueueViewer): QueuePart | nul
     case 'approved':
     case 'consent':
     case 'error':
-    case 'review': {
+    case 'review':
+    case 'revised': {
       let finalVersion = article.finalVersion ?? null
       let isOwnMarking = finalVersion?.isCancellable === true && !finalVersion.isReplacement
       return isOwn && isOwnMarking ? 'mine' : null
