@@ -9,7 +9,7 @@ import { DriveAccount, type DriveAccountContext } from '../../middleware/drive-a
 import { Issues, type IssuesContext } from '../../middleware/issues.server.ts'
 import { Toasts } from '../../middleware/toasts.server.ts'
 import type { AppContext } from '../../router.ts'
-import type { IssueFilter } from '../../domain/issue.ts'
+import type { ApprovedCount, IssueFilter } from '../../domain/issue.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import type { IssueStepDialogView } from './issue-parts.tsx'
 import { type NewIssueDialog, OverviewPage } from './overview-page.tsx'
@@ -59,10 +59,10 @@ export async function renderOverview(
   ])
   /* _Čeká na vás_ adds up the amber and pink tags of the issue's articles and artworks and one
      for each article with a missing folder (`11a`, `01d`, `12j`). */
-  let artworkCounts = new Map<number, number>()
+  let artworkCounts = new Map<number, ApprovedCount>()
   let waitingCounts = new Map(articleWaiting)
-  for (let [issueId, { total, waiting }] of artworkTotals) {
-    artworkCounts.set(issueId, total)
+  for (let [issueId, { approved, total, waiting }] of artworkTotals) {
+    artworkCounts.set(issueId, { approved, total })
     waitingCounts.set(issueId, (waitingCounts.get(issueId) ?? 0) + waiting)
   }
 

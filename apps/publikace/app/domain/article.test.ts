@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 import { type ClauseCounts, type ClauseState } from './approvals.ts'
 
 import {
+  approvedArticlesLine,
   articleMeta,
   articleState,
   articleStateTag,
@@ -313,5 +314,18 @@ describe('lacksConsent (12g)', () => {
       'review',
       'writing',
     ])
+  })
+})
+
+describe('approvedArticlesLine (11a)', () => {
+  it('counts the approved in Czech, all of them as všechny schválené', () => {
+    let line = (approved: number, total: number) => approvedArticlesLine({ approved, total })
+    assert.equal(line(0, 0), null)
+    assert.equal(line(1, 1), 'schválený')
+    assert.equal(line(9, 9), 'všechny schválené')
+    assert.equal(line(0, 3), '0 schválených')
+    assert.equal(line(1, 5), '1 schválený')
+    assert.equal(line(3, 5), '3 schválené')
+    assert.equal(line(5, 7), '5 schválených')
   })
 })

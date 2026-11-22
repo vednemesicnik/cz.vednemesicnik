@@ -64,7 +64,7 @@ describe('the article store', () => {
 
       let [article] = await articles.listCreated(issueId)
       assert.equal(article?.docId, 'd-a')
-      assert.equal((await articles.countsByIssue()).get(issueId), 1)
+      assert.deepEqual((await articles.countsByIssue()).get(issueId), { approved: 0, total: 1 })
       let artworks = await createLinkStore(app.database).artworksLinksOf(issueId)
       assert.equal(artworks.get(attempt.id)?.kind, 'artworks')
     } finally {
@@ -673,6 +673,43 @@ describe('what the articles add to Čeká na vás (11a, 01d, 12j)', () => {
       let counts = await articles.waitingCountsByIssue()
       assert.equal(counts.get(issueId), expected)
       assert.equal(counts.get(issueId), 6)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('counts as approved only what articleState reads as Schváleno (11a, 01a)', async () => {
+    let app = await createTestApp()
+    try {
+      let articles = createArticleStore(app.database)
+      let issueId = await seedIssue(app)
+      let ids = [
+        (await seedArticle(app, issueId)).articleId,
+        await marked(app, issueId, 'consent'),
+        await marked(app, issueId, 'error'),
+        await marked(app, issueId, 'review'),
+        await marked(app, issueId, 'approved'),
+        await marked(app, issueId, 'approved'),
+        await marked(app, issueId, 'approved', { isDocRevised: true }),
+        await marked(app, issueId, 'approved', { isFolderMissing: true }),
+      ]
+      let cancelled = await marked(app, issueId, 'approved')
+      await app.database.exec(
+        sql`UPDATE final_versions SET cancelled_at = ${SENT} WHERE article_id = ${cancelled}`,
+      )
+      ids.push(cancelled)
+
+      let expected = 0
+      for (let id of ids) {
+        let article = await articles.findById(id)
+        if (article === null) throw new Error('No article.')
+        expected += articleState(article) === 'approved' ? 1 : 0
+      }
+      assert.equal(expected, 3)
+      assert.deepEqual((await articles.countsByIssue()).get(issueId), {
+        approved: expected,
+        total: ids.length,
+      })
     } finally {
       await app.close()
     }

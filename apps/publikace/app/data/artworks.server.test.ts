@@ -1,4 +1,5 @@
 import * as assert from 'remix/assert'
+import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { createTestApp, seedArticle, seedIssue, type TestApp } from '../test-app.server.ts'
@@ -148,11 +149,29 @@ describe('the artwork store', () => {
       assert.deepEqual(await artworks.listByIssue(issueId), [])
 
       await artworks.commitBatch(started.id, AT)
-      assert.deepEqual((await artworks.countsByIssue()).get(issueId), { total: 2, waiting: 2 })
+      assert.deepEqual((await artworks.countsByIssue()).get(issueId), {
+        approved: 0,
+        total: 2,
+        waiting: 2,
+      })
       assert.equal((await artworks.countsByArticle(issueId)).get(article.articleId)?.error, 2)
 
       await artworks.markMail(started.id, 'sent', AT)
-      assert.deepEqual((await artworks.countsByIssue()).get(issueId), { total: 2, waiting: 0 })
+      assert.deepEqual((await artworks.countsByIssue()).get(issueId), {
+        approved: 0,
+        total: 2,
+        waiting: 0,
+      })
+
+      await app.database.exec(
+        sql`UPDATE artwork_batches SET approved_at = ${AT.toString()}, consent_file_id = 'c-1'
+            WHERE id = ${started.id}`,
+      )
+      assert.deepEqual((await artworks.countsByIssue()).get(issueId), {
+        approved: 2,
+        total: 2,
+        waiting: 0,
+      })
       let [listed] = await artworks.listByIssue(issueId)
       assert.equal(listed?.articleName, 'Školní jídelna po roce')
 

@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 
 import type { ArtworkCounts, ArtworkState, BatchStatus } from '../domain/artwork.ts'
 import { batchState, batchTag, isWaiting, NO_ARTWORKS } from '../domain/artwork.ts'
+import type { ApprovedCount } from '../domain/issue.ts'
 import {
   type BatchReport,
   CLAIM_LIMIT,
@@ -113,8 +114,11 @@ export type ArtworkStore = {
   /** Every batch attempt left uncommitted, for the cleanup at startup. */
   abandonedBatches(): Promise<BatchRow[]>
   addUpload(upload: NewUpload): Promise<ArtworkRow>
-  /** Committed batches per issue: how many artworks, and how many wait on the editors. */
-  countsByIssue(): Promise<Map<number, { total: number; waiting: number }>>
+  /**
+   * Committed batches per issue: how many artworks, how many of them are _Schváleno_ (`01b`) and
+   * how many wait on the editors.
+   */
+  countsByIssue(): Promise<Map<number, ApprovedCount & { waiting: number }>>
   /** The artworks of the issue's committed batches per article, by their state (`12a`). */
   countsByArticle(issueId: number): Promise<Map<number, ArtworkCounts>>
   commitBatch(id: number, at: Temporal.Instant): Promise<BatchRow>
@@ -407,14 +411,16 @@ export function createArtworkStore(database: Database): ArtworkStore {
             WHERE b.created_at IS NOT NULL AND b.discarded_at IS NULL
             GROUP BY b.id`,
       )
-      let counts = new Map<number, { total: number; waiting: number }>()
+      let counts = new Map<number, ApprovedCount & { waiting: number }>()
       for (let row of result.rows ?? []) {
         let issueId = Number(row['issue_id'])
         let count = Number(row['count'])
-        let current = counts.get(issueId) ?? { total: 0, waiting: 0 }
+        let state = batchState(toBatch(row, []))
+        let current = counts.get(issueId) ?? { approved: 0, total: 0, waiting: 0 }
         counts.set(issueId, {
+          approved: current.approved + (state === 'approved' ? count : 0),
           total: current.total + count,
-          waiting: current.waiting + (isWaiting(batchState(toBatch(row, []))) ? count : 0),
+          waiting: current.waiting + (isWaiting(state) ? count : 0),
         })
       }
       return counts

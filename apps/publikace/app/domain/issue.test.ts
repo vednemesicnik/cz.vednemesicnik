@@ -155,13 +155,45 @@ describe('the lines of an issue', () => {
   })
 
   it('counts in Czech on a phone', () => {
-    assert.equal(phoneRowLine(issue(), 0, 0), '0 článků · 0 děl')
     assert.equal(articleCount(1), '1 článek')
     assert.equal(articleCount(3), '3 články')
     assert.equal(artworkCount(1), '1 dílo')
     assert.equal(artworkCount(4), '4 díla')
     assert.equal(artworkCount(11), '11 děl')
-    assert.equal(phoneRowLine(issue({ completedAt: null }), 0, 0), 'založení zahájeno 14. 11. 2026')
+  })
+
+  it('ends an open row on a phone in what waits, or in vše schválené (11e)', () => {
+    let count = (approved: number, total: number) => ({ approved, total })
+    let line = (counts: Parameters<typeof phoneRowLine>[1], overrides: Partial<Issue> = {}) =>
+      phoneRowLine(issue(overrides), counts)
+
+    assert.deepEqual(line({ articles: count(9, 9), artworks: count(14, 14), waiting: 0 }), {
+      tail: { isWaiting: false, text: 'vše schválené' },
+      text: '9 článků · 14 děl',
+    })
+    assert.deepEqual(line({ articles: count(5, 5), artworks: count(13, 13), waiting: 5 }), {
+      tail: { isWaiting: true, text: '5 čeká na vás' },
+      text: '5 článků · 13 děl',
+    })
+    assert.deepEqual(line({ articles: count(1, 3), artworks: count(0, 2), waiting: 2 }).tail, {
+      isWaiting: true,
+      text: '2 čekají na vás',
+    })
+    assert.equal(line({ articles: count(1, 3), artworks: count(2, 2), waiting: 0 }).tail, null)
+    assert.deepEqual(line({ articles: count(0, 0), artworks: count(0, 0), waiting: 0 }), {
+      tail: null,
+      text: '0 článků · 0 děl',
+    })
+
+    let closed = { closedAt: Temporal.Instant.from('2026-12-01T09:00:00Z') }
+    assert.deepEqual(line({ articles: count(1, 3), artworks: count(0, 0), waiting: 4 }, closed), {
+      tail: null,
+      text: '3 články · 0 děl · uzavřeno 1. 12.',
+    })
+    assert.deepEqual(
+      line({ articles: count(0, 0), artworks: count(0, 0), waiting: 0 }, { completedAt: null }),
+      { tail: null, text: 'založení zahájeno 14. 11. 2026' },
+    )
   })
 
   it('does not decline vydání', () => {

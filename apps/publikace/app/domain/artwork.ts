@@ -5,6 +5,7 @@
  * `public/artwork-form.ts`, which the browser loads too.
  */
 
+import type { ApprovedCount } from './issue.ts'
 import { formatDayMonth } from './time.ts'
 import { tied } from './public/typography.ts'
 
@@ -211,6 +212,17 @@ export function totalOf(counts: ArtworkCounts): number {
 function approvedWord(count: number): string {
   if (count === 1) return 'schválené'
   return count >= 2 && count <= 4 ? 'schválená' : 'schválených'
+}
+
+/**
+ * The line under the count of artworks in the overview (`11a`), a batch counting when it is
+ * _Schváleno_ (`01b`). `null` is an issue without artworks. None approved says `0 schválených`
+ * rather than the detail's `u poskytovatele`, which the overview cannot tell from a zero.
+ */
+export function approvedArtworksLine(count: ApprovedCount): string | null {
+  if (count.total === 0) return null
+  if (count.approved === count.total) return count.total === 1 ? 'schválené' : 'všechna schválená'
+  return `${count.approved} ${approvedWord(count.approved)}`
 }
 
 /**

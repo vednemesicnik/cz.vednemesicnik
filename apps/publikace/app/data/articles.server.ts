@@ -16,6 +16,7 @@ import {
 import type { ArticleStep, Author, FinalVersion, ReplacedVersion } from '../domain/article.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
 import { isReplaceable } from '../domain/final-version-replacement.ts'
+import type { ApprovedCount } from '../domain/issue.ts'
 import type { DigestCandidate } from '../domain/proofreading-digest.ts'
 import { type BatchReport, decideReport } from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
@@ -277,8 +278,11 @@ export type ArticleStore = {
   abandonedAttempts(): Promise<ArticleRow[]>
   /** Commits the attempt as an article and gives it its link for artworks, in one transaction. */
   commit(id: number, at: Temporal.Instant): Promise<Article>
-  /** Created articles per issue, for the overview's counts. */
-  countsByIssue(): Promise<Map<number, number>>
+  /**
+   * Created articles per issue, and how many of them are _Schváleno_ (`01a`), for the overview's
+   * counts and the line under them (`11a`). An issue without an article is absent.
+   */
+  countsByIssue(): Promise<Map<number, ApprovedCount>>
   /** Removes an attempt whose files are in the bin; its authors go with it. */
   discard(id: number): Promise<void>
   findByFormKey(formKey: string): Promise<ArticleRow | null>
@@ -837,16 +841,25 @@ const WAITS_ON_EDITORS = sql`c.approved_at IS NULL AND c.state != 'pending' AND 
         AND c.is_exact_consent = 0)
   )`
 
+/** The standing markings `f` with at least one clause and every clause approved. */
+const ALL_CLAUSES_APPROVED_F = sql`EXISTS (SELECT 1 FROM article_clauses c WHERE c.final_version_id = f.id)
+  AND NOT EXISTS (SELECT 1 FROM article_clauses c
+                  WHERE c.final_version_id = f.id AND c.approved_at IS NULL)`
+
 /**
  * The standing markings `f` that are _Upraveno po schválení_, as `articleState` reads them: every
  * clause approved and a revision of the Doc recorded after the PDF (#101). The revision is what
  * the issue detail last found on Drive, so the overview asks nobody. Written out for SQL; the
  * tests hold it to `articleState`.
  */
-const REVISED_AFTER_APPROVAL_F = sql`f.doc_revised_at IS NOT NULL
-  AND EXISTS (SELECT 1 FROM article_clauses c WHERE c.final_version_id = f.id)
-  AND NOT EXISTS (SELECT 1 FROM article_clauses c
-                  WHERE c.final_version_id = f.id AND c.approved_at IS NULL)`
+const REVISED_AFTER_APPROVAL_F = sql`f.doc_revised_at IS NOT NULL AND ${ALL_CLAUSES_APPROVED_F}`
+
+/**
+ * The standing markings `f` that are _Schváleno_, as `articleState` reads them: every clause
+ * approved and no revision of the Doc since. Written out for SQL; the tests hold it to
+ * `articleState`.
+ */
+const APPROVED_F = sql`f.doc_revised_at IS NULL AND ${ALL_CLAUSES_APPROVED_F}`
 
 /* The clauses that could be in the queue; `isQueuedClause` decides. */
 const CLAUSE_QUEUE_CANDIDATES = sql`SELECT c.*, a.name AS article_name, i.name AS issue_name
@@ -944,11 +957,18 @@ export function createArticleStore(database: Database): ArticleStore {
 
     async countsByIssue() {
       let result = await database.exec(
-        sql`SELECT issue_id, count(*) AS count FROM articles
-            WHERE created_at IS NOT NULL GROUP BY issue_id`,
+        sql`SELECT issue_id, count(*) AS total,
+              sum(id IN (SELECT f.article_id FROM final_versions f
+                         WHERE ${STANDING_F} AND ${APPROVED_F})) AS approved
+            FROM articles WHERE created_at IS NOT NULL GROUP BY issue_id`,
       )
-      let counts = new Map<number, number>()
-      for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
+      let counts = new Map<number, ApprovedCount>()
+      for (let row of result.rows ?? []) {
+        counts.set(Number(row['issue_id']), {
+          approved: Number(row['approved']),
+          total: Number(row['total']),
+        })
+      }
       return counts
     },
 

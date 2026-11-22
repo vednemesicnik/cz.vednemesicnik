@@ -345,7 +345,7 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
       assert.ok(html.includes('/issues/VDM_2026_5/articles/1/folders/check'))
 
       let overview = textOf(await (await context.editor.get('/')).text())
-      assert.match(overview, /Aktivní 1 0 1/)
+      assert.match(overview, /Aktivní 1 0 schválených 0 1/)
     }))
 
   it('says what Zkontrolovat znovu found, and the step goes once the folder is back', () =>

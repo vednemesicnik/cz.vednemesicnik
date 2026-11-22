@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import {
+  approvedArtworksLine,
   articleArtworksLine,
   authorAndSource,
   batchState,
@@ -298,5 +299,18 @@ describe('checkArtworks', () => {
       provider: ONDREJ,
     })
     assert.equal(twenty.ok, true)
+  })
+})
+
+describe('approvedArtworksLine (11a)', () => {
+  it('counts the approved in Czech, all of them as všechna schválená', () => {
+    let line = (approved: number, total: number) => approvedArtworksLine({ approved, total })
+    assert.equal(line(0, 0), null)
+    assert.equal(line(1, 1), 'schválené')
+    assert.equal(line(14, 14), 'všechna schválená')
+    assert.equal(line(0, 3), '0 schválených')
+    assert.equal(line(1, 5), '1 schválené')
+    assert.equal(line(3, 5), '3 schválená')
+    assert.equal(line(7, 13), '7 schválených')
   })
 })

@@ -343,7 +343,7 @@ describe('the link and the articles in the detail (12a, 12c, 02d)', () => {
       assert.ok(textOf(detail).includes('Píše se'))
 
       let overview = await (await editor.get('/')).text()
-      assert.match(overview, /<span role="cell" class="vdm-num">1<\/span>/)
+      assert.match(overview, /<span class="vdm-num">1<\/span><small>0 schválených<\/small>/)
     }))
 
   it('asks before renewing, then shows the new link with the toast', () =>

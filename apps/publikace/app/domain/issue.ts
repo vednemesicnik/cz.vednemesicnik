@@ -9,6 +9,12 @@ import { shortAccount } from './drive-account.ts'
 import { formatDate, formatDayMonth, pragueYear } from './time.ts'
 import { tied } from './public/typography.ts'
 
+/**
+ * How many of an issue's articles or artworks there are, and how many of them are _Schváleno_
+ * (`01a`, `01b`): the overview's count and the line under it (`11a`).
+ */
+export type ApprovedCount = { approved: number; total: number }
+
 /** The three folders an issue has on the shared drive, in the order they are created. */
 export type FolderKind = 'issue' | 'articles' | 'print'
 
@@ -285,15 +291,33 @@ export function reopenedToast(name: string): string {
   return `Vydání ${name} je znovu otevřené.`
 }
 
-/** The second line of a row on a phone, where the counts stand in one line (`11e`). */
-export function phoneRowLine(issue: Issue, articles: number, artworks: number): string {
+/**
+ * The second line of a row on a phone, where the counts stand in one line (`11e`). An open
+ * issue ends in what waits on the editors, in the ink of _Čeká na vás_, or in _vše schválené_
+ * once there is nothing left to approve; `tail` is that end, apart so the page can ink it.
+ */
+export function phoneRowLine(
+  issue: Issue,
+  counts: { articles: ApprovedCount; artworks: ApprovedCount; waiting: number },
+): { tail: { isWaiting: boolean; text: string } | null; text: string } {
   let state = issueState(issue)
-  if (state === 'unfinished') return rowSubtitle(issue)
-  let counts = `${articleCount(articles)} · ${artworkCount(artworks)}`
+  if (state === 'unfinished') return { tail: null, text: rowSubtitle(issue) }
+  let { articles, artworks, waiting } = counts
+  let text = `${articleCount(articles.total)} · ${artworkCount(artworks.total)}`
   if (state === 'closed' && issue.closedAt !== null) {
-    return `${counts} · uzavřeno ${formatDayMonth(issue.closedAt)}`
+    return { tail: null, text: `${text} · uzavřeno ${formatDayMonth(issue.closedAt)}` }
   }
-  return counts
+  if (waiting > 0) return { tail: { isWaiting: true, text: waitingText(waiting) }, text }
+  let isAllApproved =
+    articles.total + artworks.total > 0 &&
+    articles.approved === articles.total &&
+    artworks.approved === artworks.total
+  return { tail: isAllApproved ? { isWaiting: false, text: 'vše schválené' } : null, text }
+}
+
+/* `11e` draws `5 čeká na vás`; the verb agrees with the number, `2 čekají na vás`. */
+function waitingText(count: number): string {
+  return `${count} ${count >= 2 && count <= 4 ? 'čekají' : 'čeká'} na vás`
 }
 
 export const EMPTY_TITLE = 'Zatím tu není žádné vydání'

@@ -5,6 +5,7 @@
  */
 
 import type { ClauseCounts, ClauseDetail } from './approvals.ts'
+import type { ApprovedCount } from './issue.ts'
 import type { Author } from './public/article-form.ts'
 import { formatDayMonth } from './time.ts'
 import { NBSP, tied } from './public/typography.ts'
@@ -205,6 +206,25 @@ export function isMarked(state: ArticleState): boolean {
  */
 export function waitsOnEditors(state: ArticleState): boolean {
   return state === 'error' || state === 'review' || state === 'revised'
+}
+
+/**
+ * The line under the count of articles in the overview (`11a`), _Schváleno_ alone counting
+ * (`01a`): an article _Upraveno po schválení_ waits on the editors, and a row that said
+ * _všechny schválené_ beside it in _Čeká na vás_ would contradict itself. `null` is an issue
+ * without an article. None approved still says `0 schválených`, so an active row never looks
+ * like a closed one; a lone approved article says `schválený` without repeating the `1` above.
+ */
+export function approvedArticlesLine(count: ApprovedCount): string | null {
+  if (count.total === 0) return null
+  if (count.approved === count.total) return count.total === 1 ? 'schválený' : 'všechny schválené'
+  return `${count.approved} ${approvedArticleWord(count.approved)}`
+}
+
+/** `1 schválený`, `2 schválené`, `5 schválených`. */
+function approvedArticleWord(count: number): string {
+  if (count === 1) return 'schválený'
+  return count >= 2 && count <= 4 ? 'schválené' : 'schválených'
 }
 
 /**

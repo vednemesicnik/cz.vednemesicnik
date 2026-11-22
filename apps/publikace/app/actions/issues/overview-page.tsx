@@ -1,6 +1,8 @@
 import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
 
+import { approvedArticlesLine } from '../../domain/article.ts'
+import { approvedArtworksLine } from '../../domain/artwork.ts'
 import { disconnectedBanner } from '../../domain/drive-account.ts'
 import {
   CREATE_UNAVAILABLE_TEXT,
@@ -11,6 +13,7 @@ import {
   emptyFilterTitle,
   FILTER_LABELS,
   folderUrl,
+  type ApprovedCount,
   type Issue,
   type IssueFilter,
   isInFilter,
@@ -68,10 +71,10 @@ export type NewIssueDialog =
   | { issue: Issue; kind: 'unfinished' }
 
 export type OverviewPageProps = {
-  /** Created articles by issue ID; an issue missing here has none. */
-  articleCounts: ReadonlyMap<number, number>
-  /** The sent artworks by issue ID. */
-  artworkCounts: ReadonlyMap<number, number>
+  /** Created articles by issue ID, and how many are approved; an issue missing here has none. */
+  articleCounts: ReadonlyMap<number, ApprovedCount>
+  /** The sent artworks by issue ID, and how many are approved. */
+  artworkCounts: ReadonlyMap<number, ApprovedCount>
   /** _Nové vydání_ (`11d`), or closing and reopening asked from a row (`12g`, `12h`). */
   dialog?: NewIssueDialog | IssueStepDialogView
   driveAccount: { expectedEmail: string; status: DriveStatus }
@@ -94,6 +97,16 @@ const desktopOnlyStyle = css({ [PHONE]: { display: 'none' } })
 const phoneOnlyStyle = css({ display: 'none', [PHONE]: { display: 'block' } })
 
 const quietStyle = css({ color: 'var(--text-tertiary)' })
+
+const NO_COUNT: ApprovedCount = { approved: 0, total: 0 }
+
+/* A count with the line of what is approved under it (`11a`). */
+const countCellStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  '& small': { color: 'var(--text-secondary)', fontSize: '12px' },
+})
 
 /* Holds the hidden name of the actions column: an absolute `.vdm-sr-only` with no positioned
    ancestor escapes the table that scrolls sideways on a phone and widens the whole page. */
@@ -180,8 +193,8 @@ const waitingCountStyle = css({ color: 'var(--state-attention-text)', fontWeight
 /** One row of `11a`; the unfinished one carries _Dokončit vydání_ where the counts would be. */
 function IssueRow(
   handle: Handle<{
-    articles: number
-    artworks: number
+    articles: ApprovedCount
+    artworks: ApprovedCount
     filter: IssueFilter
     isLast: boolean
     issue: Issue
@@ -204,12 +217,15 @@ function IssueRow(
           </span>
         ) : (
           <>
-            <span class="vdm-num" role="cell">
-              {articles}
-            </span>
-            <span class="vdm-num" role="cell">
-              {artworks}
-            </span>
+            {/* A closed issue shows the counts alone (`11a`). */}
+            <CountCell
+              count={articles.total}
+              line={state === 'active' ? approvedArticlesLine(articles) : null}
+            />
+            <CountCell
+              count={artworks.total}
+              line={state === 'active' ? approvedArtworksLine(artworks) : null}
+            />
             {/* What waits on the editors: the amber and pink tags and the missing folders (`01d`,
                 `12j`). A closed issue shows none, whatever is left in it: the jobs no longer work
                 on it (`11a`). */}
@@ -232,12 +248,38 @@ function IssueRow(
   }
 }
 
+function CountCell(handle: Handle<{ count: number; line: string | null }>) {
+  return () => {
+    let { count, line } = handle.props
+    if (line === null) {
+      return (
+        <span class="vdm-num" role="cell">
+          {count}
+        </span>
+      )
+    }
+    return (
+      <span mix={countCellStyle} role="cell">
+        <span class="vdm-num">{count}</span>
+        <small>{line}</small>
+      </span>
+    )
+  }
+}
+
 function PhoneRow(
-  handle: Handle<{ articles: number; artworks: number; filter: IssueFilter; issue: Issue }>,
+  handle: Handle<{
+    articles: ApprovedCount
+    artworks: ApprovedCount
+    filter: IssueFilter
+    issue: Issue
+    waiting: number
+  }>,
 ) {
   return () => {
-    let { articles, artworks, filter, issue } = handle.props
+    let { articles, artworks, filter, issue, waiting } = handle.props
     let state = issueState(issue)
+    let line = phoneRowLine(issue, { articles, artworks, waiting })
 
     return (
       <div mix={phoneRowStyle}>
@@ -247,7 +289,17 @@ function PhoneRow(
           </a>
           <IssueStateTag state={state} />
         </div>
-        <span mix={phoneLineStyle}>{phoneRowLine(issue, articles, artworks)}</span>
+        <span mix={phoneLineStyle}>
+          {line.text}
+          {line.tail === null ? null : (
+            <>
+              {' · '}
+              <span mix={line.tail.isWaiting ? waitingCountStyle : undefined}>
+                {line.tail.text}
+              </span>
+            </>
+          )}
+        </span>
         {state === 'unfinished' ? (
           <div mix={phoneActionStyle}>
             <FinishIssueForm filter={filter} issue={issue} placement="row" returnTo="overview" />
@@ -260,8 +312,8 @@ function PhoneRow(
 
 function IssueList(
   handle: Handle<{
-    articleCounts: ReadonlyMap<number, number>
-    artworkCounts: ReadonlyMap<number, number>
+    articleCounts: ReadonlyMap<number, ApprovedCount>
+    artworkCounts: ReadonlyMap<number, ApprovedCount>
     filter: IssueFilter
     issues: readonly Issue[]
     waitingCounts: ReadonlyMap<number, number>
@@ -313,8 +365,8 @@ function IssueList(
                 </TableRow>
                 {shown.map((issue, index) => (
                   <IssueRow
-                    articles={articleCounts.get(issue.id) ?? 0}
-                    artworks={artworkCounts.get(issue.id) ?? 0}
+                    articles={articleCounts.get(issue.id) ?? NO_COUNT}
+                    artworks={artworkCounts.get(issue.id) ?? NO_COUNT}
                     filter={filter}
                     isLast={index === shown.length - 1}
                     issue={issue}
@@ -326,10 +378,11 @@ function IssueList(
             <div mix={phoneOnlyStyle}>
               {shown.map((issue) => (
                 <PhoneRow
-                  articles={articleCounts.get(issue.id) ?? 0}
-                  artworks={artworkCounts.get(issue.id) ?? 0}
+                  articles={articleCounts.get(issue.id) ?? NO_COUNT}
+                  artworks={artworkCounts.get(issue.id) ?? NO_COUNT}
                   filter={filter}
                   issue={issue}
+                  waiting={waitingCounts.get(issue.id) ?? 0}
                 />
               ))}
             </div>

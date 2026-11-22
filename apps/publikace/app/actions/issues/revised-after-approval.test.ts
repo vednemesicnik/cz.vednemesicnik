@@ -293,15 +293,21 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
     }
   })
 
-  it('counts in Čeká na vás on the overview once the detail found the edit, without Drive, and not once closed', async () => {
+  it('counts in Čeká na vás and leaves the approved on the overview once the detail found the edit, without Drive, and not once closed', async () => {
     let { app, docId, editor, issueId } = await approved()
     try {
       app.drive.reviseDoc(docId, EDITED_AT)
-      assert.match(textOf(await (await editor.get('/')).text()), /VDM_2026_7 .* Aktivní 1 0 — /)
+      assert.match(
+        textOf(await (await editor.get('/')).text()),
+        /VDM_2026_7 .* Aktivní 1 schválený 0 — /,
+      )
 
       await editor.get(DETAIL)
       let calls = revisionCalls(app)
-      assert.match(textOf(await (await editor.get('/')).text()), /VDM_2026_7 .* Aktivní 1 0 1 /)
+      assert.match(
+        textOf(await (await editor.get('/')).text()),
+        /VDM_2026_7 .* Aktivní 1 0 schválených 0 1 /,
+      )
       assert.equal(revisionCalls(app), calls)
 
       await app.database.exec(
