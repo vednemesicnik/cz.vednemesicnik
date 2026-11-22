@@ -36,11 +36,7 @@ function EditorsOnlyPage(handle: Handle<EditorsOnlyPageProps>) {
         <Layout active={null} driveAccount={driveAccount} person={person} title="" toasts={toasts}>
           <EmptyState>
             <EmptyStateTitle>{EDITORS_ONLY_TITLE}</EmptyStateTitle>
-            <a
-              class="vdm-btn vdm-btn--primary vdm-btn--sm"
-              href={routes.proofreading.index.href()}
-              style={{ marginTop: '4px' }}
-            >
+            <a class="vdm-btn vdm-btn--primary vdm-btn--sm" href={routes.proofreading.index.href()}>
               {TO_PROOFREADING_LABEL}
             </a>
           </EmptyState>

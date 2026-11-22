@@ -282,7 +282,15 @@ function Part(handle: Handle<{ csrfToken: string; part: ProofreadingPartView }>)
           {part.title}
           {part.cards.length === 0 ? null : <span mix={countStyle}>{part.cards.length}</span>}
         </h2>
-        {part.note === null ? null : <p mix={noteStyle}>{part.note}</p>}
+        {/* Only _Čeká na korekturu_ stands empty, and its sentence is then the part's empty
+            state (`15e`); _Ještě se píšou_'s sentence is a note over its cards. */}
+        {part.note === null ? null : part.cards.length === 0 ? (
+          <EmptyState>
+            <EmptyStateText>{part.note}</EmptyStateText>
+          </EmptyState>
+        ) : (
+          <p mix={noteStyle}>{part.note}</p>
+        )}
         {part.cards.length === 0 ? null : (
           <ol class="vdm-queue">
             {part.cards.map((card) => (

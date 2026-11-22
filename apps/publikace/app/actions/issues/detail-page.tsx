@@ -64,6 +64,8 @@ import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
 import { Dialog } from '../../ui/dialog/component.tsx'
 import { DialogTitle } from '../../ui/dialog-title/component.tsx'
+import { EmptyState } from '../../ui/empty-state/component.tsx'
+import { EmptyStateText } from '../../ui/empty-state-text/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
 import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
@@ -783,7 +785,9 @@ function Articles(
           </Callout>
         )}
         {articles.length === 0 ? (
-          <p mix={placeholderStyle}>{ARTICLES_EMPTY_TEXT}</p>
+          <EmptyState>
+            <EmptyStateText>{ARTICLES_EMPTY_TEXT}</EmptyStateText>
+          </EmptyState>
         ) : (
           <div aria-label="Články" class="vdm-table" role="table">
             <TableRow columns={ARTICLE_COLUMNS} isHead>
@@ -890,7 +894,9 @@ function Artworks(handle: Handle<{ artworks: ArtworksView; csrfToken: string }>)
           )}
         </div>
         {total === 0 ? (
-          <p mix={placeholderStyle}>{ARTWORKS_EMPTY_TEXT}</p>
+          <EmptyState>
+            <EmptyStateText>{ARTWORKS_EMPTY_TEXT}</EmptyStateText>
+          </EmptyState>
         ) : artworks.rows.length === 0 ? null : (
           <div aria-label={ARTWORKS_SECTION_TITLE} class="vdm-table" role="table">
             <TableRow columns={ARTWORK_COLUMNS} isHead>

@@ -1,10 +1,6 @@
 import type { Handle, RemixNode } from 'remix/component'
 
-/** The sentence under the title of an `EmptyState`, full width as `11b` draws it. */
+/** The sentence of an `EmptyState`, under its title or alone in an empty section. */
 export function EmptyStateText(handle: Handle<{ children?: RemixNode }>) {
-  return () => (
-    <p class="vdm-empty__text" style={{ margin: 0, maxWidth: 'none' }}>
-      {handle.props.children}
-    </p>
-  )
+  return () => <p class="vdm-empty__text">{handle.props.children}</p>
 }

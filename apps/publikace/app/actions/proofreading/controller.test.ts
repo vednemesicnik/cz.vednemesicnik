@@ -187,6 +187,15 @@ describe('the page Korektura (15a, 15b, 15e)', () => {
     let { app, articleId, editor, proofreader } = await newsroom()
     try {
       let articles = createArticleStore(app.database)
+      await articles.takeProofreading(articleId, LENKA, Temporal.Now.instant(), 'writing')
+      let nothingWaiting = await (await proofreader.get(PAGE)).text()
+      assert.deepEqual(partsOf(nothingWaiting), ['Moje korektury 1', 'Čeká na korekturu'])
+      assert.ok(
+        nothingWaiting.includes(
+          '<div class="vdm-empty"><p class="vdm-empty__text">Žádný článek teď nečeká na korekturu.</p></div>',
+        ),
+      )
+
       await app.database.exec(sql`DELETE FROM article_authors`)
       await app.database.exec(sql`DELETE FROM articles`)
       let empty = textOf(await (await proofreader.get(PAGE)).text())
