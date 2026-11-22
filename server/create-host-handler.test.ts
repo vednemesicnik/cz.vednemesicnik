@@ -6,7 +6,8 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 import { createHostHandler } from './create-host-handler.ts'
 
-const ORIGIN = 'http://vednemesicnik.test'
+const ORIGIN = 'http://web.localhost'
+const UNKNOWN_ORIGIN = 'http://unknown.test'
 const LARGE_SCRIPT = `export const text = '${'a'.repeat(4096)}'\n`
 
 let clientDirectory: string
@@ -69,6 +70,27 @@ describe('createHostHandler', () => {
     expect(webHandler).toHaveBeenCalledOnce()
     expect(log).toHaveBeenCalledOnce()
     expect(log.mock.lastCall?.[0]).toMatch(/^GET \/articles 200 /)
+  })
+
+  test('answers 404 to an unknown host, files included', async () => {
+    const { handler, webHandler } = setUp()
+
+    const page = await handler(new Request(`${UNKNOWN_ORIGIN}/articles`))
+    const file = await handler(
+      new Request(`${UNKNOWN_ORIGIN}/assets/entry-abc123.js`),
+    )
+
+    expect(page.status).toBe(404)
+    expect(file.status).toBe(404)
+    expect(webHandler).not.toHaveBeenCalled()
+  })
+
+  test('hands /health to the web app on any host', async () => {
+    const { handler, webHandler } = setUp()
+
+    await handler(new Request(`${UNKNOWN_ORIGIN}/health`))
+
+    expect(webHandler).toHaveBeenCalledOnce()
   })
 
   test('keeps the query, where links carry their token, out of the log', async () => {

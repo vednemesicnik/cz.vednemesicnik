@@ -6,6 +6,7 @@ import { createRouter } from 'remix/router'
 
 import { addDefaultCharset } from './add-default-charset.ts'
 import type { FetchHandler } from './create-web-handler.ts'
+import { refuseUnknownHost } from './refuse-unknown-host.ts'
 
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable'
 const REVALIDATE_CACHE_CONTROL = 'public, max-age=0'
@@ -22,7 +23,7 @@ type HostHandlerOptions = {
 /**
  * Creates the host's request handler: what `react-router-serve` did in front of the web app.
  *
- * Fingerprinted files under `/assets` are cached for a year, the rest of the client build
+ * A host the web doesn't answer gets 404 before anything else. Fingerprinted files under `/assets` are cached for a year, the rest of the client build
  * revalidates, everything compressible is compressed, and only requests that reach the web
  * app are logged, as morgan logged them, though without the query.
  *
@@ -45,6 +46,7 @@ export function createHostHandler({
       compression({
         brotli: { params: { [constants.BROTLI_PARAM_QUALITY]: 4 } },
       }),
+      refuseUnknownHost,
       staticFiles(clientDirectory, {
         cacheControl: IMMUTABLE_CACHE_CONTROL,
         filter: isFingerprintedAsset,
