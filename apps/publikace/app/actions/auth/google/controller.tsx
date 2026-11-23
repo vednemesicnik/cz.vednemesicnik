@@ -9,7 +9,7 @@ import { createController } from 'remix/router'
 import { Session } from 'remix/session'
 
 import { type VerifiedProfile, decideAccess } from '../../../auth/access.server.ts'
-import { appOrigin, googleCredentials } from '../../../auth/environment.server.ts'
+import type { GoogleCredentials } from '../../../auth/environment.server.ts'
 import {
   EDITOR_SESSION_KEY,
   REFUSED_EMAIL_SESSION_KEY,
@@ -24,33 +24,36 @@ import { routes } from '../../../routes.ts'
 import type { SignInError } from '../sign-in-page.tsx'
 import { localPath } from '../controller.tsx'
 
-let cachedProvider: ReturnType<typeof createGoogleAuthProvider> | null | undefined
+/** The OAuth client and the origin Google sends the browser back to. */
+export type GoogleSignIn = { credentials: GoogleCredentials | null; origin: string }
 
 /**
  * The Google OAuth client, built on first use, or `null` outside production when no client is
  * configured — then every attempt ends as `oauth`.
  */
-function provider(domain: string) {
-  if (cachedProvider === undefined) {
-    let credentials = googleCredentials()
+function createProvider({ credentials, origin }: GoogleSignIn) {
+  let cached: ReturnType<typeof createGoogleAuthProvider> | null | undefined
 
-    cachedProvider =
-      credentials === null
-        ? null
-        : createGoogleAuthProvider({
-            authorizationParams: {
-              /* A hint to Google's account chooser, not a check: a personal account can still
-                 come back, which is why `decideAccess` looks at the domain again. */
-              hd: domain,
-              prompt: 'select_account',
-            },
-            clientId: credentials.clientId,
-            clientSecret: credentials.clientSecret,
-            redirectUri: new URL(routes.auth.google.callback.href(), appOrigin()),
-          })
+  return (domain: string) => {
+    if (cached === undefined) {
+      cached =
+        credentials === null
+          ? null
+          : createGoogleAuthProvider({
+              authorizationParams: {
+                /* A hint to Google's account chooser, not a check: a personal account can still
+                   come back, which is why `decideAccess` looks at the domain again. */
+                hd: domain,
+                prompt: 'select_account',
+              },
+              clientId: credentials.clientId,
+              clientSecret: credentials.clientSecret,
+              redirectUri: new URL(routes.auth.google.callback.href(), origin),
+            })
+    }
+
+    return cached
   }
-
-  return cachedProvider
 }
 
 function refuse(error: SignInError, redirectTo: string | undefined): Response {
@@ -102,7 +105,12 @@ export async function completeGoogleSignIn(
   return response
 }
 
-export default function createGoogleController(signedInUntil: SignedInUntilCookie) {
+export default function createGoogleController(
+  signedInUntil: SignedInUntilCookie,
+  signIn: GoogleSignIn,
+) {
+  let provider = createProvider(signIn)
+
   return createController(routes.auth.google, {
     actions: {
       async start(context) {

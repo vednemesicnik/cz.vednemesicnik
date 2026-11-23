@@ -146,7 +146,7 @@ describe('connecting publikace.app@, the routes', () => {
   })
 
   it('without a Google client, comes back to the card with try again, once', async () => {
-    let app = await createTestApp()
+    let app = await createTestApp({ googleCredentials: null })
     try {
       await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
@@ -168,8 +168,6 @@ describe('connecting publikace.app@, the routes', () => {
 describe('connecting publikace.app@, the way to Google', () => {
   it('asks for Drive, offline, with consent and publikace.app@ offered first', async () => {
     let app = await createTestApp()
-    process.env.GOOGLE_CLIENT_ID = 'test-client'
-    process.env.GOOGLE_CLIENT_SECRET = 'test-secret'
     try {
       await seedAdmin(app, 'marie@vednemesicnik.test')
       let browser = app.browser()
@@ -188,8 +186,6 @@ describe('connecting publikace.app@, the way to Google', () => {
         'http://localhost:44100/settings/account/callback',
       )
     } finally {
-      delete process.env.GOOGLE_CLIENT_ID
-      delete process.env.GOOGLE_CLIENT_SECRET
       await app.close()
     }
   })

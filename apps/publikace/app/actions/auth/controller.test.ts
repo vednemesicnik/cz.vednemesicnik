@@ -4,7 +4,7 @@ import { describe, it } from 'remix/test'
 
 import { createSignedInUntilCookie } from '../../auth/session.server.ts'
 import { stamp } from '../../domain/time.ts'
-import { createTestApp, seedAdmin } from '../../test-app.server.ts'
+import { createTestApp, seedAdmin, TEST_ENVIRONMENT } from '../../test-app.server.ts'
 
 function locationOf(response: Response): URL {
   return new URL(response.headers.get('Location') ?? '', 'http://localhost')
@@ -104,8 +104,6 @@ describe('sign-in page', () => {
 
   it('starts Google with the account chooser and the domain as a hint', async () => {
     let app = await createTestApp()
-    process.env.GOOGLE_CLIENT_ID = 'test-client'
-    process.env.GOOGLE_CLIENT_SECRET = 'test-secret'
     try {
       let response = await app.browser().get('/sign-in/google?redirectTo=%2Fsettings')
       let location = locationOf(response)
@@ -119,8 +117,6 @@ describe('sign-in page', () => {
         'http://localhost:44100/sign-in/google/callback',
       )
     } finally {
-      delete process.env.GOOGLE_CLIENT_ID
-      delete process.env.GOOGLE_CLIENT_SECRET
       await app.close()
     }
   })
@@ -130,7 +126,7 @@ describe('expiry', () => {
   it('tells an expired sign-in from a first visit and from one ended early', async () => {
     let app = await createTestApp()
     try {
-      let marker = createSignedInUntilCookie()
+      let marker = createSignedInUntilCookie(TEST_ENVIRONMENT)
       let browser = app.browser()
 
       browser.setCookie(
@@ -163,7 +159,7 @@ describe('expiry', () => {
       // The page keeps its token, but the session behind it, token and all, has expired.
       await app.database.exec(sql`UPDATE sessions SET expires_at = ${'2000-01-01T00:00:00.000Z'}`)
       browser.setCookie(
-        await createSignedInUntilCookie().serialize(
+        await createSignedInUntilCookie(TEST_ENVIRONMENT).serialize(
           stamp(Temporal.Now.instant().subtract({ hours: 1 })),
         ),
       )

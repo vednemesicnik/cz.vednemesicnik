@@ -1,7 +1,7 @@
 import { sql } from 'remix/data-table'
 import { html, type SafeHtml } from 'remix/html-template'
 
-import { appOrigin } from './auth/environment.server.ts'
+import { appOrigin, type Environment } from './auth/environment.server.ts'
 import { createSessionCookie } from './auth/session.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
@@ -31,7 +31,7 @@ import {
  * The app on the fake Drive, the fake Mailer and a `:memory:` database, for trying the pages in a
  * browser (`pnpm app:fake`). It is the suite's harness served over HTTP, with a page of controls
  * under `/_fake` that exist only here: `createAppRouter()` knows nothing of them, and nothing in
- * this file is reachable from `server.ts`.
+ * this file is reachable from `createPublikace`.
  *
  * The seed goes through the app's own forms, as the link tests do, so the issue's folders exist
  * on the fake Drive and the article page finds them.
@@ -116,14 +116,14 @@ function button(path: string, label: string, fields: Record<string, string> = {}
   </form>`
 }
 
-export async function createFakeApp(): Promise<FakeApp> {
-  let app = await createTestApp()
+export async function createFakeApp(environment: Environment): Promise<FakeApp> {
+  let app = await createTestApp({ environment })
   let issues = createIssueStore(app.database)
   let links = createLinkStore(app.database)
   let articles = createArticleStore(app.database)
   let batchStore = createArtworkStore(app.database)
-  let origin = appOrigin()
-  let sessionCookieName = createSessionCookie().name
+  let origin = appOrigin(environment)
+  let sessionCookieName = createSessionCookie(environment).name
 
   /* What the controls set, shown on their page: the fake Drive keeps it but does not tell. */
   let failingSteps = new Set<FakeStep>()

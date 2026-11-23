@@ -163,8 +163,8 @@ export async function drainRecordQueue(queue: RecordQueue): Promise<void> {
 }
 
 /**
- * Runs a pass now and every `intervalMs` after, without keeping the process alive. `server.ts`
- * starts it once the port is open; the suite calls `drainRecordQueue` itself. `stop` waits for
+ * Runs a pass now and every `intervalMs` after, without keeping the process alive.
+ * `createPublikace` starts it and its `close()` stops it; the suite calls `drainRecordQueue` itself. `stop` waits for
  * the pass under way, so the database it writes to is closed only after it.
  */
 export function startRecordQueue(

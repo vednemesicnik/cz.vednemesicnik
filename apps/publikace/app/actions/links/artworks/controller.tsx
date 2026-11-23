@@ -1,6 +1,6 @@
 import { createController } from 'remix/router'
 
-import { shareImageHref } from '../../../assets.ts'
+import { requestAssets } from '../../../assets.ts'
 import type { ArtworkRow } from '../../../data/artworks.server.ts'
 import {
   ARTWORKS_LINK_GONE_NOTE,
@@ -88,7 +88,7 @@ function articlesOf(context: LinkContext): ArticlesContext {
 
 function previewOf(context: LinkContext): LinkPreview {
   return {
-    imageUrl: absoluteUrl(articlesOf(context).origin, shareImageHref),
+    imageUrl: absoluteUrl(articlesOf(context).origin, requestAssets().shareImageHref),
     title: PREVIEW_GENERIC_TITLE,
   }
 }

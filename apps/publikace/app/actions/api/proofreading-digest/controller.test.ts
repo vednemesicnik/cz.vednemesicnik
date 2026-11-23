@@ -12,6 +12,7 @@ import {
   JOB_TOKEN,
   seedArticle,
   seedIssue,
+  TEST_ENVIRONMENT,
   type TestApp,
   UNREACHABLE_IDENTITY_TOKEN,
 } from '../../../test-app.server.ts'
@@ -24,7 +25,11 @@ function call(app: TestApp, body: unknown, token: string | null = JOB_TOKEN): Pr
   let headers = new Headers({ 'Content-Type': 'application/json' })
   if (token !== null) headers.set('Authorization', `Bearer ${token}`)
   return app.fetch(
-    new Request(new URL(RUN, appOrigin()), { body: JSON.stringify(body), headers, method: 'POST' }),
+    new Request(new URL(RUN, appOrigin(TEST_ENVIRONMENT)), {
+      body: JSON.stringify(body),
+      headers,
+      method: 'POST',
+    }),
   )
 }
 

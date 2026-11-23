@@ -64,8 +64,8 @@ pnpm design:screen    # one screen out of a saved design file — docs/design-pr
 **Node 26 or newer is required**, as in billing: the app uses `Temporal`, `node:sqlite` and
 the runtime's own TypeScript stripping (`node scripts/….ts` runs without a build step).
 
-**The database is `DATABASE_PATH`, `./db/publikace.sqlite` by default.** `server.ts` applies
-pending migrations from `db/migrations` before it listens, and `pnpm db:*` reads the same
+**The database is `DATABASE_PATH`, `./db/publikace.sqlite` by default.** `createPublikace`
+applies pending migrations from `db/migrations` before its first request, and `pnpm db:*` reads the same
 directory through `remix db`, configured in `remix.json`. A migration that has run is never
 edited; the journal keeps its checksum and both refuse a database whose history changed.
 [docs/migrations.md](docs/migrations.md) has the layout, the commands and how the SQL is
@@ -283,6 +283,13 @@ What protects a link's form is the key in the address, the form's one-time key a
 thirty articles an hour. What protects the API is the job's Google identity token and the job
 account it names. A page under `/l/` or `/api/` that needs a session is a sign that it belongs
 behind `requireEditor()` or `requireProofreading()` instead.
+
+**The app starts in `createPublikace(environment)`, and nothing under `app/` reads `process.env`.**
+`app/publikace.server.ts` checks the configuration before it opens anything, so a misconfiguration
+rejects with nothing left running, and it never listens, exits or handles a signal: a host that
+serves other sites beside it does that, and `server.ts` is that host for this repository alone. A
+variable is read in `app/auth/environment.server.ts` from the record the app was handed, so the host
+can pass its own names; one that production requires is added to `checkConfiguration` too.
 
 **`css()` loses to a `vdm-*` class on the same element.** The mixes sit in the cascade layer
 `rmx`, and the design system's classes are unlayered, so on one element the class wins whatever

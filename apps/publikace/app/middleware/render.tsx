@@ -1,6 +1,6 @@
 import { render as renderComponent } from 'remix/middleware/render'
 
-import { assetServer } from '../assets.ts'
+import type { Assets } from '../assets.ts'
 
 /**
  * `context.render` for every route: a Remix component answered as an HTML document.
@@ -9,6 +9,6 @@ import { assetServer } from '../assets.ts'
  * entry's `import.meta.url` into a browser module URL and writes the graph behind it into the
  * head as `modulepreload`, so the browser asks for the graph in one fan-out.
  */
-export function render() {
-  return renderComponent({ assets: assetServer })
+export function render(assets: Assets) {
+  return renderComponent({ assets: assets.server })
 }

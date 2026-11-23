@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import type { Database } from 'remix/data-table'
 import { asyncContext } from 'remix/middleware/async-context'
 import { compression } from 'remix/middleware/compression'
@@ -24,12 +25,14 @@ import createReviewController from './actions/review/controller.tsx'
 import createDriveAccountController from './actions/settings/account/controller.tsx'
 import createSettingsController from './actions/settings/controller.tsx'
 import createJobsController from './actions/settings/jobs/controller.tsx'
+import type { Assets } from './assets.ts'
 import {
   appOrigin,
   articleTemplateDocumentId,
   authorizedDomain,
   driveAccountEmail,
   driveTokenKey,
+  type Environment,
   googleCredentials,
   type GoogleCredentials,
   groupMembershipEndpoint,
@@ -92,9 +95,12 @@ import { logRequests } from './middleware/request-log.server.ts'
 import { takeToasts } from './middleware/toasts.server.ts'
 import { routes } from './routes.ts'
 
+/* `favicon.svg` and the like, from the repository whichever directory the process started in. */
+const PUBLIC_DIR = fileURLToPath(new URL('../public', import.meta.url))
+
 /**
  * The context every controller sees. Exported for the type alone: building a router opens
- * nothing by itself, but `server.ts` and the tests are the ones that decide on which database.
+ * nothing by itself, but `createPublikace` and the tests are the ones that decide on which database.
  *
  * Under `/l/` and `/api/` the session, the sign-in and the toasts are not there, though the type
  * says they are: `skipWithoutSession()` takes their middlewares out at runtime. A controller for
@@ -124,6 +130,8 @@ declare module 'remix' {
 }
 
 export type AppDependencies = {
+  /** The asset server and the addresses every page links to. */
+  assets: Assets
   /** Asks about a group. Defaults to the configured service. */
   checkMembership?: MembershipCheck
   database: Database
@@ -133,6 +141,8 @@ export type AppDependencies = {
   driveAccountEmail?: string
   /** Encrypts the Drive token. Defaults to `DRIVE_TOKEN_KEY`. */
   driveTokenKey?: Buffer
+  /** The variables the app was started with; every default below is read from it. */
+  environment: Environment
   /** Every call to Google's token endpoint and to Drive. Defaults to the global `fetch`. */
   fetch?: typeof globalThis.fetch
   /** The OAuth client the Drive token is exchanged with. Defaults to `GOOGLE_CLIENT_ID`/`_SECRET`. */
@@ -153,24 +163,27 @@ export type AppDependencies = {
   verifyJobToken?: IdentityTokenVerifier
 }
 
-function defaultMailer(): Mailer {
-  let endpoint = mailSendEndpoint()
+/** What a setup reads; the assets serve pages only. */
+export type SetupDependencies = Omit<AppDependencies, 'assets'>
+
+function defaultMailer(environment: Environment): Mailer {
+  let endpoint = mailSendEndpoint(environment)
   return endpoint === null ? mailerUnavailable : createMailer(endpoint)
 }
 
 /**
- * How an article is made, on the app's database. `server.ts` builds one too, for the cleanup
- * it runs before listening.
+ * How an article is made, on the app's database. `createPublikace` builds one too, for the
+ * cleanup it runs before the first request.
  */
-export function createArticleSetup(dependencies: AppDependencies): ArticleSetup {
+export function createArticleSetup(dependencies: SetupDependencies): ArticleSetup {
   let fetch = dependencies.fetch ?? globalThis.fetch
   let credentials =
     dependencies.googleCredentials === undefined
-      ? googleCredentials()
+      ? googleCredentials(dependencies.environment)
       : dependencies.googleCredentials
   let driveAccountStore = createDriveAccountStore(
     dependencies.database,
-    dependencies.driveTokenKey ?? driveTokenKey(),
+    dependencies.driveTokenKey ?? driveTokenKey(dependencies.environment),
   )
   return {
     articles: createArticleStore(dependencies.database),
@@ -179,21 +192,24 @@ export function createArticleSetup(dependencies: AppDependencies): ArticleSetup 
     issues: createIssueStore(dependencies.database),
     links: createLinkStore(dependencies.database),
     mailLog: createPublicMailLog(dependencies.database),
-    mailPerDay: dependencies.mailPerDay ?? publicMailPerDay(DEFAULT_PUBLIC_MAIL_PER_DAY),
-    mailer: dependencies.mailer ?? defaultMailer(),
+    mailPerDay:
+      dependencies.mailPerDay ??
+      publicMailPerDay(dependencies.environment, DEFAULT_PUBLIC_MAIL_PER_DAY),
+    mailer: dependencies.mailer ?? defaultMailer(dependencies.environment),
     now,
-    origin: appOrigin(),
-    templateId: dependencies.templateId ?? articleTemplateDocumentId(),
+    origin: appOrigin(dependencies.environment),
+    templateId: dependencies.templateId ?? articleTemplateDocumentId(dependencies.environment),
     token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
   }
 }
 
 /**
  * How artworks are uploaded and sent, on the app's database, with the same Drive account and
- * Mailer as an article. `server.ts` builds one too, for the cleanup it runs before listening.
+ * Mailer as an article. `createPublikace` builds one too, for the cleanup it runs before the
+ * first request.
  */
 export function createArtworksSetup(
-  dependencies: AppDependencies,
+  dependencies: SetupDependencies,
   articleSetup: ArticleSetup = createArticleSetup(dependencies),
 ): ArtworksSetup {
   let fetch = dependencies.fetch ?? globalThis.fetch
@@ -214,55 +230,57 @@ export function createArtworksSetup(
 
 /**
  * The record queue on the app's database (#111), under the same Drive account as every other
- * action. `server.ts` starts it once the port is open.
+ * action. `createPublikace` starts it and `close()` stops it.
  */
 export function createRecordQueue(
-  dependencies: AppDependencies,
+  dependencies: SetupDependencies,
   articleSetup: ArticleSetup = createArticleSetup(dependencies),
 ): RecordQueue {
   let fetch = dependencies.fetch ?? globalThis.fetch
-  let editor = dependencies.driveAccountEmail ?? driveAccountEmail()
+  let editor = dependencies.driveAccountEmail ?? driveAccountEmail(dependencies.environment)
   return {
     articles: articleSetup.articles,
     artworks: createArtworkStore(dependencies.database),
     issues: articleSetup.issues,
     marks: createRecordStore(dependencies.database),
     now,
-    origin: appOrigin(),
-    registryId: dependencies.registrySpreadsheetId ?? registrySpreadsheetId(),
+    origin: appOrigin(dependencies.environment),
+    registryId:
+      dependencies.registrySpreadsheetId ?? registrySpreadsheetId(dependencies.environment),
     sheets: (accessToken) => createRecordSheets({ accessToken, editor, fetch }),
     token: articleSetup.token,
   }
 }
 
-function defaultMembershipCheck(): MembershipCheck {
-  let endpoint = groupMembershipEndpoint()
+function defaultMembershipCheck(environment: Environment): MembershipCheck {
+  let endpoint = groupMembershipEndpoint(environment)
   return endpoint === null ? membershipUnavailable : createMembershipCheck(endpoint)
 }
 
 /**
- * Builds the app on one database. `server.ts` hands it the file on the volume; a test hands it
+ * Builds the app on one database. `createPublikace` hands it the file on the volume; a test hands it
  * `:memory:` and a membership check of its own.
  */
 export function createAppRouter(dependencies: AppDependencies) {
-  let sessionCookie = createSessionCookie()
-  let signedInUntil = createSignedInUntilCookie()
+  let sessionCookie = createSessionCookie(dependencies.environment)
+  let signedInUntil = createSignedInUntilCookie(dependencies.environment)
   let directory = createAccessDirectory(dependencies.database)
   let driveAccountStore = createDriveAccountStore(
     dependencies.database,
-    dependencies.driveTokenKey ?? driveTokenKey(),
+    dependencies.driveTokenKey ?? driveTokenKey(dependencies.environment),
   )
   let fetch = dependencies.fetch ?? globalThis.fetch
   let credentials =
     dependencies.googleCredentials === undefined
-      ? googleCredentials()
+      ? googleCredentials(dependencies.environment)
       : dependencies.googleCredentials
   let issueStore = createIssueStore(dependencies.database)
   /* Read once, so the dialog and Nastavení follow the same Registr (`11d`, `14j`). */
-  let registryId = dependencies.registrySpreadsheetId ?? registrySpreadsheetId()
+  let registryId =
+    dependencies.registrySpreadsheetId ?? registrySpreadsheetId(dependencies.environment)
   let issueSetup: IssueSetup = {
     folders: (accessToken) => createDriveFolders({ accessToken, fetch }),
-    issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(),
+    issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(dependencies.environment),
     now,
     store: issueStore,
     token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
@@ -270,7 +288,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   let articleSetup = createArticleSetup(dependencies)
   let artworksSetup = createArtworksSetup(dependencies, articleSetup)
   let checkMembership = rememberGroupNames(
-    dependencies.checkMembership ?? defaultMembershipCheck(),
+    dependencies.checkMembership ?? defaultMembershipCheck(dependencies.environment),
     directory.recordGroupName,
   )
   let jobRuns = createJobRunStore(dependencies.database)
@@ -286,13 +304,14 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `compression()` above the static files, because the stylesheet and the fonts are the
      *     largest things the app sends,
      *   - the fast exits next — `staticFiles()` and `serveAssets()` — so no file request ever
-     *     reaches the session store,
+     *     reaches the session store; `serveAssets()` also leaves the assets in the context,
+     *   - `asyncContext()` above `render()`, so every page drawn, an error page included, reaches
+     *     its stylesheet and script entry, and before `csrf()`, so `<CsrfField />` can reach the
+     *     token while the page is drawn,
      *   - `render()` above everything a controller uses, so every one has `context.render`,
      *   - `formData()` before `csrf()`, which reads the token from the submitted body,
      *   - `session()` before `csrf()`, whose token lives in it, and before `loadAuth()`, which
      *     reads the person out of it,
-     *   - `asyncContext()` before `csrf()`, so `<CsrfField />` can reach the token while the
-     *     page is drawn,
      *   - `loadAccess()` before `loadAuth()`, whose ten-minute check asks the access list, and
      *     `loadDriveAccount()` beside it, for the banner every editor screen draws, and
      *     `loadIssues()` beside that,
@@ -311,20 +330,22 @@ export function createAppRouter(dependencies: AppDependencies) {
       logRequests(),
       publicLinkHeaders(),
       compression(),
-      staticFiles('./public', { index: false }),
-      serveAssets(),
-      render(),
+      staticFiles(PUBLIC_DIR, { index: false }),
+      serveAssets(dependencies.assets),
+      asyncContext(),
+      render(dependencies.assets),
       formData(),
       skipWithoutSession(session(sessionCookie, createSqliteSessionStorage(dependencies.database))),
-      asyncContext(),
       loadAccess({
         checkMembership,
         directory,
-        domain: dependencies.domain ?? authorizedDomain(),
+        domain: dependencies.domain ?? authorizedDomain(dependencies.environment),
         proofreadersAddress: async () => (await proofreaders.find())?.email ?? null,
       }),
       loadDriveAccount({
-        expectedEmail: (dependencies.driveAccountEmail ?? driveAccountEmail()).toLowerCase(),
+        expectedEmail: (
+          dependencies.driveAccountEmail ?? driveAccountEmail(dependencies.environment)
+        ).toLowerCase(),
         store: driveAccountStore,
       }),
       loadIssues({ hasRegistry: registryId !== '', setup: issueSetup, store: issueStore }),
@@ -338,14 +359,14 @@ export function createAppRouter(dependencies: AppDependencies) {
         runs: jobRuns,
         setup: articleSetup,
       }),
-      skipWithoutSession(loadAuth()),
+      skipWithoutSession(loadAuth({ origin: articleSetup.origin })),
       skipWithoutSession(loadReviewCount(artworksSetup.artworks, articleSetup.articles)),
       skipWithoutSession(loadProofreadingCount(articleSetup.articles)),
       skipWithoutSession(loadFailingJobs(jobRuns, now)),
       skipWithoutSession(
         csrf({
           // Behind a TLS-terminating proxy the request's own URL says `http:`.
-          origin: appOrigin(),
+          origin: articleSetup.origin,
           /* A form sent after the session expired has lost its token with it. Somebody no longer
            signed in is sent to sign in again (`10a`, `expired`) rather than shown a bare 403. */
           onError: (_reason, context) =>
@@ -367,43 +388,60 @@ export function createAppRouter(dependencies: AppDependencies) {
     routes.api.artworkReplies,
     createArtworkRepliesController({
       artworks: artworksSetup.artworks,
-      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      jobAccount: (
+        dependencies.jobAccount ?? scriptJobAccount(dependencies.environment)
+      ).toLowerCase(),
       now,
       runs: jobRuns,
       verifyIdentityToken:
         dependencies.verifyJobToken ??
-        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+        createIdentityTokenVerifier({
+          audiences: scriptTokenAudiences(dependencies.environment),
+          fetch,
+        }),
     }),
   )
   router.map(
     routes.api.approvals,
     createApprovalsController({
       articles: articleSetup.articles,
-      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      jobAccount: (
+        dependencies.jobAccount ?? scriptJobAccount(dependencies.environment)
+      ).toLowerCase(),
       now,
       runs: jobRuns,
       verifyIdentityToken:
         dependencies.verifyJobToken ??
-        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+        createIdentityTokenVerifier({
+          audiences: scriptTokenAudiences(dependencies.environment),
+          fetch,
+        }),
     }),
   )
   router.map(
     routes.api.printHandoff,
     createPrintHandoffController({
       handoffs: printHandoffs,
-      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      jobAccount: (
+        dependencies.jobAccount ?? scriptJobAccount(dependencies.environment)
+      ).toLowerCase(),
       now,
       runs: jobRuns,
       verifyIdentityToken:
         dependencies.verifyJobToken ??
-        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+        createIdentityTokenVerifier({
+          audiences: scriptTokenAudiences(dependencies.environment),
+          fetch,
+        }),
     }),
   )
   router.map(
     routes.api.proofreadingDigest,
     createProofreadingDigestController({
       articles: articleSetup.articles,
-      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      jobAccount: (
+        dependencies.jobAccount ?? scriptJobAccount(dependencies.environment)
+      ).toLowerCase(),
       lock: createLock(),
       mailer: articleSetup.mailer,
       now,
@@ -412,7 +450,10 @@ export function createAppRouter(dependencies: AppDependencies) {
       runs: jobRuns,
       verifyIdentityToken:
         dependencies.verifyJobToken ??
-        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+        createIdentityTokenVerifier({
+          audiences: scriptTokenAudiences(dependencies.environment),
+          fetch,
+        }),
     }),
   )
   router.map(
@@ -428,12 +469,15 @@ export function createAppRouter(dependencies: AppDependencies) {
     }),
   )
   router.map(routes.auth, createAuthController(signedInUntil))
-  router.map(routes.auth.google, createGoogleController(signedInUntil))
+  router.map(
+    routes.auth.google,
+    createGoogleController(signedInUntil, { credentials, origin: articleSetup.origin }),
+  )
   router.map(
     routes.settings,
     createSettingsController(signedInUntil, {
       driveFiles: {
-        issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(),
+        issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(dependencies.environment),
         registrySpreadsheetId: registryId,
         templateId: articleSetup.templateId,
       },
@@ -441,7 +485,10 @@ export function createAppRouter(dependencies: AppDependencies) {
       runs: jobRuns,
     }),
   )
-  router.map(routes.settings.account, createDriveAccountController(signedInUntil))
+  router.map(
+    routes.settings.account,
+    createDriveAccountController(signedInUntil, { credentials, origin: articleSetup.origin }),
+  )
   router.map(
     routes.settings.jobs,
     createJobsController(signedInUntil, { proofreaders, runs: jobRuns }),

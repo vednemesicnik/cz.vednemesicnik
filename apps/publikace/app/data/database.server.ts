@@ -4,6 +4,8 @@ import type { Database } from 'remix/data-table'
 import { loadMigrations } from 'remix/data-table/migrations/node'
 import { createSqliteDatabase } from 'remix/data-table/sqlite'
 
+import type { Environment } from '../auth/environment.server.ts'
+
 /**
  * The same default `remix.json` gives `remix db`, so `pnpm db:status` and the running app
  * open one file unless `DATABASE_PATH` says otherwise. On Fly.io it is a path on the volume.
@@ -30,7 +32,7 @@ export type OpenDatabase = {
  *   - `busy_timeout`, because `node:sqlite` defaults to 0 and a write that meets a lock would
  *     fail at once instead of waiting; 5 s is the value the config-backed database uses.
  */
-export function openDatabase(path: string = databasePath()): OpenDatabase {
+export function openDatabase(path: string): OpenDatabase {
   let connection = new DatabaseSync(path)
   connection.exec('PRAGMA journal_mode = WAL')
   connection.exec('PRAGMA foreign_keys = ON')
@@ -51,7 +53,7 @@ export function openDatabase(path: string = databasePath()): OpenDatabase {
 /**
  * Applies every pending migration in `db/migrations`, in id order, in one batch.
  *
- * Called by `server.ts` before it listens, so no request meets an old schema. The run also
+ * Called by `createPublikace` before the first request, so no request meets an old schema. The run also
  * creates the journal, which is what `remix db status` reads.
  */
 export async function migrateDatabase(database: Database): Promise<void> {
@@ -59,20 +61,8 @@ export async function migrateDatabase(database: Database): Promise<void> {
   await database.migrate(migrations)
 }
 
-let shared: OpenDatabase | null = null
-
-/**
- * The one database the process runs on, opened on first use.
- *
- * Memoised rather than module-level, so that importing this file — which a test may do only
- * to reach a function — does not open the database as a side effect.
- */
-export function defaultDatabase(): OpenDatabase {
-  shared ??= openDatabase()
-  return shared
-}
-
-function databasePath(): string {
-  let configured = process.env.DATABASE_PATH
+/** The app's SQLite file, `DATABASE_PATH` or the default. */
+export function databasePath(environment: Environment): string {
+  let configured = environment.DATABASE_PATH
   return configured === undefined || configured === '' ? DEFAULT_DATABASE_PATH : configured
 }

@@ -1,6 +1,6 @@
 import { createCookie } from 'remix/cookie'
 
-import { sessionSecrets } from './environment.server.ts'
+import { type Environment, isProduction, sessionSecrets } from './environment.server.ts'
 
 /**
  * How long a sign-in lasts: seven days from the moment it happened, whatever happens after
@@ -74,24 +74,20 @@ export function storedPerson(decision: {
   }
 }
 
-function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production'
-}
-
 /**
  * The session cookie: only the id travels, the contents are a row in the database.
  *
  * `Lax` rather than `Strict`, because the return from Google is a top-level navigation from
  * accounts.google.com, and a strict cookie would not come with it.
  */
-export function createSessionCookie() {
+export function createSessionCookie(environment: Environment) {
   return createCookie('publikace_session', {
     httpOnly: true,
     maxAge: SESSION_LIFETIME_SECONDS,
     path: '/',
     sameSite: 'Lax',
-    secrets: sessionSecrets(),
-    secure: isProduction(),
+    secrets: sessionSecrets(environment),
+    secure: isProduction(environment),
   })
 }
 
@@ -107,14 +103,14 @@ export function createSessionCookie() {
  * It outlives the session by thirty days, because a marker gone together with the session could
  * tell nothing: the browser would forget it at the very moment it is needed.
  */
-export function createSignedInUntilCookie() {
+export function createSignedInUntilCookie(environment: Environment) {
   return createCookie('publikace_signed_in_until', {
     httpOnly: true,
     maxAge: SESSION_LIFETIME_SECONDS + 30 * 24 * 60 * 60,
     path: '/',
     sameSite: 'Lax',
-    secrets: sessionSecrets(),
-    secure: isProduction(),
+    secrets: sessionSecrets(environment),
+    secure: isProduction(environment),
   })
 }
 

@@ -3,7 +3,7 @@ import { redirect } from 'remix/response/redirect'
 import { createController } from 'remix/router'
 import { Session } from 'remix/session'
 
-import { appOrigin, googleCredentials } from '../../../auth/environment.server.ts'
+import type { GoogleCredentials } from '../../../auth/environment.server.ts'
 import type { SignedInUntilCookie } from '../../../auth/session.server.ts'
 import {
   connectedToast,
@@ -22,42 +22,45 @@ import {
 import { flashToast } from '../../../middleware/toasts.server.ts'
 import { routes } from '../../../routes.ts'
 
-let cached: { key: string; provider: ReturnType<typeof createGoogleAuthProvider> } | undefined
+/** The OAuth client and the origin Google sends the browser back to. */
+export type DriveAccountClient = { credentials: GoogleCredentials | null; origin: string }
 
 /**
  * The Google client asking for the Drive account, or `null` when no client is configured outside
- * production. Built once per configuration rather than once per process, so a client configured
- * later — a test, a restarted shell — is picked up.
+ * production. Built once per domain and account, the two things it is asked with.
  *
  * The same OAuth client as the sign-in, with its own return address and the `drive` scope.
  * `login_hint` makes Google offer `publikace.app@` first, because the account it would otherwise
  * offer is the one signed in in the browser — the editor-in-chief's own (`14h`). `offline` and
  * `consent` make it hand over a refresh token every time, also to an account connected before.
  */
-function provider(domain: string, expectedEmail: string) {
-  let credentials = googleCredentials()
-  if (credentials === null) return null
+function createProvider({ credentials, origin }: DriveAccountClient) {
+  let cached: { key: string; provider: ReturnType<typeof createGoogleAuthProvider> } | undefined
 
-  let key = [credentials.clientId, domain, expectedEmail].join('\n')
-  if (cached?.key !== key) {
-    cached = {
-      key,
-      provider: createGoogleAuthProvider({
-        authorizationParams: {
-          access_type: 'offline',
-          hd: domain,
-          login_hint: expectedEmail,
-          prompt: 'consent',
-        },
-        clientId: credentials.clientId,
-        clientSecret: credentials.clientSecret,
-        redirectUri: new URL(routes.settings.account.callback.href(), appOrigin()),
-        scopes: ['openid', 'email', DRIVE_SCOPE],
-      }),
+  return (domain: string, expectedEmail: string) => {
+    if (credentials === null) return null
+
+    let key = [domain, expectedEmail].join('\n')
+    if (cached?.key !== key) {
+      cached = {
+        key,
+        provider: createGoogleAuthProvider({
+          authorizationParams: {
+            access_type: 'offline',
+            hd: domain,
+            login_hint: expectedEmail,
+            prompt: 'consent',
+          },
+          clientId: credentials.clientId,
+          clientSecret: credentials.clientSecret,
+          redirectUri: new URL(routes.settings.account.callback.href(), origin),
+          scopes: ['openid', 'email', DRIVE_SCOPE],
+        }),
+      }
     }
-  }
 
-  return cached.provider
+    return cached.provider
+  }
 }
 
 function backToAccounts(): Response {
@@ -123,7 +126,12 @@ export async function completeDriveConnection(
   return backToAccounts()
 }
 
-export default function createDriveAccountController(signedInUntil: SignedInUntilCookie) {
+export default function createDriveAccountController(
+  signedInUntil: SignedInUntilCookie,
+  client: DriveAccountClient,
+) {
+  let provider = createProvider(client)
+
   return createController(routes.settings.account, {
     /* An expired sign-in comes back to Settings, not to the callback: its code is spent once
        used, and a second visit could only fail. */

@@ -1,10 +1,9 @@
 import { Auth, auth, createSessionAuthScheme, requireAuth } from 'remix/middleware/auth'
 import { redirect } from 'remix/response/redirect'
-import { createContextKey, type RequestContext } from 'remix/router'
+import { createContextKey, type Middleware, type RequestContext } from 'remix/router'
 import { Session } from 'remix/session'
 
 import { type AccessRefusal, decideAccess } from '../auth/access.server.ts'
-import { appOrigin } from '../auth/environment.server.ts'
 import {
   EDITOR_SESSION_KEY,
   REFUSED_EMAIL_SESSION_KEY,
@@ -35,6 +34,9 @@ export type Person = {
 /** Why this request lost its sign-in, when the ten-minute check just said no or "don't know". */
 const AccessLoss = createContextKey<AccessRefusal | null>(null)
 
+/** Where the app is reached, which a sign-in comes back to; `loadAuth()` sets it. */
+const SignInOrigin = createContextKey<string>()
+
 /**
  * Resolves the person from the session, asking about access again once the last answer is ten
  * minutes old, or one minute when it rested on a service that did not reply.
@@ -44,8 +46,8 @@ const AccessLoss = createContextKey<AccessRefusal | null>(null)
  * - **Don't know** (`unavailable`): the request is refused but the session is left as it is,
  *   so the next request asks again; a blip in the membership service never signs anybody out.
  */
-export function loadAuth() {
-  return auth({
+export function loadAuth({ origin }: { origin: string }) {
+  let middleware = auth({
     schemes: [
       createSessionAuthScheme<Person, StoredEditor>({
         invalidate(session, context) {
@@ -97,6 +99,14 @@ export function loadAuth() {
       }),
     ],
   })
+
+  /* Into the context, because the refusal that reads it is built by every controller's
+     `requireEditor()`, which is never handed the configuration. */
+  let withOrigin: Middleware<any> = (context, next) => {
+    context.set(SignInOrigin, origin)
+    return middleware(context, next)
+  }
+  return withOrigin as typeof middleware
 }
 
 /**
@@ -118,7 +128,9 @@ function returnPath(context: RequestContext): string {
     let from = new URL(referer)
     // Against the configured origin: behind a TLS-terminating proxy the request's own URL says
     // `http:` while the browser sent `https:`.
-    return from.origin === appOrigin() ? from.pathname + from.search : routes.home.href()
+    return from.origin === context.get(SignInOrigin)
+      ? from.pathname + from.search
+      : routes.home.href()
   } catch {
     return routes.home.href()
   }

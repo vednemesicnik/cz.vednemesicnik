@@ -19,12 +19,12 @@ their ids sort. The name is snake_case and says what the migration does:
 
 ## Who runs them
 
-**The app, before it listens.** `server.ts` calls `migrateDatabase`
-(`app/data/database.server.ts`), which loads the directory and applies every pending migration
-in id order, as one batch, before the port opens, so no request meets an old schema. One process
-on one machine is the whole deployment, which is what makes migrating at startup safe. SQLite's
-DDL is transactional and each migration runs in its own transaction, so an `up.sql` that fails
-leaves nothing of itself behind and the server does not start.
+**The app, before its first request.** `createPublikace` (`app/publikace.server.ts`) calls
+`migrateDatabase` (`app/data/database.server.ts`), which loads the directory and applies every
+pending migration in id order, as one batch, before it resolves, so no request meets an old
+schema. One process on one machine is the whole deployment, which is what makes migrating at
+startup safe. SQLite's DDL is transactional and each migration runs in its own transaction, so an
+`up.sql` that fails leaves nothing of itself behind and the app does not start.
 
 **`remix db`, by hand.** `remix.json` points it at the same directory and the same file
 (`DATABASE_PATH`, `./db/publikace.sqlite` by default):

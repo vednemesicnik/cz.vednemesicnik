@@ -7,7 +7,7 @@ import { createArtworkStore } from './data/artworks.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { createFakeApp, type FakeApp } from './fake-app.server.ts'
-import { seedBatch } from './test-app.server.ts'
+import { seedBatch, TEST_ENVIRONMENT } from './test-app.server.ts'
 
 function textOf(html: string): string {
   return html
@@ -17,7 +17,7 @@ function textOf(html: string): string {
 }
 
 async function withFakeApp(run: (fake: FakeApp) => Promise<void>): Promise<void> {
-  let fake = await createFakeApp()
+  let fake = await createFakeApp(TEST_ENVIRONMENT)
   try {
     await run(fake)
   } finally {
@@ -26,12 +26,12 @@ async function withFakeApp(run: (fake: FakeApp) => Promise<void>): Promise<void>
 }
 
 function get(fake: FakeApp, path: string, headers?: HeadersInit): Promise<Response> {
-  return fake.fetch(new Request(new URL(path, appOrigin()), { headers }))
+  return fake.fetch(new Request(new URL(path, appOrigin(TEST_ENVIRONMENT)), { headers }))
 }
 
 function control(fake: FakeApp, path: string, fields: Record<string, string> = {}) {
   return fake.fetch(
-    new Request(new URL(`/_fake${path}`, appOrigin()), {
+    new Request(new URL(`/_fake${path}`, appOrigin(TEST_ENVIRONMENT)), {
       body: new URLSearchParams(fields),
       method: 'POST',
     }),
@@ -185,7 +185,9 @@ describe('the fake app (pnpm app:fake)', () => {
       assert.equal((await control(fake, '/drive/fail', { step: 'everything' })).status, 400)
       assert.equal((await control(fake, '/nothing')).status, 404)
       assert.equal((await get(fake, '/_fake/nothing')).status, 404)
-      let bare = new Request(new URL('/_fake/drive/heal', appOrigin()), { method: 'POST' })
+      let bare = new Request(new URL('/_fake/drive/heal', appOrigin(TEST_ENVIRONMENT)), {
+        method: 'POST',
+      })
       assert.equal((await fake.fetch(bare)).status, 303)
       let calls = fake.app.drive.calls.length
       await control(fake, '/drive/down')

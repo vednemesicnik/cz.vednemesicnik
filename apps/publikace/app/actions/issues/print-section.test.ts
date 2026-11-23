@@ -11,6 +11,7 @@ import {
   seedArticle,
   seedBatch,
   seedIssue,
+  TEST_ENVIRONMENT,
   type TestApp,
   type TestBrowser,
 } from '../../test-app.server.ts'
@@ -36,7 +37,7 @@ function section(html: string): string | null {
 
 function call(app: TestApp, path: string, body: unknown): Promise<Response> {
   return app.fetch(
-    new Request(new URL(path, appOrigin()), {
+    new Request(new URL(path, appOrigin(TEST_ENVIRONMENT)), {
       body: JSON.stringify(body),
       headers: { Authorization: `Bearer ${JOB_TOKEN}`, 'Content-Type': 'application/json' },
       method: 'POST',

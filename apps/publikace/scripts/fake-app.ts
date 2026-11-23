@@ -1,7 +1,6 @@
 import * as http from 'node:http'
 import { createRequestListener } from 'remix/node-fetch-server'
 
-import { assetServer } from '../app/assets.ts'
 import { startRecordQueue } from '../app/drive/record-queue.server.ts'
 import { createFakeApp } from '../app/fake-app.server.ts'
 
@@ -10,9 +9,9 @@ import { createFakeApp } from '../app/fake-app.server.ts'
  * controls at `/_fake` (`app/fake-app.server.ts`). Started without `--env-file`, so `.env` is
  * never read, and every call to Google is answered by the fake.
  *
- * It listens on 127.0.0.1 alone, because the controls can sign anybody in. The origin is set here,
- * before the app is built, so that CSRF and every address the pages print name this server, and
- * the port differs from `app:dev`'s so both can run at once.
+ * It listens on 127.0.0.1 alone, because the controls can sign anybody in. The origin is the app's
+ * one variable, so that CSRF and every address the pages print name this server, and the port
+ * differs from `app:dev`'s so both can run at once.
  */
 
 if (process.env.NODE_ENV === 'production') {
@@ -22,9 +21,10 @@ if (process.env.NODE_ENV === 'production') {
 
 const host = '127.0.0.1'
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44110
-process.env.APP_ORIGIN = `http://${host}:${port}`
-
-const fakeApp = await createFakeApp()
+const fakeApp = await createFakeApp({
+  APP_ORIGIN: `http://${host}:${port}`,
+  NODE_ENV: process.env.NODE_ENV,
+})
 /* The record follows the fake database as it follows the real one, into the fake Registr. */
 const recordQueue = startRecordQueue(fakeApp.app.record)
 
@@ -60,9 +60,7 @@ function shutdown() {
   isShuttingDown = true
   let passUnderWay = recordQueue.stop()
   server.close(() => {
-    passUnderWay
-      .then(() => Promise.allSettled([assetServer.close(), fakeApp.close()]))
-      .finally(() => process.exit(0))
+    passUnderWay.then(() => fakeApp.close()).finally(() => process.exit(0))
   })
   server.closeAllConnections()
 }

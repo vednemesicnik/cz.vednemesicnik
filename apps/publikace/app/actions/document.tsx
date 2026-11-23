@@ -2,7 +2,7 @@ import type { Handle, RemixNode } from 'remix/component'
 import { css } from 'remix/component'
 import { ImportMap } from 'remix/component/server'
 
-import { scriptEntry, stylesheetHref } from '../assets.ts'
+import { requestAssets } from '../assets.ts'
 
 export type DocumentProps = {
   children?: RemixNode
@@ -36,6 +36,7 @@ const bodyStyle = css({
 export function Document(handle: Handle<DocumentProps>) {
   return () => {
     let { children, head, title } = handle.props
+    let { scriptEntry, stylesheetHref } = requestAssets()
     let { href, importMap, preloads } = scriptEntry
 
     return (

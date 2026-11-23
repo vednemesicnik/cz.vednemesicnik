@@ -1,27 +1,12 @@
 import * as http from 'node:http'
 import { createRequestListener } from 'remix/node-fetch-server'
 
-import { assetServer } from './app/assets.ts'
-import {
-  appOrigin,
-  authorizedDomain,
-  googleCredentials,
-  initialAdminEmail,
-  issuesFolderId,
-} from './app/auth/environment.server.ts'
-import { createAccessDirectory } from './app/data/access.server.ts'
-import { defaultDatabase, migrateDatabase } from './app/data/database.server.ts'
-import { normalizeEmail } from './app/domain/access.ts'
-import { now } from './app/domain/time.ts'
-import { cleanUpAbandoned } from './app/drive/article-setup.server.ts'
-import { cleanUpAbandonedArtworks } from './app/drive/artworks-setup.server.ts'
-import { startRecordQueue } from './app/drive/record-queue.server.ts'
-import {
-  createAppRouter,
-  createArticleSetup,
-  createArtworksSetup,
-  createRecordQueue,
-} from './app/router.ts'
+import { createPublikace } from './app/publikace.server.ts'
+
+/*
+ * The app on its own, for working on this repository: `pnpm app:dev` and `pnpm app:start`. A host
+ * that serves it beside other sites calls `createPublikace` itself, with variables of its own.
+ */
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100
 
@@ -34,62 +19,11 @@ const hmrProxyPort = process.env.HMR_PROXY_PORT
   : null
 const isHmr = process.env.REMIX_NODE_HMR === '1'
 
-/*
- * Before the port opens, so no request meets an old schema. One process on one machine is the
- * whole deployment, which is what makes migrating at startup safe.
- */
-const database = defaultDatabase()
-await migrateDatabase(database.database)
-
-/*
- * The first administrator, only while the access list has no named account (`03`, row 26).
- * Production refuses to start when nobody could ever change the list, and the reads before it
- * refuse a missing domain, origin, Google client or issues folder there, so a deployment that
- * could let nobody in, or create no issue, fails here rather than at somebody's first click.
- */
-authorizedDomain()
-appOrigin()
-googleCredentials()
-issuesFolderId()
-const initialAdmin = normalizeEmail(initialAdminEmail())
-const directory = createAccessDirectory(database.database)
-if (initialAdmin !== '') {
-  await directory.seedInitialAdmin(initialAdmin, now())
-} else if (process.env.NODE_ENV === 'production' && (await directory.listAccounts()).length === 0) {
-  throw new Error('Přístup nemá žádný jmenovaný účet a chybí INITIAL_ADMIN_EMAIL.')
-}
-
-/*
- * Before the port opens, no request is running, so every article attempt and artwork batch left
- * uncommitted is one a crash or a failed cleanup left behind: its files go to the bin now (`11c`),
- * and so does every upload that waited 24 hours unsent (`21d`). A Drive that does not answer
- * delays it to the next send and does not stop the app.
- */
-try {
-  let articleSetup = createArticleSetup({ database: database.database })
-  await cleanUpAbandoned(articleSetup)
-  await cleanUpAbandonedArtworks(createArtworksSetup({ database: database.database }, articleSetup))
-} catch (error) {
-  console.error('[drive] the cleanup at startup did not run:', error)
-}
-
-const router = createAppRouter({ database: database.database })
+/* A rejection ends the process with its message, before the port opens. */
+const publikace = await createPublikace(process.env)
 
 const server = http.createServer(
-  createRequestListener(
-    async (request) => {
-      try {
-        return await router.fetch(request)
-      } catch (error) {
-        // A request the browser gave up on rejects with its own abort reason, which is noise.
-        if (!(request.signal.aborted && error === request.signal.reason)) {
-          console.error(error)
-        }
-        return new Response('Internal Server Error', { status: 500 })
-      }
-    },
-    { trustProxy: isHmr },
-  ),
+  createRequestListener((request) => publikace.fetch(request), { trustProxy: isHmr }),
 )
 
 server.listen(port, () => {
@@ -98,15 +32,7 @@ server.listen(port, () => {
   }
 
   console.log(`Server listening on http://localhost:${hmrProxyPort ?? port}`)
-
-  /*
-   * The Registr and each Evidence follow the database from here on (#111), a pass every 30 s
-   * that keeps nothing alive and holds no request: a sheet that does not answer only delays them.
-   */
-  recordQueue = startRecordQueue(createRecordQueue({ database: database.database }))
 })
-
-let recordQueue: { stop(): Promise<void> } | null = null
 
 let isShuttingDown = false
 
@@ -116,11 +42,8 @@ function shutdown() {
   }
 
   isShuttingDown = true
-  let passUnderWay = recordQueue?.stop() ?? Promise.resolve()
   server.close(() => {
-    passUnderWay
-      .then(() => Promise.allSettled([assetServer.close(), database.close()]))
-      .finally(() => process.exit(0))
+    publikace.close().finally(() => process.exit(0))
   })
   server.closeAllConnections()
 }

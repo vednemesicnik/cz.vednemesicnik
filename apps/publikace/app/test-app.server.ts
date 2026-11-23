@@ -1,6 +1,7 @@
 import { createSession } from 'remix/session'
 
-import { appOrigin } from './auth/environment.server.ts'
+import { type Assets, createAssets } from './assets.ts'
+import { appOrigin, type Environment } from './auth/environment.server.ts'
 import type { MembershipAnswer, MembershipCheck } from './auth/group-membership.server.ts'
 import {
   createSessionCookie,
@@ -49,6 +50,26 @@ const fakeIdentityVerifier: IdentityTokenVerifier = async (token) => {
   return { identity, status: 'verified' }
 }
 
+/**
+ * The variables the suite runs on: none but `NODE_ENV`, so every reader gives its development
+ * default, and `test`, which keeps the asset server from watching files.
+ */
+export const TEST_ENVIRONMENT: Environment = { NODE_ENV: 'test' }
+
+let suiteAssets: Promise<Assets> | null = null
+
+/*
+ * One asset server for every app on `TEST_ENVIRONMENT` in the process, because building the script
+ * entry for each test would slow the suite down; without a watcher it holds nothing open.
+ */
+function assetsFor(environment: Environment): { assets: Promise<Assets>; isShared: boolean } {
+  if (environment !== TEST_ENVIRONMENT) {
+    return { assets: createAssets(environment), isShared: false }
+  }
+  suiteAssets ??= createAssets(TEST_ENVIRONMENT)
+  return { assets: suiteAssets, isShared: true }
+}
+
 /** The domain every test runs on, fictional like everything else in the suite. */
 export const TEST_DOMAIN = 'vednemesicnik.test'
 
@@ -83,6 +104,8 @@ export const TEST_REGISTRY_OLD_ROWS = [
 ]
 
 export type TestApp = {
+  /** The asset server the pages link to. */
+  assets: Assets
   /** A browser with its own cookies; it starts signed out. */
   browser(): TestBrowser
   close(): Promise<void>
@@ -136,13 +159,19 @@ export type TestBrowser = {
  * browser that keeps cookies. Nothing leaves the process.
  *
  * The browser's requests come from `appOrigin()`, the origin CSRF checks them against, so the
- * same harness works on another port when `APP_ORIGIN` names it. `overrides` swaps a dependency
- * for one test, such as an empty `registrySpreadsheetId` for a deployment without a Registr.
+ * same harness works on another port when the environment's `APP_ORIGIN` names it. `overrides`
+ * swaps a dependency for one test, such as an empty `registrySpreadsheetId` for a deployment
+ * without a Registr, or `googleCredentials: null` for one without a Google client.
  */
 export async function createTestApp(
-  overrides: Pick<Partial<AppDependencies>, 'registrySpreadsheetId'> = {},
+  overrides: Pick<
+    Partial<AppDependencies>,
+    'environment' | 'googleCredentials' | 'registrySpreadsheetId'
+  > = {},
 ): Promise<TestApp> {
-  let origin = appOrigin()
+  let environment = overrides.environment ?? TEST_ENVIRONMENT
+  let origin = appOrigin(environment)
+  let { assets, isShared } = assetsFor(environment)
   let opened = openDatabase(':memory:')
   await migrateDatabase(opened.database)
 
@@ -158,11 +187,13 @@ export async function createTestApp(
   let mail: MailMessage[] = []
   let mailFailure: string | null = null
   let dependencies: AppDependencies = {
+    assets: await assets,
     checkMembership,
     database: opened.database,
     domain: TEST_DOMAIN,
     driveAccountEmail: TEST_DRIVE_ACCOUNT,
     driveTokenKey: TEST_DRIVE_TOKEN_KEY,
+    environment,
     fetch: drive.fetch,
     googleCredentials: { clientId: 'test-client', clientSecret: 'test-secret' },
     issuesFolderId: TEST_ISSUES_FOLDER,
@@ -180,7 +211,7 @@ export async function createTestApp(
   let router = createAppRouter(dependencies)
   let record = createRecordQueue(dependencies)
   let storage = createSqliteSessionStorage(opened.database)
-  let sessionCookie = createSessionCookie()
+  let sessionCookie = createSessionCookie(environment)
 
   function browser(): TestBrowser {
     let jar = new Map<string, string>()
@@ -274,8 +305,11 @@ export async function createTestApp(
   }
 
   return {
+    assets: dependencies.assets,
     browser,
-    close: opened.close,
+    async close() {
+      await Promise.allSettled([isShared ? null : dependencies.assets.close(), opened.close()])
+    },
     database: opened.database,
     directory: createAccessDirectory(opened.database),
     drive,

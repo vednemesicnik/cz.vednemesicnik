@@ -1,7 +1,6 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
-import { stylesheetHref } from '../../assets.ts'
 import { pragueYear } from '../../domain/time.ts'
 import {
   connectDriveAccount,
@@ -88,7 +87,7 @@ describe('home, the shell', () => {
       assert.match(html, /<html lang="cs">/)
       assert.match(html, /<title>Vydání · Publikace<\/title>/)
       assert.match(html, /<h1 class="vdm-page-title">Vydání<\/h1>/)
-      assert.ok(html.includes(`<link rel="stylesheet" href="${stylesheetHref}" />`))
+      assert.ok(html.includes(`<link rel="stylesheet" href="${app.assets.stylesheetHref}" />`))
     } finally {
       await app.close()
     }

@@ -1,6 +1,6 @@
 import { createController } from 'remix/router'
 
-import { shareImageHref } from '../../assets.ts'
+import { requestAssets } from '../../assets.ts'
 import {
   type AuthorInput,
   checkArticle,
@@ -72,7 +72,7 @@ function articlesOf(context: LinkContext): ArticlesContext {
 }
 
 function imageUrl(origin: string): string {
-  return absoluteUrl(origin, shareImageHref)
+  return absoluteUrl(origin, requestAssets().shareImageHref)
 }
 
 function previewOf(origin: string, issue: Issue): LinkPreview {
