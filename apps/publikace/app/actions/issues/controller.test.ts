@@ -24,9 +24,9 @@ function textOf(html: string): string {
 
 /** An app with Marie signed in as an editor-in-chief, and the Drive account connected or not. */
 async function newsroom(
-  options: { isConnected?: boolean } = {},
+  options: { hasRegistry?: boolean; isConnected?: boolean } = {},
 ): Promise<{ app: TestApp; browser: TestBrowser }> {
-  let app = await createTestApp()
+  let app = await createTestApp(options.hasRegistry === false ? { registrySpreadsheetId: '' } : {})
   await seedAdmin(app, MARIE)
   if (options.isConnected !== false) await connectDriveAccount(app)
   let browser = app.browser()
@@ -230,6 +230,25 @@ describe('the dialog Nové vydání (11d, 14g)', () => {
       assert.match(next, new RegExp(`name="name"[^>]*value="VDM_${YEAR}_6"`))
     } finally {
       await app.close()
+    }
+  })
+
+  it('names the Registr only when the deployment has one (cac9z72q)', async () => {
+    let withRegistry = await newsroom()
+    try {
+      let text = textOf(await (await withRegistry.browser.get('/issues/new')).text())
+      assert.ok(text.includes('Evidence a záznam v Registru vzniknou až po vytvoření vydání.'))
+    } finally {
+      await withRegistry.app.close()
+    }
+
+    let withoutRegistry = await newsroom({ hasRegistry: false })
+    try {
+      let text = textOf(await (await withoutRegistry.browser.get('/issues/new')).text())
+      assert.ok(text.includes('podklady pro tisk. Evidence vznikne až po vytvoření vydání. Odkaz'))
+      assert.ok(!text.includes('Registr'))
+    } finally {
+      await withoutRegistry.app.close()
     }
   })
 

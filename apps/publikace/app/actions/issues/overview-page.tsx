@@ -20,7 +20,7 @@ import {
   issueFilterSearch,
   issueState,
   NAME_HINT,
-  NEW_ISSUE_TEXT,
+  newIssueText,
   notConnectedDialogMessage,
   OPEN_FOLDER_LABEL,
   otherFilterText,
@@ -79,6 +79,8 @@ export type OverviewPageProps = {
   dialog?: NewIssueDialog | IssueStepDialogView
   driveAccount: { expectedEmail: string; status: DriveStatus }
   filter: IssueFilter
+  /** Whether the deployment names a Registr, for the dialog's sentence about the record. */
+  hasRegistry: boolean
   issues: readonly Issue[]
   person: PanelPerson
   toasts: readonly ToastMessage[]
@@ -438,10 +440,11 @@ function NewIssueDialogView(
     dialog: NewIssueDialog
     driveAccount: OverviewPageProps['driveAccount']
     filter: IssueFilter
+    hasRegistry: boolean
   }>,
 ) {
   return () => {
-    let { dialog, driveAccount, filter } = handle.props
+    let { dialog, driveAccount, filter, hasRegistry } = handle.props
     let search = issueFilterSearch(filter)
 
     if (dialog.kind === 'unfinished') {
@@ -483,7 +486,7 @@ function NewIssueDialogView(
               isDriveUnavailable={dialog.isDriveUnavailable === true}
             />
             <p class="vdm-dialog__text" style={{ margin: 0 }}>
-              {NEW_ISSUE_TEXT}
+              {newIssueText(hasRegistry)}
             </p>
             <SelectedField
               error={error}
@@ -520,6 +523,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
       dialog,
       driveAccount,
       filter,
+      hasRegistry,
       issues,
       person,
       toasts,
@@ -566,7 +570,12 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
         {dialog === undefined ? null : isStepDialog(dialog) ? (
           <IssueStepDialog step={dialog} />
         ) : (
-          <NewIssueDialogView dialog={dialog} driveAccount={driveAccount} filter={filter} />
+          <NewIssueDialogView
+            dialog={dialog}
+            driveAccount={driveAccount}
+            filter={filter}
+            hasRegistry={hasRegistry}
+          />
         )}
       </Document>
     )

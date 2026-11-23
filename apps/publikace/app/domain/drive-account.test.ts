@@ -2,14 +2,22 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import {
+  connectedCardText,
   connectedToast,
   decideConnection,
   disconnectedBanner,
+  disconnectedCardText,
   DRIVE_SCOPE,
   notConnectedBanner,
   refusalMessage,
   shortAccount,
 } from './drive-account.ts'
+import { NBSP } from './public/typography.ts'
+
+/** The tied text as typed: `tied` keeps one-letter words with the next one. */
+function plain(text: string): string {
+  return text.replaceAll(NBSP, ' ')
+}
 
 const EXPECTED = 'publikace.app@vednemesicnik.test'
 
@@ -98,5 +106,24 @@ describe('the words of 14g, 14h and 14c (fxmhsx1r)', () => {
       'Účet publikace.app@ je odpojený. Akce se soubory na Disku teď nejsou dostupné.',
     )
     assert.equal(connectedToast(EXPECTED), 'Účet publikace.app@ je připojený.')
+  })
+
+  it('names the Registr on the card only when the deployment has one (14j, 14c)', () => {
+    assert.equal(
+      plain(connectedCardText(true)),
+      'Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Registru a Evidence. Soubory patří disku.',
+    )
+    assert.equal(
+      plain(connectedCardText(false)),
+      'Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Evidence. Soubory patří disku.',
+    )
+    assert.equal(
+      plain(disconnectedCardText(true)),
+      'Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Po připojení účtu aplikace do Registru a Evidence doplní všechny čekající změny.',
+    )
+    assert.equal(
+      plain(disconnectedCardText(false)),
+      'Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Po připojení účtu aplikace do Evidence doplní všechny čekající změny.',
+    )
   })
 })

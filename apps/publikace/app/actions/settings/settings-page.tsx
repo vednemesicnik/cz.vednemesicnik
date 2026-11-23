@@ -20,10 +20,10 @@ import {
 } from '../../domain/access.ts'
 import {
   accountDomain,
-  CONNECTED_CARD_TEXT,
+  connectedCardText,
   type ConnectionRefusal,
   connectHint,
-  DISCONNECTED_CARD_TEXT,
+  disconnectedCardText,
   MAILBOX_CARD_TEXT,
   NOT_CONNECTED_CARD_TEXT,
   refusalMessage,
@@ -69,6 +69,8 @@ export type RemovalQuestion =
 /** The account the app acts as on Drive, and why the last return from Google was refused. */
 export type DriveAccountView = {
   expectedEmail: string
+  /** Whether the deployment names a Registr: the card's sentence about the record follows it. */
+  hasRegistry: boolean
   refusal: ConnectionRefusal | null
   state: DriveAccountState
 }
@@ -662,7 +664,7 @@ const TAGS = {
  */
 function DriveAccountCard(handle: Handle<{ view: DriveAccountView }>) {
   return () => {
-    let { expectedEmail, refusal, state } = handle.props.view
+    let { expectedEmail, hasRegistry, refusal, state } = handle.props.view
     let tag = TAGS[state.status]
     let isConnected = state.status === 'connected'
     let message = refusal === null ? null : refusalMessage(refusal, expectedEmail, isConnected)
@@ -680,12 +682,14 @@ function DriveAccountCard(handle: Handle<{ view: DriveAccountView }>) {
                 <p style={{ margin: 0 }}>{message}</p>
               </Callout>
             )}
-            <p mix={metaStyle}>{CONNECTED_CARD_TEXT}</p>
+            <p mix={metaStyle}>{connectedCardText(hasRegistry)}</p>
           </>
         ) : (
           <>
             <p mix={metaStyle}>
-              {state.status === 'not-connected' ? NOT_CONNECTED_CARD_TEXT : DISCONNECTED_CARD_TEXT}
+              {state.status === 'not-connected'
+                ? NOT_CONNECTED_CARD_TEXT
+                : disconnectedCardText(hasRegistry)}
             </p>
             {message === null ? null : (
               <Callout tone="error">

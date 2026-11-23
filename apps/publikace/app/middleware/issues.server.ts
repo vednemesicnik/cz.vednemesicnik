@@ -5,6 +5,8 @@ import type { IssueSetup } from '../drive/issue-setup.server.ts'
 
 /** The issues and the way their folders are made. Read with `context.get(Issues)`. */
 export type IssuesContext = {
+  /** Whether the deployment names a Registr, for the dialog's sentence about the record (`11d`). */
+  hasRegistry: boolean
   setup: IssueSetup
   store: IssueStore
 }

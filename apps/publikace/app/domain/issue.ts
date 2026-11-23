@@ -137,8 +137,17 @@ export function suggestNextName(names: readonly string[], today: Temporal.Instan
   return isAnyNumbered ? `VDM_${year}_${highest + 1}` : ''
 }
 
-/* `11d`, as drawn, the Evidence, the Registr and the link included. */
-export const NEW_ISSUE_TEXT = tied`Na sdíleném disku Publikace vznikne složka vydání se složkami Články a podklady pro tisk. Evidence a záznam v Registru se doplní následně. Odkaz pro redakci na nový článek bude v detailu vydání.`
+/**
+ * The dialog's text (`11d`, answer `cac9z72q`). Without a Registr its middle sentence names only
+ * the Evidence and says nothing of the Registr, since the editors can do nothing about it here and
+ * Soubory na Disku says it where the Registr is looked for (`14j`).
+ */
+export function newIssueText(hasRegistry: boolean): string {
+  let record = hasRegistry
+    ? tied`Evidence a záznam v Registru vzniknou až po vytvoření vydání.`
+    : tied`Evidence vznikne až po vytvoření vydání.`
+  return `${tied`Na sdíleném disku Publikace vznikne složka vydání se složkami Články a podklady pro tisk.`} ${record} ${tied`Odkaz pro redakci na nový článek bude v detailu vydání.`}`
+}
 
 export const NAME_HINT = 'Ve tvaru VDM_RRRR_N.'
 

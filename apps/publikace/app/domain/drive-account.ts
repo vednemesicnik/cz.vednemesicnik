@@ -61,9 +61,22 @@ export function accountDomain(email: string): string {
 
 export const NOT_CONNECTED_CARD_TEXT = tied`Připojte účet, aby aplikace mohla zakládat vydání a pracovat se soubory na Disku.`
 
-export const CONNECTED_CARD_TEXT = tied`Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Registru a Evidence. Soubory patří disku.`
+/*
+ * The two cards that name the record follow whether the deployment has a Registr, as Soubory na
+ * Disku above them does, so one page never says both (`14j`, `14c`, answer `cac9z72q`).
+ */
 
-export const DISCONNECTED_CARD_TEXT = tied`Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Zápis do Registru a Evidence čeká a po připojení se doplní.`
+export function connectedCardText(hasRegistry: boolean): string {
+  return hasRegistry
+    ? tied`Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Registru a Evidence. Soubory patří disku.`
+    : tied`Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Evidence. Soubory patří disku.`
+}
+
+export function disconnectedCardText(hasRegistry: boolean): string {
+  return hasRegistry
+    ? tied`Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Po připojení účtu aplikace do Registru a Evidence doplní všechny čekající změny.`
+    : tied`Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Po připojení účtu aplikace do Evidence doplní všechny čekající změny.`
+}
 
 export const MAILBOX_CARD_TEXT = tied`Schránka pro uvítání, žádosti o souhlas, připomínky a odpovědi. Aplikace zadává odeslání a dostává výsledky kontroly odpovědí; ke schránce se nepřihlašuje ani ji nečte.`
 

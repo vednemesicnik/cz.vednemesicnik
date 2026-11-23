@@ -82,6 +82,7 @@ async function renderSettings(
     proofreaders.find(),
   ])
   let today = now()
+  let hasRegistry = driveFiles.registrySpreadsheetId !== ''
   /* Asked on every visit, as when a group is added to Přístup (`03`, row 27): the warning stands
      while the service does not know the address and goes by itself once it does. A service that
      does not answer shows nothing, since it says nothing about the address. Not for a form drawn
@@ -98,11 +99,12 @@ async function renderSettings(
       addForm={state.addForm}
       domain={access.domain}
       driveFiles={{
-        intro: driveFilesIntro(driveFiles.registrySpreadsheetId !== ''),
+        intro: driveFilesIntro(hasRegistry),
         rows: driveFileRows(driveFiles),
       }}
       driveAccount={{
         expectedEmail: driveAccount.expectedEmail,
+        hasRegistry,
         refusal: takeConnectRefusal(context.get(Session) as Session | undefined),
         state: driveState,
       }}

@@ -11,6 +11,7 @@ import {
   issueState,
   LONG_NAME_MESSAGE,
   missingFolders,
+  newIssueText,
   parseIssueFilter,
   phoneRowLine,
   rowSubtitle,
@@ -23,6 +24,12 @@ import {
   closeWarningText,
   closedCalloutText,
 } from './issue.ts'
+import { NBSP } from './public/typography.ts'
+
+/** The tied text as typed: `tied` keeps one-letter words with the next one. */
+function plain(text: string): string {
+  return text.replaceAll(NBSP, ' ')
+}
 
 const NOVEMBER = Temporal.Instant.from('2026-11-14T09:00:00Z')
 const JANUARY = Temporal.Instant.from('2027-01-05T09:00:00Z')
@@ -57,6 +64,19 @@ describe('an issue name (11d)', () => {
   it('is compared without case, surrounding spaces or how an accent was encoded', () => {
     assert.equal(issueNameKey(' vdm_2026_5 '), issueNameKey('VDM_2026_5'))
     assert.equal(issueNameKey('Zvla\u0301s\u030Ctni\u0301'), issueNameKey('Zvláštní'))
+  })
+})
+
+describe('the text of the dialog (11d)', () => {
+  it('names the Registr only when the deployment has one', () => {
+    assert.equal(
+      plain(newIssueText(true)),
+      'Na sdíleném disku Publikace vznikne složka vydání se složkami Články a podklady pro tisk. Evidence a záznam v Registru vzniknou až po vytvoření vydání. Odkaz pro redakci na nový článek bude v detailu vydání.',
+    )
+    assert.equal(
+      plain(newIssueText(false)),
+      'Na sdíleném disku Publikace vznikne složka vydání se složkami Články a podklady pro tisk. Evidence vznikne až po vytvoření vydání. Odkaz pro redakci na nový článek bude v detailu vydání.',
+    )
   })
 })
 

@@ -73,6 +73,7 @@ export async function renderOverview(
       dialog={dialog}
       driveAccount={driveAccount}
       filter={filter}
+      hasRegistry={issuesOf(context).hasRegistry}
       issues={issues}
       person={editor}
       toasts={context.get(Toasts) as readonly ToastMessage[]}

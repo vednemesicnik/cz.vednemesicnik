@@ -258,6 +258,8 @@ export function createAppRouter(dependencies: AppDependencies) {
       ? googleCredentials()
       : dependencies.googleCredentials
   let issueStore = createIssueStore(dependencies.database)
+  /* Read once, so the dialog and Nastavení follow the same Registr (`11d`, `14j`). */
+  let registryId = dependencies.registrySpreadsheetId ?? registrySpreadsheetId()
   let issueSetup: IssueSetup = {
     folders: (accessToken) => createDriveFolders({ accessToken, fetch }),
     issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(),
@@ -325,7 +327,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         expectedEmail: (dependencies.driveAccountEmail ?? driveAccountEmail()).toLowerCase(),
         store: driveAccountStore,
       }),
-      loadIssues({ setup: issueSetup, store: issueStore }),
+      loadIssues({ hasRegistry: registryId !== '', setup: issueSetup, store: issueStore }),
       loadArticles({
         articles: articleSetup.articles,
         artworks: artworksSetup,
@@ -432,7 +434,7 @@ export function createAppRouter(dependencies: AppDependencies) {
     createSettingsController(signedInUntil, {
       driveFiles: {
         issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(),
-        registrySpreadsheetId: dependencies.registrySpreadsheetId ?? registrySpreadsheetId(),
+        registrySpreadsheetId: registryId,
         templateId: articleSetup.templateId,
       },
       proofreaders,

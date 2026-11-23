@@ -436,6 +436,21 @@ describe('settings, Soubory na Disku (14a, 14j)', () => {
       assert.ok(!text.includes('pomocí Registru a Evidence'))
       assert.ok(text.includes('Registr vydání Aplikace do Registru nezapisuje. Evidence'))
       assert.ok(!html.includes('/spreadsheets/d/'))
+
+      /* The card under it follows the same deployment, connected and disconnected (cac9z72q). */
+      await connectDriveAccount(app)
+      let connected = textOf(await (await browser.get('/settings')).text())
+      assert.ok(connected.includes('sdíleném disku a zapisuje do Evidence. Soubory patří disku.'))
+      assert.ok(!connected.includes('zapisuje do Registru'))
+
+      await app.driveAccount.markDisconnected(now())
+      let disconnected = textOf(await (await browser.get('/settings')).text())
+      assert.ok(
+        disconnected.includes(
+          'Po připojení účtu aplikace do Evidence doplní všechny čekající změny.',
+        ),
+      )
+      assert.ok(!disconnected.includes('do Registru a Evidence'))
     } finally {
       await app.close()
     }
@@ -493,7 +508,11 @@ describe('settings, Účty Publikace', () => {
 
       assert.ok(html.includes('vdm-status--published'))
       assert.ok(text.includes('Připojeno'))
-      assert.ok(text.includes('Pod tímto účtem běží úlohy na pozadí.'))
+      assert.ok(
+        text.includes(
+          'Pod tímto účtem běží úlohy na pozadí. Aplikace pod ním zakládá složky a dokumenty na sdíleném disku a zapisuje do Registru a Evidence. Soubory patří disku.',
+        ),
+      )
       assert.ok(!html.includes('/settings/account/connect'))
       assert.ok(!text.includes('Přejít k účtu'))
     } finally {
@@ -514,7 +533,9 @@ describe('settings, Účty Publikace', () => {
       assert.ok(html.includes('vdm-status--problem'))
       assert.ok(text.includes('Odpojeno'))
       assert.ok(
-        text.includes('Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku.'),
+        text.includes(
+          'Připojte účet znovu, aby aplikace mohla pracovat se soubory na Disku. Po připojení účtu aplikace do Registru a Evidence doplní všechny čekající změny.',
+        ),
       )
       assert.ok(text.includes('Připojit znovu'))
       assert.ok(html.includes('vdm-callout--error'))
