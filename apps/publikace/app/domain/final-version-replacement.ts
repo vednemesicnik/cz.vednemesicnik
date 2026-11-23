@@ -133,7 +133,7 @@ export function replacedClauseTag(
  * _Upraveno po schválení_ (#101, `12b`, `12q`): every author agreed and the Doc was edited after
  * its PDF. The same step as `12r`, from a button in the row, worded as the copywriter settled it
  * (`znor6hp8`, the button's name for a screen reader `dd5fjcle`). Nothing is said of the
- * podklady pro tisk: an article of an issue made in the app does not reach them yet.
+ * podklady pro tisk: they keep the last approved version, and their own section says so (`12t`).
  */
 
 /** Short enough for the action cell's 200 px; the dialog's title names the final version. */

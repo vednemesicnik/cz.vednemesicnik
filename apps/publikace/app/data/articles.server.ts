@@ -847,8 +847,11 @@ const WAITS_ON_EDITORS = sql`c.approved_at IS NULL AND c.state != 'pending' AND 
         AND c.is_exact_consent = 0)
   )`
 
-/** The standing markings `f` with at least one clause and every clause approved. */
-const ALL_CLAUSES_APPROVED_F = sql`EXISTS (SELECT 1 FROM article_clauses c WHERE c.final_version_id = f.id)
+/**
+ * The markings `f` with at least one clause and every clause approved. Standing or not is the
+ * caller's: the print folder keeps a replaced version every author agreed to (#110).
+ */
+export const ALL_CLAUSES_APPROVED_F = sql`EXISTS (SELECT 1 FROM article_clauses c WHERE c.final_version_id = f.id)
   AND NOT EXISTS (SELECT 1 FROM article_clauses c
                   WHERE c.final_version_id = f.id AND c.approved_at IS NULL)`
 

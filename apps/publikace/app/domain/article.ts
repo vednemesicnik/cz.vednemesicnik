@@ -296,9 +296,9 @@ export function whoOf(step: Pick<ArticleStep, 'email' | 'name'>): string {
 /**
  * A marked article's tag (`01a`). An e-mail that did not go wins over an archive that failed: it
  * waits on the editors-in-chief, the archive only on the next run. The lines under _Schváleno_ and
- * under a failed archive are the copywriter's (`ey9bfcxx`): the job that fills the podklady pro
- * tisk still reads only the sheets, so an article of the app is never in them yet, and the line
- * says where its proof is instead, as for artworks (`13f`).
+ * under a failed archive are the copywriter's (`ey9bfcxx`): the line says where the proof is, as
+ * for artworks (`13f`), and not whether the text is in the podklady pro tisk, which only their own
+ * section knows, after the job's next full run (`12t`).
  */
 function finalVersionTag(finalVersion: FinalVersion): {
   detail: string

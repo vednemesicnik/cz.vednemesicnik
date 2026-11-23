@@ -15,6 +15,7 @@ import createHomeController from './actions/controller.tsx'
 import createProofreadingController from './actions/proofreading/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
 import createApprovalsController from './actions/api/approvals/controller.ts'
+import createPrintHandoffController from './actions/api/print-handoff/controller.ts'
 import createArtworkRepliesController from './actions/api/artwork-replies/controller.ts'
 import createProofreadingDigestController from './actions/api/proofreading-digest/controller.ts'
 import createArtworksController from './actions/links/artworks/controller.tsx'
@@ -57,6 +58,7 @@ import { createDriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
 import { createLinkStore } from './data/links.server.ts'
+import { createPrintHandoffStore } from './data/print-handoff.server.ts'
 import { createProofreadersStore } from './data/proofreaders.server.ts'
 import { createRecordStore } from './data/record.server.ts'
 import { createPublicMailLog } from './data/public-mail.server.ts'
@@ -269,6 +271,7 @@ export function createAppRouter(dependencies: AppDependencies) {
     directory.recordGroupName,
   )
   let jobRuns = createJobRunStore(dependencies.database)
+  let printHandoffs = createPrintHandoffStore(dependencies.database)
   let proofreaders = createProofreadersStore(dependencies.database)
 
   let router = createRouter({
@@ -327,6 +330,7 @@ export function createAppRouter(dependencies: AppDependencies) {
         artworks: artworksSetup,
         links: articleSetup.links,
         origin: articleSetup.origin,
+        printHandoffs,
         proofreaders,
         runs: jobRuns,
         setup: articleSetup,
@@ -372,6 +376,18 @@ export function createAppRouter(dependencies: AppDependencies) {
     routes.api.approvals,
     createApprovalsController({
       articles: articleSetup.articles,
+      jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
+      now,
+      runs: jobRuns,
+      verifyIdentityToken:
+        dependencies.verifyJobToken ??
+        createIdentityTokenVerifier({ audiences: scriptTokenAudiences(), fetch }),
+    }),
+  )
+  router.map(
+    routes.api.printHandoff,
+    createPrintHandoffController({
+      handoffs: printHandoffs,
       jobAccount: (dependencies.jobAccount ?? scriptJobAccount()).toLowerCase(),
       now,
       runs: jobRuns,

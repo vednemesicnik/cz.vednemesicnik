@@ -323,7 +323,10 @@ describe('the Evidence in the issue’s „⋯“ (12a, 12h)', () => {
 
       let active = await (await editor.get(DETAIL)).text()
       assert.ok(active.includes(href))
-      assert.ok(active.indexOf('Otevřít Evidenci') < active.indexOf('Otevřít podklady pro tisk'))
+      assert.ok(
+        active.indexOf('"label":"Otevřít Evidenci"') <
+          active.indexOf('"label":"Otevřít podklady pro tisk"'),
+      )
 
       await createIssueStore(app.database).close(issueId, Temporal.Now.instant())
       let closed = await (await editor.get(DETAIL)).text()

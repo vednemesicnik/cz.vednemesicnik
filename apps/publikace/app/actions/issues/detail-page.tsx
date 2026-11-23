@@ -93,7 +93,8 @@ import {
   stepDialogHref,
 } from './issue-parts.tsx'
 import type { DriveStatus } from './overview-page.tsx'
-import { tied } from '../../domain/public/typography.ts'
+import { NBSP, tied } from '../../domain/public/typography.ts'
+import { type PrintLine, PRINT_SECTION_TITLE } from '../../domain/print-handoff.ts'
 import type { ArticleState } from '../../domain/article.ts'
 import {
   CANCEL_HANDOVER_LABEL,
@@ -291,6 +292,9 @@ const DISCARD_REFUSALS: Record<DiscardRefusal, { text: string; title: string }> 
   unavailable: { text: DISCARD_KEPT_TEXT, title: DISCARD_UNAVAILABLE_TITLE },
 }
 
+/** _Podklady pro tisk_ (`12t`): the line, the print folder, and the job's history its link opens. */
+export type PrintSectionView = { folderHref: string; jobHref: string; line: PrintLine }
+
 export type DetailPageProps = {
   articles: readonly ArticleRowView[]
   missingAddress?: MissingAddressView
@@ -304,6 +308,8 @@ export type DetailPageProps = {
   issue: Issue
   link?: LinkBlockView
   person: PanelPerson
+  /** On an active issue with a print folder only (`12t`). */
+  print?: PrintSectionView
   /** The dialog of a new final version over the detail (`12r`). */
   replacing?: FinalVersionDialogProps
   /** _Uzavřít vydání_ or _Znovu otevřít_ over the detail (`12g`, `12h`). */
@@ -1051,6 +1057,71 @@ function ArtworkRow(
   }
 }
 
+/* `12t`: the text keeps at least 320 px beside the button, or the button goes under it. */
+const printBoxStyle = css({
+  alignItems: 'center',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-xl)',
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '12px 24px',
+  justifyContent: 'space-between',
+  padding: '16px 20px',
+})
+
+const printTextStyle = css({
+  display: 'flex',
+  flex: '1 1 320px',
+  flexDirection: 'column',
+  gap: '4px',
+  minWidth: 0,
+  '& h2': { fontSize: '16px', fontWeight: 600, margin: 0 },
+})
+
+const printLineStyle = css({ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 })
+
+/* On a phone the button stands under the line, and a tap target there is 44 px (`12t`). */
+const printButtonStyle = css({ '@media (max-width: 480px)': { minHeight: '44px' } })
+
+/** Between two parts of the line, which breaks only there, with „·“ ending the line. */
+const PART_SEPARATOR = `${NBSP}· `
+
+/** _Podklady pro tisk_ (`12t`): how fresh the print folder is, how much it holds, and the folder. */
+function PrintSection(handle: Handle<{ print: PrintSectionView }>) {
+  return () => {
+    let { folderHref, jobHref, line } = handle.props.print
+    let lead = line.lead.join(PART_SEPARATOR)
+    return (
+      <section aria-labelledby="print-title" mix={printBoxStyle}>
+        <div mix={printTextStyle}>
+          <h2 id="print-title">{PRINT_SECTION_TITLE}</h2>
+          <p mix={printLineStyle}>
+            {lead}
+            {line.job === null ? null : (
+              <>
+                {PART_SEPARATOR}
+                {line.job.isLink ? <a href={jobHref}>{line.job.text}</a> : line.job.text}
+              </>
+            )}
+          </p>
+        </div>
+        <div mix={printButtonStyle}>
+          <a
+            class="vdm-btn vdm-btn--outline vdm-btn--sm"
+            href={folderHref}
+            rel="noopener"
+            style={{ boxSizing: 'border-box', minHeight: 'inherit' }}
+            target="_blank"
+          >
+            {OPEN_PRINT_FOLDER_LABEL}
+            <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
+          </a>
+        </div>
+      </section>
+    )
+  }
+}
+
 /** _Obrazová díla_ of the issue in one table, the filter in the address (`12a`). */
 function Artworks(handle: Handle<{ artworks: ArtworksView; csrfToken: string }>) {
   return () => {
@@ -1246,6 +1317,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       link,
       missingAddress,
       person,
+      print,
       replacing,
       step,
       toasts,
@@ -1340,6 +1412,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
                   missingAddress={missingAddress}
                 />
                 <Artworks artworks={artworks} csrfToken={getCsrfToken(getContext())} />
+                {print === undefined ? null : <PrintSection print={print} />}
               </>
             )}
           </div>

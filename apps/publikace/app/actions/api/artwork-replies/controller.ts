@@ -11,6 +11,7 @@ import {
   REPLY_CHECK_JOB,
 } from '../../../domain/reply-check.ts'
 import { routes } from '../../../routes.ts'
+import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
 import { readConsentReport } from '../consent-report.ts'
 
 /**
@@ -37,36 +38,8 @@ export type ArtworkRepliesDependencies = {
   verifyIdentityToken: IdentityTokenVerifier
 }
 
-/* A trigger fires at most once a minute and at least once a day. */
-const MAX_INTERVAL_MINUTES = 24 * 60
 const MAX_ID_LENGTH = 200
 const MAX_ERROR_LENGTH = 2000
-
-const NO_STORE = { 'Cache-Control': 'no-store' }
-
-function json(body: unknown, status = 200): Response {
-  return Response.json(body, { headers: NO_STORE, status })
-}
-
-function bearerOf(request: Request): string | null {
-  let match = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')
-  return match?.[1] ?? null
-}
-
-async function bodyOf(request: Request): Promise<Record<string, unknown> | null> {
-  try {
-    let body: unknown = await request.json()
-    return typeof body === 'object' && body !== null && !Array.isArray(body)
-      ? (body as Record<string, unknown>)
-      : null
-  } catch {
-    return null
-  }
-}
-
-function isText(value: unknown, max: number): value is string {
-  return typeof value === 'string' && value !== '' && value.length <= max
-}
 
 function readResult(value: unknown): { batchId: number; report: BatchReport } | null {
   if (typeof value !== 'object' || value === null) return null
@@ -98,36 +71,14 @@ function claimedItem(batch: ClaimedBatch) {
 }
 
 export default function createArtworkRepliesController(dependencies: ArtworkRepliesDependencies) {
-  /** `null` when the token is the job account's; otherwise the answer that refuses the call. */
-  async function refusal(request: Request): Promise<Response | null> {
-    let bearer = bearerOf(request)
-    if (bearer === null) return json({ error: 'unauthorized' }, 401)
-    let check = await dependencies.verifyIdentityToken(bearer)
-    if (check.status === 'unavailable') return json({ error: 'unavailable' }, 503)
-    if (
-      check.status !== 'verified' ||
-      check.identity.email.toLowerCase() !== dependencies.jobAccount
-    ) {
-      return json({ error: 'unauthorized' }, 401)
-    }
-    return null
-  }
-
   return createController(routes.api.artworkReplies, {
     actions: {
       async claim(context) {
-        let refused = await refusal(context.request)
+        let refused = await refusal(context.request, dependencies)
         if (refused !== null) return refused
         let body = await bodyOf(context.request)
-        let interval = body?.['intervalMinutes']
-        if (
-          typeof interval !== 'number' ||
-          !Number.isInteger(interval) ||
-          interval < 1 ||
-          interval > MAX_INTERVAL_MINUTES
-        ) {
-          return json({ error: 'invalid_request' }, 400)
-        }
+        let interval = intervalOf(body)
+        if (interval === null) return json({ error: 'invalid_request' }, 400)
 
         let at = dependencies.now()
         let runKey = crypto.randomUUID()
@@ -142,7 +93,7 @@ export default function createArtworkRepliesController(dependencies: ArtworkRepl
       },
 
       async report(context) {
-        let refused = await refusal(context.request)
+        let refused = await refusal(context.request, dependencies)
         if (refused !== null) return refused
         let body = await bodyOf(context.request)
         let runKey = body?.['runKey']

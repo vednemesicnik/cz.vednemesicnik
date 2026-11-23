@@ -16,6 +16,7 @@ import type { Lock } from '../../../drive/one-at-a-time.server.ts'
 import { digestEmail } from '../../../mail/proofreading-digest-email.server.ts'
 import type { Mailer } from '../../../mail/mailer.server.ts'
 import { routes } from '../../../routes.ts'
+import { bodyOf, intervalOf, json, refusal } from '../job-request.ts'
 
 /**
  * The API the proofreaders' digest calls (#14): `SCRIPT__Publication__Proofreading_Digest`, a
@@ -53,36 +54,6 @@ export type ProofreadingDigestDependencies = {
    older than that is far past the Mailer's six hours of remembered keys. */
 const RUNS_FOR_LAST_SENT = 100
 
-/* A trigger fires at most once a minute and at least once a day. */
-const MAX_INTERVAL_MINUTES = 24 * 60
-
-const NO_STORE = { 'Cache-Control': 'no-store' }
-
-function json(body: unknown, status = 200): Response {
-  return Response.json(body, { headers: NO_STORE, status })
-}
-
-function bearerOf(request: Request): string | null {
-  let match = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')
-  return match?.[1] ?? null
-}
-
-async function intervalOf(request: Request): Promise<number | null> {
-  try {
-    let body: unknown = await request.json()
-    if (typeof body !== 'object' || body === null || Array.isArray(body)) return null
-    let interval = (body as Record<string, unknown>)['intervalMinutes']
-    return typeof interval === 'number' &&
-      Number.isInteger(interval) &&
-      interval >= 1 &&
-      interval <= MAX_INTERVAL_MINUTES
-      ? interval
-      : null
-  } catch {
-    return null
-  }
-}
-
 /** What the job hears back: `sent`, `nothing`, `unconfirmed` or `no-address`. */
 function answerOf(runKey: string, run: DigestRun): Response {
   return json({ runKey, state: run.kind })
@@ -91,20 +62,6 @@ function answerOf(runKey: string, run: DigestRun): Response {
 export default function createProofreadingDigestController(
   dependencies: ProofreadingDigestDependencies,
 ) {
-  async function refusal(request: Request): Promise<Response | null> {
-    let bearer = bearerOf(request)
-    if (bearer === null) return json({ error: 'unauthorized' }, 401)
-    let check = await dependencies.verifyIdentityToken(bearer)
-    if (check.status === 'unavailable') return json({ error: 'unavailable' }, 503)
-    if (
-      check.status !== 'verified' ||
-      check.identity.email.toLowerCase() !== dependencies.jobAccount
-    ) {
-      return json({ error: 'unauthorized' }, 401)
-    }
-    return null
-  }
-
   /**
    * When the last digest the Mailer confirmed was started: it changes with every confirmed send
    * and stays across the retries of one that was not, which is what the idempotency key needs.
@@ -160,9 +117,9 @@ export default function createProofreadingDigestController(
   return createController(routes.api.proofreadingDigest, {
     actions: {
       async run(context) {
-        let refused = await refusal(context.request)
+        let refused = await refusal(context.request, dependencies)
         if (refused !== null) return refused
-        let interval = await intervalOf(context.request)
+        let interval = intervalOf(await bodyOf(context.request))
         if (interval === null) return json({ error: 'invalid_request' }, 400)
 
         return dependencies.lock(PROOFREADING_DIGEST_JOB, async () => {

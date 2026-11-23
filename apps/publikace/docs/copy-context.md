@@ -76,9 +76,11 @@ všemu e-mail říká **připomínky**.
 | **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.                |
 | **připojit**, **připojení** | Trvalé spojení aplikace s účtem `publikace.app@`. Ne „přihlásit“: to dělá šéfredakce. |
 
-**Podklady pro tisk** plní úloha na pozadí, která zatím čte jen tabulky vydání založených před
-aplikací. Článek ani dílo z vydání založeného v aplikaci se do nich zatím nedostane, takže věta
-o nich na obrazovce takového vydání nic netvrdí.
+**Podklady pro tisk** plní úloha na pozadí _Podklady pro tisk_, každých 6 hodin. Do složky kopíruje
+schválené texty, tedy poslední verzi, se kterou souhlasili všichni autoři, a díla se souhlasem.
+Text upravený po schválení zůstává ve složce v poslední schválené verzi. Aplikace ví jen to, co
+úloha naposledy ohlásila: detail vydání ukazuje počet a čas posledního celého běhu, ne živý obsah
+složky. Uzavřené vydání úloha přeskakuje.
 
 **Skupina Google v Přístupu** neznamená, že se přihlásí každý její člen. Přihlásí se jen člen,
 který má účet na doméně redakce; skupina může mít i členy s jinou adresou a ti se nepřihlásí nikdy.

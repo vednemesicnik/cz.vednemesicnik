@@ -58,7 +58,8 @@ import {
   resendLabel,
   resentClausesToast,
 } from '../../domain/approvals.ts'
-import { type JobHealth, jobHealth } from '../../domain/job-run.ts'
+import { type JobHealth, jobHealth, jobState } from '../../domain/job-run.ts'
+import { PRINT_HANDOFF_JOB, printLine } from '../../domain/print-handoff.ts'
 import { tied } from '../../domain/public/typography.ts'
 import { UNDO_LABEL } from '../../domain/review.ts'
 import {
@@ -93,7 +94,7 @@ import {
   RESEND_FOLDER_GONE_TOAST,
   type SubfolderKind,
 } from '../../domain/article-folders.ts'
-import { folderUrl, type Issue } from '../../domain/issue.ts'
+import { folderUrl, type Issue, issueState } from '../../domain/issue.ts'
 import {
   absoluteUrl,
   articleLinkPath,
@@ -175,6 +176,7 @@ import {
   type LinkBlockView,
   type MissingAddressView,
   type MissingFoldersView,
+  type PrintSectionView,
   type ReplacedVersionView,
 } from './detail-page.tsx'
 import { type IssueStepDialogView, type ReturnTo, stepBackHref } from './issue-parts.tsx'
@@ -663,12 +665,30 @@ async function renderDetail(
       issue={issue}
       link={link}
       person={context.auth.identity}
+      print={await printOf(context, issue)}
       replacing={options.replacing}
       step={options.step}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
+}
+
+/**
+ * _Podklady pro tisk_ (`12t`), on an active issue with a print folder: unfinished and closed issues
+ * have none, the job skips a closed one, so its count would stand still (`12h`).
+ */
+async function printOf(context: PageContext, issue: Issue): Promise<PrintSectionView | undefined> {
+  let folderId = issue.folderIds.print
+  if (issueState(issue) !== 'active' || folderId === null) return undefined
+  let { printHandoffs, runs } = articlesOf(context)
+  let today = now()
+  let state = jobState(await runs.latest(PRINT_HANDOFF_JOB), today)
+  return {
+    folderHref: folderUrl(folderId),
+    jobHref: routes.settings.jobs.show.href({ job: PRINT_HANDOFF_JOB }),
+    line: printLine(await printHandoffs.summaryOf(issue.id), state, today),
+  }
 }
 
 /**

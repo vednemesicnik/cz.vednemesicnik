@@ -94,6 +94,12 @@ export const routes = route({
       claim: post('/api/v1/approvals/claim'),
       report: post('/api/v1/approvals/report'),
     },
+    /* `SCRIPT__Publication__Print_Handoff` for the issues made in the app (#110): it claims what
+       each print folder should hold beside what it holds, copies the difference, and reports. */
+    printHandoff: {
+      claim: post('/api/v1/print-handoff/claim'),
+      report: post('/api/v1/print-handoff/report'),
+    },
   },
 
   /* _Korektura_ (`15a`–`15e`), the one page a proofreader has, and its steps, at once and with no

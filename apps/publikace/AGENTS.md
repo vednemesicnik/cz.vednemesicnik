@@ -25,8 +25,11 @@ makes the article _Upraveno po schválení_ with _Označit novou verzi…_ in it
 issue closed from either „⋯“, which takes its links from the newsroom and its articles from the
 jobs, and reopened with the same links (#106); and the record, an issue's row in the Registr and
 its Evidence in the scripts' columns, rewritten by a queue in the app's process every 30 s after
-the database changes and in full once a day, with _Otevřít Evidenci_ in the issue's „⋯“ (#111). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
-except the artwork reply check, the article approvals and the proofreaders' digest, which go
+the database changes and in full once a day, with _Otevřít Evidenci_ in the issue's „⋯“ (#111); and the print folder, which
+`SCRIPT__Publication__Print_Handoff` fills with the approved texts and the artworks with consent
+through `/api/v1/print-handoff`, and which the issue detail's _Podklady pro tisk_ says the fill of
+(#110). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+except the artwork reply check, the article approvals, the print folder and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
 digest). What the app does on Drive and through the Mailer
@@ -131,10 +134,12 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   across every open issue, and every screen of the editors-in-chief refuses them with 403
   (`10d`); a person may be both. Everybody else arrives through a shared link that can do one thing in one issue
   (`/l/{key}/article`, `/l/{key}/artworks`) and can be revoked.
-- **The background jobs stay in Apps Script and talk to the app.** `…__Comment_Digest`,
-  `…__Designer_Handoff`, the artwork reply check (`SCRIPT__Publication__Artwork_Replies`, the
-  first of them), the article approvals (`SCRIPT__Publication__Article_Approvals`, which sends
-  the final versions and reads the replies) and the proofreaders' morning digest
+- **The background jobs stay in Apps Script and talk to the app.** `…__Comment_Digest`, the
+  print folder (`SCRIPT__Publication__Print_Handoff`, which copies what is approved into
+  `_Podklady_pro_tisk` and keeps no state of its own), the artwork reply check
+  (`SCRIPT__Publication__Artwork_Replies`, the first of them), the article approvals
+  (`SCRIPT__Publication__Article_Approvals`, which sends the final versions and reads the replies)
+  and the proofreaders' morning digest
   (`SCRIPT__Publication__Proofreading_Digest`, which only calls the app) run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report
   every run to the app with the interval of their trigger, and the app shows the last one and can
@@ -143,7 +148,8 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
   Mailer and the reply check, never with a token of its own. A job the app replaces stays on the
   sheets beside the one that talks to the app, each with its own issues, until no issue made
   before the app is open: `SCRIPT__Publication__Approval_Send` under `publikace@` keeps sending
-  the old issues' clauses, and `Artwork_Upload` keeps reading their artworks' replies.
+  the old issues' clauses, `Artwork_Upload` keeps reading their artworks' replies, and
+  `Designer_Handoff` keeps filling the print folders of the issues on the Registr's _Vydání_.
 - **The Doc carries only the text; the app carries every state.** Nothing goes into an article
   Doc: no menu, no link, no add-on. A bound script in a template is copied into every Doc and asks
   each person to authorize it in each one, so the steps on an article (the handover, taking and

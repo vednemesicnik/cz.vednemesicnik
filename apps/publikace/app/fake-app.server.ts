@@ -406,6 +406,15 @@ export async function createFakeApp(): Promise<FakeApp> {
         ${clauseRows}
       </table>
 
+      <h2>Print folder</h2>
+      <p>
+        ${button('/print', 'Fill the print folders')}
+        ${button('/print', 'Fill them, the run fails', { outcome: 'failed' })} — one run of
+        <code>Print_Handoff</code> through the app's API: it claims every open issue and reports a
+        copy of every approved text and every artwork with consent, with fake IDs. The issue
+        detail's <em>Podklady pro tisk</em> then counts them.
+      </p>
+
       <h2>Proofreaders' digest</h2>
       <p>
         Address: ${(await proofreaders.find())?.email ?? 'none'}
@@ -690,6 +699,54 @@ export async function createFakeApp(): Promise<FakeApp> {
         let answer = await job(routes.api.approvals.report.href(), {
           outcome: 'ok',
           results,
+          runKey,
+        })
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
+        return backToControls()
+      }
+      case '/print': {
+        let outcome = form?.get('outcome') === 'failed' ? 'failed' : 'ok'
+        let claimed = await job(routes.api.printHandoff.claim.href(), { intervalMinutes: 360 })
+        if (claimed.status !== 200) return new Response(`The API answered ${claimed.status}`)
+        let { issues, runKey } = (await claimed.json()) as {
+          issues: {
+            articles: {
+              articleId: number
+              artworks: { artworkId: number; storedName: string }[]
+              text: { finalVersionId: number } | null
+            }[]
+            issueId: number
+            sheetId: string | null
+          }[]
+          runKey: string
+        }
+        let answer = await job(routes.api.printHandoff.report.href(), {
+          issues: issues.map((issue) => ({
+            articles: issue.articles.map((article) => ({
+              articleId: article.articleId,
+              copy:
+                article.text === null && article.artworks.length === 0
+                  ? null
+                  : {
+                      artworks: article.artworks.map((artwork, index) => ({
+                        artworkId: artwork.artworkId,
+                        fileId: `fake-copy-${artwork.artworkId}`,
+                        name: `obr-${String(index + 1).padStart(2, '0')}${artwork.storedName.slice(artwork.storedName.lastIndexOf('.'))}`,
+                      })),
+                      folderId: `fake-print-${article.articleId}`,
+                      isTextChanged: false,
+                      lastImageNumber: article.artworks.length,
+                      textFileId:
+                        article.text === null ? null : `fake-text-${article.text.finalVersionId}`,
+                      textFinalVersionId: article.text?.finalVersionId ?? null,
+                    },
+            })),
+            isComplete: true,
+            issueId: issue.issueId,
+            sheetId: issue.sheetId ?? `fake-sheet-${issue.issueId}`,
+          })),
+          ...(outcome === 'failed' ? { error: 'The fake Drive stopped answering.' } : {}),
+          outcome,
           runKey,
         })
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)

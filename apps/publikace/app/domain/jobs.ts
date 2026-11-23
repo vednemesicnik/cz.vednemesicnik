@@ -26,6 +26,14 @@ import {
   UNCONFIRMED_CALLOUT_TITLE,
 } from './proofreading-digest.ts'
 import { APPROVAL_SEND_JOB, APPROVAL_SEND_JOB_NAME } from './approvals.ts'
+import {
+  PRINT_HANDOFF_BANNER,
+  PRINT_HANDOFF_FAILED_CALLOUT,
+  PRINT_HANDOFF_FAILED_EVENT,
+  PRINT_HANDOFF_JOB,
+  PRINT_HANDOFF_JOB_NAME,
+  PRINT_HANDOFF_SUMMARY,
+} from './print-handoff.ts'
 import { REPLY_CHECK_JOB, REPLY_CHECK_JOB_NAME } from './reply-check.ts'
 import { atTime, clockTime, formatDate, formatDay, formatDayMonth, pragueYear } from './time.ts'
 import { NBSP, tied } from './public/typography.ts'
@@ -109,6 +117,15 @@ export const JOBS: readonly Job[] = [
     stoppedText: STOPPED_DIGEST_TEXT,
     summary: PROOFREADING_DIGEST_SUMMARY,
     window: DIGEST_WINDOW,
+  },
+  {
+    /* A failed run may have copied some texts and artworks and not others (`84m2ye59`). */
+    failedCallout: PRINT_HANDOFF_FAILED_CALLOUT,
+    failedEvent: PRINT_HANDOFF_FAILED_EVENT,
+    failingBanner: PRINT_HANDOFF_BANNER,
+    key: PRINT_HANDOFF_JOB,
+    name: PRINT_HANDOFF_JOB_NAME,
+    summary: PRINT_HANDOFF_SUMMARY,
   },
 ]
 

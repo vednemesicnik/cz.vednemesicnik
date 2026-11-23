@@ -31,21 +31,21 @@ the pages and the drawings are the agent's.
 The canvas has one **page** per topic, in the canvas's Pages menu, and one or more **files** per
 page, the way the magazine's design project is laid out:
 
-| Page                     | Files                                                                      |
-| ------------------------ | -------------------------------------------------------------------------- |
-| 00 Úvod a mapa           | `Main.dc.html` — the map of every file (`00a`), access, what replaces what |
-| 01 Stavy a souhlasy      | `01-Stavy.dc.html` — the source of truth for every status tag              |
-| 02 Odkazy pro redakci    | `02-Odkazy.dc.html`                                                        |
-| 03 K rozhodnutí          | `03-K-rozhodnuti.dc.html` — every open decision, who decides it            |
-| 10 Přihlášení            | `10-Prihlaseni.dc.html`                                                    |
-| 11 Vydání                | `11-Vydani.dc.html`, `11-Vydani-nove.dc.html`, `11-Vydani-telefon.dc.html` |
-| 12 Detail vydání         | `12-Detail-vydani.dc.html`, `…-skupiny.dc.html`, `…-uzavreni.dc.html`      |
-| 13 Ke kontrole           | `13-Ke-kontrole.dc.html`                                                   |
-| 14 Nastavení             | `14-Nastaveni.dc.html`, `14-Nastaveni-ulohy.dc.html`                       |
-| 20 Nový článek · odkaz   | `20-Novy-clanek.dc.html`, `20-Novy-clanek-odeslani.dc.html`                |
-| 21 Obrazová díla · odkaz | `21-Obrazova-dila.dc.html`, `21-Obrazova-dila-odeslani.dc.html`            |
-| 30 Tmavý režim           | `30-Tmavy-rezim.dc.html`                                                   |
-| Součástky                | `Panel.dc.html` — the sidebar every screen of the editors-in-chief imports |
+| Page                     | Files                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| 00 Úvod a mapa           | `Main.dc.html` — the map of every file (`00a`), access, what replaces what                  |
+| 01 Stavy a souhlasy      | `01-Stavy.dc.html` — the source of truth for every status tag                               |
+| 02 Odkazy pro redakci    | `02-Odkazy.dc.html`                                                                         |
+| 03 K rozhodnutí          | `03-K-rozhodnuti.dc.html` — every open decision, who decides it                             |
+| 10 Přihlášení            | `10-Prihlaseni.dc.html`                                                                     |
+| 11 Vydání                | `11-Vydani.dc.html`, `11-Vydani-nove.dc.html`, `11-Vydani-telefon.dc.html`                  |
+| 12 Detail vydání         | `12-Detail-vydani.dc.html`, `…-skupiny.dc.html`, `…-uzavreni.dc.html`, `…-podklady.dc.html` |
+| 13 Ke kontrole           | `13-Ke-kontrole.dc.html`                                                                    |
+| 14 Nastavení             | `14-Nastaveni.dc.html`, `14-Nastaveni-ulohy.dc.html`                                        |
+| 20 Nový článek · odkaz   | `20-Novy-clanek.dc.html`, `20-Novy-clanek-odeslani.dc.html`                                 |
+| 21 Obrazová díla · odkaz | `21-Obrazova-dila.dc.html`, `21-Obrazova-dila-odeslani.dc.html`                             |
+| 30 Tmavý režim           | `30-Tmavy-rezim.dc.html`                                                                    |
+| Součástky                | `Panel.dc.html` — the sidebar every screen of the editors-in-chief imports                  |
 
 Every screen has an **anchor** (`11d`, `12b`) that never gets renumbered. A screen is a
 `<section id="12b" class="sec">`; its decisions are the `.dec` paragraphs under it, its notes that
