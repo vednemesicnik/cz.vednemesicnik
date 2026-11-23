@@ -37,6 +37,8 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
  * 2. `report` with the run's key gives, per issue it worked on, the sheet, whether it got through
  *    the whole issue (`isComplete`), and per article it reached the copy now in the folder, or
  *    `null` once the folder is gone. An article left out stays as it was. It closes the run.
+ *    Besides the limits on one issue and one article, the report as a whole holds at most
+ *    `MAX_REPORT_ARTICLES` articles and `MAX_REPORT_ARTWORKS` artworks, or nothing is recorded.
  *
  * Every file the job makes carries its tag in `appProperties` under `publikaceHandoff`:
  * `folderTag` on an article's folder, `copyTag` on a text or an artwork. Before it creates one, the
@@ -62,6 +64,13 @@ const MAX_NAME_LENGTH = 200
 /* An issue has tens of articles and an article tens of artworks; the limits only stop nonsense. */
 const MAX_ARTICLES = 500
 const MAX_ARTWORKS = 500
+/*
+ * A report holds up to `ISSUE_CLAIM_LIMIT` issues and is recorded in transactions every other
+ * request waits behind, so the report as a whole is bounded too. A real run carries a few open
+ * issues of tens of articles, far under either.
+ */
+const MAX_REPORT_ARTICLES = 500
+const MAX_REPORT_ARTWORKS = 5000
 const MAX_IMAGE_NUMBER = 9999
 
 function isId(value: unknown): value is number {
@@ -134,6 +143,16 @@ function readIssue(value: unknown): IssueReport | null {
   return { articles: read, isComplete, issueId, sheetId: (sheetId as string | null) ?? null }
 }
 
+function isWithinTotals(issues: readonly IssueReport[]): boolean {
+  let articles = 0
+  let artworks = 0
+  for (let issue of issues) {
+    articles += issue.articles.length
+    for (let article of issue.articles) artworks += article.copy?.artworks.length ?? 0
+  }
+  return articles <= MAX_REPORT_ARTICLES && artworks <= MAX_REPORT_ARTWORKS
+}
+
 /** One issue as the job gets it; instants as ISO 8601. */
 function claimedIssue(issue: ClaimedIssue) {
   return {
@@ -188,14 +207,15 @@ export default function createPrintHandoffController(dependencies: PrintHandoffD
           return json({ error: 'invalid_request' }, 400)
         }
         let read = (issues as unknown[]).map(readIssue)
-        if (read.some((issue) => issue === null)) return json({ error: 'invalid_request' }, 400)
+        if (!read.every((issue) => issue !== null) || !isWithinTotals(read)) {
+          return json({ error: 'invalid_request' }, 400)
+        }
         if (!(await dependencies.runs.isOpen(PRINT_HANDOFF_JOB, runKey))) {
           return json({ error: 'unknown_run' }, 409)
         }
 
         let answers = []
         for (let issue of read) {
-          if (issue === null) continue
           let answer = await dependencies.handoffs.record(runKey, issue)
           answers.push({ answer, issueId: issue.issueId })
         }

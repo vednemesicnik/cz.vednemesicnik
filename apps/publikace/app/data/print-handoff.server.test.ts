@@ -332,4 +332,64 @@ describe('the print folder’s report', () => {
       await app.close()
     }
   })
+
+  it('records only the article’s own artworks, the first of a duplicate', async () => {
+    let app = await createTestApp()
+    try {
+      let issueId = await seedIssue(app)
+      let article = await seedArticle(app, issueId)
+      let neighbour = await seedArticle(app, issueId, 'Vedle')
+      let own = await seedBatch(app, article, issueId, { count: 2 })
+      let foreign = await seedBatch(app, neighbour, issueId, { count: 1 })
+      let [first, second] = own.artworks.map((artwork) => artwork.id)
+      let store = createPrintHandoffStore(app.database)
+      await store.claim('run-1', AT)
+      await store.record('run-1', {
+        articles: [
+          {
+            articleId: article.articleId,
+            copy: {
+              artworks: [
+                { artworkId: first ?? 0, fileId: 'copy-1', name: 'obr-01.jpg' },
+                { artworkId: foreign.artworks[0]?.id ?? 0, fileId: 'copy-x', name: 'obr-02.jpg' },
+                { artworkId: second ?? 0, fileId: 'copy-3', name: 'obr-03.jpg' },
+                { artworkId: first ?? 0, fileId: 'copy-4', name: 'obr-04.jpg' },
+              ],
+              folderId: 'print-article',
+              isTextChanged: false,
+              lastImageNumber: 4,
+              textFileId: null,
+              textFinalVersionId: null,
+            },
+          },
+        ],
+        isComplete: true,
+        issueId,
+        sheetId: null,
+      })
+      let rows = await app.database.exec(
+        sql`SELECT artwork_id, article_id, copy_file_id, name FROM print_artworks
+            ORDER BY artwork_id`,
+      )
+      assert.deepEqual(
+        (rows.rows ?? []).map((row) => ({ ...row })),
+        [
+          {
+            article_id: article.articleId,
+            artwork_id: first,
+            copy_file_id: 'copy-1',
+            name: 'obr-01.jpg',
+          },
+          {
+            article_id: article.articleId,
+            artwork_id: second,
+            copy_file_id: 'copy-3',
+            name: 'obr-03.jpg',
+          },
+        ],
+      )
+    } finally {
+      await app.close()
+    }
+  })
 })

@@ -155,4 +155,67 @@ describe('the API of Print_Handoff', () => {
       await app.close()
     }
   })
+
+  it('refuses a report over its totals, each issue and article within theirs', async () => {
+    let app = await createTestApp()
+    try {
+      let issueId = await seedIssue(app)
+      let claimed = await claim(app)
+      let copy = (articleId: number, artworks: number) => ({
+        articleId,
+        copy: {
+          artworks: Array.from({ length: artworks }, (_, index) => ({
+            artworkId: articleId * 1000 + index + 1,
+            fileId: `copy-${articleId}-${index}`,
+            name: `obr-${index + 1}.jpg`,
+          })),
+          folderId: `print-${articleId}`,
+          isTextChanged: false,
+          lastImageNumber: artworks,
+          textFileId: null,
+          textFinalVersionId: null,
+        },
+      })
+      let issue = (articles: unknown[], id = issueId) => ({
+        articles,
+        isComplete: true,
+        issueId: id,
+        sheetId: null,
+      })
+
+      /* 11 × 455 artworks: 5 005 in all. */
+      let artworks = Array.from({ length: 11 }, (_, index) => copy(index + 1, 455))
+      let tooManyArtworks = await call(app, REPORT, {
+        issues: [issue(artworks)],
+        outcome: 'ok',
+        runKey: claimed.runKey,
+      })
+      assert.equal(tooManyArtworks.status, 400)
+      assert.deepEqual(await tooManyArtworks.json(), { error: 'invalid_request' })
+
+      /* 251 and 250 articles: 501 in all. */
+      let articles = (from: number, count: number) =>
+        Array.from({ length: count }, (_, index) => ({ articleId: from + index, copy: null }))
+      let tooManyArticles = await call(app, REPORT, {
+        issues: [issue(articles(1, 251)), issue(articles(1000, 250), issueId + 1)],
+        outcome: 'ok',
+        runKey: claimed.runKey,
+      })
+      assert.equal(tooManyArticles.status, 400)
+
+      let recorded = await app.database.exec(
+        sql`SELECT (SELECT count(*) FROM print_articles) + (SELECT count(*) FROM print_artworks)
+              AS count`,
+      )
+      assert.equal(Number(recorded.rows?.[0]?.['count']), 0)
+      let accepted = await call(app, REPORT, {
+        issues: [issue([])],
+        outcome: 'ok',
+        runKey: claimed.runKey,
+      })
+      assert.equal(accepted.status, 200, 'the refused reports left the run open')
+    } finally {
+      await app.close()
+    }
+  })
 })

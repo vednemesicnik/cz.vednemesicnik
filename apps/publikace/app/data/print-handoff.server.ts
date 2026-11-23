@@ -232,15 +232,23 @@ async function recordArticle(
           last_image_number = max(last_image_number, excluded.last_image_number)`,
   )
   await db.exec(sql`DELETE FROM print_artworks WHERE article_id = ${article.articleId}`)
-  for (let artwork of copy.artworks) {
-    await db.exec(
-      sql`INSERT INTO print_artworks (artwork_id, article_id, copy_file_id, name)
-          SELECT ${artwork.artworkId}, ${article.articleId}, ${artwork.fileId}, ${artwork.name}
-          WHERE EXISTS (SELECT 1 FROM artworks
-                        WHERE id = ${artwork.artworkId} AND article_id = ${article.articleId})
-          ON CONFLICT (artwork_id) DO NOTHING`,
-    )
-  }
+  if (copy.artworks.length === 0) return
+  /*
+   * One statement for all of the article's artworks, so a long list costs one round on the
+   * connection every request shares. The join keeps only this article's artworks, and `c.key`
+   * keeps the list's order, so a duplicate keeps its first entry.
+   */
+  await db.exec(
+    sql`INSERT INTO print_artworks (artwork_id, article_id, copy_file_id, name)
+        SELECT a.id, ${article.articleId},
+          json_extract(c.value, '$.fileId'), json_extract(c.value, '$.name')
+        FROM json_each(${JSON.stringify(copy.artworks)}) AS c
+        JOIN artworks AS a ON a.id = json_extract(c.value, '$.artworkId')
+                          AND a.article_id = ${article.articleId}
+        WHERE true
+        ORDER BY c.key
+        ON CONFLICT (artwork_id) DO NOTHING`,
+  )
 }
 
 export function createPrintHandoffStore(database: Database): PrintHandoffStore {
