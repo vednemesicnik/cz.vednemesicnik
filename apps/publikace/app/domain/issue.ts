@@ -255,10 +255,12 @@ export function closeDialogTitle(name: string): string {
   return `Uzavřít vydání ${name}?`
 }
 
-/* As drawn, without _Složka pro grafika se přestane sdílet._: nothing in the app shares that
-   folder yet, so the sentence would promise a step that does not happen. */
+/* `12g`: closing changes nothing on Drive, its sharing included (`03` row 8). Every file and
+   folder of the issue inherits the issues folder's link grant, and only a Manager of the shared
+   drive could cut it, which `publikace.app@` is not. The note says so with _sdílení_ rather than
+   _odkazy_, so that _odkaz_ stays the editors' link of the first sentence (answer `51yfpl63`). */
 export const CLOSE_DIALOG_TEXT = tied`Odkazy pro redakci přestanou platit a úlohy na pozadí vydání přeskočí.`
-export const CLOSE_DIALOG_NOTE = tied`Soubory na Disku zůstanou. Vydání jde kdykoli znovu otevřít.`
+export const CLOSE_DIALOG_NOTE = tied`Soubory i složky na Disku zůstanou a jejich sdílení se nezmění. Vydání jde kdykoli znovu otevřít.`
 export const CLOSE_CONFIRM_LABEL = 'Uzavřít vydání'
 export const CLOSE_ANYWAY_LABEL = 'Přesto uzavřít'
 
@@ -267,9 +269,9 @@ export const CLOSE_ANYWAY_LABEL = 'Přesto uzavřít'
  * does: _U 2 článků a 3 děl zatím chybí souhlas._ The counts stand in the genitive, so no verb
  * has to agree with them.
  *
- * The drawn _a do podkladů se nedostanou_ is left out: nothing of an issue made in the app
- * reaches the material for print, closed or not, so closing would be blamed for something it
- * does not cause.
+ * The drawn _a do podkladů se nedostanou_ is left out while the print job runs nowhere (#119):
+ * until it does, nothing of an issue made in the app reaches the print folder, closed or not, so
+ * closing would be blamed for something it does not cause.
  */
 export function closeWarningText(articles: number, artworks: number): string | null {
   if (articles === 0 && artworks === 0) return null

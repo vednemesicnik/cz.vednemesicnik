@@ -163,7 +163,10 @@ Fly.io, and from `v1.0.0` also a GitHub Release. See
 - **The link to a Doc is the right to edit it.** The issues folder on the shared drive is shared
   as _Každý, kdo má odkaz · Přispěvatel_ (an editor, in a shared drive’s words), and the drive allows people outside the organisation, so every
   issue, article folder and Doc inherits it, as on _Redakce_. Authors outside the domain edit
-  through the link; nothing in the app or the scripts shares a file with a person.
+  through the link; nothing in the app or the scripts shares a file with a person. Closing an
+  issue therefore revokes nothing, the print folder included: only a Manager of the shared drive
+  can make a folder limited and cut the inherited grant, and `publikace.app@` stays a Content
+  manager.
 
 ## Workflow skills
 

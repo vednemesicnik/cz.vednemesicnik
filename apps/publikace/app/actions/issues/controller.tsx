@@ -987,7 +987,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
       },
 
       /*
-       * The state alone, nothing on Drive and no sheet: the links and the jobs read it (`12g`).
+       * The state alone: the links and the jobs read it (`12g`). Nothing on Drive, the print
+       * folder's sharing included (`03` row 8), and the Registr follows through the record queue.
        * A second answer to a dialog drawn twice changes nothing and says nothing.
        */
       async close(context) {

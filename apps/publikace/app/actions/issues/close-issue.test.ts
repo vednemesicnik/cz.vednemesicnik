@@ -98,7 +98,12 @@ describe('closing an issue (12g)', () => {
       assert.ok(
         text.includes('Odkazy pro redakci přestanou platit a úlohy na pozadí vydání přeskočí.'),
       )
-      assert.ok(!text.includes('grafik'), 'nothing in the app shares the designer’s folder yet')
+      assert.ok(
+        text.includes(
+          'Soubory i složky na Disku zůstanou a jejich sdílení se nezmění. Vydání jde kdykoli znovu otevřít.',
+        ),
+      )
+      assert.ok(!text.includes('grafik'), 'the dialog makes no exception of the designer’s folder')
       assert.ok(!text.includes('Přesto uzavřít'))
       assert.ok(
         html.includes('class="vdm-btn vdm-btn--danger vdm-btn--sm">Uzavřít vydání</button>'),
@@ -177,6 +182,25 @@ describe('closing an issue (12g)', () => {
       await editor.post(REOPEN, { returnTo: 'detail' }, REOPEN)
       assert.equal((await visitor.get(link)).status, 200)
       assert.equal(await articleLink(app, issueId), link)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('leaves Drive alone, the print folder included, on closing and on reopening', async () => {
+    let { app, editor, issueId } = await issueApp()
+    try {
+      await connectDriveAccount(app)
+      let calls = app.drive.calls.length
+
+      let closed = await editor.post(CLOSE, { returnTo: 'detail' }, CLOSE)
+      assert.equal(closed.status, 303)
+      assert.ok((await closedAt(app, issueId)) !== null)
+      let reopened = await editor.post(REOPEN, { returnTo: 'detail' }, REOPEN)
+      assert.equal(reopened.status, 303)
+      assert.equal(await closedAt(app, issueId), null)
+
+      assert.deepEqual(app.drive.calls.slice(calls), [])
     } finally {
       await app.close()
     }
