@@ -27,25 +27,23 @@ export type ToastsProps = {
 }
 
 /*
- * Bottom left, over the page and clear of the panel's foot.
+ * Where the stack stands is the page's to decide (`Layout`), because the room the page leaves
+ * for it is counted from the page's own padding.
  *
  * The browser runtime draws the next page into the same document, so these regions stay and a
  * message put into them is announced: a confirmation politely, from `status`, an error at once,
  * from `alert`. Two sibling regions rather than one inside the other, which a screen reader may
  * read twice. A confirmation leaves by itself after five seconds, in CSS; an error stays, because
  * it asks for a step and could otherwise leave before it is read.
+ *
+ * No gap between the regions: a page has one toast at most, because the session carries one
+ * message, so one of them is always empty, and a gap beside it would push the toast off its place
+ * and give an empty stack a height.
  */
 const stackStyle = css({
-  bottom: '18px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '8px',
-  left: '242px',
-  maxWidth: 'calc(100vw - 260px)',
   pointerEvents: 'none',
-  position: 'fixed',
-  zIndex: 'var(--z-notification)',
-  '@media (max-width: 767.98px)': { left: '16px', maxWidth: 'calc(100vw - 32px)' },
 })
 
 const regionStyle = css({ display: 'flex', flexDirection: 'column', gap: '8px' })
@@ -59,7 +57,9 @@ const leavingStyle = css({
   '@media (prefers-reduced-motion: reduce)': { animationDuration: '1ms' },
 })
 
-/* A keyframes rule is not a style of one element, so it is written as a sheet beside them. */
+/* A keyframes rule is not a style of one element, so it is written as a sheet beside them. It
+   ends hidden rather than removed, so a toast that left keeps its room at the page's end until
+   the next load and the end does not jump under a finger (`11f`). */
 const LEAVE_KEYFRAMES =
   '@keyframes publikace-toast-leave { to { opacity: 0; visibility: hidden; } }'
 
