@@ -18,6 +18,7 @@ import type { JobHealth } from './job-run.ts'
 
 const AT = Temporal.Instant.from('2026-11-21T08:12:00Z')
 const SENT: ClauseStatus = {
+  answeredAt: null,
   approvedAt: null,
   archiveFailedAt: null,
   consentVerifiedAt: null,
@@ -40,6 +41,12 @@ describe('an author’s clause', () => {
     assert.equal(clauseState({ ...SENT, consentVerifiedAt: AT, replyMessageId: 'm' }), 'verified')
     assert.equal(clauseState({ ...SENT, archiveFailedAt: AT, replyMessageId: 'm' }), 'unarchived')
     assert.equal(clauseState({ ...SENT, approvedAt: AT, archiveFailedAt: AT }), 'approved')
+  })
+
+  it('puts the author on the move again once the latest reply was answered from the queue', () => {
+    assert.equal(clauseState({ ...SENT, answeredAt: AT, replyMessageId: 'm' }), 'waiting')
+    let exact = { ...SENT, answeredAt: AT, isExactConsent: true, replyMessageId: 'm' }
+    assert.equal(clauseState(exact), 'verified')
   })
 
   it('lets a reply beat an e-mail the Mailer did not confirm', () => {
@@ -65,6 +72,7 @@ const TODAY = Temporal.Instant.from('2026-11-21T09:05:00Z')
 const NEXT = Temporal.Instant.from('2026-11-21T08:30:00Z')
 const RUNNING: JobHealth = { kind: 'running', lastStartedAt: AT, next: NEXT }
 const DETAIL: ClauseDetail = {
+  answeredAt: null,
   approvedAt: null,
   archiveError: null,
   authorEmail: 'ondrej.benes@external.test',
@@ -129,6 +137,8 @@ describe('an author’s line in the open row', () => {
       quote: null,
       tone: 'running',
     })
+    let answered = row({ answeredAt: Temporal.Instant.from('2026-11-19T08:41:00Z') })
+    assert.equal(answered.detail, 'odpověď odeslána 19. 11.')
     assert.deepEqual(row({ replyText: 'Ještě jedna oprava', state: 'review' }), {
       detail: null,
       label: 'Ke kontrole',

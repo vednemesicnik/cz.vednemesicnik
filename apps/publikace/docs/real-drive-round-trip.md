@@ -347,6 +347,22 @@ step applies.
    history says _Odeslání přehledu se nepodařilo potvrdit._, and the banner stands over every
    screen. Mend it and run again: one e-mail, and the banner goes.
 
+## Answering a reply from Ke kontrole
+
+The answer goes through the Mailer as a reply in the thread of the consent request (#31,
+`13d`–`13h`). The Mailer's own live test tried a reply in an article's thread and every refusal;
+the suite covers what the app stores and shows. What is left is what only real Gmail shows.
+
+1. Answer an artwork provider's reply that is not „Souhlasím“, from a test address outside
+   `vednemesicnik.cz`: the answer lands in the provider's thread with `Re:`, from _Publikace
+   Vedneměsíčník_, with the signature, the footer and the quote of the provider's message laid out
+   as `13h` draws them.
+2. Answer an author's reply on a final version the same way: the thread is the final version's.
+3. Reply to the answer from the provider's mailbox and let the reply check run: the card comes back
+   with the new message and _Dřívější odpovědi z Publikace (1)_.
+4. Stop the Mailer's deployment, answer, start it again and use _Odeslat znovu_: the provider gets
+   one e-mail.
+
 ## The record
 
 The Registr and each Evidence follow the database through the record queue (#111), a pass every

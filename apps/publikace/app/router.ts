@@ -52,6 +52,7 @@ import {
 } from './auth/identity-token.server.ts'
 import { createSessionCookie, createSignedInUntilCookie } from './auth/session.server.ts'
 import { createAccessDirectory } from './data/access.server.ts'
+import { createAnswerStore } from './data/answers.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { createDriveAccountStore } from './data/drive-account.server.ts'
@@ -415,8 +416,12 @@ export function createAppRouter(dependencies: AppDependencies) {
   router.map(
     routes.review,
     createReviewController(signedInUntil, {
+      answers: createAnswerStore(dependencies.database),
       articles: articleSetup.articles,
       artworks: artworksSetup.artworks,
+      mailer: articleSetup.mailer,
+      mailLog: articleSetup.mailLog,
+      mailPerDay: articleSetup.mailPerDay,
       runs: jobRuns,
     }),
   )

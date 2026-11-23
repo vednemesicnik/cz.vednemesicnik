@@ -126,8 +126,12 @@ export const routes = route({
     index: get('/review'),
     verify: post('/review/batches/:id/consent'),
     undo: post('/review/batches/:id/consent/undo'),
+    reply: post('/review/batches/:id/reply'),
+    replyRetry: post('/review/batches/:id/reply/retry'),
     clauseVerify: post('/review/clauses/:id/consent'),
     clauseUndo: post('/review/clauses/:id/consent/undo'),
+    clauseReply: post('/review/clauses/:id/reply'),
+    clauseReplyRetry: post('/review/clauses/:id/reply/retry'),
   },
 
   auth: {

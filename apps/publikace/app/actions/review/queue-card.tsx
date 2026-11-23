@@ -1,14 +1,36 @@
 import type { Handle } from 'remix/component'
+import { getContext } from 'remix/middleware/async-context'
+import { getCsrfToken } from 'remix/middleware/csrf'
 
+import { ANSWER_LABEL } from '../../domain/answer.ts'
 import { JOBS_TITLE } from '../../domain/jobs.ts'
 import { CONSENT_LABEL, SHOW_WHOLE_REPLY_LABEL, UNDO_LABEL } from '../../domain/review.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
 import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
+import {
+  AnswerCompose,
+  type AnswerComposeProps,
+} from '../../ui/public/answer-compose/component.tsx'
 import { StatusTag, type StatusTone } from '../../ui/status-tag/component.tsx'
+
+/** _Odpovědět_ and the form it opens (`13d`); the token is the page's, added as it is drawn. */
+export type QueueCardAnswer = Omit<AnswerComposeProps, 'csrfToken'> & {
+  /** `?reply=`, which opens the form on a page without script. `null` hides _Odpovědět_. */
+  openHref: string | null
+}
+
+/** The answers that went from the app, under the quote (`13e`, `13f`). */
+export type QueueCardAnswers = {
+  isOpen: boolean
+  items: { line: string | null; meta: string; text: string }[]
+  title: string
+}
 
 /** One card of _Ke kontrole_, as the controller lays it out. */
 export type QueueCardView = {
+  answer: QueueCardAnswer | null
+  answers: QueueCardAnswers | null
   callout: { text: string; title: string | null; tone: 'error' | 'info' } | null
   /** Where _Je to souhlas_ posts, or `null` where the card offers no decision. */
   consentAction: string | null
@@ -41,11 +63,13 @@ export function QueueCard(handle: Handle<{ card: QueueCardView }>) {
     let { card } = handle.props
     /* The buttons say what they do and the card says which reply: a screen reader hears both. */
     let aboutId = `reply-${card.id}-about`
+    let openHref = card.answer?.openHref ?? null
     let hasActions =
       card.consentAction !== null ||
       card.undoAction !== null ||
       card.menu !== null ||
-      card.jobsHref !== null
+      card.jobsHref !== null ||
+      openHref !== null
 
     return (
       <li
@@ -84,6 +108,20 @@ export function QueueCard(handle: Handle<{ card: QueueCardView }>) {
             {SHOW_WHOLE_REPLY_LABEL}
           </a>
         ) : null}
+        {card.answers === null ? null : (
+          <details class="vdm-queue-item__sent" open={card.answers.isOpen ? true : undefined}>
+            <summary>{card.answers.title}</summary>
+            {card.answers.items.map((item) => (
+              <div class="vdm-queue-item__reply">
+                <span class="vdm-queue-item__reply-meta">
+                  {item.meta}
+                  {item.line === null ? null : ` · ${item.line}`}
+                </span>
+                <p class="vdm-queue-item__reply-text">{item.text}</p>
+              </div>
+            ))}
+          </details>
+        )}
         {card.callout === null ? null : (
           <Callout tone={card.callout.tone}>
             {card.callout.title === null ? null : (
@@ -95,42 +133,63 @@ export function QueueCard(handle: Handle<{ card: QueueCardView }>) {
           </Callout>
         )}
         {hasActions ? (
-          <div class="vdm-queue-item__actions">
-            {card.consentAction === null ? null : (
-              <form action={card.consentAction} method="post">
-                <CsrfField />
-                <input name="reply" type="hidden" value={card.consentReplyId ?? ''} />
-                <button
+          /* The form stands in for this row while it is open, so the card has one main action
+             (`13d`); the island hides and shows it again. `hidden` sits on a wrapper, since
+             the row's own `display: flex` would win over the attribute. */
+          <div
+            hidden={card.answer?.isOpen === true ? true : undefined}
+            id={`reply-${card.id}-actions`}
+          >
+            <div class="vdm-queue-item__actions">
+              {card.consentAction === null ? null : (
+                <form action={card.consentAction} method="post">
+                  <CsrfField />
+                  <input name="reply" type="hidden" value={card.consentReplyId ?? ''} />
+                  <button
+                    aria-describedby={aboutId}
+                    class="vdm-btn vdm-btn--primary vdm-btn--sm"
+                    type="submit"
+                  >
+                    {CONSENT_LABEL}
+                  </button>
+                </form>
+              )}
+              {openHref === null ? null : (
+                <a
                   aria-describedby={aboutId}
-                  class="vdm-btn vdm-btn--primary vdm-btn--sm"
-                  type="submit"
+                  class="vdm-btn vdm-btn--outline vdm-btn--sm"
+                  href={openHref}
+                  id={`reply-${card.id}-answer`}
                 >
-                  {CONSENT_LABEL}
-                </button>
-              </form>
-            )}
-            {card.undoAction === null ? null : (
-              <form action={card.undoAction} method="post">
-                <CsrfField />
-                <button
-                  aria-describedby={aboutId}
-                  class="vdm-btn vdm-btn--ghost vdm-btn--sm"
-                  type="submit"
-                >
-                  {UNDO_LABEL}
-                </button>
-              </form>
-            )}
-            {card.menu === null ? null : (
-              <ActionMenu items={card.menu.items} label={card.menu.label} />
-            )}
-            {card.jobsHref === null ? null : (
-              <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={card.jobsHref}>
-                {JOBS_TITLE}
-              </a>
-            )}
+                  {ANSWER_LABEL}
+                </a>
+              )}
+              {card.undoAction === null ? null : (
+                <form action={card.undoAction} method="post">
+                  <CsrfField />
+                  <button
+                    aria-describedby={aboutId}
+                    class="vdm-btn vdm-btn--ghost vdm-btn--sm"
+                    type="submit"
+                  >
+                    {UNDO_LABEL}
+                  </button>
+                </form>
+              )}
+              {card.menu === null ? null : (
+                <ActionMenu items={card.menu.items} label={card.menu.label} />
+              )}
+              {card.jobsHref === null ? null : (
+                <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={card.jobsHref}>
+                  {JOBS_TITLE}
+                </a>
+              )}
+            </div>
           </div>
         ) : null}
+        {card.answer === null ? null : (
+          <AnswerCompose {...card.answer} csrfToken={getCsrfToken(getContext())} />
+        )}
       </li>
     )
   }

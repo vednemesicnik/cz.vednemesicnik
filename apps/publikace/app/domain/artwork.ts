@@ -92,6 +92,11 @@ export type ArtworkState = 'approved' | 'error' | 'provider' | 'review'
 
 /** A committed batch, as far as its state goes: its request, the reply and what came of it. */
 export type BatchStatus = {
+  /**
+   * When an answer from _Ke kontrole_ to the latest reply went (`13e`); `null` while that reply
+   * has none, so a newer reply from the provider brings the batch back to _Ke kontrole_.
+   */
+  answeredAt: Temporal.Instant | null
   approvedAt: Temporal.Instant | null
   archiveFailedAt: Temporal.Instant | null
   consentVerifiedAt: Temporal.Instant | null
@@ -124,13 +129,16 @@ export function mayArchive(
  *   request. A reply beats the unconfirmed request: a copy that arrived after all was read
  *   (`viipe3q8`).
  * - _U poskytovatele_ after _Je to souhlas_ (stored as _Souhlas k archivaci_), after an exact
- *   „Souhlasím“ the job is about to archive, and while the request waits for an answer.
+ *   „Souhlasím“ the job is about to archive, after an answer from _Ke kontrole_ to the latest
+ *   reply (`13e`), and while the request waits for an answer.
  * - _Ke kontrole_ for any other reply.
  */
 export function batchState(batch: BatchStatus): ArtworkState {
   if (batch.approvedAt !== null) return 'approved'
   if (batch.archiveFailedAt !== null) return 'error'
-  if (batch.replyMessageId !== null) return mayArchive(batch) ? 'provider' : 'review'
+  if (batch.replyMessageId !== null) {
+    return mayArchive(batch) || batch.answeredAt !== null ? 'provider' : 'review'
+  }
   return batch.mailSentAt === null ? 'error' : 'provider'
 }
 
@@ -158,6 +166,10 @@ export function batchStateDetail(batch: BatchStatus): string {
   if (batch.archiveFailedAt !== null) return 'konverzace se neuložila'
   if (batch.consentVerifiedAt !== null) {
     return `souhlas zaznamenán ${formatDayMonth(batch.consentVerifiedAt)}`
+  }
+  /* The date of the last e-mail that went to the provider, as `žádost odeslána` has it (`01b`). */
+  if (batch.answeredAt !== null && batchState(batch) === 'provider') {
+    return `odpověď odeslána ${formatDayMonth(batch.answeredAt)}`
   }
   if (batch.replyMessageId !== null && batchState(batch) === 'review') {
     if (batch.discardedAt !== null) return `dávka zahozena ${formatDayMonth(batch.discardedAt)}`

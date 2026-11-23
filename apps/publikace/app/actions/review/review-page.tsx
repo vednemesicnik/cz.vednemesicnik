@@ -16,6 +16,7 @@ import {
   SHOW_ALL_LABEL,
 } from '../../domain/review.ts'
 import { routes } from '../../routes.ts'
+import { Callout } from '../../ui/callout/component.tsx'
 import { EmptyState } from '../../ui/empty-state/component.tsx'
 import { EmptyStateText } from '../../ui/empty-state-text/component.tsx'
 import { EmptyStateTitle } from '../../ui/empty-state-title/component.tsx'
@@ -23,6 +24,7 @@ import { Layout } from '../../ui/layout/component.tsx'
 import { ListHeader } from '../../ui/list-header/component.tsx'
 import { ListHeaderTitle } from '../../ui/list-header-title/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
+import { CopyButton } from '../../ui/public/copy-button/component.tsx'
 import { StateFilter } from '../../ui/state-filter/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
@@ -43,8 +45,23 @@ export type ReviewPageProps = {
   /** When the replies were read, or which job is not reading them (`13a`, `13c`). */
   readLine: ReadLine
   toasts?: readonly ToastMessage[]
+  /** An answer whose card left the queue while it was written, shown once (`gjovqe1p`). */
+  unsent?: UnsentAnswer | null
 }
 
+/**
+ * The text of an answer that did not go because its card is gone: decided, approved, in a closed
+ * issue or on a final version a newer one replaced. Nothing stores it, so this one load is the
+ * last chance to copy it.
+ */
+export type UnsentAnswer = {
+  /** `‹jméno› · ‹adresa›`, who it was for. */
+  line: string
+  note: string
+  text: string
+  title: string
+  tone: 'error' | 'info' | 'success'
+}
 const headStyle = css({ display: 'flex', flexDirection: 'column', gap: '6px' })
 
 const leadStyle = css({ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 })
@@ -75,7 +92,7 @@ const queueStyle = css({ maxWidth: '860px', width: '100%' })
  */
 export function ReviewPage(handle: Handle<ReviewPageProps>) {
   return () => {
-    let { cards, counts, driveAccount, hasCards, hrefOf, kind, person, readLine, toasts } =
+    let { cards, counts, driveAccount, hasCards, hrefOf, kind, person, readLine, toasts, unsent } =
       handle.props
     let read = (
       <p mix={readStyle}>
@@ -117,6 +134,18 @@ export function ReviewPage(handle: Handle<ReviewPageProps>) {
               {read}
             </div>
           ) : null}
+          {unsent === undefined || unsent === null ? null : (
+            <div mix={queueStyle}>
+              <Callout tone={unsent.tone}>
+                <p class="vdm-callout__title">{unsent.title}</p>
+                {unsent.line === '' ? null : <p style={{ margin: '0 0 8px' }}>{unsent.line}</p>}
+                <div style={{ margin: '0 0 8px' }}>
+                  <CopyButton shown={unsent.text} value={unsent.text} />
+                </div>
+                <p style={{ margin: 0 }}>{unsent.note}</p>
+              </Callout>
+            </div>
+          )}
           {cards.length === 0 && kind !== 'all' && hasCards ? (
             <EmptyState>
               <EmptyStateTitle>{emptyKindTitle(kind)}</EmptyStateTitle>
@@ -137,7 +166,9 @@ export function ReviewPage(handle: Handle<ReviewPageProps>) {
             <div mix={queueStyle}>
               <ol class="vdm-queue">
                 {cards.map((card) => (
-                  <QueueCard card={card} />
+                  /* Keyed, so a card that leaves the list does not hand its open form and its
+                     typed text to the card after it. */
+                  <QueueCard card={card} key={card.id} />
                 ))}
               </ol>
             </div>

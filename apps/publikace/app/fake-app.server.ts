@@ -8,6 +8,7 @@ import { createJobRunStore } from './data/job-runs.server.ts'
 import { clauseState } from './domain/approvals.ts'
 import { batchState } from './domain/artwork.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
+import { answeredAtOf } from './data/consent-patch.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { createProofreadersStore } from './data/proofreaders.server.ts'
@@ -281,6 +282,7 @@ export async function createFakeApp(): Promise<FakeApp> {
     let clauseRows = (clauseResult.rows ?? []).map((row) => {
       let id = String(row['id'])
       let status = {
+        answeredAt: answeredAtOf(row),
         approvedAt: parseStamp(row['approved_at']),
         archiveFailedAt: parseStamp(row['archive_failed_at']),
         consentVerifiedAt: parseStamp(row['consent_verified_at']),
@@ -310,6 +312,9 @@ export async function createFakeApp(): Promise<FakeApp> {
         html`<tr>
           <td>${message.to}</td>
           <td>${message.subject}</td>
+          <td>
+            ${message.replyToMessageId === undefined ? '' : `reply to ${message.replyToMessageId}`}
+          </td>
         </tr>`,
     )
 
@@ -434,6 +439,9 @@ export async function createFakeApp(): Promise<FakeApp> {
         ${
           isMailFailing ? button('/mail/heal', 'Let it send') : button('/mail/fail', 'Make it fail')
         }
+        ${isMailFailing ? '' : button('/mail/refuse', 'Refuse a reply for good')} — the second
+        answers <code>reply_not_allowed</code>, as the Mailer does for a reply it will not send into
+        a thread.
       </p>
       <table>
         ${mailRows}
@@ -661,6 +669,10 @@ export async function createFakeApp(): Promise<FakeApp> {
         return backToControls()
       case '/mail/fail':
         app.failMail(true)
+        isMailFailing = true
+        return backToControls()
+      case '/mail/refuse':
+        app.failMail('reply_not_allowed')
         isMailFailing = true
         return backToControls()
       case '/mail/heal':

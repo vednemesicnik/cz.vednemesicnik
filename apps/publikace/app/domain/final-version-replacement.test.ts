@@ -20,6 +20,7 @@ function plain<T>(value: T): T {
 
 function clause(state: ClauseState, extra: Partial<ClauseDetail> = {}): ClauseDetail {
   return {
+    answeredAt: null,
     approvedAt: null,
     archiveError: null,
     authorEmail: 'tereza.vlkova@external.test',
@@ -36,7 +37,7 @@ function clause(state: ClauseState, extra: Partial<ClauseDetail> = {}): ClauseDe
 }
 
 function counts(approved: number, total: number) {
-  let sent = { approvedAt: null, archiveFailedAt: null, consentVerifiedAt: null }
+  let sent = { answeredAt: null, approvedAt: null, archiveFailedAt: null, consentVerifiedAt: null }
   let all = Array.from({ length: total }, (_, index) => ({
     ...sent,
     approvedAt: index < approved ? AT : null,

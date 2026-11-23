@@ -21,6 +21,12 @@ export type MailMessage = {
   idempotencyKey: string
   /** The sender's display name. */
   name: string
+  /**
+   * The Gmail message this one answers, inside its thread: the provider's latest reply as the
+   * reply check reports it (`13h`). `to` must then be that message's sender, nothing may be
+   * copied, and Gmail sends the thread's own subject with `Re:`, so `subject` goes unused.
+   */
+  replyToMessageId?: string
   subject: string
   to: string
 }
@@ -39,6 +45,9 @@ const PERMANENT_REFUSALS = new Set([
   'invalid_recipient',
   'invalid_request',
   'missing_fields',
+  /* A reply the Mailer will not send into that thread: one outside the consent requests, a `to`
+     that is not the message's sender, or a message Gmail does not find. */
+  'reply_not_allowed',
   'too_many_recipients',
 ])
 

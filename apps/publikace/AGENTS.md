@@ -28,7 +28,9 @@ its Evidence in the scripts' columns, rewritten by a queue in the app's process 
 the database changes and in full once a day, with _Otevřít Evidenci_ in the issue's „⋯“ (#111); and the print folder, which
 `SCRIPT__Publication__Print_Handoff` fills with the approved texts and the artworks with consent
 through `/api/v1/print-handoff`, and which the issue detail's _Podklady pro tisk_ says the fill of
-(#110). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+(#110); and a reply in _Ke kontrole_ answered from its card, which the Mailer sends inside the
+thread of the request and which puts the provider or the author on the move until they write
+again (#31). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals, the print folder and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the

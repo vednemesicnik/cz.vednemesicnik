@@ -109,6 +109,7 @@ describe('Články', () => {
     let step = { at: LATER, email: 'sefredaktor@vednemesicnik.test', name: null }
     let marked = finalVersion([
       {
+        answeredAt: null,
         approvedAt: null,
         archiveFailedAt: null,
         consentVerifiedAt: null,
@@ -143,6 +144,7 @@ describe('Články', () => {
 
 describe('Redakční doložky', () => {
   let clause: RecordClause = {
+    answeredAt: null,
     approvedAt: null,
     archiveError: null,
     archiveFailedAt: null,
@@ -207,6 +209,7 @@ describe('Redakční doložky', () => {
 
 describe('Obrazová díla', () => {
   let batch: RecordBatch = {
+    answeredAt: null,
     approvedAt: null,
     archiveError: null,
     archiveFailedAt: null,

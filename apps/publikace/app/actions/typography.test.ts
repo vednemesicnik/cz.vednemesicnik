@@ -1,4 +1,5 @@
 import * as assert from 'remix/assert'
+import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { createIssueStore } from '../data/issues.server.ts'
@@ -61,9 +62,15 @@ describe('one-letter words on the screens', () => {
       await editor.post('/issues/new', { name: ISSUE }, '/issues/new')
       let issueId = (await createIssueStore(app.database).findByName(ISSUE))?.id ?? 0
       let article = await seedArticle(app, issueId, SEEDED_ARTICLE)
-      await seedBatch(app, article, issueId, {
+      let batch = await seedBatch(app, article, issueId, {
         provider: { email: 'eva@external.test', name: PROVIDER },
       })
+      /* A reply that is not „Souhlasím“, so the queue has a card to answer (`13d`). */
+      await app.database.exec(
+        sql`UPDATE artwork_batches SET reply_message_id = 'm-1', reply_thread_id = 't-1',
+              reply_received_at = '2026-11-14T06:12:00.000Z', reply_text = 'Kde fotka vyjde?'
+            WHERE id = ${batch.id}`,
+      )
       let articleLink = await createLinkStore(app.database).articleLinkOf(issueId)
       assert.ok(articleLink !== null)
 
@@ -99,6 +106,7 @@ describe('one-letter words on the screens', () => {
         `/issues/${ISSUE}?artworks=all`,
         `/issues/${ISSUE}/close`,
         '/review',
+        `/review?reply=${batch.id}`,
         '/settings',
         '/settings/jobs',
         '/settings/jobs/artwork-replies',

@@ -74,6 +74,7 @@ describe('consentSubject', () => {
 describe('batchState', () => {
   let at = Temporal.Instant.from('2026-11-18T12:45:00Z')
   let sent: BatchStatus = {
+    answeredAt: null,
     approvedAt: null,
     archiveFailedAt: null,
     consentVerifiedAt: null,
@@ -102,6 +103,13 @@ describe('batchState', () => {
   it('waits on the editors for a reply that is not exactly „Souhlasím“, quoting its first line', () => {
     assert.equal(batchState(replied), 'review')
     assert.equal(batchStateDetail(replied), 'odpověď „ok, souhlas“')
+  })
+
+  it('is with the provider again once the latest reply was answered from the queue', () => {
+    let answered = { ...replied, answeredAt: Temporal.Instant.from('2026-11-19T08:41:00Z') }
+    assert.equal(batchState(answered), 'provider')
+    assert.equal(batchStateDetail(answered), 'odpověď odeslána 19. 11.')
+    assert.equal(batchState({ ...answered, discardedAt: at }), 'provider')
   })
 
   it('takes a reply over a request the Mailer never confirmed', () => {

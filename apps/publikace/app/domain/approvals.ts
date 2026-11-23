@@ -58,6 +58,11 @@ export function sendKey(key: string, attempt: number): string {
 
 /** What the state of one clause is read from. */
 export type ClauseStatus = {
+  /**
+   * When an answer from _Ke kontrole_ to the latest reply went (`13e`); `null` while that reply
+   * has none, so the author's next reply brings the clause back to _Ke kontrole_.
+   */
+  answeredAt: Temporal.Instant | null
   approvedAt: Temporal.Instant | null
   archiveFailedAt: Temporal.Instant | null
   consentVerifiedAt: Temporal.Instant | null
@@ -72,7 +77,8 @@ export type ClauseStatus = {
  * Where one author's clause is, by who is on the move (the Evidence's names in brackets):
  *
  * - `pending` (_K odeslání_) waits for the next run to send it;
- * - `waiting` (_Čeká na odpověď_) was sent and nobody replied yet;
+ * - `waiting` (_Čeká na odpověď_) was sent and nobody replied yet, or the editors-in-chief
+ *   answered the latest reply from _Ke kontrole_ and the author is on the move again;
  * - `review` (_Odpověď ke kontrole_): the reply is not exactly „Souhlasím“, and the editors-in-chief
  *   decide in _Ke kontrole_ (`13a`);
  * - `verified` (_Souhlas k archivaci_): a consent, exact or decided, whose conversation the next
@@ -98,7 +104,8 @@ export function clauseState(clause: ClauseStatus): ClauseState {
   if (clause.state === 'pending') return 'pending'
   if (clause.archiveFailedAt !== null) return 'unarchived'
   if (clause.replyMessageId !== null) {
-    return mayArchive({ ...clause, discardedAt: null }) ? 'verified' : 'review'
+    if (mayArchive({ ...clause, discardedAt: null })) return 'verified'
+    return clause.answeredAt === null ? 'review' : 'waiting'
   }
   return clause.state === 'failed' ? 'unsent' : 'waiting'
 }
@@ -131,6 +138,8 @@ export function isResendable(state: ClauseState): boolean {
 
 /** One author's clause as the open row of the issue detail shows it (`12b`, `12q`). */
 export type ClauseDetail = {
+  /** The answer from _Ke kontrole_ to the latest reply, when one went. */
+  answeredAt: Temporal.Instant | null
   approvedAt: Temporal.Instant | null
   archiveError: string | null
   authorEmail: string
@@ -142,6 +151,14 @@ export type ClauseDetail = {
   sentAt: Temporal.Instant | null
   signature: string
   state: ClauseState
+}
+
+/** _Čeká na odpověď_: the author is on the move, in the row and on the card just answered. */
+export const WAITING_CLAUSE_LABEL = 'Čeká na odpověď'
+
+/** `odpověď odeslána 19. 11.`, under the tag once an answer from _Ke kontrole_ went (`0kwr8vpl`). */
+export function answeredLine(at: Temporal.Instant): string {
+  return `odpověď odeslána ${formatDayMonth(at)}`
 }
 
 /**
@@ -180,8 +197,14 @@ export function clauseRowTag(
     case 'waiting':
       return {
         ...tag,
-        detail: clause.sentAt === null ? null : `od ${formatDayMonth(clause.sentAt)}`,
-        label: 'Čeká na odpověď',
+        /* The date of the last e-mail that went to the author (`0kwr8vpl`). */
+        detail:
+          clause.answeredAt !== null
+            ? answeredLine(clause.answeredAt)
+            : clause.sentAt === null
+              ? null
+              : `od ${formatDayMonth(clause.sentAt)}`,
+        label: WAITING_CLAUSE_LABEL,
         tone: 'running',
       }
     case 'review':

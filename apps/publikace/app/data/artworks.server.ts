@@ -11,7 +11,7 @@ import {
   decideReport,
 } from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
-import { applyConsentPatch } from './consent-patch.server.ts'
+import { answeredAtOf, applyConsentPatch } from './consent-patch.server.ts'
 
 /**
  * Artworks in the app's database, the source of truth for them, and the batches that send them.
@@ -239,6 +239,7 @@ function toArtwork(row: Row): ArtworkRow {
 
 function toBatch(row: Row, artworks: ArtworkRow[]): BatchRow {
   return {
+    answeredAt: answeredAtOf(row),
     approvedAt: parseStamp(row['approved_at']),
     archiveError: text(row['archive_error']),
     archiveFailedAt: parseStamp(row['archive_failed_at']),

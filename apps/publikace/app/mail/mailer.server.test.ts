@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto'
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
-import { createMailer, type MailMessage } from './mailer.server.ts'
+import { createMailer, isPermanentRefusal, type MailMessage } from './mailer.server.ts'
 import { welcomeEmail } from './welcome-email.server.ts'
 
 const ENDPOINT = { secret: 'test-secret', url: 'https://mailer.test/exec' }
@@ -47,6 +47,20 @@ describe('the Mailer', () => {
       fetch: async () => Response.json({ error: 'invalid_recipient', ok: false }),
     })
     assert.deepEqual(await mailer(MESSAGE), { error: 'invalid_recipient', ok: false })
+  })
+
+  it('takes a reply the Mailer will not send into its thread as refused for good', async () => {
+    let sent: unknown
+    let mailer = createMailer(ENDPOINT, {
+      fetch: async (_url, init) => {
+        sent = JSON.parse(String(init?.body))
+        return Response.json({ error: 'reply_not_allowed', ok: false })
+      },
+    })
+    let result = await mailer({ ...MESSAGE, replyToMessageId: 'm-1' })
+    assert.equal(isPermanentRefusal(result), true)
+    let payload = JSON.parse((sent as { payload: string }).payload) as Record<string, unknown>
+    assert.equal(payload['replyToMessageId'], 'm-1')
   })
 
   it('turns a network failure into a refusal instead of throwing', async () => {

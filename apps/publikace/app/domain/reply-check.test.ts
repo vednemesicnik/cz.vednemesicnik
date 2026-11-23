@@ -7,6 +7,7 @@ import { decideReport, NO_CONVERSATION_ERROR, type ReportedReply } from './reply
 const AT = Temporal.Instant.from('2026-11-19T08:00:00Z')
 
 const WAITING: BatchStatus = {
+  answeredAt: null,
   approvedAt: null,
   archiveFailedAt: null,
   consentVerifiedAt: null,
