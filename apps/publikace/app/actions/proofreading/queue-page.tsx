@@ -36,6 +36,7 @@ import { FinalVersionDialog } from '../../ui/final-version-dialog/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
 import { ListHeader } from '../../ui/list-header/component.tsx'
 import { ListHeaderTitle } from '../../ui/list-header-title/component.tsx'
+import { NewTabMark } from '../../ui/new-tab-mark/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
 import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
@@ -119,33 +120,6 @@ const partStyle = css({ display: 'flex', flexDirection: 'column', gap: '12px' })
 const countStyle = css({ color: 'var(--text-tertiary)', fontWeight: 400, marginLeft: '6px' })
 
 const noteStyle = css({ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 })
-
-const newTabIconStyle = css({ marginLeft: '2px', verticalAlign: '-0.125em' })
-
-/** The icon after a link that opens a new tab, and what a screen reader hears of it. */
-function NewTabMark() {
-  return () => (
-    <>
-      <svg
-        aria-hidden="true"
-        fill="none"
-        height="1em"
-        mix={newTabIconStyle}
-        stroke="currentColor"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-        width="1em"
-      >
-        <path d="M15 3h6v6" />
-        <path d="M10 14 21 3" />
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-      </svg>
-      <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
-    </>
-  )
-}
 
 /**
  * The design system's `.vdm-queue-item` without its quote (`15a`): the issue, the name, the

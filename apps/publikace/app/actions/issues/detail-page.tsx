@@ -75,6 +75,7 @@ import { DialogTitle } from '../../ui/dialog-title/component.tsx'
 import { EmptyState } from '../../ui/empty-state/component.tsx'
 import { EmptyStateText } from '../../ui/empty-state-text/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
+import { NewTabMark } from '../../ui/new-tab-mark/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
 import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
 import { CopyButton } from '../../ui/public/copy-button/component.tsx'
@@ -528,7 +529,6 @@ const bandRuleStyle = css({ borderBottom: '1px solid var(--border)' })
 
 /* A folder's name and its icon never part at a line break. */
 const folderLinkStyle = css({ fontWeight: 'inherit', whiteSpace: 'nowrap' })
-const newTabIconStyle = css({ marginLeft: '2px', verticalAlign: '-0.125em' })
 
 /* What waits on the editors, in the ink of _Čeká na vás_ (`12a`, `11a`). */
 const waitingLineStyle = css({ color: 'var(--state-attention-text)', fontWeight: 600 })
@@ -645,23 +645,7 @@ function FolderHeading(
           return (
             <a class="vdm-link" href={url} mix={folderLinkStyle} rel="noopener" target="_blank">
               {part.name}
-              <svg
-                aria-hidden="true"
-                fill="none"
-                height="1em"
-                mix={newTabIconStyle}
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                viewBox="0 0 24 24"
-                width="1em"
-              >
-                <path d="M15 3h6v6" />
-                <path d="M10 14 21 3" />
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              </svg>
-              <span class="vdm-sr-only">{tied` (otevře se v nové záložce)`}</span>
+              <NewTabMark />
             </a>
           )
         })}

@@ -16,6 +16,7 @@ import {
   PROOFREADERS_SAVED,
   unknownGroupMessage,
 } from '../../domain/access.ts'
+import { type DriveFileIds, driveFileRows, driveFilesIntro } from '../../domain/drive-files.ts'
 import { JOBS, settingsSummary, stateOfJob } from '../../domain/jobs.ts'
 import { now } from '../../domain/time.ts'
 import { Access } from '../../middleware/access.server.ts'
@@ -57,11 +58,16 @@ type PageState = {
   question?: RemovalQuestion
 }
 
-type Stores = { proofreaders: ProofreadersStore; runs: JobRunStore }
+type Stores = {
+  /** The IDs of the deployment's files on Drive, for Soubory na Disku (`14a`). */
+  driveFiles: DriveFileIds
+  proofreaders: ProofreadersStore
+  runs: JobRunStore
+}
 
 async function renderSettings(
   context: PageContext,
-  { proofreaders, runs }: Stores,
+  { driveFiles, proofreaders, runs }: Stores,
   editor: Person,
   state: PageState,
   init?: ResponseInit,
@@ -91,6 +97,10 @@ async function renderSettings(
       accounts={accounts}
       addForm={state.addForm}
       domain={access.domain}
+      driveFiles={{
+        intro: driveFilesIntro(driveFiles.registrySpreadsheetId !== ''),
+        rows: driveFileRows(driveFiles),
+      }}
       driveAccount={{
         expectedEmail: driveAccount.expectedEmail,
         refusal: takeConnectRefusal(context.get(Session) as Session | undefined),

@@ -30,7 +30,9 @@ the database changes and in full once a day, with _Otevřít Evidenci_ in the is
 through `/api/v1/print-handoff`, and which the issue detail's _Podklady pro tisk_ says the fill of
 (#110); and a reply in _Ke kontrole_ answered from its card, which the Mailer sends inside the
 thread of the request and which puts the provider or the author on the move until they write
-again (#31). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+again (#31); and Nastavení › _Soubory na Disku_, which links the issues folder, the Registr and
+the article template from the deployment's IDs and says when no Registr is written (#116).
+Nothing runs on Fly.io yet, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals, the print folder and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the

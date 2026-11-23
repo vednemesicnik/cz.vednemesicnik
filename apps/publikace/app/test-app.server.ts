@@ -136,9 +136,12 @@ export type TestBrowser = {
  * browser that keeps cookies. Nothing leaves the process.
  *
  * The browser's requests come from `appOrigin()`, the origin CSRF checks them against, so the
- * same harness works on another port when `APP_ORIGIN` names it.
+ * same harness works on another port when `APP_ORIGIN` names it. `overrides` swaps a dependency
+ * for one test, such as an empty `registrySpreadsheetId` for a deployment without a Registr.
  */
-export async function createTestApp(): Promise<TestApp> {
+export async function createTestApp(
+  overrides: Pick<Partial<AppDependencies>, 'registrySpreadsheetId'> = {},
+): Promise<TestApp> {
   let origin = appOrigin()
   let opened = openDatabase(':memory:')
   await migrateDatabase(opened.database)
@@ -172,6 +175,7 @@ export async function createTestApp(): Promise<TestApp> {
     registrySpreadsheetId: TEST_REGISTRY,
     templateId: TEST_TEMPLATE,
     verifyJobToken: fakeIdentityVerifier,
+    ...overrides,
   }
   let router = createAppRouter(dependencies)
   let record = createRecordQueue(dependencies)

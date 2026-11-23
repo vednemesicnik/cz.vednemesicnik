@@ -429,7 +429,15 @@ export function createAppRouter(dependencies: AppDependencies) {
   router.map(routes.auth.google, createGoogleController(signedInUntil))
   router.map(
     routes.settings,
-    createSettingsController(signedInUntil, { proofreaders, runs: jobRuns }),
+    createSettingsController(signedInUntil, {
+      driveFiles: {
+        issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(),
+        registrySpreadsheetId: dependencies.registrySpreadsheetId ?? registrySpreadsheetId(),
+        templateId: articleSetup.templateId,
+      },
+      proofreaders,
+      runs: jobRuns,
+    }),
   )
   router.map(routes.settings.account, createDriveAccountController(signedInUntil))
   router.map(

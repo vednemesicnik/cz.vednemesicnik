@@ -29,6 +29,12 @@ import {
   refusalMessage,
   shortAccount,
 } from '../../domain/drive-account.ts'
+import {
+  DRIVE_FILES_TITLE,
+  type DriveFileRow,
+  type DriveFileValue,
+  READ_ONLY_TAG,
+} from '../../domain/drive-files.ts'
 import { JOBS_TITLE, SHOW_JOBS_LABEL } from '../../domain/jobs.ts'
 import { formatDate, formatDay } from '../../domain/time.ts'
 import type { Person } from '../../middleware/auth.server.ts'
@@ -39,6 +45,7 @@ import { CsrfField } from '../../ui/csrf-field/component.tsx'
 import { Dialog } from '../../ui/dialog/component.tsx'
 import { DialogTitle } from '../../ui/dialog-title/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
+import { NewTabMark } from '../../ui/new-tab-mark/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { StatusTag } from '../../ui/status-tag/component.tsx'
 import { Document } from '../document.tsx'
@@ -72,6 +79,8 @@ export type SettingsPageProps = {
   /** Without the `@`. */
   domain: string
   driveAccount: DriveAccountView
+  /** Soubory na Disku: its intro and its five rows (`14a`, `14j`). */
+  driveFiles: { intro: string; rows: readonly DriveFileRow[] }
   editor: Person
   groups: readonly AccessGroup[]
   /**
@@ -844,12 +853,77 @@ function ProofreadersDialog(handle: Handle<{ domain: string; form: ProofreadersF
   }
 }
 
+/* The value of a row: grey text around the link, as `14a`'s `.loc`. */
+const locStyle = css({ color: 'var(--text-secondary)' })
+
+/* The last word keeps the icon on its line (`14a`). */
+const keepStyle = css({ whiteSpace: 'nowrap' })
+
+function DriveFileValueView(handle: Handle<{ value: DriveFileValue }>) {
+  return () => {
+    let { value } = handle.props
+    if (value.kind === 'sentence') return <span>{value.text}</span>
+    if (value.kind === 'note') return <span mix={locStyle}>{value.text}</span>
+
+    let { after, before, link } = value
+    let split = link.text.lastIndexOf(' ')
+    let head = split === -1 ? '' : link.text.slice(0, split + 1)
+    let last = link.text.slice(split + 1)
+    return (
+      <span>
+        {before === null ? null : <span mix={locStyle}>{before} </span>}
+        {link.href === null ? (
+          link.text
+        ) : (
+          <a class="vdm-link" href={link.href} rel="noopener" target="_blank">
+            {head}
+            <span mix={keepStyle}>
+              {last}
+              <NewTabMark />
+            </span>
+          </a>
+        )}
+        {after === null ? null : <span mix={locStyle}> {after}</span>}
+      </span>
+    )
+  }
+}
+
 /**
- * `/settings`: Nastavení with Přístup (`14a`, `14b`), Účty Publikace (`14a`, `14g`, `14h`,
- * `14c`), Korektura (`14a`, `14f`) and the way to Úlohy na pozadí (`14a`, `14d`).
- *
- * The lead sentence under the title waits for the parts it names — files and proofreading arrive
- * with their own issues.
+ * Soubory na Disku (`14a`, `14j`): where the app's files and its record are, the same for every
+ * editor-in-chief. The rows are the design system's `AdminDetailRow`, whose name stands over the
+ * value below 480 px of the row; `vdm-detail` is the container that query reads. The Evidence's
+ * _jen pro čtení_ sits in the row's actions column.
+ */
+function DriveFilesPart(handle: Handle<{ intro: string; rows: readonly DriveFileRow[] }>) {
+  return () => {
+    let { intro, rows } = handle.props
+    return (
+      <section aria-labelledby="drive-files-title" mix={partStyle}>
+        <h2 id="drive-files-title">{DRIVE_FILES_TITLE}</h2>
+        <p mix={metaStyle}>{intro}</p>
+        <div class="vdm-detail">
+          {rows.map((row) => (
+            <div class="vdm-detail-row">
+              <span class="vdm-detail-row__label">{row.label}</span>
+              <div class="vdm-detail-row__value">
+                <DriveFileValueView value={row.value} />
+              </div>
+              <div class="vdm-detail-row__actions">
+                {row.isReadOnly ? <span mix={locStyle}>{READ_ONLY_TAG}</span> : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+}
+
+/**
+ * `/settings`: Nastavení with Přístup (`14a`, `14b`), Soubory na Disku (`14a`, `14j`), Účty
+ * Publikace (`14a`, `14g`, `14h`, `14c`), Korektura (`14a`, `14f`) and the way to Úlohy na pozadí
+ * (`14a`, `14d`).
  */
 export function SettingsPage(handle: Handle<SettingsPageProps>) {
   return () => {
@@ -858,6 +932,7 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
       addForm,
       domain,
       driveAccount,
+      driveFiles,
       editor,
       groups,
       isProofreadersUnknownGroup,
@@ -930,6 +1005,8 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
                 <ReadOnlyAccess accounts={accounts} groups={groups} isRoleLost={isRoleLost} />
               )}
             </section>
+
+            <DriveFilesPart intro={driveFiles.intro} rows={driveFiles.rows} />
 
             <section aria-labelledby="accounts-title" id="accounts" mix={partStyle}>
               <h2 id="accounts-title">Účty Publikace</h2>

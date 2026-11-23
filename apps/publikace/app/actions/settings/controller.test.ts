@@ -7,6 +7,9 @@ import {
   connectDriveAccount,
   createTestApp,
   seedAdmin,
+  TEST_ISSUES_FOLDER,
+  TEST_REGISTRY,
+  TEST_TEMPLATE,
   type TestApp,
 } from '../../test-app.server.ts'
 
@@ -361,6 +364,78 @@ describe('settings, Přístup', () => {
         `/settings/access/groups/${group}/remove`,
       )
       assert.equal((await app.directory.listGroups()).length, 0)
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('settings, Soubory na Disku (14a, 14j)', () => {
+  it('shows every editor-in-chief where the files and the record are, before Účty Publikace', async () => {
+    let app = await editorialBoard()
+    try {
+      let browser = app.browser()
+      await browser.signInAs('eva@vednemesicnik.test')
+      let html = await (await browser.get('/settings')).text()
+      let text = textOf(html)
+
+      assert.ok(html.includes('aria-labelledby="drive-files-title"'))
+      assert.ok(html.indexOf('id="drive-files-title"') > html.indexOf('id="access-title"'))
+      assert.ok(html.indexOf('id="drive-files-title"') < html.indexOf('id="accounts-title"'))
+      assert.ok(
+        text.includes(
+          'Soubory na Disku Na sdíleném disku Publikace vznikají složky a dokumenty nových vydání. Stavy těchto vydání a jejich článků a děl se mění jen v aplikaci. Licence a souhlasy můžete mimo aplikaci dohledat pomocí Registru a Evidence. Aplikace do obou tabulek zapisuje a údaje z nich nepřebírá. Záznamy mohou být opožděné.',
+        ),
+      )
+      assert.ok(
+        text.includes('Sdílený disk Publikace · složka s vydáními (otevře se v nové záložce)'),
+      )
+      assert.ok(
+        text.includes(
+          'Registr vydání Registr (otevře se v nové záložce) · list Vydání z aplikace je jen pro čtení',
+        ),
+      )
+      assert.ok(
+        text.includes(
+          'Evidence v každé složce vydání · listy Články, Redakční doložky, Obrazová díla jen pro čtení',
+        ),
+      )
+      assert.ok(
+        text.includes('Šablona článku TEMPLATE__Publication__Article (otevře se v nové záložce)'),
+      )
+      assert.ok(text.includes('Podklady pro tisk v každé složce vydání › _Podklady_pro_tisk'))
+      // The tag stands at the Evidence only; the Registr says it in its sentence.
+      assert.equal(text.split('jen pro čtení').length - 1, 2)
+      assert.ok(
+        html.includes(`href="https://drive.google.com/drive/folders/${TEST_ISSUES_FOLDER}"`),
+      )
+      assert.ok(
+        html.includes(`href="https://docs.google.com/spreadsheets/d/${TEST_REGISTRY}/edit"`),
+      )
+      assert.ok(html.includes(`href="https://docs.google.com/document/d/${TEST_TEMPLATE}/edit"`))
+      assert.equal(html.match(/target="_blank"/g)?.length, 3)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('says the app writes no Registr when the deployment names none (14j)', async () => {
+    let app = await createTestApp({ registrySpreadsheetId: '' })
+    try {
+      await seedAdmin(app, 'marie@vednemesicnik.test')
+      let browser = app.browser()
+      await browser.signInAs('marie@vednemesicnik.test')
+      let html = await (await browser.get('/settings')).text()
+      let text = textOf(html)
+
+      assert.ok(
+        text.includes(
+          'Licence a souhlasy můžete mimo aplikaci dohledat v Evidenci. Aplikace do ní zapisuje a údaje z ní nepřebírá. Záznamy mohou být opožděné.',
+        ),
+      )
+      assert.ok(!text.includes('pomocí Registru a Evidence'))
+      assert.ok(text.includes('Registr vydání Aplikace do Registru nezapisuje. Evidence'))
+      assert.ok(!html.includes('/spreadsheets/d/'))
     } finally {
       await app.close()
     }

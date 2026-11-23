@@ -52,6 +52,8 @@ Doc without code:
 - [ ] a copy of the template, made as `publikace.app@` with _Vytvořit kopii_ in Drive. Its body
       still contains `{{NAZEV_CLANKU}}`, _Rozšíření › Apps Script_ opens an empty project of its
       own rather than a bound one, and its ID is `ARTICLE_TEMPLATE_DOCUMENT_ID`.
+- [ ] shared as _Kdokoli ve vednemesicnik.cz · Čtenář_, so that _Šablona článku_ in Nastavení ›
+      Soubory na Disku opens for an editor-in-chief; `publikace.app@` stays its only editor.
 
 **The Mailer of `publikace@`** (`SCRIPT__Mail__Send`), its existing deployment and not a new
 one. `OWN_SECRET` belongs to the project, so a second deployment would share it and keep
