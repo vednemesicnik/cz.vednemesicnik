@@ -13,6 +13,8 @@ export const FILES_ENDPOINT = 'https://www.googleapis.com/drive/v3/files'
 export const UPLOAD_ENDPOINT = 'https://www.googleapis.com/upload/drive/v3/files'
 export const DOCS_ENDPOINT = 'https://docs.googleapis.com/v1/documents'
 export const FOLDER_TYPE = 'application/vnd.google-apps.folder'
+export const SHEETS_ENDPOINT = 'https://sheets.googleapis.com/v4/spreadsheets'
+export const SPREADSHEET_TYPE = 'application/vnd.google-apps.spreadsheet'
 
 export type DriveCall = (what: string, url: URL, init?: RequestInit) => Promise<Response | null>
 

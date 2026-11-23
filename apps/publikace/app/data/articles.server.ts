@@ -16,6 +16,7 @@ import {
 import type { ArticleStep, Author, FinalVersion, ReplacedVersion } from '../domain/article.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
 import { isReplaceable } from '../domain/final-version-replacement.ts'
+import type { RecordClause } from '../domain/record.ts'
 import type { ApprovedCount } from '../domain/issue.ts'
 import type { DigestCandidate } from '../domain/proofreading-digest.ts'
 import { type BatchReport, decideReport } from '../domain/reply-check.ts'
@@ -429,6 +430,11 @@ export type ArticleStore = {
    * replaced, for the toast of `13a`; `null` while the clause's own marking stands.
    */
   replacingVersionOf(clauseId: number): Promise<ArticleStep | null>
+  /**
+   * Every clause of the issue's markings that were not cancelled, replaced ones included, for
+   * Redakční doložky in the Evidence (#111). A cancelled marking never left the app.
+   */
+  listClausesForRecord(issueId: number): Promise<RecordClause[]>
   /** The markings of the issue the detail asks Drive about, while the issue is open (#101). */
   listDocCheckTargets(issueId: number): Promise<DocCheckTarget[]>
   /**
@@ -1131,6 +1137,35 @@ export function createArticleStore(database: Database): ArticleStore {
           )
         }
       })
+    },
+
+    async listClausesForRecord(issueId) {
+      let result = await database.exec(
+        sql`SELECT c.*, a.name AS article_name, a.doc_id, a.licences_folder_id,
+              f.marked_at, f.pdf_file_id, f.pdf_hash
+            FROM article_clauses c
+            JOIN final_versions f ON f.id = c.final_version_id
+            JOIN articles a ON a.id = c.article_id
+            WHERE a.issue_id = ${issueId} AND a.created_at IS NOT NULL AND f.cancelled_at IS NULL`,
+      )
+      return (result.rows ?? []).map((row) => ({
+        ...toClauseStatus(row),
+        archiveError: text(row['archive_error']),
+        articleName: String(row['article_name']),
+        authorEmail: String(row['author_email']),
+        authorName: String(row['author_name']),
+        clauseKey: String(row['clause_key']),
+        docId: String(row['doc_id'] ?? ''),
+        error: text(row['error']),
+        licencesFolderId: text(row['licences_folder_id']),
+        markedAt: parseStamp(row['marked_at']) ?? EPOCH,
+        pdfFileId: String(row['pdf_file_id']),
+        pdfHash: String(row['pdf_hash']),
+        position: Number(row['position']),
+        replyReceivedAt: parseStamp(row['reply_received_at']),
+        replyThreadId: text(row['reply_thread_id']),
+        sentAt: parseStamp(row['sent_at']),
+      }))
     },
 
     async listCreated(issueId) {

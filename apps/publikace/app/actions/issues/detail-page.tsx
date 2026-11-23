@@ -47,6 +47,7 @@ import {
   issueState,
   LINK_PLACEHOLDER_TEXT,
   missingFolders,
+  OPEN_EVIDENCE_LABEL,
   OPEN_FOLDER_LABEL,
   OPEN_PRINT_FOLDER_LABEL,
   REOPEN_CONFIRM_LABEL,
@@ -108,6 +109,7 @@ import {
   type FinalVersionDialogProps,
 } from '../../ui/final-version-dialog/component.tsx'
 import { SHOW_REPLY_LABEL } from '../../domain/approvals.ts'
+import { spreadsheetUrl } from '../../domain/record.ts'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
 export type LinkBlockView = {
@@ -1158,27 +1160,29 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
 }
 
 /**
- * The issue's „⋯“ in the header. Active (`12a`): the print folder, then after a line
- * _Uzavřít vydání…_. Closed (`12h`): the issue folder, then _Znovu otevřít vydání…_. Unfinished,
- * none. _Otevřít Evidenci_ waits for the app to write an Evidence.
+ * The issue's „⋯“ in the header. Active (`12a`): the Evidence and the print folder, then after a
+ * line _Uzavřít vydání…_. Closed (`12h`): the Evidence and the issue folder, then _Znovu otevřít
+ * vydání…_. Unfinished, none. The Evidence only once the record queue created it, a few seconds
+ * after the issue is complete (`11d`).
  */
 function issueMenuItems(issue: Issue): ActionMenuItem[] {
   let state = issueState(issue)
   if (state === 'unfinished') return []
   let isClosed = state === 'closed'
   let folderId = isClosed ? issue.folderIds.issue : issue.folderIds.print
-  let folder: ActionMenuItem[] =
-    folderId === null
-      ? []
-      : [
-          {
-            href: folderUrl(folderId),
-            label: isClosed ? OPEN_FOLDER_LABEL : OPEN_PRINT_FOLDER_LABEL,
-          },
-          { isSeparator: true },
-        ]
+  let opens: ActionMenuItem[] = []
+  if (issue.evidenceSpreadsheetId !== null) {
+    opens.push({ href: spreadsheetUrl(issue.evidenceSpreadsheetId), label: OPEN_EVIDENCE_LABEL })
+  }
+  if (folderId !== null) {
+    opens.push({
+      href: folderUrl(folderId),
+      label: isClosed ? OPEN_FOLDER_LABEL : OPEN_PRINT_FOLDER_LABEL,
+    })
+  }
   return [
-    ...folder,
+    ...opens,
+    ...(opens.length === 0 ? [] : [{ isSeparator: true } as const]),
     {
       href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'detail'),
       isSameTab: true,

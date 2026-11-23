@@ -15,7 +15,13 @@ import { normalizeEmail } from './app/domain/access.ts'
 import { now } from './app/domain/time.ts'
 import { cleanUpAbandoned } from './app/drive/article-setup.server.ts'
 import { cleanUpAbandonedArtworks } from './app/drive/artworks-setup.server.ts'
-import { createAppRouter, createArticleSetup, createArtworksSetup } from './app/router.ts'
+import { startRecordQueue } from './app/drive/record-queue.server.ts'
+import {
+  createAppRouter,
+  createArticleSetup,
+  createArtworksSetup,
+  createRecordQueue,
+} from './app/router.ts'
 
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100
 
@@ -92,7 +98,15 @@ server.listen(port, () => {
   }
 
   console.log(`Server listening on http://localhost:${hmrProxyPort ?? port}`)
+
+  /*
+   * The Registr and each Evidence follow the database from here on (#111), a pass every 30 s
+   * that keeps nothing alive and holds no request: a sheet that does not answer only delays them.
+   */
+  recordQueue = startRecordQueue(createRecordQueue({ database: database.database }))
 })
+
+let recordQueue: { stop(): Promise<void> } | null = null
 
 let isShuttingDown = false
 
@@ -102,8 +116,11 @@ function shutdown() {
   }
 
   isShuttingDown = true
+  let passUnderWay = recordQueue?.stop() ?? Promise.resolve()
   server.close(() => {
-    Promise.allSettled([assetServer.close(), database.close()]).finally(() => process.exit(0))
+    passUnderWay
+      .then(() => Promise.allSettled([assetServer.close(), database.close()]))
+      .finally(() => process.exit(0))
   })
   server.closeAllConnections()
 }

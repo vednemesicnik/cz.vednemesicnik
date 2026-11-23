@@ -46,6 +46,8 @@ export type IssueStore = {
    * state and never their own copy of it. `false` when the issue was open already.
    */
   reopen(id: number): Promise<boolean>
+  /** Stores the Evidence's ID once, as a folder's; one already stored is never replaced. */
+  setEvidence(id: number, spreadsheetId: string): Promise<void>
   /** Stores a folder's ID once; a folder already stored is never replaced. */
   setFolder(id: number, kind: FolderKind, folderId: string): Promise<void>
 }
@@ -62,6 +64,7 @@ function toIssue(row: Row): Issue {
   return {
     closedAt: parseStamp(row['closed_at']),
     completedAt: parseStamp(row['completed_at']),
+    evidenceSpreadsheetId: text(row['evidence_spreadsheet_id']),
     folderIds: {
       articles: text(row['articles_folder_id']),
       issue: text(row['folder_id']),
@@ -155,6 +158,13 @@ export function createIssueStore(database: Database): IssueStore {
         sql`UPDATE issues SET closed_at = NULL WHERE id = ${id} AND closed_at IS NOT NULL`,
       )
       return (result.affectedRows ?? 0) === 1
+    },
+
+    async setEvidence(id, spreadsheetId) {
+      await database.exec(
+        sql`UPDATE issues SET evidence_spreadsheet_id = ${spreadsheetId}
+            WHERE id = ${id} AND evidence_spreadsheet_id IS NULL`,
+      )
     },
 
     async setFolder(id, kind, folderId) {

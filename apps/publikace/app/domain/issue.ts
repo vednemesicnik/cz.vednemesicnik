@@ -27,6 +27,8 @@ export const PRINT_FOLDER_NAME = '_Podklady_pro_tisk'
 export type Issue = {
   closedAt: Temporal.Instant | null
   completedAt: Temporal.Instant | null
+  /** The issue's Evidence, which the record queue creates once the issue is complete (#111). */
+  evidenceSpreadsheetId: string | null
   folderIds: Record<FolderKind, string | null>
   id: number
   name: string
@@ -237,6 +239,8 @@ export const CLOSE_ISSUE_LABEL = 'Uzavřít vydání…'
 export const REOPEN_ISSUE_LABEL = 'Znovu otevřít vydání…'
 export const OPEN_FOLDER_LABEL = 'Otevřít složku na Disku'
 export const OPEN_PRINT_FOLDER_LABEL = 'Otevřít podklady pro tisk'
+/* `12a`, `12h`: first in the detail's „⋯“ once the record queue created it (#111). */
+export const OPEN_EVIDENCE_LABEL = 'Otevřít Evidenci'
 
 export function closeDialogTitle(name: string): string {
   return `Uzavřít vydání ${name}?`

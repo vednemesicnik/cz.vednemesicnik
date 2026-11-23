@@ -35,6 +35,7 @@ import {
   issuesFolderId,
   mailSendEndpoint,
   publicMailPerDay,
+  registrySpreadsheetId,
   scriptJobAccount,
   scriptTokenAudiences,
 } from './auth/environment.server.ts'
@@ -57,6 +58,7 @@ import { createIssueStore } from './data/issues.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { createProofreadersStore } from './data/proofreaders.server.ts'
+import { createRecordStore } from './data/record.server.ts'
 import { createPublicMailLog } from './data/public-mail.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
 import { DEFAULT_PUBLIC_MAIL_PER_DAY } from './domain/artwork.ts'
@@ -69,6 +71,8 @@ import type { ArtworksSetup } from './drive/artworks-setup.server.ts'
 import { createDriveFolders } from './drive/folders.server.ts'
 import type { IssueSetup } from './drive/issue-setup.server.ts'
 import { createLock } from './drive/one-at-a-time.server.ts'
+import type { RecordQueue } from './drive/record-queue.server.ts'
+import { createRecordSheets } from './drive/sheets.server.ts'
 import { createMailer, type Mailer, mailerUnavailable } from './mail/mailer.server.ts'
 import { loadAccess } from './middleware/access.server.ts'
 import { loadArticles } from './middleware/articles.server.ts'
@@ -136,6 +140,8 @@ export type AppDependencies = {
   mailer?: Mailer
   /** The cap on e-mails public pages start in a day. Defaults to `PUBLIC_MAIL_PER_DAY`. */
   mailPerDay?: number
+  /** The Registr the record queue writes its list into. Defaults to `REGISTRY_SPREADSHEET_ID`. */
+  registrySpreadsheetId?: string
   /** The Doc every article is copied from. Defaults to `ARTICLE_TEMPLATE_DOCUMENT_ID`. */
   templateId?: string
   /** The account the background jobs run as. Defaults to `SCRIPT_JOB_ACCOUNT`. */
@@ -199,6 +205,29 @@ export function createArtworksSetup(
     mailPerDay: articleSetup.mailPerDay,
     mailer: articleSetup.mailer,
     now,
+    token: articleSetup.token,
+  }
+}
+
+/**
+ * The record queue on the app's database (#111), under the same Drive account as every other
+ * action. `server.ts` starts it once the port is open.
+ */
+export function createRecordQueue(
+  dependencies: AppDependencies,
+  articleSetup: ArticleSetup = createArticleSetup(dependencies),
+): RecordQueue {
+  let fetch = dependencies.fetch ?? globalThis.fetch
+  let editor = dependencies.driveAccountEmail ?? driveAccountEmail()
+  return {
+    articles: articleSetup.articles,
+    artworks: createArtworkStore(dependencies.database),
+    issues: articleSetup.issues,
+    marks: createRecordStore(dependencies.database),
+    now,
+    origin: appOrigin(),
+    registryId: dependencies.registrySpreadsheetId ?? registrySpreadsheetId(),
+    sheets: (accessToken) => createRecordSheets({ accessToken, editor, fetch }),
     token: articleSetup.token,
   }
 }

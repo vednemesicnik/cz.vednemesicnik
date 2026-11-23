@@ -378,7 +378,9 @@ export function authorsLine(authors: readonly Pick<Author, 'name'>[]): string {
 }
 
 /**
- * `_meta.json` in the article folder, in the scripts' shape: the artwork upload reads these keys. An issue in the app has no Evidence spreadsheet, so `sheetId` is `null`.
+ * `_meta.json` in the article folder, in the scripts' shape: the artwork upload reads these keys.
+ * `sheetId` stays `null` although the issue has an Evidence (#111): the scripts' upload writes into
+ * whatever Evidence it finds there, and the app's is a record only the app writes.
  */
 export function articleMeta(article: {
   articleFolderId: string

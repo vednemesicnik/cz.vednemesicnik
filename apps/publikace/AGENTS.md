@@ -23,7 +23,9 @@ PDF and new requests in place of the old ones, which stop counting (#90); and on
 agreed, a revision of the Doc after its PDF, which the issue detail asks Drive about as it opens,
 makes the article _Upraveno po schválení_ with _Označit novou verzi…_ in its row (#101); and an
 issue closed from either „⋯“, which takes its links from the newsroom and its articles from the
-jobs, and reopened with the same links (#106). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+jobs, and reopened with the same links (#106); and the record, an issue's row in the Registr and
+its Evidence in the scripts' columns, rewritten by a queue in the app's process every 30 s after
+the database changes and in full once a day, with _Otevřít Evidenci_ in the issue's „⋯“ (#111). Nothing runs on Fly.io yet, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
@@ -242,6 +244,20 @@ and deploy to Apps Script on their own. The app's API is their contract: a chang
 endpoint takes or returns is a change in them too, so the API is versioned and a field is never
 renamed in place. Each job claims its batch before it acts and confirms it with the batch's key,
 so a run that dies between sending an e-mail and reporting it does not send it twice.
+
+**The app's Registr rows are in its own list, _Vydání z aplikace_, never in _Vydání_.** Six
+scripts pick their issues from _Vydání_ by _Aktivní_ and follow its _ID tabulky_ into the Evidence,
+so an issue made in the app there would have `Approval_Send` send its clauses a second time. The
+app renames, writes and protects no list but its own, by name, and puts its protection back
+before every write; `_meta.json` keeps `sheetId: null` so that the scripts' upload never writes
+into the app's Evidence. The lists merge, if they
+do, only at the cutover.
+
+**SQLite triggers mark the record, not the controllers.** `20261130120000_record_queue` marks an
+issue's Evidence or the Registr in the same transaction as the change, on the columns the record
+shows and no others. A column the record starts to show needs its trigger changed in a new
+migration, or it reaches the sheet only with the daily rewrite. A write that keeps failing is a
+`[drive] … was not written` line in the log and nothing on a screen (`00d`).
 
 **A trigger runs as the account that created it.** CI pushes code but never installs triggers.
 Moving a script to `publikace.app@` means running its `setupTriggers()` as `publikace.app@` and

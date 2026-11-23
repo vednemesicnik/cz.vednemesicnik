@@ -127,6 +127,15 @@ export function issuesFolderId(): string {
 }
 
 /**
+ * The Registr spreadsheet, in which the app writes its own list and never the scripts' Vydání
+ * (#111). Optional everywhere until the cutover: without it the Registr is skipped with one line
+ * in the log and each Evidence is still written.
+ */
+export function registrySpreadsheetId(): string {
+  return optional('REGISTRY_SPREADSHEET_ID')
+}
+
+/**
  * The Doc every article is copied from, a Doc without code carrying `{{NAZEV_CLANKU}}` in its
  * body. Optional outside production; without it, creating an article answers _Zkuste článek
  * vytvořit za chvíli znovu._ and logs why.

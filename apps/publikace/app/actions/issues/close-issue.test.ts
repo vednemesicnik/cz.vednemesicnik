@@ -4,8 +4,10 @@ import { describe, it } from 'remix/test'
 
 import { createIssueStore } from '../../data/issues.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
+import { drainRecordQueue } from '../../drive/record-queue.server.ts'
 import { articleLinkPath } from '../../domain/link.ts'
 import {
+  connectDriveAccount,
   createTestApp,
   seedAdmin,
   seedArticle,
@@ -300,6 +302,33 @@ describe('a closed issue and reopening it (12h)', () => {
       assert.ok(after.includes('Kopírovat'))
 
       assert.equal((await editor.get(REOPEN)).status, 303, 'an open issue has nothing to reopen')
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('the Evidence in the issue’s „⋯“ (12a, 12h)', () => {
+  it('stands first once the record queue created it, open or closed', async () => {
+    let { app, editor, issueId } = await issueApp()
+    try {
+      assert.ok(!(await (await editor.get(DETAIL)).text()).includes('Otevřít Evidenci'))
+
+      await connectDriveAccount(app)
+      await drainRecordQueue(app.record)
+      let evidenceId = (await createIssueStore(app.database).findById(issueId))
+        ?.evidenceSpreadsheetId
+      assert.ok(evidenceId !== null && evidenceId !== undefined)
+      let href = `"href":"https://docs.google.com/spreadsheets/d/${evidenceId}/edit"`
+
+      let active = await (await editor.get(DETAIL)).text()
+      assert.ok(active.includes(href))
+      assert.ok(active.indexOf('Otevřít Evidenci') < active.indexOf('Otevřít podklady pro tisk'))
+
+      await createIssueStore(app.database).close(issueId, Temporal.Now.instant())
+      let closed = await (await editor.get(DETAIL)).text()
+      assert.ok(closed.includes(href))
+      assert.ok(closed.indexOf('Otevřít Evidenci') < closed.indexOf('Otevřít složku na Disku'))
     } finally {
       await app.close()
     }

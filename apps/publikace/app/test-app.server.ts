@@ -21,7 +21,8 @@ import { now } from './domain/time.ts'
 import { createFakeDrive, type FakeDrive } from './drive/fake-drive.server.ts'
 import type { IdentityTokenVerifier, VerifiedIdentity } from './auth/identity-token.server.ts'
 import type { MailMessage } from './mail/mailer.server.ts'
-import { createAppRouter } from './router.ts'
+import type { RecordQueue } from './drive/record-queue.server.ts'
+import { type AppDependencies, createAppRouter, createRecordQueue } from './router.ts'
 
 const FAKE_IDENTITY_PREFIX = 'fake-identity.'
 
@@ -63,6 +64,24 @@ export const TEST_ISSUES_FOLDER = 'fake-issues-folder'
 /** The article template on the fake shared drive. */
 export const TEST_TEMPLATE = 'fake-article-template'
 
+/**
+ * The Registr on the fake drive, with the scripts' list Vydání and one issue made before the app
+ * in it, so a test can see that list stay as it is.
+ */
+export const TEST_REGISTRY = 'fake-registry'
+export const TEST_REGISTRY_OLD_ROWS = [
+  [
+    'Vydání',
+    'ID složky',
+    'ID tabulky',
+    'Aktivní',
+    'URL – Vytvořit článek',
+    'Vytvořeno',
+    'URL – Vytvořit skupinu obrazových děl',
+  ],
+  ['VDM_2026_4', 'fake-old-folder', 'fake-old-evidence', true, '', 46300, ''],
+]
+
 export type TestApp = {
   /** A browser with its own cookies; it starts signed out. */
   browser(): TestBrowser
@@ -79,6 +98,8 @@ export type TestApp = {
   mail: MailMessage[]
   /** The store of the app's account on Drive, on the same database. */
   driveAccount: DriveAccountStore
+  /** The record queue on the same database and fake Drive, for a test to run a pass of. */
+  record: RecordQueue
   /** Sets what the fake membership service answers for a group. */
   setMembership(group: string, answer: (email: string) => MembershipAnswer): void
 }
@@ -125,9 +146,12 @@ export async function createTestApp(): Promise<TestApp> {
 
   let drive = createFakeDrive()
   drive.seedTemplate(TEST_TEMPLATE, 'TEMPLATE__Publication__Article')
+  drive.seedSpreadsheet(TEST_REGISTRY, 'Registr', [
+    { cells: TEST_REGISTRY_OLD_ROWS, title: 'Vydání' },
+  ])
   let mail: MailMessage[] = []
   let isMailFailing = false
-  let router = createAppRouter({
+  let dependencies: AppDependencies = {
     checkMembership,
     database: opened.database,
     domain: TEST_DOMAIN,
@@ -141,9 +165,12 @@ export async function createTestApp(): Promise<TestApp> {
       return isMailFailing ? { error: 'the fake Mailer is failing', ok: false } : { ok: true }
     },
     jobAccount: TEST_DRIVE_ACCOUNT,
+    registrySpreadsheetId: TEST_REGISTRY,
     templateId: TEST_TEMPLATE,
     verifyJobToken: fakeIdentityVerifier,
-  })
+  }
+  let router = createAppRouter(dependencies)
+  let record = createRecordQueue(dependencies)
   let storage = createSqliteSessionStorage(opened.database)
   let sessionCookie = createSessionCookie()
 
@@ -245,6 +272,7 @@ export async function createTestApp(): Promise<TestApp> {
     directory: createAccessDirectory(opened.database),
     drive,
     driveAccount: createDriveAccountStore(opened.database, TEST_DRIVE_TOKEN_KEY),
+    record,
     failMail(isFailing) {
       isMailFailing = isFailing
     },

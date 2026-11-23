@@ -22,8 +22,18 @@ Nothing here is real data in the repository: the IDs, the URLs and the testers' 
 - [ ] the authorised redirect URIs include both `http://localhost:44100/sign-in/google/callback`
       and `http://localhost:44100/settings/account/callback`;
 - [ ] the consent screen offers the `https://www.googleapis.com/auth/drive` scope;
-- [ ] the **Google Drive API** and the **Google Docs API** are enabled. The Docs API writes the
-      article's name into the copied Doc (`documents.batchUpdate`, `replaceAllText`).
+- [ ] the **Google Drive API**, the **Google Docs API** and the **Google Sheets API** are
+      enabled. The Docs API writes the article's name into the copied Doc
+      (`documents.batchUpdate`, `replaceAllText`); the Sheets API writes the Registr and each
+      Evidence (#111).
+
+**A test Registr**, never the real one:
+
+- [ ] a spreadsheet named `Registr (test)` with a list `Vydání` holding a header row and one
+      made-up issue, as the scripts' list looks;
+- [ ] shared with `publikace.app@` as an editor, a file share: the account belongs to no other
+      shared drive, and the real Registr will need the same share;
+- [ ] its ID is `REGISTRY_SPREADSHEET_ID`.
 
 **A test shared drive**, never _Publikace_ or a folder the scripts use:
 
@@ -59,8 +69,7 @@ sends to nobody the request does not name:
 - [ ] `ISSUES_FOLDER_ID` and `ARTICLE_TEMPLATE_DOCUMENT_ID` as above, `MAIL_SEND_URL` and
       `MAIL_SEND_SECRET`, and `DRIVE_TOKEN_KEY` set;
 - [ ] `DRIVE_ACCOUNT_EMAIL` empty (it defaults to `publikace.app@` on `AUTHORIZED_DOMAIN`);
-- [ ] `REGISTRY_SPREADSHEET_ID` empty. The app reads it nowhere yet, and the run must not reach
-      the Registr even by mistake.
+- [ ] `REGISTRY_SPREADSHEET_ID` the test Registr's, never the real one's.
 
 The run's database is not a line in `.env`. It is set on the command line, because Node's
 `--env-file` never overrides a variable that is already set, so the run stays apart from the dev
@@ -338,6 +347,28 @@ step applies.
    history says _Odeslání přehledu se nepodařilo potvrdit._, and the banner stands over every
    screen. Mend it and run again: one e-mail, and the banner goes.
 
+## The record
+
+The Registr and each Evidence follow the database through the record queue (#111), a pass every
+30 s under `publikace.app@`. Nothing on a screen says how far it is; the log does.
+
+1. Once the first issue is complete, within a minute: an `Evidence` in its folder with the lists
+   _Články_, _Redakční doložky_ and _Obrazová díla_, their headers dark, their status dropdowns
+   in place (_Dopsáno_ among those of _Články_), and _Otevřít Evidenci_ first in the issue's „⋯“.
+2. The test Registr has a list _Vydání z aplikace_ with the issue, _Aktivní_ ticked and _ID
+   tabulky_ the Evidence. The list _Vydání_ shows no new version in the version history.
+3. As a tester who is not `publikace.app@`, try to type into either list: the sheet refuses. The
+   log has no `[record] the protection of the list … was put back` after the first write: one
+   on every write would mean Google reads a protection back otherwise than the fake does.
+4. Create an article, hand it over, mark its final version and upload artworks: each shows in
+   the Evidence within a minute, in the states the scripts' Evidences use.
+5. Close the issue: _Aktivní_ is cleared. Reopen it: ticked again.
+6. Disconnect `publikace.app@` in Nastavení, change something, connect it again: the record
+   catches up within a minute, and the log has no failed write in between.
+7. Take the account's share off the test Registr for a minute: the log says
+   `[drive] the Registr was not written`, the actions still work, and once the share is back the
+   list catches up within the hour the backoff allows.
+
 ## After the run
 
 - [ ] put the origin back by pushing the project from CI (`workflow_dispatch` of `deploy.yml`),
@@ -346,6 +377,6 @@ step applies.
 - [ ] remove `publikace.app@` from the test shared drive: _Publikace_ is the only shared drive
       it belongs to, because it holds the full `drive` scope;
 - [ ] delete the shared drive `Publikace (test)`, once its bin has been looked at;
-- [ ] delete `./db/round-trip.sqlite`;
+- [ ] delete `./db/round-trip.sqlite` and the test Registr;
 - [ ] write the results into the issue: each check passed, fixed in a commit, or moved to a new
       issue.

@@ -31,6 +31,7 @@ function issue(overrides: Partial<Issue> = {}): Issue {
   return {
     closedAt: null,
     completedAt: NOVEMBER,
+    evidenceSpreadsheetId: null,
     folderIds: { articles: 'f-articles', issue: 'f-issue', print: 'f-print' },
     id: 1,
     name: 'VDM_2026_6',
