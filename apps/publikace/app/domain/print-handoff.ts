@@ -3,7 +3,8 @@
  * `SCRIPT__Publication__Print_Handoff` fills with copies of the approved texts and of the artworks
  * with consent. The job claims what belongs there through the app's API and reports what it
  * copied; the app keeps the copies and says in the issue detail how fresh the folder is and how
- * much it holds. The wording went through the copywriter (`84m2ye59`) and the drawing (`w0jshy5i`).
+ * much it holds. The wording went through the copywriter (`84m2ye59`) and stands in the drawing
+ * (`12a`, `12t`).
  */
 
 import type { JobState } from './job-run.ts'

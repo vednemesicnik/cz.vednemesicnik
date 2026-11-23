@@ -63,7 +63,7 @@ export const NOT_CONNECTED_CARD_TEXT = tied`Připojte účet, aby aplikace mohla
 
 /*
  * The two cards that name the record follow whether the deployment has a Registr, as Soubory na
- * Disku above them does, so one page never says both (`14j`, `14c`, answer `cac9z72q`).
+ * Disku above them does, so one page never says both (`14j`, `14c`).
  */
 
 export function connectedCardText(hasRegistry: boolean): string {

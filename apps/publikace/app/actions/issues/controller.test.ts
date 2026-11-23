@@ -232,7 +232,7 @@ describe('the dialog Nové vydání (11d, 14g)', () => {
     }
   })
 
-  it('names the Registr only when the deployment has one (cac9z72q)', async () => {
+  it('names the Registr only when the deployment has one (11d)', async () => {
     let withRegistry = await newsroom()
     try {
       let text = textOf(await (await withRegistry.browser.get('/issues/new')).text())

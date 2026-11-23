@@ -138,7 +138,7 @@ export function suggestNextName(names: readonly string[], today: Temporal.Instan
 }
 
 /**
- * The dialog's text (`11d`, answer `cac9z72q`). Without a Registr its middle sentence names only
+ * The dialog's text (`11d`). Without a Registr its middle sentence names only
  * the Evidence and says nothing of the Registr, since the editors can do nothing about it here and
  * Soubory na Disku says it where the Registr is looked for (`14j`).
  */

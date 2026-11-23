@@ -10,7 +10,7 @@ import {
 } from './record.ts'
 
 /*
- * Nastavení › Soubory na Disku (`14a`, `14j`, answer `4ty0k2za`, copy `i1b02nx7`): where an
+ * Nastavení › Soubory na Disku (`14a`, `14j`, copy `i1b02nx7`): where an
  * editor-in-chief finds the app's files and its record outside the app. Every name here is a fixed
  * text: the app asks Drive nothing when the page opens and knows only the IDs of its deployment.
  */

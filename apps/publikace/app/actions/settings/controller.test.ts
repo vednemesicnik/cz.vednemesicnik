@@ -437,7 +437,7 @@ describe('settings, Soubory na Disku (14a, 14j)', () => {
       assert.ok(text.includes('Registr vydání Aplikace do Registru nezapisuje. Evidence'))
       assert.ok(!html.includes('/spreadsheets/d/'))
 
-      /* The card under it follows the same deployment, connected and disconnected (cac9z72q). */
+      /* The card under it follows the same deployment, connected and disconnected (`14c`, `14j`). */
       await connectDriveAccount(app)
       let connected = textOf(await (await browser.get('/settings')).text())
       assert.ok(connected.includes('sdíleném disku a zapisuje do Evidence. Soubory patří disku.'))
