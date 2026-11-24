@@ -121,6 +121,39 @@ describe('Ke kontrole', () => {
     }
   })
 
+  it('gives a line a job over the queue, links a failed read to its job, and follows the filter', async () => {
+    let { app, batch, browser } = await setup()
+    try {
+      await replyTo(app, batch, 'Můžu se zeptat, kde přesně fotka vyjde?')
+      let runs = createJobRunStore(app.database)
+      let at = Temporal.Now.instant()
+      await runs.start({ at, intervalMinutes: 30, job: APPROVAL_SEND_JOB, runKey: 'a-1' })
+      await runs.finish(APPROVAL_SEND_JOB, 'a-1', { at, error: null, outcome: 'ok' })
+      let artworks = await (await browser.get('/review')).text()
+      let failing = crypto.randomUUID()
+      await runs.start({ at, intervalMinutes: 30, job: REPLY_CHECK_JOB, runKey: failing })
+      await runs.finish(REPLY_CHECK_JOB, failing, { at, error: 'Gmail: 500', outcome: 'failed' })
+
+      let html = await (await browser.get('/review')).text()
+      assert.match(html, /<ul aria-label="Stav čtení odpovědí"/)
+      assert.match(
+        html,
+        /<li><span>Články: čtení ze?\s[^<]* dokončeno<\/span> · <span>další běh kolem /,
+      )
+      assert.match(
+        html,
+        /<li><span>Obrazová díla: <a href="\/settings\/jobs\/artwork-replies">čtení ze?\s[^<]* skončilo chybou<\/a><\/span>/,
+      )
+      let only = await (await browser.get('/review?kind=artworks')).text()
+      assert.match(only, /Obrazová díla: <a/)
+      assert.doesNotMatch(only, /Články: čtení/)
+      /* A run that is still open within its time reads as under way, with no time. */
+      assert.match(artworks, /Obrazová díla: probíhá čtení odpovědí/)
+    } finally {
+      await app.close()
+    }
+  })
+
   it('shows a reply with who sent it, when, and its own text, and counts it in the panel', async () => {
     let { app, batch, browser } = await setup()
     try {

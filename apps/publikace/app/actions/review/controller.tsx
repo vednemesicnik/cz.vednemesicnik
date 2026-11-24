@@ -20,7 +20,7 @@ import {
 import { answeredLine, APPROVAL_SEND_JOB, WAITING_CLAUSE_LABEL } from '../../domain/approvals.ts'
 import { ARTWORK_STATE_LABELS, batchStateDetail, replyExcerpt } from '../../domain/artwork.ts'
 import { alreadyReplacedToast } from '../../domain/final-version-replacement.ts'
-import { type JobHealth, jobHealth } from '../../domain/job-run.ts'
+import { type JobHealth, jobHealth, jobState } from '../../domain/job-run.ts'
 import { REPLY_CHECK_JOB } from '../../domain/reply-check.ts'
 import {
   ARCHIVE_FAILED_TAG,
@@ -31,7 +31,7 @@ import {
   discardedBatchText,
   isLongReply,
   kindLine,
-  readLine,
+  readLines,
   receivedLine,
   replyMenuLabel,
   type ReviewKind,
@@ -681,13 +681,17 @@ export default function createReviewController(
         let kind = kindOf(context)
         let whole = context.url.searchParams.get('whole')
         let requested = context.url.searchParams.get('reply')
-        let [batches, clauses, artworksHealth, articlesHealth, driveAccount] = await Promise.all([
+        let [batches, clauses, artworksRun, articlesRun, driveAccount] = await Promise.all([
           dependencies.artworks.reviewQueue(settledIdOf(settled, 'batch')),
           dependencies.articles.reviewQueue(settledIdOf(settled, 'clause')),
-          healthOf(REPLY_CHECK_JOB),
-          healthOf(APPROVAL_SEND_JOB),
+          dependencies.runs.latest(REPLY_CHECK_JOB),
+          dependencies.runs.latest(APPROVAL_SEND_JOB),
           driveView(context),
         ])
+        /* The cards ask whether a job still runs; the header, how its last read ended (`13i`). */
+        let at = now()
+        let artworksHealth = jobHealth(artworksRun, at)
+        let articlesHealth = jobHealth(articlesRun, at)
         let [batchAnswers, clauseAnswers] = await Promise.all([
           dependencies.answers.answersOf(
             'artworks',
@@ -760,7 +764,11 @@ export default function createReviewController(
             kind={kind}
             driveAccount={driveAccount}
             person={context.auth.identity}
-            readLine={readLine({ articles: articlesHealth, artworks: artworksHealth }, today)}
+            readLines={readLines(
+              { articles: jobState(articlesRun, at), artworks: jobState(artworksRun, at) },
+              kind,
+              today,
+            )}
             toasts={context.get(Toasts) as readonly ToastMessage[]}
             unsent={unsent}
           />,

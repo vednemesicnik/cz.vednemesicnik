@@ -90,7 +90,7 @@ describe('a replaced version in the open row (12s)', () => {
     assert.equal(replacedClauseTag(clause('pending'), TODAY).label, 'Neodesláno')
     assert.deepEqual(plain(replacedClauseTag(clause('unsent', { error: 'Mailer: 550' }), TODAY)), {
       detail: null,
-      label: 'Neodesláno',
+      label: 'Bez potvrzení odeslání',
       quote: null,
     })
     assert.deepEqual(plain(replacedClauseTag(clause('unarchived', reply), TODAY)), {

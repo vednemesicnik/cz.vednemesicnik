@@ -5,17 +5,16 @@
  * `ey9bfcxx`).
  */
 
-import { APPROVAL_SEND_JOB_NAME } from './approvals.ts'
+import { APPROVAL_SEND_JOB, APPROVAL_SEND_JOB_NAME } from './approvals.ts'
 import { artworksCount } from './artwork.ts'
-import type { JobHealth } from './job-run.ts'
-import { REPLY_CHECK_JOB_NAME } from './reply-check.ts'
+import type { JobHealth, JobState } from './job-run.ts'
+import { REPLY_CHECK_JOB, REPLY_CHECK_JOB_NAME } from './reply-check.ts'
 import {
-  atTime,
   clockTime,
   formatDate,
-  formatDay,
   formatDayMonth,
   formatMoment,
+  fromMoment,
   pragueYear,
 } from './time.ts'
 import { tied } from './public/typography.ts'
@@ -116,14 +115,27 @@ function dateOf(instant: Temporal.Instant, today: Temporal.Instant): string {
 }
 
 /**
- * The line under the title (`13a`, `13c`), in three parts so the page can link the middle one to
- * _Úlohy na pozadí_: the whole sentence of a job that is not reading the replies, the job's name
- * when it never reported. When the replies were read, nothing is linked.
+ * One part of a job's line over the queue (`13i`): words around one link at most. The page keeps
+ * a part together and breaks the line between parts, at „·“, unless a part alone is wider than
+ * the screen.
  */
-export type ReadLine = { after: string; before: string; link: string | null }
+export type ReadPart = { after: string; before: string; link: string | null }
+
+/**
+ * A line of the header over the queue, one a job (`13a`, `13i`, `13c`). `job` is the job whose
+ * page the link opens, when its last run failed (`14e`); a sentence about a job that stopped or
+ * never reported links to the list of jobs (`14d`), as `job: null`.
+ */
+export type ReadLine = { job: string | null; parts: readonly ReadPart[] }
 
 /** The two jobs that read the replies the queue holds: the artworks' and the articles'. */
-export type ReadingJobs = { articles: JobHealth; artworks: JobHealth }
+export type ReadingJobs = { articles: JobState; artworks: JobState }
+
+/**
+ * What a screen reader calls the header's list: _Stav_, so it is not heard as a task beside the
+ * lead's _Přečtěte je_ (copy `9gje14lt`).
+ */
+export const READ_LIST_LABEL = 'Stav čtení odpovědí'
 
 /* `13c`, and the copywriter's lines for a job that is _Neběží_ (`ey9bfcxx`). */
 const ARTWORKS_STOPPED = tied`Čtení odpovědí k obrazovým dílům teď neběží.`
@@ -131,45 +143,87 @@ const ARTICLES_STOPPED = tied`Čtení odpovědí u článků teď neběží.`
 const BOTH_STOPPED = tied`Čtení odpovědí u článků i obrazových děl teď neběží.`
 const NONE_REPORTED = tied`Žádná z úloh pro čtení odpovědí se zatím neohlásila.`
 
+type ReadingKind = Exclude<ReviewKind, 'all'>
+
+/** Each kind's job, named by the filter's word, in the filter's order (`13i`). */
+const READING: Readonly<
+  Record<ReadingKind, { job: string; label: string; name: string; stopped: string }>
+> = {
+  articles: {
+    job: APPROVAL_SEND_JOB,
+    label: 'Články:',
+    name: APPROVAL_SEND_JOB_NAME,
+    stopped: ARTICLES_STOPPED,
+  },
+  artworks: {
+    job: REPLY_CHECK_JOB,
+    label: 'Obrazová díla:',
+    name: REPLY_CHECK_JOB_NAME,
+    stopped: ARTWORKS_STOPPED,
+  },
+}
+
+function sentence(text: string): ReadLine {
+  return { job: null, parts: [{ after: '', before: '', link: text }] }
+}
+
 /**
- * One line for the two jobs. A job that is _Neběží_ wins over one that never reported, because it
- * stopped doing what it did; one that never reported is named, because the queue may be empty for
- * that reason alone. Two jobs that both report give the older of their last runs, which is true
- * of both, and the estimate only when it is the same for both: one job's next run reads none of
- * the other's replies. Whether the line should be two, one per kind, is a question for design.
+ * A job's line: how its last read ended, with the time it started (`4k262ttk`). _dokončeno_ only
+ * after a run that reported its end without an error, so it never stands over a run that read
+ * nothing. A run that did not report its end within the limit is _zatím bez výsledku_ and not an
+ * error, because only a reported end knows of one; both send the reader to the job's page.
  */
-export function readLine(jobs: ReadingJobs, today: Temporal.Instant): ReadLine {
+function jobLine(kind: ReadingKind, state: JobState, today: Temporal.Instant): ReadLine {
+  let { job, label, name, stopped } = READING[kind]
+  switch (state.kind) {
+    case 'stopped':
+      return sentence(stopped)
+    case 'never':
+      return {
+        job: null,
+        parts: [{ after: ' se zatím neohlásila.', before: 'Úloha ', link: name }],
+      }
+    case 'running':
+      return {
+        job: null,
+        parts: [{ after: '', before: `${label} probíhá čtení odpovědí`, link: null }],
+      }
+    case 'ok':
+    case 'failed': {
+      let read = `čtení ${fromMoment(state.lastStartedAt, today)}`
+      let first: ReadPart =
+        state.kind === 'ok'
+          ? { after: '', before: `${label} ${read} dokončeno`, link: null }
+          : {
+              after: '',
+              before: `${label} `,
+              link: `${read} ${state.isUnreported ? 'zatím bez výsledku' : 'skončilo chybou'}`,
+            }
+      let parts =
+        state.next === null
+          ? [first]
+          : [first, { after: '', before: `další běh kolem ${clockTime(state.next)}`, link: null }]
+      return { job: state.kind === 'failed' ? job : null, parts }
+    }
+  }
+}
+
+/**
+ * The header over the queue (`13i`): a line a job, so the reader sees for which kind a reply may
+ * be missing and when to look again, since two estimates hardly ever meet. Under one kind of the
+ * filter only that kind's line, which describes the list under it. Two jobs that both stopped, or
+ * that both never reported, share one sentence, as `13c` has it.
+ */
+export function readLines(
+  jobs: ReadingJobs,
+  kind: ReviewKind,
+  today: Temporal.Instant,
+): ReadLine[] {
+  if (kind !== 'all') return [jobLine(kind, jobs[kind], today)]
   let { articles, artworks } = jobs
-  if (artworks.kind === 'stopped' && articles.kind === 'stopped') {
-    return { after: '', before: '', link: BOTH_STOPPED }
-  }
-  if (artworks.kind === 'stopped') return { after: '', before: '', link: ARTWORKS_STOPPED }
-  if (articles.kind === 'stopped') return { after: '', before: '', link: ARTICLES_STOPPED }
-  if (artworks.kind === 'never' && articles.kind === 'never') {
-    return { after: '', before: '', link: NONE_REPORTED }
-  }
-  if (artworks.kind === 'never') {
-    return { after: ' se zatím neohlásila.', before: 'Úloha ', link: REPLY_CHECK_JOB_NAME }
-  }
-  if (articles.kind === 'never') {
-    return { after: ' se zatím neohlásila.', before: 'Úloha ', link: APPROVAL_SEND_JOB_NAME }
-  }
-  let isArtworksOlder =
-    Temporal.Instant.compare(artworks.lastStartedAt, articles.lastStartedAt) <= 0
-  let lastStartedAt = isArtworksOlder ? artworks.lastStartedAt : articles.lastStartedAt
-  let next =
-    artworks.next !== null &&
-    articles.next !== null &&
-    Temporal.Instant.compare(artworks.next, articles.next) === 0
-      ? artworks.next
-      : null
-  let day = formatDay(lastStartedAt, today)
-  let read =
-    day === 'dnes'
-      ? `Odpovědi čteny ${atTime(lastStartedAt)}`
-      : `Odpovědi čteny ${formatMoment(lastStartedAt, today)}`
-  let text = next === null ? read : `${read} · další běh kolem ${clockTime(next)}`
-  return { after: '', before: text, link: null }
+  if (articles.kind === 'stopped' && artworks.kind === 'stopped') return [sentence(BOTH_STOPPED)]
+  if (articles.kind === 'never' && artworks.kind === 'never') return [sentence(NONE_REPORTED)]
+  return [jobLine('articles', articles, today), jobLine('artworks', artworks, today)]
 }
 
 /* `13a`, the filter over the queue, in the address as `?kind=`. */

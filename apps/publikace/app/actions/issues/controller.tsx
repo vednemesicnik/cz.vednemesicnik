@@ -359,6 +359,7 @@ function clausesView(
           : rowTag
       return {
         email: clause.authorEmail,
+        error: tag.error,
         link:
           tag.link === 'review'
             ? {

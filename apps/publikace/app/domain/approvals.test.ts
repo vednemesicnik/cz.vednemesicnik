@@ -132,6 +132,7 @@ describe('an author’s line in the open row', () => {
       clauseRowTag({ ...DETAIL, ...detail }, RUNNING, TODAY)
     assert.deepEqual(row({}), {
       detail: 'od 12. 11.',
+      error: null,
       label: 'Čeká na odpověď',
       link: null,
       quote: null,
@@ -141,6 +142,7 @@ describe('an author’s line in the open row', () => {
     assert.equal(answered.detail, 'odpověď odeslána 19. 11.')
     assert.deepEqual(row({ replyText: 'Ještě jedna oprava', state: 'review' }), {
       detail: null,
+      error: null,
       label: 'Ke kontrole',
       link: 'review',
       quote: 'Ještě jedna oprava',
@@ -154,16 +156,17 @@ describe('an author’s line in the open row', () => {
     })
     assert.equal(approved.label, 'Souhlasí')
     assert.equal(approved.detail, '13. 11. v\u00a018:04')
+    /* The line says only what the app knows; the job's text waits under Zobrazit podrobnosti. */
     assert.deepEqual(row({ error: 'Mailer answered 503', state: 'unsent' }), {
-      detail: 'Mailer answered 503',
+      detail: 'chybí potvrzení o\u00a0odeslání žádosti',
+      error: 'Mailer answered 503',
       label: 'Chyba',
       link: 'jobs',
       quote: null,
       tone: 'problem',
     })
-    assert.equal(
-      row({ archiveError: 'Licence is gone', state: 'unarchived' }).detail,
-      'Licence is gone',
-    )
+    let unarchived = row({ archiveError: 'Licence is gone', state: 'unarchived' })
+    assert.equal(unarchived.detail, 'konverzace se neuložila')
+    assert.equal(unarchived.error, 'Licence is gone')
   })
 })

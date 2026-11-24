@@ -221,7 +221,7 @@ describe('the state of an article (01a)', () => {
     }
     assert.equal(articleState(failed), 'error')
     assert.deepEqual(articleStateTag(failed), {
-      detail: 'e-mail se nedoručil',
+      detail: 'chybí potvrzení o\u00a0odeslání žádosti',
       label: 'Chyba',
       tone: 'problem',
     })
@@ -273,7 +273,7 @@ describe('the state of an article (01a)', () => {
     /* An e-mail that did not go waits on the editors-in-chief; the archive only on the next run. */
     assert.equal(
       articleStateTag(withClauses({ unarchived: 1, unsent: 1 })).detail,
-      'e-mail se nedoručil',
+      'chybí potvrzení o\u00a0odeslání žádosti',
     )
   })
 

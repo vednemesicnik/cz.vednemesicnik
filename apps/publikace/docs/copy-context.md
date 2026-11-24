@@ -168,6 +168,10 @@ výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
   M = 1 je tvar „autora“, při M = 2 až 10 „autorů“: _souhlas 0 z 1 autora_, _souhlas 1 ze 2
   autorů_, _souhlas 2 z 5 autorů_. N tvar ani předložku nemění a „souhlas“ zůstává v jednotném
   čísle. Platí pro tuto řádku a pro 1 až 10 autorů, ne jako obecné pravidlo skloňování.
+- „Z“ před časem nebo datem (_čtení z 9:12_) se mění na „ze“ podle výslovnosti: před hodinami
+  2, 3, 4, 6, 7, 12, 13, 14, 16, 17 a 20–23, a stojí-li tam datum, rozhoduje jen den, „ze“ před
+  dny 2, 3, 4, 6, 7, 12, 13, 14, 16, 17 a 20–31: _čtení ze 7:05_, _čtení ze 22. 11. v 9:12_,
+  _čtení z 18. 11. ve 12:00_. Konvence Publikace jako „v/ve“.
 - Časové okno se píše rozsahem: _9:00–10:00_.
 - Pomlčka ve větě je em dash `—` s mezerami.
 - Uvozovky české „…“.

@@ -7,6 +7,7 @@
 import type { ClauseCounts, ClauseDetail } from './approvals.ts'
 import type { ApprovedCount } from './issue.ts'
 import type { Author } from './public/article-form.ts'
+import { UNCONFIRMED_SEND_LINE } from './artwork.ts'
 import { formatDayMonth } from './time.ts'
 import { NBSP, tied } from './public/typography.ts'
 
@@ -309,7 +310,7 @@ function finalVersionTag(finalVersion: FinalVersion): {
   switch (finalVersionState(finalVersion)) {
     case 'error':
       return {
-        detail: clauses.unsent > 0 ? 'e-mail se nedoručil' : 'konverzace se neuložila',
+        detail: clauses.unsent > 0 ? UNCONFIRMED_SEND_LINE : 'konverzace se neuložila',
         label: 'Chyba',
         tone: 'problem',
       }

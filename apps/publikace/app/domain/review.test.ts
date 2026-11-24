@@ -1,14 +1,14 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
-import type { JobHealth } from './job-run.ts'
+import type { JobHealth, JobState } from './job-run.ts'
 import {
   archiveFailedText,
   articleKindLine,
   discardedBatchText,
   kindLine,
   otherKindText,
-  readLine,
+  readLines,
   receivedLine,
   reviewKindOf,
   verifiedToast,
@@ -57,61 +57,151 @@ describe('the queue’s lines', () => {
     )
   })
 
-  it('reads the jobs: the time and the estimate, the passed estimate, a stopped job and none', () => {
-    let both = (health: JobHealth) => ({ articles: health, artworks: health })
-    assert.deepEqual(readLine(both(RUNNING), TODAY), {
-      after: '',
-      before: 'Odpovědi čteny v\u00a09:00 · další běh kolem 9:30',
-      link: null,
-    })
-    assert.deepEqual(readLine(both(PASSED), TODAY), {
-      after: '',
-      before: 'Odpovědi čteny v\u00a09:00',
-      link: null,
-    })
-    assert.deepEqual(readLine({ articles: RUNNING, artworks: STOPPED }, TODAY), {
-      after: '',
-      before: '',
-      link: 'Čtení odpovědí k\u00a0obrazovým dílům teď neběží.',
-    })
-    assert.deepEqual(readLine({ articles: STOPPED, artworks: NEVER }, TODAY), {
-      after: '',
-      before: '',
-      link: 'Čtení odpovědí u\u00a0článků teď neběží.',
-    })
-    assert.deepEqual(readLine(both(STOPPED), TODAY), {
-      after: '',
-      before: '',
-      link: 'Čtení odpovědí u\u00a0článků i\u00a0obrazových děl teď neběží.',
-    })
-    assert.deepEqual(readLine({ articles: RUNNING, artworks: NEVER }, TODAY), {
-      after: ' se zatím neohlásila.',
-      before: 'Úloha ',
-      link: 'Odpovědi k\u00a0obrazovým dílům',
-    })
-    assert.deepEqual(readLine({ articles: NEVER, artworks: RUNNING }, TODAY), {
-      after: ' se zatím neohlásila.',
-      before: 'Úloha ',
-      link: 'Žádosti a\u00a0odpovědi u\u00a0článků',
-    })
-    assert.deepEqual(readLine(both(NEVER), TODAY), {
-      after: '',
-      before: '',
-      link: 'Žádná z\u00a0úloh pro čtení odpovědí se zatím neohlásila.',
-    })
+  it('says how each job’s last read ended, one line a job in the filter’s order', () => {
+    let ok: JobState = { kind: 'ok', lastStartedAt: LAST, next: NEXT }
+    let failed: JobState = { isUnreported: false, kind: 'failed', lastStartedAt: LAST, next: NEXT }
+    assert.deepEqual(readLines({ articles: ok, artworks: failed }, 'all', TODAY), [
+      {
+        job: null,
+        parts: [
+          { after: '', before: 'Články: čtení z\u00a09:00 dokončeno', link: null },
+          { after: '', before: 'další běh kolem 9:30', link: null },
+        ],
+      },
+      {
+        job: 'artwork-replies',
+        parts: [
+          { after: '', before: 'Obrazová díla: ', link: 'čtení z\u00a09:00 skončilo chybou' },
+          { after: '', before: 'další běh kolem 9:30', link: null },
+        ],
+      },
+    ])
   })
 
-  it('gives the older of two runs, and an estimate only when both jobs share it', () => {
-    let later: JobHealth = {
-      kind: 'running',
-      lastStartedAt: LAST.add({ minutes: 12 }),
-      next: NEXT.add({ minutes: 10 }),
+  it('calls a run that never reported its end no result, not an error, and links its job', () => {
+    let unreported: JobState = {
+      isUnreported: true,
+      kind: 'failed',
+      lastStartedAt: LAST,
+      next: null,
     }
-    assert.deepEqual(readLine({ articles: later, artworks: RUNNING }, TODAY), {
-      after: '',
-      before: 'Odpovědi čteny v\u00a09:00',
-      link: null,
+    assert.deepEqual(readLines({ articles: unreported, artworks: NEVER }, 'articles', TODAY), [
+      {
+        job: 'approval-send',
+        parts: [{ after: '', before: 'Články: ', link: 'čtení z\u00a09:00 zatím bez výsledku' }],
+      },
+    ])
+  })
+
+  it('drops the estimate once it passed, and gives no time while a run is under way', () => {
+    let passed: JobState = { kind: 'ok', lastStartedAt: LAST, next: null }
+    let running: JobState = { kind: 'running', startedAt: LAST }
+    assert.deepEqual(readLines({ articles: running, artworks: passed }, 'all', TODAY), [
+      { job: null, parts: [{ after: '', before: 'Články: probíhá čtení odpovědí', link: null }] },
+      {
+        job: null,
+        parts: [{ after: '', before: 'Obrazová díla: čtení z\u00a09:00 dokončeno', link: null }],
+      },
+    ])
+  })
+
+  it('reads with ze where the hour or the day asks for it, and gives the date on another day', () => {
+    let at = (instant: string): JobState => ({
+      kind: 'ok',
+      lastStartedAt: Temporal.Instant.from(instant),
+      next: null,
     })
+    let first = (state: JobState) =>
+      readLines({ articles: state, artworks: NEVER }, 'articles', TODAY)[0]?.parts[0]?.before
+    assert.equal(first(at('2026-11-19T06:05:00Z')), 'Články: čtení ze 7:05 dokončeno')
+    assert.equal(
+      first(at('2026-11-18T08:12:00Z')),
+      'Články: čtení z\u00a018. 11. v\u00a09:12 dokončeno',
+    )
+    assert.equal(
+      first(at('2026-11-22T08:12:00Z')),
+      'Články: čtení ze 22. 11. v\u00a09:12 dokončeno',
+    )
+    assert.equal(
+      first(at('2025-11-22T08:12:00Z')),
+      'Články: čtení ze 22. 11. 2025 v\u00a09:12 dokončeno',
+    )
+  })
+
+  it('puts a stopped or a silent job’s sentence in its own line’s place', () => {
+    let ok: JobState = { kind: 'ok', lastStartedAt: LAST, next: NEXT }
+    let stopped: JobState = { kind: 'stopped', lastStartedAt: LAST }
+    let never: JobState = { kind: 'never' }
+    let lines = readLines({ articles: ok, artworks: stopped }, 'all', TODAY)
+    assert.equal(lines.length, 2)
+    assert.deepEqual(lines[1], {
+      job: null,
+      parts: [{ after: '', before: '', link: 'Čtení odpovědí k\u00a0obrazovým dílům teď neběží.' }],
+    })
+    assert.deepEqual(readLines({ articles: never, artworks: ok }, 'all', TODAY)[0], {
+      job: null,
+      parts: [
+        {
+          after: ' se zatím neohlásila.',
+          before: 'Úloha ',
+          link: 'Žádosti a\u00a0odpovědi u\u00a0článků',
+        },
+      ],
+    })
+    assert.deepEqual(readLines({ articles: stopped, artworks: never }, 'all', TODAY), [
+      {
+        job: null,
+        parts: [{ after: '', before: '', link: 'Čtení odpovědí u\u00a0článků teď neběží.' }],
+      },
+      {
+        job: null,
+        parts: [
+          {
+            after: ' se zatím neohlásila.',
+            before: 'Úloha ',
+            link: 'Odpovědi k\u00a0obrazovým dílům',
+          },
+        ],
+      },
+    ])
+  })
+
+  it('gives one sentence for two jobs that both stopped or never reported, but not under a kind', () => {
+    let stopped: JobState = { kind: 'stopped', lastStartedAt: LAST }
+    let never: JobState = { kind: 'never' }
+    let both = (state: JobState) => ({ articles: state, artworks: state })
+    assert.deepEqual(readLines(both(stopped), 'all', TODAY), [
+      {
+        job: null,
+        parts: [
+          {
+            after: '',
+            before: '',
+            link: 'Čtení odpovědí u\u00a0článků i\u00a0obrazových děl teď neběží.',
+          },
+        ],
+      },
+    ])
+    assert.deepEqual(readLines(both(never), 'all', TODAY), [
+      {
+        job: null,
+        parts: [
+          {
+            after: '',
+            before: '',
+            link: 'Žádná z\u00a0úloh pro čtení odpovědí se zatím neohlásila.',
+          },
+        ],
+      },
+    ])
+    assert.deepEqual(readLines(both(stopped), 'artworks', TODAY), [
+      {
+        job: null,
+        parts: [
+          { after: '', before: '', link: 'Čtení odpovědí k\u00a0obrazovým dílům teď neběží.' },
+        ],
+      },
+    ])
   })
 
   it('names an article’s final version and its issue', () => {

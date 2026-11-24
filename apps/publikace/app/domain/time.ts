@@ -45,6 +45,30 @@ export function atTime(instant: Temporal.Instant): string {
   return keepOneLetterWords(`${preposition} ${clockTime(instant)}`)
 }
 
+/*
+ * The hours and the days before which _z_ reads as _ze_: a convention of Publikace, as `atTime`'s
+ * hours are (copy `9gje14lt`).
+ */
+const FROM_ZE_HOURS: readonly number[] = [2, 3, 4, 6, 7, 12, 13, 14, 16, 17, 20, 21, 22, 23]
+const FROM_ZE_DAYS: readonly number[] = [
+  2, 3, 4, 6, 7, 12, 13, 14, 16, 17, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+]
+
+/**
+ * `z 9:12` today, `ze 22. 11. v 9:12` on another day and with the year in another year: when
+ * something started, as _čtení z ‹čas›_ has it (`13i`). _Ze_ follows how the number after it is
+ * read, as `atTime` picks _ve_.
+ */
+export function fromMoment(instant: Temporal.Instant, today: Temporal.Instant): string {
+  let time = inPrague(instant)
+  if (formatDay(instant, today) === 'dnes') {
+    let preposition = FROM_ZE_HOURS.includes(time.hour) ? 'ze' : 'z'
+    return keepOneLetterWords(`${preposition} ${clockTime(instant)}`)
+  }
+  let preposition = FROM_ZE_DAYS.includes(time.day) ? 'ze' : 'z'
+  return keepOneLetterWords(`${preposition} ${formatMoment(instant, today)}`)
+}
+
 /** `9:30`, as after _kolem_. */
 export function clockTime(instant: Temporal.Instant): string {
   let time = inPrague(instant)

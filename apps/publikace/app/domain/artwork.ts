@@ -160,6 +160,13 @@ export const ARTWORK_STATE_LABELS: Readonly<Record<ArtworkState, string>> = {
   review: 'Ke kontrole',
 }
 
+/**
+ * The Mailer did not confirm that a request for consent went out. The line claims no delivery and
+ * no bounce, which no job reads (copy `4k262ttk`), and stands under _Chyba_ for a batch, an
+ * article and an author's clause alike (`01a`, `12b`, `12o`).
+ */
+export const UNCONFIRMED_SEND_LINE = tied`chybí potvrzení o odeslání žádosti`
+
 /** The line under the tag (`12a`, `01b`, `13c`). */
 export function batchStateDetail(batch: BatchStatus): string {
   if (batch.approvedAt !== null) return tied`konverzace v Licencích`
@@ -177,7 +184,7 @@ export function batchStateDetail(batch: BatchStatus): string {
   }
   if (batch.mailSentAt !== null) return `žádost odeslána ${formatDayMonth(batch.mailSentAt)}`
   if (batch.mailRefusedAt !== null) return 'pošta žádost trvale odmítla'
-  return tied`chybí potvrzení o odeslání žádosti`
+  return UNCONFIRMED_SEND_LINE
 }
 
 /* `12a`, the filter over the table, in the address as `?artworks=`. */

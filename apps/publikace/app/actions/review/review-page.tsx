@@ -7,6 +7,7 @@ import {
   EMPTY_TITLE,
   emptyKindTitle,
   otherKindText,
+  READ_LIST_LABEL,
   type ReadLine,
   REVIEW_KINDS,
   REVIEW_KINDS_LABEL,
@@ -42,8 +43,8 @@ export type ReviewPageProps = {
   hrefOf(kind: ReviewKind): string
   kind: ReviewKind
   person: PanelPerson
-  /** When the replies were read, or which job is not reading them (`13a`, `13c`). */
-  readLine: ReadLine
+  /** How each job's last read ended, or that it is not reading (`13i`, `13c`). */
+  readLines: readonly ReadLine[]
   toasts?: readonly ToastMessage[]
   /** An answer whose card left the queue while it was written, shown once (`gjovqe1p`). */
   unsent?: UnsentAnswer | null
@@ -66,10 +67,17 @@ const headStyle = css({ display: 'flex', flexDirection: 'column', gap: '6px' })
 
 const leadStyle = css({ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 })
 
+/*
+ * One line a job (`13i`). A part stays whole and the line breaks between parts, at „·“, unless a
+ * part alone is wider than the screen: an inline block wraps inside itself only then.
+ */
 const readStyle = css({
   color: 'var(--text-tertiary)',
   fontSize: '13px',
+  listStyle: 'none',
   margin: 0,
+  padding: 0,
+  '& span': { display: 'inline-block', maxWidth: '100%' },
   '& a': { color: 'var(--link)' },
   '& a:hover': { color: 'var(--link-hover)' },
 })
@@ -92,16 +100,31 @@ const queueStyle = css({ maxWidth: '860px', width: '100%' })
  */
 export function ReviewPage(handle: Handle<ReviewPageProps>) {
   return () => {
-    let { cards, counts, driveAccount, hasCards, hrefOf, kind, person, readLine, toasts, unsent } =
+    let { cards, counts, driveAccount, hasCards, hrefOf, kind, person, readLines, toasts, unsent } =
       handle.props
     let read = (
-      <p mix={readStyle}>
-        {readLine.before}
-        {readLine.link === null ? null : (
-          <a href={routes.settings.jobs.index.href()}>{readLine.link}</a>
-        )}
-        {readLine.after}
-      </p>
+      <ul aria-label={READ_LIST_LABEL} mix={readStyle}>
+        {readLines.map((line) => {
+          let href =
+            line.job === null
+              ? routes.settings.jobs.index.href()
+              : routes.settings.jobs.show.href({ job: line.job })
+          return (
+            <li>
+              {line.parts.map((part, index) => (
+                <>
+                  {index === 0 ? null : ' · '}
+                  <span>
+                    {part.before}
+                    {part.link === null ? null : <a href={href}>{part.link}</a>}
+                    {part.after}
+                  </span>
+                </>
+              ))}
+            </li>
+          )
+        })}
+      </ul>
     )
 
     return (

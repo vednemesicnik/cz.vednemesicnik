@@ -111,6 +111,7 @@ import {
   type FinalVersionDialogProps,
 } from '../../ui/final-version-dialog/component.tsx'
 import { SHOW_REPLY_LABEL } from '../../domain/approvals.ts'
+import { DETAILS_LABEL } from '../../domain/jobs.ts'
 import { spreadsheetUrl } from '../../domain/record.ts'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
@@ -142,6 +143,8 @@ export type MissingFoldersView = {
 /** One author's clause in the open row (`12b`): the tag, its line, and where the line leads. */
 export type ClauseAuthorView = {
   email: string
+  /** What the job reported under _Chyba_, kept closed under _Zobrazit podrobnosti_ (`12b`). */
+  error: string | null
   /** _Úloha …_ under _Chyba_ (`14e`), _Přejít na odpověď ke kontrole_ under a reply (`13a`). */
   link: { href: string; label: string } | null
   name: string
@@ -487,6 +490,43 @@ const clauseNoteStyle = css({
     whiteSpace: 'pre-line',
   },
 })
+/*
+ * The job's technical text under an author's _Chyba_, closed: the editors-in-chief cannot mend it
+ * in the app, so it waits to be read or copied for whoever runs the jobs, and the line above keeps
+ * what the app knows for sure (`12b`). The summary is a 44 px target, as the drawing measures it.
+ */
+const clauseErrorStyle = css({
+  color: 'var(--text-secondary)',
+  fontSize: '13px',
+  gridColumn: '1 / -1',
+  marginTop: '-8px',
+  minWidth: 0,
+  '& > summary': {
+    alignItems: 'center',
+    color: 'var(--link)',
+    cursor: 'pointer',
+    display: 'flex',
+    minHeight: '44px',
+    textDecoration: 'underline',
+    textUnderlineOffset: '2px',
+    width: 'fit-content',
+  },
+  '& > summary:hover': { color: 'var(--link-hover)' },
+  '& > div': {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    minWidth: 0,
+    paddingBottom: '8px',
+  },
+  '& pre': {
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: '12px',
+    margin: 0,
+    overflowWrap: 'anywhere',
+    whiteSpace: 'pre-wrap',
+  },
+})
 const namesListStyle = css({ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 })
 const namesLabelStyle = css({
   color: 'var(--text-secondary)',
@@ -822,7 +862,18 @@ function ClauseBand(handle: Handle<{ clauses: ClausesView }>) {
                 <span mix={clauseMetaStyle}>
                   {author.quote === null ? (author.tag.detail ?? '') : ''}
                 </span>
-                {author.quote === null && author.link === null ? null : (
+                {author.error === null ? null : (
+                  <details mix={clauseErrorStyle}>
+                    <summary>{DETAILS_LABEL}</summary>
+                    <div>
+                      <pre>{author.error}</pre>
+                      {author.link === null ? null : (
+                        <a href={author.link.href}>{author.link.label}</a>
+                      )}
+                    </div>
+                  </details>
+                )}
+                {author.error !== null || (author.quote === null && author.link === null) ? null : (
                   <span mix={clauseNoteStyle}>
                     {author.quote === null ? null : <blockquote>{author.quote}</blockquote>}
                     {author.link === null ? null : (

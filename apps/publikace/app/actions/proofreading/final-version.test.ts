@@ -344,8 +344,12 @@ describe('the final version (15f, 15g)', () => {
       let row = await (await editor.get(`/issues/${ISSUE}?article=${articleId}`)).text()
       let text = textOf(row)
       assert.ok(row.includes('vdm-row vdm-row--last vdm-row--selected'))
-      assert.ok(text.includes('Chyba Mailer answered 503'), text)
-      assert.ok(text.includes('Úloha Žádosti a odpovědi u článků'))
+      assert.ok(text.includes('Chyba chybí potvrzení o odeslání žádosti'), text)
+      /* The job's text is closed under Zobrazit podrobnosti, with the job's link inside. */
+      assert.match(
+        row,
+        /<details[^>]*><summary>Zobrazit podrobnosti<\/summary><div><pre>Mailer answered 503<\/pre><a href="\/settings\/jobs\/approval-send">Úloha Žádosti a\u00a0odpovědi u\u00a0článků<\/a>/,
+      )
       assert.ok(text.includes(`Označení: ${LENKA.name}`))
       assert.ok(text.includes('Jméno v doložce'))
       assert.ok(row.includes('href="/settings/jobs/approval-send"'))

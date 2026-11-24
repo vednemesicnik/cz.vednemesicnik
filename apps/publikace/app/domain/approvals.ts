@@ -4,7 +4,7 @@
  * author's reply (#89).
  */
 
-import { mayArchive } from './artwork.ts'
+import { mayArchive, UNCONFIRMED_SEND_LINE } from './artwork.ts'
 import { type JobHealth, RUN_LIMIT_MINUTES } from './job-run.ts'
 import { clockTime, formatDayMonth, formatMoment, stamp } from './time.ts'
 import { tied } from './public/typography.ts'
@@ -164,11 +164,15 @@ export function answeredLine(at: Temporal.Instant): string {
 /**
  * An author's tag in the open row and the line beside it, as the table under `12b` gives them.
  * `quote` is the reply under _Ke kontrole_, which is decided only in the queue (`13a`), so the row
- * links there; `link` names where the page links under the line. The estimate of the next run
- * only while there is one, and none for a job that stopped reporting (`14d`).
+ * links there; `link` names where the page links under the line. `error` is the technical text
+ * the job reported for the clause, which the page keeps closed under _Zobrazit podrobnosti_: the
+ * clause is the only place that holds it, and the editors-in-chief cannot mend it in the app
+ * (`12b`). The estimate of the next run only while there is one, and none for a job that stopped
+ * reporting (`14d`).
  */
 export type ClauseRowTag = {
   detail: string | null
+  error: string | null
   label: string
   link: 'jobs' | 'review' | null
   quote: string | null
@@ -180,7 +184,7 @@ export function clauseRowTag(
   health: JobHealth,
   today: Temporal.Instant,
 ): ClauseRowTag {
-  let tag = { detail: null, link: null, quote: null }
+  let tag = { detail: null, error: null, link: null, quote: null }
   switch (clause.state) {
     case 'pending':
       return {
@@ -228,9 +232,23 @@ export function clauseRowTag(
       }
     }
     case 'unsent':
-      return { ...tag, detail: clause.error, label: 'Chyba', link: 'jobs', tone: 'problem' }
+      return {
+        ...tag,
+        detail: UNCONFIRMED_SEND_LINE,
+        error: clause.error,
+        label: 'Chyba',
+        link: 'jobs',
+        tone: 'problem',
+      }
     case 'unarchived':
-      return { ...tag, detail: clause.archiveError, label: 'Chyba', link: 'jobs', tone: 'problem' }
+      return {
+        ...tag,
+        detail: 'konverzace se neuložila',
+        error: clause.archiveError,
+        label: 'Chyba',
+        link: 'jobs',
+        tone: 'problem',
+      }
   }
 }
 

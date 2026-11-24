@@ -89,8 +89,9 @@ export type ReplacedClauseTag = { detail: string | null; label: string; quote: s
 
 /**
  * The words promise nothing: _Bez odpovědi_ is „no reply until the replacement“, as the reply
- * check stopped asking, and an e-mail that never went is _Neodesláno_ without the job's text,
- * since nothing of the record can be mended. A consent whose archive failed is still a consent.
+ * check stopped asking, an e-mail that never went is _Neodesláno_ and one the Mailer did not
+ * confirm _Bez potvrzení odeslání_, both without the job's text, since nothing of the record can
+ * be mended. A consent whose archive failed is still a consent.
  */
 export function replacedClauseTag(
   clause: ClauseDetail,
@@ -115,8 +116,9 @@ export function replacedClauseTag(
     case 'review':
       return { detail: replyAt, label: 'Jiná odpověď', quote: clause.replyText }
     case 'pending':
-    case 'unsent':
       return { ...tag, label: 'Neodesláno' }
+    case 'unsent':
+      return { ...tag, label: 'Bez potvrzení odeslání' }
     case 'unarchived':
       return {
         ...tag,
