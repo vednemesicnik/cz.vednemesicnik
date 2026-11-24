@@ -1734,13 +1734,15 @@ export function createArticleStore(database: Database): ArticleStore {
       /* The tag and the missing folder are two items, as `01d` adds them: an article in _Chyba_
          whose folder is in the bin waits on two steps, a reply and a restore. An article has one
          tag, and a waiting clause rules out every clause approved, so the two sets of tags never
-         meet. */
+         meet. With the issue folder in the bin its one Callout stands for every folder in it, so
+         the articles' missing folders are not counted beside it (`12j`). */
       let result = await database.exec(
         sql`SELECT issue_id, sum(is_missing) + sum(is_tagged) AS count FROM (
               SELECT issue_id,
-                (folder_missing_at IS NOT NULL
-                  OR artworks_folder_missing_at IS NOT NULL
-                  OR licences_folder_missing_at IS NOT NULL) AS is_missing,
+                (issue_id NOT IN (SELECT id FROM issues WHERE folder_missing_at IS NOT NULL)
+                  AND (folder_missing_at IS NOT NULL
+                    OR artworks_folder_missing_at IS NOT NULL
+                    OR licences_folder_missing_at IS NOT NULL)) AS is_missing,
                 (id IN (SELECT c.article_id FROM article_clauses c
                         JOIN final_versions f ON f.id = c.final_version_id
                         WHERE ${STANDING_F} AND ${WAITS_ON_EDITORS})

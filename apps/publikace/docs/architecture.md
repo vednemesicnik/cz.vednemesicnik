@@ -104,6 +104,7 @@ erDiagram
     int id PK
     text name "unique regardless of case"
     text folder_id "and articles_folder_id, print_folder_id, groups_folder_id"
+    instant folder_missing_at "and articles_folder_missing_at, 12j"
     instant completed_at "null while Nedokončené"
     instant closed_at
     text evidence_spreadsheet_id

@@ -30,6 +30,7 @@ import {
 } from '../../domain/artwork.ts'
 import {
   CHECK_AGAIN_LABEL,
+  CHECKING_LABEL,
   DISCARD_KEPT_TEXT,
   type HeadingPart,
   type SubfolderKind,
@@ -161,6 +162,14 @@ export type MissingFoldersView = {
   /** What the row cannot do and when the app found it, in one paragraph. */
   text: string
   urls: Readonly<Partial<Record<SubfolderKind, string>>>
+}
+
+/** The Callout under the header while the issue's `Články` or its own folder is missing (`12j`). */
+export type IssueMissingView = {
+  /** Where _Zkontrolovat znovu_ posts; `null` in a closed issue, whose detail is for reading. */
+  checkAction: string | null
+  heading: string
+  text: string
 }
 
 /** One author's clause in the open row (`12b`): the tag, its line, and where the line leads. */
@@ -371,6 +380,7 @@ export type DetailPageProps = {
   /** The question _Vydat nový odkaz_ over the detail (`02d`). */
   isRenewing?: boolean
   issue: Issue
+  issueMissing?: IssueMissingView | null
   link?: LinkBlockView
   person: PanelPerson
   /** On an active issue with a print folder only (`12t`). */
@@ -764,17 +774,39 @@ function MissingFoldersBand(handle: Handle<{ isLast: boolean; missing: MissingFo
           <Callout tone="error">
             <FolderHeading heading={missing.heading} urls={missing.urls} />
             <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
-            {missing.checkAction === null ? null : (
-              <form action={missing.checkAction} class="vdm-callout__actions" method="post">
-                <CsrfField />
-                <button class="vdm-btn vdm-btn--outline vdm-btn--sm" type="submit">
-                  {CHECK_AGAIN_LABEL}
-                </button>
-              </form>
-            )}
+            {missing.checkAction === null ? null : <CheckAgainForm action={missing.checkAction} />}
           </Callout>
         </div>
       </div>
+    )
+  }
+}
+
+/** _Zkontrolovat znovu_, with _Kontroluje se…_ while Drive is asked (`12j`). */
+function CheckAgainForm(handle: Handle<{ action: string }>) {
+  return () => (
+    <form action={handle.props.action} class="vdm-callout__actions" method="post">
+      <CsrfField />
+      <PendingActions emphasis="outline" label={CHECK_AGAIN_LABEL} pendingLabel={CHECKING_LABEL} />
+    </form>
+  )
+}
+
+/**
+ * The issue's own missing folder, under the header where `12i` stands for an unfinished issue:
+ * the newsroom's link needs `Články`, and every link of the issue needs the issue folder (`12j`).
+ */
+function IssueMissingCallout(handle: Handle<{ missing: IssueMissingView }>) {
+  return () => {
+    let { missing } = handle.props
+    return (
+      <Callout tone="error">
+        <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+          {missing.heading}
+        </p>
+        <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
+        {missing.checkAction === null ? null : <CheckAgainForm action={missing.checkAction} />}
+      </Callout>
     )
   }
 }
@@ -1605,6 +1637,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       isFolderGone = false,
       isRenewing = false,
       issue,
+      issueMissing = null,
       newGroup,
       link,
       missingAddress,
@@ -1701,6 +1734,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
               </>
             ) : (
               <>
+                {issueMissing === null ? null : <IssueMissingCallout missing={issueMissing} />}
                 {link === undefined ? null : <LinkBlock link={link} />}
                 <Articles
                   articles={articles}

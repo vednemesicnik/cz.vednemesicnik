@@ -42,6 +42,9 @@ export const routes = route({
     discardBatch: post('/issues/:name/artworks/batches/:id/discard'),
     /* `12j`: _Zkontrolovat znovu_ under an article whose folder was found missing. */
     checkArticleFolders: post('/issues/:name/articles/:id/folders/check'),
+    /* `12j`: _Zkontrolovat znovu_ under the header of an issue whose `Články`, or whose own
+       folder, was found missing. */
+    checkIssueFolders: post('/issues/:name/folders/check'),
     /* `12k`: _Předat ke korektuře_ and _Zrušit předání_ act at once, with no dialog, and the
        toast's _Vrátit_ sends the other one (`12l`). With `?undo=` each takes back only the step
        it was offered for. */

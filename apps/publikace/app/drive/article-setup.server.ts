@@ -18,6 +18,7 @@ import { welcomeEmail } from '../mail/welcome-email.server.ts'
 import type { DriveAccessToken } from './access-token.server.ts'
 import type { ArticleFiles } from './article-files.server.ts'
 import type { DriveFolders } from './folders.server.ts'
+import { checkIssueFolders } from './issue-folders.server.ts'
 import { logDriveFailure } from './log.server.ts'
 import { reservePublicMail } from './artworks-setup.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
@@ -117,9 +118,16 @@ async function create(setup: ArticleSetup, input: NewArticle): Promise<CreateArt
 
   let articlesFolderId = issue.folderIds.articles
   if (articlesFolderId === null) return { kind: 'folder-gone' }
-  let presence = await setup.folders(token.accessToken).presence(articlesFolderId)
-  if (presence === 'gone') return { kind: 'folder-gone' }
-  if (presence === 'unavailable') return { kind: 'unavailable' }
+  /* The issue's folders are checked and marked, so that the detail shows what the page says the
+     editors-in-chief see (`12j`). */
+  let folderDeps = {
+    folders: setup.folders(token.accessToken),
+    issues: setup.issues,
+    now: () => setup.now(),
+  }
+  let folderCheck = await checkIssueFolders(folderDeps, issue)
+  if (folderCheck === 'unavailable') return { kind: 'unavailable' }
+  if (folderCheck.missing.length > 0) return { kind: 'folder-gone' }
 
   if (setup.templateId === '') {
     logDriveFailure('an article was not created', 'ARTICLE_TEMPLATE_DOCUMENT_ID is empty')
@@ -162,8 +170,10 @@ async function create(setup: ArticleSetup, input: NewArticle): Promise<CreateArt
   }
   if (committed === null) {
     await cleanUp(setup, files, attempt, articlesFolderId)
-    let after = await setup.folders(token.accessToken).presence(articlesFolderId)
-    return { kind: after === 'gone' ? 'folder-gone' : 'unavailable' }
+    let after = await checkIssueFolders(folderDeps, issue)
+    return {
+      kind: after !== 'unavailable' && after.missing.length > 0 ? 'folder-gone' : 'unavailable',
+    }
   }
 
   await sendWelcomes(setup, committed, issue)

@@ -104,6 +104,8 @@ export const CONSENTS_RECORDED_TEXT = 'Souhlasy se dál zaznamenávají.'
 export const ARCHIVE_LATER_TEXT = tied`Konverzace se do složky uloží při první kontrole odpovědí po jejím návratu.`
 export const ARCHIVE_LATER_IN_LICENCE_TEXT = tied`Konverzace se do složky Licence uloží při první kontrole odpovědí po jejím návratu.`
 export const CHECK_AGAIN_LABEL = 'Zkontrolovat znovu'
+/** What _Zkontrolovat znovu_ says while Drive is asked (`12j`). */
+export const CHECKING_LABEL = 'Kontroluje se…'
 
 /* The toasts after _Zkontrolovat znovu_ (`12j`). One folder of two back gets the singular error,
    which says what still has to be done. */
@@ -113,10 +115,13 @@ export const FOLDER_STILL_MISSING_TOAST = tied`Obnovte složku z koše, nebo ji 
 export const FOLDERS_STILL_MISSING_TOAST = tied`Obnovte složky z koše, nebo je vraťte na sdílený disk Publikace. Stále nejsou dostupné.`
 export const CHECK_UNAVAILABLE_TOAST = 'Zkuste kontrolu za chvíli znovu.'
 
-/** What _Zkontrolovat znovu_ says, from the folders checked and the ones still missing. */
+/**
+ * What _Zkontrolovat znovu_ says, from the folders checked and the ones still missing: an
+ * article's or a group's, or the issue's own (#134).
+ */
 export function checkedToast(
-  checked: readonly ArticleFolderKind[],
-  stillMissing: readonly ArticleFolderKind[],
+  checked: readonly string[],
+  stillMissing: readonly string[],
 ): { text: string; tone: 'error' | 'success' } {
   if (stillMissing.length === 0) {
     return { text: checked.length > 1 ? FOLDERS_BACK_TOAST : FOLDER_BACK_TOAST, tone: 'success' }

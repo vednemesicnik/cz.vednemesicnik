@@ -1,7 +1,7 @@
 import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
-import { type FolderKind, type Issue, issueNameKey } from '../domain/issue.ts'
+import { type FolderKind, type Issue, type IssueFolderKind, issueNameKey } from '../domain/issue.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import { ensureArticleLinkIn } from './links.server.ts'
 
@@ -22,6 +22,8 @@ export type NewIssue = {
 export type InsertResult = { existingName: string; ok: false } | { issue: Issue; ok: true }
 
 export type IssueStore = {
+  /** Takes the marks of the folders the app reached again (`12j`). */
+  clearMissing(id: number, kinds: readonly IssueFolderKind[]): Promise<void>
   /**
    * _Uzavřít vydání_ (`12g`): `false` when the issue was closed already or is not finished, so a
    * dialog drawn before somebody else's step changes nothing.
@@ -39,6 +41,8 @@ export type IssueStore = {
   insert(issue: NewIssue): Promise<InsertResult>
   /** Unfinished first, then active, then closed; newest first in each. */
   list(): Promise<Issue[]>
+  /** Marks the folders found missing; a mark already there keeps its first time (`12j`). */
+  markMissing(id: number, kinds: readonly IssueFolderKind[], at: Temporal.Instant): Promise<void>
   /** Only while Drive refused the issue folder itself, so nothing of the issue exists. */
   remove(id: number): Promise<void>
   /**
@@ -74,6 +78,10 @@ function toIssue(row: Row): Issue {
     },
     groupsFolderId: text(row['groups_folder_id']),
     id: Number(row['id']),
+    missing: {
+      articles: parseStamp(row['articles_folder_missing_at']),
+      issue: parseStamp(row['folder_missing_at']),
+    },
     name: String(row['name']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
     startedByEmail: String(row['started_by_email']),
@@ -89,6 +97,18 @@ export function createIssueStore(database: Database): IssueStore {
   }
 
   return {
+    async clearMissing(id, kinds) {
+      /* One statement per column, which a template cannot bind as a name. */
+      if (kinds.includes('issue')) {
+        await database.exec(sql`UPDATE issues SET folder_missing_at = NULL WHERE id = ${id}`)
+      }
+      if (kinds.includes('articles')) {
+        await database.exec(
+          sql`UPDATE issues SET articles_folder_missing_at = NULL WHERE id = ${id}`,
+        )
+      }
+    },
+
     async close(id, at) {
       let result = await database.exec(
         sql`UPDATE issues SET closed_at = ${stamp(at)}
@@ -150,6 +170,23 @@ export function createIssueStore(database: Database): IssueStore {
               id DESC`,
       )
       return (result.rows ?? []).map(toIssue)
+    },
+
+    async markMissing(id, kinds, at) {
+      let when = stamp(at)
+      if (kinds.includes('issue')) {
+        await database.exec(
+          sql`UPDATE issues SET folder_missing_at = coalesce(folder_missing_at, ${when})
+              WHERE id = ${id}`,
+        )
+      }
+      if (kinds.includes('articles')) {
+        await database.exec(
+          sql`UPDATE issues
+              SET articles_folder_missing_at = coalesce(articles_folder_missing_at, ${when})
+              WHERE id = ${id}`,
+        )
+      }
     },
 
     async remove(id) {

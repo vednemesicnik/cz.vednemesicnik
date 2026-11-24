@@ -96,6 +96,7 @@ import {
   type SubfolderKind,
 } from '../../domain/article-folders.ts'
 import { folderUrl, type Issue, issueState } from '../../domain/issue.ts'
+import { issueFolderHeading, issueFolderText, shownIssueMark } from '../../domain/issue-folders.ts'
 import {
   absoluteUrl,
   articleLinkPath,
@@ -114,6 +115,7 @@ import type {
 } from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
+import { checkIssueFolders, recordedIssueMissing } from '../../drive/issue-folders.server.ts'
 import { discardBatch, holderOf, resendBatch } from '../../drive/artworks-setup.server.ts'
 import { checkAllDocRevisions } from '../../drive/doc-revisions.server.ts'
 import {
@@ -177,6 +179,7 @@ import {
   DetailPage,
   type DiscardView,
   type GroupsView,
+  type IssueMissingView,
   type LinkBlockView,
   type MissingAddressView,
   type NewGroupDialogView,
@@ -300,6 +303,8 @@ function missingView(
   article: Article,
   batches: readonly BatchRow[],
 ): MissingFoldersView | null {
+  /* With the issue folder in the bin, its one Callout stands for every folder in it (`12j`). */
+  if (issue.missing.issue !== null) return null
   let missing = recordedMissing(article)
   if (missing.length === 0) return null
   let foundAt = missing
@@ -328,20 +333,39 @@ function missingView(
 }
 
 /**
- * The articles of the issue that have a folder on record as missing, asked again: the record goes
- * for a folder that is back (`12j`). Without an account or an answer from Drive, the records
- * stand as they are.
+ * The issue and its articles that have a folder on record as missing, asked again: the record goes
+ * for a folder that is back (`12j`). An article's mark asks after the issue's folders too, because
+ * an article's folder is missing also when the whole issue folder is in the bin, and the bin shows
+ * only that one, which the detail then names instead. Without an account or an answer from
+ * Drive, the records stand as they are.
  */
-async function recheckMissing(context: PageContext, issue: Issue): Promise<void> {
+async function recheckMissing(context: PageContext, issue: Issue): Promise<Issue> {
   let { articles, artworks } = articlesOf(context)
   let marked = (await articles.listCreated(issue.id)).filter(
     (article) => recordedMissing(article).length > 0,
   )
-  if (marked.length === 0) return
+  let isIssueMarked = recordedIssueMissing(issue).length > 0
+  if (marked.length === 0 && !isIssueMarked) return issue
   let token = await artworks.token()
-  if (!token.ok) return
-  let deps = { articles, folders: artworks.folders(token.accessToken), now }
+  if (!token.ok) return issue
+  let folders = artworks.folders(token.accessToken)
+  let { store } = issuesOf(context)
+  await checkIssueFolders({ folders, issues: store, now }, issue)
+  let deps = { articles, folders, now }
   for (let article of marked) await checkArticleFolders(deps, { ...article, kind: 'article' })
+  return (await store.findById(issue.id)) ?? issue
+}
+
+/** The Callout under the header while the issue's `Články` or its own folder is missing. */
+function issueMissingView(issue: Issue): IssueMissingView | null {
+  let mark = shownIssueMark(issue)
+  if (mark === null) return null
+  return {
+    checkAction:
+      issue.closedAt === null ? routes.issues.checkIssueFolders.href({ name: issue.name }) : null,
+    heading: issueFolderHeading(mark.kind, issue.name),
+    text: issueFolderText(mark.kind, mark.at),
+  }
 }
 
 /**
@@ -732,6 +756,7 @@ async function renderDetail(
       isFolderGone={options.isFolderGone}
       isRenewing={options.isRenewing}
       issue={issue}
+      issueMissing={issueMissingView(issue)}
       link={link}
       newGroup={options.newGroup}
       person={context.auth.identity}
@@ -1005,8 +1030,11 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
 
-        await Promise.all([recheckMissing(context, issue), recheckDocRevisions(context, issue)])
-        return renderDetail(context, issue, {
+        let [checked] = await Promise.all([
+          recheckMissing(context, issue),
+          recheckDocRevisions(context, issue),
+        ])
+        return renderDetail(context, checked, {
           isFolderGone: takeFolderGone(context.get(Session), issue.name),
         })
       },
@@ -1038,6 +1066,41 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let check = await checkArticleFolders(
           { articles, folders: artworks.folders(token.accessToken), now },
           { ...article, kind: 'article' },
+        )
+        if (check === 'unavailable') {
+          flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
+          return back()
+        }
+        let toast = checkedToast(checked, check.missing)
+        flashToast(context, toast.text, toast.tone === 'error' ? 'error' : undefined)
+        return back()
+      },
+
+      /* `12j`: the issue's folders asked again, then back to the detail with what came of it.
+         The detail's own check then takes the marks of the articles' folders that came back with
+         the issue folder. */
+      async checkIssueFolders(context) {
+        let { store } = issuesOf(context)
+        let issue = await store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        let { expectedEmail } = context.get(DriveAccount)
+
+        let token = await articlesOf(context).artworks.token()
+        if (!token.ok) {
+          if (token.reason === 'not-connected')
+            flashToast(context, notConnectedToast(expectedEmail), 'error')
+          else if (token.reason === 'disconnected')
+            flashToast(context, disconnectedBanner(expectedEmail), 'error')
+          else flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
+          return back()
+        }
+        /* The toast speaks of the folder the Callout named, never of one it kept quiet about. */
+        let shown = shownIssueMark(issue)
+        let checked = shown === null ? [] : [shown.kind]
+        let check = await checkIssueFolders(
+          { folders: articlesOf(context).artworks.folders(token.accessToken), issues: store, now },
+          issue,
         )
         if (check === 'unavailable') {
           flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')

@@ -20,6 +20,12 @@ export type FolderKind = 'issue' | 'articles' | 'print'
 
 export const FOLDER_KINDS: readonly FolderKind[] = ['issue', 'articles', 'print']
 
+/**
+ * The issue's folders the app marks when it finds them missing (`12j`): the issue folder, and
+ * `Články` in it, which the newsroom's link needs. The print folder is the print job's (#110).
+ */
+export type IssueFolderKind = Exclude<FolderKind, 'print'>
+
 /** The names of the two folders inside the issue folder, as the script has always made them. */
 export const ARTICLES_FOLDER_NAME = 'Články'
 export const PRINT_FOLDER_NAME = '_Podklady_pro_tisk'
@@ -33,6 +39,8 @@ export type Issue = {
   /** `Skupiny obrazových děl`, made with the issue's first artwork group and `null` until then. */
   groupsFolderId: string | null
   id: number
+  /** When the app found each folder missing, `null` while it is there (`12j`). */
+  missing: Record<IssueFolderKind, Temporal.Instant | null>
   name: string
   startedAt: Temporal.Instant
   startedByEmail: string

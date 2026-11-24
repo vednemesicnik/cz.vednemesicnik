@@ -12,6 +12,7 @@ import { MIGRATIONS_DIRECTORY, openDatabase } from './database.server.ts'
  */
 
 const BEFORE = '20261202120000_consent_answers'
+const GROUPS = '20261203120000_artwork_groups'
 const AT = '2026-11-20T09:00:00.000Z'
 
 async function seededBeforeGroups() {
@@ -121,7 +122,8 @@ describe('the artwork groups migration', () => {
   it('rolls back to the tables before groups, dropping the groups’ rows and keeping the articles’', async () => {
     let { db, migrations, opened } = await seededBeforeGroups()
     try {
-      await db.migrate(migrations)
+      /* Up to this migration and no further, so that one step down undoes this one. */
+      await db.migrate(migrations, { to: GROUPS })
       /* A group with everything that hangs on it, which the rollback takes away first. */
       await db.exec(sql`INSERT INTO artwork_groups (id, issue_id, form_key, name, name_key,
           started_at, started_by_email, started_by_name, folder_id, artworks_folder_id,
