@@ -2,7 +2,7 @@
 name: next-issue
 description: After the PR is merged — land the aftermath, bank what survives the issue, and hand off to a fresh context window for the next one. Use once a PR is merged and the work moves on to the next issue.
 argument-hint: [next-issue-number]
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git fetch:*), Bash(ls:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git show:*), Bash(git fetch:*), Bash(ls:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
 ---
 
 ## Requested next issue number
@@ -121,6 +121,13 @@ Work through these; report what each one did or why it was a no-op.
    one's. When there are none, say so in a line — but only as "none in the index": a pair older
    than the index has no entry until a full `/ask-design tidy` writes one, so compare the index
    with the file listing and name the pairs it does not cover yet.
+
+9. **Check the written design survived the merge.** Read the squash's diff
+   (`git show --stat <sha>`) against `docs/product.md`, `docs/architecture.md` and
+   `docs/security.md`. A change to behaviour they describe that left them untouched, or a review
+   finding the issue resolved without its _Resolution_ saying so, is a follow-up for the gate
+   below — a `docs:` PR, or `/review-idea` when it is not clear whether the document or the code
+   is the one that is wrong. `dev` is never edited directly. Say so in a line when they held.
 
 ### Phase 2 — Bank what outlives the issue
 

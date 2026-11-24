@@ -94,6 +94,14 @@ Track the steps with the task tools if the plan has more than a handful.
 Prefer reusing existing utilities and components over new code — the plan already names
 them. Keep the diff to the plan's scope: no drive-by refactors, no extra features.
 
+**The written design changes with the code.** Make the edits the plan's _The written design_
+names to `docs/product.md`, `docs/architecture.md` and `docs/security.md`, in the words of what
+is true once the branch lands, never as history. When the issue resolves a finding of
+`docs/review-*.md`, write the issue number into that finding's _Resolution_ and leave the rest of
+the review as it is: it is a dated reading, and only its resolutions move. If the code turns out
+to change something the plan said it would not — a state, a limit, an endpoint, a job, a
+boundary — the documents follow the code here, and the deviation is named in the report.
+
 Hold the house style while you write, not afterwards: `let` inside function bodies,
 Czech for anything a user reads and English for everything else, comments that record a
 decision and what it was chosen over, tests beside the code they test.
@@ -121,7 +129,8 @@ decision and what it was chosen over, tests beside the code they test.
    public route is how to see it yourself; otherwise hand the browser check back to the
    user rather than claiming it passed.
 4. Re-read the issue's acceptance criteria — the plan's explicit list, plus anything the
-   issue's prose asked for — and check each one against the actual diff. Anything unmet
+   issue's prose asked for — and check each one against the actual diff, the documents in
+   `docs/` included. Anything unmet
    gets named. Do not claim done work that isn't.
 
 ### Phase 3 — Commit

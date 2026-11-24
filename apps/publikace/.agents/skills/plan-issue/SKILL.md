@@ -55,6 +55,14 @@ You are preparing an implementation plan for the GitHub issue shown above.
    client-side JavaScript. Prefer reusing existing functions and components over proposing
    new code.
 
+   Read the sections of [product.md](../../../docs/product.md),
+   [architecture.md](../../../docs/architecture.md) and [security.md](../../../docs/security.md)
+   the issue touches — a state, a rule, a limit, a table, a flow, a job, a boundary, a field
+   about a person — and the findings of the newest `docs/review-*.md` it resolves. They are the
+   plan the change has to fit or, where the issue says so, the plan it changes. A plan that
+   departs from them without the issue saying why has found a question, not an answer: name it
+   and offer `/review-idea` on it.
+
    **Subagents are the exception here, not the method.** Most issues in this repo name the
    function and the file, and a `grep` plus a `sed -n` answers them for a fraction of what
    an agent costs — the agent pays twice, once to read and once for what it hands back.
@@ -103,6 +111,10 @@ You are preparing an implementation plan for the GitHub issue shown above.
      what "done" means as an explicit list, so the later stages have something to check
      against. Where the issue names a design decision, quote it rather than paraphrase.
    - **Scope** — what changes, what stays out of scope.
+   - **The written design** — which sections of `product.md`, `architecture.md` and
+     `security.md` the change makes untrue, and their new wording, and which review finding it
+     resolves. These edits are implementation steps like any other, landed in the same PR. When
+     none is touched, say so in a line: that is a claim the review in `/ship-issue` checks.
    - **Implementation steps** — concrete files to touch, referencing existing utilities to
      reuse.
    - **Verification** — `pnpm typecheck` and `pnpm test`, plus how to see it in the app

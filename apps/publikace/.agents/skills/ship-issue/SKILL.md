@@ -93,6 +93,12 @@ Read every hunk of `git diff dev...HEAD` yourself and check it against:
   the document itself in the design canvas, not against the issue's summary of it —
   the screen the diff touches, read by its id as
   [docs/design-project.md](../../../docs/design-project.md) describes.
+- **The written design** — `docs/product.md`, `docs/architecture.md` and `docs/security.md`
+  say what the diff now does. A state, a rule, a limit, a table, a flow, an endpoint, a job, a
+  trust boundary or a field about a person that the diff adds or changes is in them, in the
+  present tense; a review finding the issue resolves carries its number under _Resolution_. A
+  document the diff made untrue is a finding: low-risk when the issue settled the question and
+  the text only has to follow, risky when the diff decided something the issue did not.
 - **The issue-conformance layer** — acceptance criteria met / partial / unmet, scope
   creep, tests or docs the issue explicitly asked for.
 

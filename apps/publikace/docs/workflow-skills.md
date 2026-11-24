@@ -10,10 +10,10 @@ They divide by what each one takes in hand.
 
 **Before an issue exists**, the subject is an idea and the argument is a sentence:
 
-| Skill            | Takes                                 | Ends with                                                                                 |
-| ---------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `/discover-idea` | an area — a screen, a flow, a surface | three to five evidenced candidates, and a recommendation of which to weigh first          |
-| `/review-idea`   | one proposal, in words                | a verdict: write the issue, ask design first, or drop it — plus the argued text, unopened |
+| Skill            | Takes                                 | Ends with                                                                                                  |
+| ---------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `/discover-idea` | an area — a screen, a flow, a surface | three to five evidenced candidates, and a recommendation of which to weigh first                           |
+| `/review-idea`   | one proposal, in words                | a verdict: write the issue, ask design first, change the plan, or drop it — plus the argued text, unopened |
 
 **Once there is an issue**, each one takes its number:
 
@@ -70,7 +70,9 @@ something that is not its to decide.
 - `/discover-idea` **weighs nothing.** The pass that invents an idea is the worst judge of it, so
   it hands the candidates over rather than acting on the best one.
 - `/review-idea` **opens no issue.** It produces the argued text; you open it. Its most valuable
-  outcome is a well-argued no, and a skill that could open issues would find fewer of them.
+  outcome is a well-argued no, and a skill that could open issues would find fewer of them. The
+  one thing it writes is the documents of the written design, under _Change the plan_, and it
+  commits none of them.
 - `/plan-issue` **writes no code**, and `/implement-issue` **opens no PR**.
 - `/ship-issue` **asks before merging, then merges.** Green is not the same as wanted — `#130` is
   green and deliberately unmerged — so the merge is the answer to a question, not the end of a
@@ -95,6 +97,31 @@ instead of opening one and carries on from the checks.
 
 `gh pr merge` falls under the `Bash(gh pr *)` allow rule, so it does not raise a permission
 prompt. The question inside `/ship-issue` is the only stop between a green PR and a landed one.
+
+## The written design
+
+[product.md](product.md), [architecture.md](architecture.md) and [security.md](security.md) are
+the plan of what the app does, what it stores and whom it lets in; the design canvas is the plan
+of how each screen looks and reads. When the two disagree, the question decides which one gives
+way: a question of UX is the canvas's, answered through `/ask-design`, and one of product,
+architecture or security is the documents', decided by the agent running the skill, because the
+design answers UX only. The agent holds the documents, the code and the evidence, so it states
+those decisions with their reasons rather than asking; you are asked only where the call turns on
+something only you know, and then with its recommendation first. `docs/review-*.md` is something else: a reading of all of them on one date, whose findings
+each carry an ID and a _Resolution_.
+
+The documents change whenever what they say stops being true, and every skill reads them for that:
+
+| When the plan changes…                                                               | the documents change in                                                                                        |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| with code — an issue adds a state, a rule, a job, a door                             | the issue's own PR: `/plan-issue` names the sections, `/implement-issue` edits them, `/ship-issue` checks them |
+| without code — a decision, a service that changed, a rule the newsroom does not keep | a `docs/…` branch from `/review-idea`'s _Change the plan_, committed when you say so                           |
+| unnoticed — a merge that left them behind                                            | a follow-up `/next-issue` offers                                                                               |
+
+`/discover-idea` reports a document that has fallen behind as a candidate and edits nothing,
+because whether the document or the code is the one that is wrong is a judgement. The documents
+say what is true now, never what it used to be: git keeps the history. A review is never rewritten,
+apart from its _Resolution_ column, and the next reading is a new file beside it.
 
 ## Where they live, and the links that get them there
 

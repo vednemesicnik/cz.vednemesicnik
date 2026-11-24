@@ -183,9 +183,16 @@ the design canvas, for `/ask-design`.
 **Before an issue exists**, the subject is an idea:
 
 - **`/discover-idea`** — sweep one area for what is missing: drawn and not built, built and not
-  drawn, answered by design and never built, or two places disagreeing.
-- **`/review-idea`** — weigh a proposal against product, design and UX. Three verdicts: write
-  the issue, ask design first, or drop it.
+  drawn, answered by design and never built, written in the plan and not kept, or two places
+  disagreeing.
+- **`/review-idea`** — weigh a proposal against product, evidence, design and security. Four
+  verdicts: write the issue, ask design first, change the plan, or drop it.
+
+Both read the written design — [docs/product.md](docs/product.md),
+[docs/architecture.md](docs/architecture.md), [docs/security.md](docs/security.md) — and every
+stage after them keeps it true: the documents change in the PR that changes what they describe,
+or on their own when the plan changes without code
+([docs/workflow-skills.md](docs/workflow-skills.md) § The written design).
 
 **Once there is an issue**, each one takes its number:
 
