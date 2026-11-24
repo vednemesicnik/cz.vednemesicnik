@@ -7,27 +7,37 @@ read. It replaces the web pages of the `SCRIPT__Publication__*` Apps Script proj
 
 The interface is Czech, because the people using it are. The code is English.
 
-**Status: skeleton.** The screens are drawn in a design canvas (see
-[docs/design-project.md](docs/design-project.md)); the code serves the editors-in-chief's panel
-and has its database, and the screens arrive one issue at a time.
+**Status: built, not deployed.** The screens are drawn in a design canvas (see
+[docs/design-project.md](docs/design-project.md)), and most of them are built: issues and their
+Drive folders, the newsroom's links, artworks and consents, _Ke kontrole_, proofreading, final
+versions and approvals, closing, the record and Settings. Nothing runs on Fly.io yet, and three of
+the four background jobs that talk to the app still have to be set up. Issues made before the app
+stay on the scripts until the cutover.
 
 ## How it will work
 
-| Who               | How they get in                                                  | What they do                                                        |
-| ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Editors-in-chief  | Google account on the domain, named in Settings or in its groups | create and close issues, send links, artwork groups, review replies |
-| Editorial board   | a shared link, no sign-in                                        | start an article in one issue                                       |
-| Artwork providers | a shared link, no sign-in                                        | upload artworks to one article or group                             |
+| Who               | How they get in                                                  | What they do                                                         |
+| ----------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Editors-in-chief  | Google account on the domain, named in Settings or in its groups | create and close issues, send links, hand texts over, review replies |
+| Proofreaders      | Google account, the address in Settings › Korektura or its group | take a text, mark its final version, on the page Korektura only      |
+| Editorial board   | a shared link, no sign-in                                        | start an article in one issue                                        |
+| Authors           | the welcome e-mail: the Doc's link and the artworks link         | write in the Doc, consent to the final version by e-mail             |
+| Artwork providers | a shared link, no sign-in                                        | upload artworks to one article and consent by e-mail                 |
 
-- **Remix 3 on Fly.io**, the same stack as Fakturace: Node 26 and SQLite.
+- **Remix 3 on Fly.io**: Node 26 and SQLite, behind the front server of the magazine's web.
 - **The app's database is the source of truth.** Issues, articles, consents and artworks live
   there. Drive keeps the files, Gmail keeps the consent conversations.
 - **The Registr and Evidence sheets stay as a record.** The app writes them after every change
   and never reads them; they are where a licence is looked up.
 - **The background jobs stay in Apps Script**, run as `publikace.app@` and read and write through
   the app's API. `publikace@` is only the mailbox that sends and reads the e-mails.
-- **Writing, proofreading and consent stay where they are**: in the Google Doc of the article
-  and in an e-mail reply „Souhlasím“.
+- **Writing and consent stay where they are**: in the Google Doc of the article and in an e-mail
+  reply „Souhlasím“. The Doc carries only the text, so handing it over, proofreading and marking
+  its final version happen in the app.
+
+The written design: [product](docs/product.md), [architecture](docs/architecture.md),
+[security](docs/security.md) and the [review of 24 Nov 2026](docs/review-2026-11-24.md), which
+lists where design, product and code still disagree.
 
 ## Requirements
 

@@ -1,7 +1,10 @@
 # cz.vednemesicnik.publikace Agent Guide
 
 The magazine's publishing app on `publikace.vednemesicnik.cz`. [README.md](README.md) explains
-what it does; this file is about working in it without breaking something expensive.
+what it does; this file is about working in it without breaking something expensive. The plan of
+how it works, with diagrams, is [docs/product.md](docs/product.md),
+[docs/architecture.md](docs/architecture.md) and [docs/security.md](docs/security.md); what still
+disagrees is in [docs/review-2026-11-24.md](docs/review-2026-11-24.md).
 
 ## Where the project stands
 
