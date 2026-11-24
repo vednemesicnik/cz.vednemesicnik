@@ -296,7 +296,7 @@ function Parts(handle: Handle<{ parts: readonly CalloutPart[] }>) {
 }
 
 /** The step as the heading, a list of links when there are many, and what came of it. */
-function FixCalloutView(handle: Handle<{ callout: FixCallout }>) {
+export function FixCalloutView(handle: Handle<{ callout: FixCallout }>) {
   return () => {
     let { list, text, title } = handle.props.callout
     return (

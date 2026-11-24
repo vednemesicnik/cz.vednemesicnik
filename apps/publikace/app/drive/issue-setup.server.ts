@@ -70,6 +70,13 @@ function oneAtATime<T>(name: string, run: () => Promise<T>): Promise<T> {
 }
 
 /**
+ * Runs under the issue's name, as creating, finishing and renaming it do. A fix on one of its
+ * articles writes that article's `_meta.json`, which a rename of the issue writes too, so the two
+ * take turns rather than each write over what the other read.
+ */
+export const underIssueName = oneAtATime
+
+/**
  * A name already in the app is refused before Google is asked anything. The token comes next,
  * before the row is written, so an account that is not connected leaves nothing behind and the
  * dialog can say so with the field still filled (`14g`). The insert checks the name again, in
@@ -268,7 +275,7 @@ export function renameIssue(
   })
 }
 
-type Undo = () => Promise<boolean>
+export type Undo = () => Promise<boolean>
 
 async function renameOnDrive(
   setup: IssueFixSetup,
@@ -417,7 +424,7 @@ async function answerOf(
 }
 
 /** Newest first, as the steps were made; a step Drive would not take back is logged. */
-async function undoAll(undo: readonly Undo[]): Promise<void> {
+export async function undoAll(undo: readonly Undo[]): Promise<void> {
   for (let step of [...undo].reverse()) {
     if (!(await step())) logDriveFailure('a rename was not undone', 'Drive refused a step back')
   }
@@ -491,7 +498,8 @@ async function metaFilesOf(
   return metas
 }
 
-async function stateOf(
+/** Where a file the app keeps an ID of is: on the drive, in the bin, or gone for good. */
+export async function stateOf(
   files: IssueFiles,
   fileId: string | null,
 ): Promise<MetaFile['state'] | 'unavailable'> {

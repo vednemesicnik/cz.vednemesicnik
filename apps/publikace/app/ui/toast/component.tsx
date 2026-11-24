@@ -12,8 +12,9 @@ export type ToastTone = 'error' | 'neutral'
 export type ToastAction = { action: string; label: string }
 
 /**
- * `detail` is the line under the message when somebody else got there first: who and when, in the
- * shape of a tag's line (`12l`, _21. 11. v 9:40 · Jana Veselá_).
+ * `detail` is the line under the message: who and when, in the shape of a tag's line, when
+ * somebody else got there first (`12l`, _21. 11. v 9:40 · Jana Veselá_), or the addresses an
+ * e-mail went to or did not (`12y`), an error's toast included.
  */
 export type ToastMessage = {
   action?: ToastAction
@@ -93,7 +94,12 @@ export function Toasts(handle: Handle<ToastsProps>) {
                 <path d="M12 8v4" />
                 <path d="M12 16h.01" />
               </svg>
-              <span class="vdm-toast__text">{toast.message}</span>
+              <span class="vdm-toast__text">
+                {toast.message}
+                {toast.detail === undefined ? null : (
+                  <span class="vdm-toast__detail">{toast.detail}</span>
+                )}
+              </span>
             </div>
           ))}
         </div>

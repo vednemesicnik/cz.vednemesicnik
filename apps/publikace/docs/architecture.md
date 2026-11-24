@@ -161,6 +161,7 @@ erDiagram
     int id PK
     text provider_email
     text tag "in the request's subject"
+    text sent_holder_name "the name its request was last sent under"
     instant mail_sent_at "or mail_failed_at"
     instant discarded_at
     instant approved_at
@@ -259,6 +260,9 @@ sequenceDiagram
   A->>A: archived: Schváleno, any other reply: Ke kontrole
   E->>A: Je to souhlas, or an answer in the thread (13)
 ```
+
+The reply check asks for the name the batch's request was last sent with, so a renamed article
+still finds its replies.
 
 ### Proofreading, the final version and the authors' consent
 

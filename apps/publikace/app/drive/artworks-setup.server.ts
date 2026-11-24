@@ -686,6 +686,8 @@ async function sendRequest(
   attachments: MailAttachment[],
 ): Promise<SubmitOutcome> {
   let named: HolderName = { kind: holder.kind, name: holder.name }
+  /* Before the Mailer: a request it never confirmed may still have gone under this name. */
+  await setup.artworks.recordRequestName(batch.id, named.name)
   let result = await setup.mailer(
     consentEmail({
       artworks: batch.artworks.map((artwork) => ({

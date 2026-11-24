@@ -129,6 +129,11 @@ stateDiagram-v2
 
 A cancelled take returns the article to _Dopsáno_ if it was handed over, otherwise to _Píše se_.
 
+The name can be corrected until the final version (`12x`). The authors can be corrected until the
+final version, and after it only an author who has not agreed, whose request is then sent again
+under a new key (`12y`). A new or corrected address gets the welcome e-mail; an address that
+disappears gets nothing, and whoever already had the link can still edit the Doc.
+
 ### Artwork batch
 
 One upload is one batch: one _Odeslat díla_, one consent request and one tag shared by all its
@@ -228,6 +233,9 @@ again.
 | E-mails started from any link page | 300 a day for the whole app (`PUBLIC_MAIL_PER_DAY`)                | `03` row 50  |
 | An answer from _Ke kontrole_       | plain text, up to 5 000 characters                                 | `13d`        |
 | A session                          | 7 days from sign-in, roles re-checked every 10 minutes             | `03` row 3   |
+
+The welcome sent after _Upravit autory_ is not counted: a signed-in editor-in-chief sends it, not
+a link page (`12y`).
 
 ## Old issues and the cutover
 

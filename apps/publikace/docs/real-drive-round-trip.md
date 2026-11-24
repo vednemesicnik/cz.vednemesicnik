@@ -422,6 +422,21 @@ runs both on the fake Drive; what is left is what only the real one shows.
    link draws the page of a link that no longer works, and a new issue of the same name can be
    created.
 
+## Correcting an article
+
+_Přejmenovat článek…_ (`12x`) and _Upravit autory…_ (`12y`), from the article row's „⋯“ (#152).
+The suite runs both on the fake Drive; what is left is what only the real one shows.
+
+1. Rename an article with a batch whose request went out: the Doc and the article folder have the
+   new name, the Doc's text is as it was, `articleName` in `_meta.json` is the new name, and the
+   Evidence's row has it within a minute. Reply „Souhlasím“ to the earlier request and let the
+   reply check run: the reply is still paired with the batch.
+2. Correct an author's address before the final version and add an author: one welcome reaches
+   each new address, and nobody else gets anything. `authors` in `_meta.json` follows.
+3. After the final version, correct the address of an author who has not agreed: the next run of
+   `SCRIPT__Publication__Article_Approvals` sends the request to the corrected address, and a
+   reply to the earlier one is no longer paired.
+
 ## After the run
 
 - [ ] put the origin back by pushing the project from CI (`workflow_dispatch` of `deploy.yml`),

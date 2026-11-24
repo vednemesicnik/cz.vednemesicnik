@@ -5,6 +5,7 @@ import {
   CLAIM_LIMIT,
   CLAIM_MINUTES,
   clauseKey,
+  correctedClauseKey,
   type ClauseDetail,
   type ClauseOutcome,
   clauseState,
@@ -15,6 +16,7 @@ import {
 } from '../domain/approvals.ts'
 import type { ArticleStep, Author, FinalVersion, ReplacedVersion } from '../domain/article.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
+import { isAgreed } from '../domain/article-fixes.ts'
 import { isReplaceable } from '../domain/final-version-replacement.ts'
 import type { RecordClause } from '../domain/record.ts'
 import type { ApprovedCount } from '../domain/issue.ts'
@@ -172,6 +174,35 @@ export type ResendClausesOutcome =
   | { kind: 'nothing' }
   | { issueName: string; kind: 'closed' }
   | { kind: 'gone' }
+
+/**
+ * What _Přejmenovat článek_ came to (`12x`). Every refusal wrote nothing: a final version marked
+ * meanwhile, with who and when, a rename by somebody else, an issue closed meanwhile.
+ */
+export type RenameArticleOutcome =
+  | { kind: 'renamed' }
+  | { kind: 'renamed-meanwhile' }
+  | { kind: 'final-version'; step: ArticleStep }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
+
+/**
+ * What _Upravit autory_ came to (`12y`). `saved` gives the places, in the new order, whose address
+ * is new to the article and gets the welcome; `corrected` how many clauses went back to be sent.
+ * Every refusal wrote nothing: a final version marked or replaced meanwhile (`final-version`), the
+ * one the dialog showed cancelled (`cancelled`), an author who agreed meanwhile (`agreed`).
+ */
+export type EditAuthorsOutcome =
+  | { kind: 'saved'; welcome: number[] }
+  | { count: number; kind: 'corrected' }
+  | { kind: 'final-version' }
+  | { kind: 'cancelled' }
+  | { agreedAt: Temporal.Instant | null; kind: 'agreed'; name: string }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
+
+/** One author corrected after the final version: the clause the dialog showed, and its new data. */
+export type ClauseCorrection = { clauseId: number; email: string; name: string }
 
 /** A clause a run took to ask about its reply, and where its archive goes (#89). */
 export type ClaimedReply = {
@@ -520,6 +551,40 @@ export type ArticleStore = {
    * failed one is discarded and no longer counts, as it sent nothing.
    */
   recentAttempts(linkId: number, since: Temporal.Instant): Promise<number>
+  /**
+   * Renames the article while it has no final version and still has the name the dialog showed
+   * (`12x`). Drive is renamed before, so a refusal is the caller's to undo there.
+   */
+  rename(input: {
+    id: number
+    /** A `_meta.json` written anew because the one on record was gone for good. */
+    metaFileId?: string
+    name: string
+    shownName: string
+  }): Promise<RenameArticleOutcome>
+  /**
+   * Puts the authors in place of the article's, before the final version (`12y`). An address the
+   * article already had keeps its welcome as it stood, matched by the address and not by the
+   * place; the answer names the places whose address is new.
+   */
+  replaceAuthors(input: {
+    authors: readonly Author[]
+    id: number
+    metaFileId?: string
+  }): Promise<EditAuthorsOutcome>
+  /**
+   * Corrects authors who have not agreed, after the final version marked at `markedAt` (`12y`):
+   * the author and the clause together. A clause that changed gets a new key and goes back to
+   * _K odeslání_ with any reply to the earlier request dropped, since that reply answered other
+   * details. A correction that changes nothing leaves its clause as it is.
+   */
+  correctAuthors(input: {
+    at: Temporal.Instant
+    corrections: readonly ClauseCorrection[]
+    id: number
+    markedAt: Temporal.Instant
+    metaFileId?: string
+  }): Promise<EditAuthorsOutcome>
   /** Stores a file's ID once; one already stored is never replaced. */
   setDriveId(id: number, kind: DriveFileKind, fileId: string): Promise<void>
   /**
@@ -715,6 +780,12 @@ async function replaceFinalRefusalOf(
   return null
 }
 
+/** The `_meta.json` a fix wrote anew in place of one gone for good, when it did. */
+async function setMetaFile(db: Database, id: number, metaFileId: string | undefined) {
+  if (metaFileId === undefined) return
+  await db.exec(sql`UPDATE articles SET meta_file_id = ${metaFileId} WHERE id = ${id}`)
+}
+
 /** Nobody has the article: never taken, or the take was cancelled. */
 const NO_TAKE = sql`(proofread_at IS NULL OR proofreading_cancelled_at IS NOT NULL)`
 
@@ -778,6 +849,7 @@ function toClauseDetail(row: Row): ClauseDetail {
     authorName: String(row['author_name']),
     error: text(row['error']),
     id: Number(row['id']),
+    position: Number(row['position']),
     replyReceivedAt: parseStamp(row['reply_received_at']),
     replyText: text(row['reply_text']),
     sentAt: parseStamp(row['sent_at']),
@@ -1811,6 +1883,120 @@ export function createArticleStore(database: Database): ArticleStore {
           sql`UPDATE articles SET meta_file_id = ${fileId} WHERE id = ${id} AND meta_file_id IS NULL`,
         )
       }
+    },
+
+    rename(input) {
+      return database.transaction(async (db) => {
+        let found = await withIssue(db, input.id)
+        if (found === null) return { kind: 'gone' }
+        let { isClosed, issueName, row } = found
+        if (isClosed) return { issueName, kind: 'closed' }
+        if (row.finalVersion !== null) return { kind: 'final-version', step: row.finalVersion }
+        if (row.name !== input.shownName) return { kind: 'renamed-meanwhile' }
+        await db.exec(sql`UPDATE articles SET name = ${input.name} WHERE id = ${input.id}`)
+        await setMetaFile(db, input.id, input.metaFileId)
+        return { kind: 'renamed' }
+      })
+    },
+
+    replaceAuthors(input) {
+      return database.transaction(async (db) => {
+        let found = await withIssue(db, input.id)
+        if (found === null) return { kind: 'gone' }
+        let { isClosed, issueName, row } = found
+        if (isClosed) return { issueName, kind: 'closed' }
+        if (row.finalVersion !== null) return { kind: 'final-version' }
+
+        let before = new Map(row.authors.map((author) => [author.email.toLowerCase(), author]))
+        let welcome: number[] = []
+        await db.exec(sql`DELETE FROM article_authors WHERE article_id = ${input.id}`)
+        for (let [index, author] of input.authors.entries()) {
+          let position = index + 1
+          let kept = before.get(author.email.toLowerCase())
+          if (kept === undefined) welcome.push(position)
+          await db.exec(
+            sql`INSERT INTO article_authors
+                  (article_id, position, name, email, welcome_sent_at, welcome_failed_at)
+                VALUES (${input.id}, ${position}, ${author.name}, ${author.email},
+                        ${kept?.welcomeSentAt == null ? null : stamp(kept.welcomeSentAt)},
+                        ${kept?.welcomeFailedAt == null ? null : stamp(kept.welcomeFailedAt)})`,
+          )
+        }
+        await setMetaFile(db, input.id, input.metaFileId)
+        return { kind: 'saved', welcome }
+      })
+    },
+
+    correctAuthors(input) {
+      return database.transaction(async (db) => {
+        let found = await withIssue(db, input.id)
+        if (found === null) return { kind: 'gone' }
+        let { isClosed, issueName, row } = found
+        if (isClosed) return { issueName, kind: 'closed' }
+        let finalVersion = row.finalVersion
+        if (finalVersion === null || !finalVersion.at.equals(input.markedAt)) {
+          let shown = await db.exec(
+            sql`SELECT cancelled_at FROM final_versions
+                WHERE article_id = ${input.id} AND marked_at = ${stamp(input.markedAt)}`,
+          )
+          let isCancelled = shown.rows?.[0]?.['cancelled_at'] != null
+          return isCancelled ? { kind: 'cancelled' } : { kind: 'final-version' }
+        }
+
+        let clauses = await db.exec(
+          sql`SELECT * FROM article_clauses
+              WHERE final_version_id = (SELECT id FROM final_versions
+                                        WHERE article_id = ${input.id} AND ${STANDING})`,
+        )
+        let byClauseId = new Map((clauses.rows ?? []).map((each) => [Number(each['id']), each]))
+        /* Every clause first, so one that agreed meanwhile leaves the others unwritten too: the
+           dialog is one step (`12y`). */
+        for (let correction of input.corrections) {
+          let clause = byClauseId.get(correction.clauseId)
+          if (clause === undefined) return { kind: 'final-version' }
+          let detail = toClauseDetail(clause)
+          if (isAgreed(detail.state)) {
+            return {
+              agreedAt: detail.approvedAt ?? detail.replyReceivedAt,
+              kind: 'agreed',
+              name: detail.authorName,
+            }
+          }
+        }
+
+        let count = 0
+        for (let correction of input.corrections) {
+          let clause = byClauseId.get(correction.clauseId)
+          if (clause === undefined) continue
+          let isSame =
+            String(clause['author_name']) === correction.name &&
+            String(clause['author_email']) === correction.email
+          if (isSame) continue
+          let position = Number(clause['position'])
+          let key = correctedClauseKey(input.id, position, input.markedAt, input.at)
+          /* The claim key stays: `first_claimed_at` needs it, and says an e-mail may have gone,
+             which still forbids cancelling the marking (`15g`). */
+          await db.exec(
+            sql`UPDATE article_clauses
+                SET author_name = ${correction.name}, author_email = ${correction.email},
+                    signature = ${correction.name}, clause_key = ${key}, send_attempt = 1,
+                    state = 'pending', error = NULL, sent_at = NULL, claimed_at = NULL,
+                    reply_thread_id = NULL, reply_message_id = NULL, reply_received_at = NULL,
+                    reply_text = NULL, is_exact_consent = 0, checked_at = NULL,
+                    consent_verified_at = NULL, consent_verified_by_email = NULL,
+                    consent_verified_by_name = NULL, answered_message_id = NULL,
+                    answered_at = NULL
+                WHERE id = ${correction.clauseId}`,
+          )
+          await db.exec(
+            sql`UPDATE article_authors SET name = ${correction.name}, email = ${correction.email}
+                WHERE article_id = ${input.id} AND position = ${position}`,
+          )
+          count += 1
+        }
+        await setMetaFile(db, input.id, input.metaFileId)
+        return { count, kind: 'corrected' }
+      })
     },
 
     startAttempt(attempt) {

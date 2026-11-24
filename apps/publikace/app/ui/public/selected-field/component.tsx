@@ -4,7 +4,8 @@ import { clientEntry, ref } from 'remix/component'
 export type SelectedFieldProps = {
   /** Why the value was refused; it takes the hint's place under the field. */
   error?: string
-  hint: string
+  /** The line under the field; `12x` has none. */
+  hint?: string
   label: string
   /** The form field's name, which the label, the hint and the error are paired by. */
   name: string
@@ -36,7 +37,8 @@ export const SelectedField = clientEntry(
       shownError = error
 
       let id = `field-${name}`
-      let messageId = error === undefined ? `${id}-hint` : `${id}-error`
+      let messageId =
+        error !== undefined ? `${id}-error` : hint === undefined ? undefined : `${id}-hint`
 
       return (
         <div class="vdm-field">
@@ -63,9 +65,11 @@ export const SelectedField = clientEntry(
             type="text"
           />
           {error === undefined ? (
-            <span class="vdm-field__hint" id={messageId}>
-              {hint}
-            </span>
+            hint === undefined ? null : (
+              <span class="vdm-field__hint" id={messageId}>
+                {hint}
+              </span>
+            )
           ) : (
             <span class="vdm-field__hint vdm-field__hint--error" id={messageId}>
               {error}

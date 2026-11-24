@@ -27,6 +27,7 @@ function clause(state: ClauseState, extra: Partial<ClauseDetail> = {}): ClauseDe
     authorName: 'Tereza Vlková',
     error: null,
     id: 1,
+    position: 1,
     replyReceivedAt: null,
     replyText: null,
     sentAt: null,

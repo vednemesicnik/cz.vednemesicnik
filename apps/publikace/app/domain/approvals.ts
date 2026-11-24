@@ -48,6 +48,21 @@ export function clauseKey(articleId: number, position: number, markedAt: Tempora
 }
 
 /**
+ * The key of a clause whose author's name or address was corrected (`12y`): the marking's key
+ * with the correction's time, so the request goes under a key of its own and a reply tagged with
+ * the earlier one is never paired with it.
+ */
+export function correctedClauseKey(
+  articleId: number,
+  position: number,
+  markedAt: Temporal.Instant,
+  correctedAt: Temporal.Instant,
+): string {
+  let compact = stamp(correctedAt).replace(/[^0-9]/g, '')
+  return `${clauseKey(articleId, position, markedAt)}_${compact}`
+}
+
+/**
  * The Mailer's idempotency key for one sending of a clause, which the job gets as `sendKey`. The
  * Mailer answers a key it has sent as sent without sending, so _Poslat žádost znovu_ needs a new
  * one; the first sending keeps the clause's own key, so what went before #92 keeps its key.
@@ -146,6 +161,8 @@ export type ClauseDetail = {
   authorName: string
   error: string | null
   id: number
+  /** The author's place in the article, which the clause was made for. */
+  position: number
   replyReceivedAt: Temporal.Instant | null
   replyText: string | null
   sentAt: Temporal.Instant | null

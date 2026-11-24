@@ -1,4 +1,50 @@
 import { redirect } from 'remix/response/redirect'
+import {
+  AGREED_AUTHOR_TAG,
+  agreedMeanwhileToast,
+  ARTICLE_RENAMED_MEANWHILE_TOAST,
+  ARTICLE_RENAMED_TOAST,
+  AUTHORS_DISCONNECTED,
+  AUTHORS_FOLDER_MISSING,
+  AUTHORS_META_BINNED,
+  AUTHORS_SAVED_TOAST,
+  AUTHORS_UNAVAILABLE,
+  authorsSavedToast,
+  canEditAuthors,
+  canRenameArticle,
+  CLAUSES_CORRECTED_TOAST,
+  editAuthorsLead,
+  editAuthorsNote,
+  FINAL_VERSION_CANCELLED_TOAST,
+  FINAL_VERSION_MEANWHILE_TOAST,
+  fixClosedToast,
+  isAgreed,
+  RENAME_ARTICLE_DISCONNECTED,
+  RENAME_ARTICLE_DOC_MISSING,
+  RENAME_ARTICLE_FOLDER_MISSING,
+  RENAME_ARTICLE_META_BINNED,
+  RENAME_ARTICLE_UNAVAILABLE,
+  renameTooLateToast,
+  SAVE_AUTHORS_LABEL,
+  SAVE_AUTHORS_PENDING_LABEL,
+} from '../../domain/article-fixes.ts'
+import {
+  checkArticleName,
+  checkAuthors,
+  type FieldError,
+} from '../../domain/public/article-form.ts'
+import {
+  type ArticleFixSetup,
+  editAuthors,
+  type EditAuthorsFixOutcome,
+  renameArticle,
+} from '../../drive/article-fixes.server.ts'
+import {
+  AUTHOR_EMAIL_FIELD,
+  AUTHOR_NAME_FIELD,
+  type AuthorCardView,
+} from '../../ui/public/author-cards/component.tsx'
+import type { ArticleFixView } from './article-fix-dialogs.tsx'
 import { createController } from 'remix/router'
 import { Session } from 'remix/session'
 
@@ -129,7 +175,7 @@ import {
   shownUrl,
   usageLine,
 } from '../../domain/link.ts'
-import { formatMoment, now, parseStamp, stamp } from '../../domain/time.ts'
+import { clockTime, formatMoment, now, parseStamp, stamp } from '../../domain/time.ts'
 import type {
   Article,
   ArticleRow,
@@ -618,6 +664,14 @@ async function linkAndArticles(
           : null,
       cancelHandoverAction:
         isOpen && state === 'handedOver' ? routes.issues.cancelHandover.href(ids) : null,
+      fixes: {
+        editAuthorsHref: canEditAuthors(article, isOpen)
+          ? withFilter(routes.issues.askEditAuthors.href(ids), filter)
+          : null,
+        renameHref: canRenameArticle(article, isOpen)
+          ? withFilter(routes.issues.askRenameArticle.href(ids), filter)
+          : null,
+      },
       handOverAction: isOpen && state === 'writing' ? routes.issues.handOver.href(ids) : null,
       sortAt,
       sortState,
@@ -807,6 +861,7 @@ async function renderDetail(
   issue: Issue,
   options: {
     discarding?: DiscardView
+    fixing?: ArticleFixView
     isFolderGone?: boolean
     isRenewing?: boolean
     newGroup?: NewGroupDialogView
@@ -829,11 +884,13 @@ async function renderDetail(
       missingAddress={await missingAddressOf(context, articles)}
       artworks={await artworksOf(context, issue, filterOf(context))}
       discarding={options.discarding}
+      fixing={options.fixing}
       driveAccount={await driveView(context)}
       groups={await groupsOf(context, issue, takeGroupChanged(session))}
       isFolderGone={options.isFolderGone}
       isRenewing={options.isRenewing}
       isTitleFocused={fixed?.focus === 'title' && fixed.issueId === issue.id}
+      isArticlesFocused={fixed?.focus === 'articles' && fixed.issueId === issue.id}
       issue={issue}
       issueMissing={issueMissingView(issue)}
       link={link}
@@ -891,6 +948,128 @@ async function articleOf(context: PageContext, issue: Issue, id: string): Promis
   if (!Number.isSafeInteger(articleId)) return null
   let created = await articlesOf(context).articles.listCreated(issue.id)
   return created.find((each) => each.id === articleId) ?? null
+}
+
+/** `?artworks=` kept on the address of a dialog over the detail. */
+function withFilter(href: string, filter: ArtworkFilter): string {
+  return filter === 'all' ? href : `${href}?artworks=${filter}`
+}
+
+/** What the fixes of an article need: the article's setup and the issue's files on Drive. */
+function articleFixSetupOf(context: PageContext): ArticleFixSetup {
+  return { ...articlesOf(context).setup, files: issuesOf(context).setup.files }
+}
+
+/** The dialog of `12x` over the detail, with the name in the field and the one it showed. */
+function renameViewOf(
+  issue: Issue,
+  article: Article,
+  filter: ArtworkFilter,
+  extra: { callout?: FixCallout; fieldError?: string; name: string; shownName?: string },
+): ArticleFixView {
+  let ids = { id: String(article.id), name: issue.name }
+  return {
+    action: withFilter(routes.issues.renameArticle.href(ids), filter),
+    cancelHref: detailHref(issue, filter),
+    kind: 'rename',
+    shownName: extra.shownName ?? article.name,
+    ...(extra.callout === undefined ? {} : { callout: extra.callout }),
+    ...(extra.fieldError === undefined ? {} : { fieldError: extra.fieldError }),
+    name: extra.name,
+  }
+}
+
+/** Cards to type into, numbered in their order: before the final version, every author's. */
+function editableCards(authors: readonly { email: string; name: string }[]): AuthorCardView[] {
+  return authors.map((author, index) => ({
+    email: author.email,
+    key: index + 1,
+    kind: 'editable',
+    name: author.name,
+    number: index + 1,
+  }))
+}
+
+/**
+ * The cards as the article stands: every author before the final version; after it, an agreed
+ * author as text with the tag of `12b`, and every other one to type into, keyed by its clause,
+ * whose ID the form carries.
+ */
+function storedCards(article: Article): AuthorCardView[] {
+  let finalVersion = article.finalVersion
+  if (finalVersion === null) return editableCards(article.authors)
+  let today = now()
+  return finalVersion.authors.map((clause): AuthorCardView => {
+    if (isAgreed(clause.state)) {
+      let at = clause.approvedAt ?? clause.replyReceivedAt
+      return {
+        agreed: { detail: at === null ? null : formatMoment(at, today), label: AGREED_AUTHOR_TAG },
+        email: clause.authorEmail,
+        key: clause.id,
+        kind: 'agreed',
+        name: clause.authorName,
+        number: clause.position,
+      }
+    }
+    return {
+      email: clause.authorEmail,
+      hidden: { name: 'clause', value: String(clause.id) },
+      key: clause.id,
+      kind: 'editable',
+      name: clause.authorName,
+      number: clause.position,
+    }
+  })
+}
+
+/** The dialog of `12y` over the detail, with the cards as typed or as stored. */
+function authorsViewOf(
+  issue: Issue,
+  article: Article,
+  filter: ArtworkFilter,
+  cards: AuthorCardView[],
+  extra: { callout?: FixCallout; errors?: readonly FieldError[] },
+): ArticleFixView {
+  let ids = { id: String(article.id), name: issue.name }
+  let finalVersion = article.finalVersion
+  let hasFinal = finalVersion !== null
+  let partsText = (parts: FixCallout['text']) =>
+    parts.map((part) => (typeof part === 'string' ? part : part.text)).join(' ')
+  return {
+    action: withFilter(routes.issues.editAuthors.href(ids), filter),
+    callout:
+      extra.callout === undefined
+        ? null
+        : { text: partsText(extra.callout.text), title: partsText(extra.callout.title) },
+    cancelHref: detailHref(issue, filter),
+    cards,
+    confirmLabel: SAVE_AUTHORS_LABEL,
+    errors: extra.errors ?? [],
+    hidden: [{ name: 'marked', value: finalVersion === null ? '' : stamp(finalVersion.at) }],
+    isFinal: hasFinal,
+    kind: 'authors',
+    lead: editAuthorsLead(article.name, hasFinal),
+    note: editAuthorsNote(hasFinal),
+    pendingLabel: SAVE_AUTHORS_PENDING_LABEL,
+  }
+}
+
+/** The Callout in the dialog for a refusal on Drive or of the account; `null` for any other. */
+function authorsCalloutOf(kind: EditAuthorsFixOutcome['kind']): FixCallout | null {
+  switch (kind) {
+    case 'folder-missing':
+      return AUTHORS_FOLDER_MISSING
+    case 'meta-binned':
+      return AUTHORS_META_BINNED
+    case 'not-connected':
+    case 'disconnected':
+      return AUTHORS_DISCONNECTED
+    case 'doc-missing':
+    case 'unavailable':
+      return AUTHORS_UNAVAILABLE
+    default:
+      return null
+  }
 }
 
 /** What somebody else did meanwhile, as `12l` says it: nothing changed, so no _Vrátit_. */
@@ -1654,6 +1833,234 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           flashToast(context, resendClosedToast(outcome.issueName))
         else flashToast(context, RESEND_NOTHING_TOAST)
         return redirect(detailHref(issue, filterOf(context), article.id), 303)
+      },
+
+      /* `12x`: the dialog with the name in the field, while the article can be renamed. */
+      async askRenameArticle(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        if (issue === null || article === null) return notFound()
+        let filter = filterOf(context)
+        if (!canRenameArticle(article, issue.closedAt === null)) {
+          return redirect(detailHref(issue, filter), 303)
+        }
+        return renderDetail(context, issue, {
+          fixing: renameViewOf(issue, article, filter, { name: article.name }),
+        })
+      },
+
+      /*
+       * `12x`: Drive and the row together, or neither. A refusal the editor can mend stays in the
+       * dialog with the name as typed; what changed meanwhile reloads the detail with the reason.
+       */
+      async renameArticle(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        if (issue === null || article === null) return notFound()
+        let filter = filterOf(context)
+        let back = () => redirect(detailHref(issue, filter), 303)
+        let typed = formText(context, 'name')
+        let shownName = formText(context, 'shownName')
+        let dialog = (extra: { callout?: FixCallout; fieldError?: string }, status: number) =>
+          renderDetail(context, issue, {
+            fixing: renameViewOf(issue, article, filter, { ...extra, name: typed, shownName }),
+            status,
+          })
+        let checked = checkArticleName(typed)
+        if (!checked.ok) return dialog({ fieldError: checked.error.message }, REFUSED)
+
+        let outcome = await renameArticle(articleFixSetupOf(context), {
+          id: article.id,
+          name: checked.name,
+          shownName,
+        })
+        switch (outcome.kind) {
+          case 'renamed':
+            flashToast(context, ARTICLE_RENAMED_TOAST)
+            flashIssueFixed(context, { focus: 'articles', issueId: issue.id })
+            return back()
+          case 'unchanged':
+            return back()
+          case 'renamed-meanwhile':
+            flashToast(context, ARTICLE_RENAMED_MEANWHILE_TOAST)
+            return back()
+          case 'final-version': {
+            let toast = renameTooLateToast(outcome.step, now())
+            flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+            return back()
+          }
+          case 'closed':
+            flashToast(context, fixClosedToast(outcome.issueName))
+            return back()
+          case 'gone':
+            return notFound()
+          case 'folder-missing':
+            return dialog({ callout: RENAME_ARTICLE_FOLDER_MISSING }, IN_THE_WAY)
+          case 'doc-missing':
+            return dialog({ callout: RENAME_ARTICLE_DOC_MISSING }, IN_THE_WAY)
+          case 'meta-binned':
+            return dialog({ callout: RENAME_ARTICLE_META_BINNED }, IN_THE_WAY)
+          case 'not-connected':
+          case 'disconnected':
+            return dialog({ callout: RENAME_ARTICLE_DISCONNECTED }, IN_THE_WAY)
+          case 'unavailable':
+            return dialog({ callout: RENAME_ARTICLE_UNAVAILABLE }, IN_THE_WAY)
+        }
+      },
+
+      /* `12y`: the cards of the authors as they are, before the final version or after it. */
+      async askEditAuthors(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        if (issue === null || article === null) return notFound()
+        let filter = filterOf(context)
+        if (!canEditAuthors(article, issue.closedAt === null)) {
+          return redirect(detailHref(issue, filter), 303)
+        }
+        return renderDetail(context, issue, {
+          fixing: authorsViewOf(issue, article, filter, storedCards(article), {}),
+        })
+      },
+
+      /*
+       * `12y`: the authors on Drive and in the row together, or neither, and only then the
+       * welcome. The form carries the marking it showed, so a final version marked, cancelled or
+       * replaced meanwhile writes nothing (`15d`).
+       */
+      async editAuthors(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        if (issue === null || article === null) return notFound()
+        let filter = filterOf(context)
+        let back = () => redirect(detailHref(issue, filter), 303)
+        let data = context.get(FormData) as FormData
+        let names = data.getAll(AUTHOR_NAME_FIELD).map(String)
+        let emails = data.getAll(AUTHOR_EMAIL_FIELD).map(String)
+        let typed = names.map((name, index) => ({ email: emails[index] ?? '', name }))
+        let clauseIds = data.getAll('clause').map(Number)
+        let marked = formText(context, 'marked')
+        let markedAt = marked === '' ? null : parseStamp(marked)
+        if (marked !== '' && markedAt === null) return notFound()
+        /* After the final version: the stored cards with what was typed into the editable ones. */
+        let typedFinalCards = () =>
+          storedCards(article).map((card) => {
+            let index = card.kind === 'editable' ? clauseIds.indexOf(card.key) : -1
+            let entered = index === -1 ? undefined : typed[index]
+            return entered === undefined ? card : { ...card, ...entered }
+          })
+        let dialog = (
+          cards: AuthorCardView[],
+          extra: { callout?: FixCallout; errors?: readonly FieldError[] },
+          status: number,
+        ) =>
+          renderDetail(context, issue, {
+            fixing: authorsViewOf(issue, article, filter, cards, extra),
+            status,
+          })
+
+        let outcome: EditAuthorsFixOutcome
+        let finalVersion = article.finalVersion
+        if (markedAt === null) {
+          /* Without the runtime, _Přidat autora_ and _Odebrat_ come here and draw the cards again. */
+          let intent = formText(context, 'intent')
+          let removed = /^remove-(\d+)$/.exec(intent)
+          if (intent === 'add-author' || removed !== null) {
+            let kept =
+              removed === null
+                ? typed
+                : typed.filter((_, index) => index + 1 !== Number(removed[1]))
+            let next = intent === 'add-author' ? [...kept, { email: '', name: '' }] : kept
+            return dialog(editableCards(next), {}, 200)
+          }
+          let check = checkAuthors(typed)
+          if (check.errors.length > 0) {
+            return dialog(editableCards(check.authors), { errors: check.errors }, REFUSED)
+          }
+          outcome = await editAuthors(articleFixSetupOf(context), {
+            authors: check.authors,
+            id: article.id,
+            markedAt: null,
+          })
+        } else {
+          let corrections = clauseIds.map((clauseId, index) => ({
+            clauseId,
+            email: typed[index]?.email ?? '',
+            name: typed[index]?.name ?? '',
+          }))
+          /* The marking the form showed is still the one: the cards are checked against it. A
+             change meanwhile is answered by the step itself, which writes nothing. */
+          if (finalVersion !== null && finalVersion.at.equals(markedAt)) {
+            let byId = new Map(finalVersion.authors.map((clause) => [clause.id, clause]))
+            let check = checkAuthors(typed, {
+              fixed: finalVersion.authors
+                .filter((clause) => isAgreed(clause.state))
+                .map((clause) => ({ email: clause.authorEmail, number: clause.position })),
+              keepsEmptyCards: true,
+              numbers: clauseIds.map((id) => byId.get(id)?.position ?? 0),
+            })
+            if (check.errors.length > 0) {
+              return dialog(typedFinalCards(), { errors: check.errors }, REFUSED)
+            }
+          }
+          outcome = await editAuthors(articleFixSetupOf(context), {
+            corrections,
+            id: article.id,
+            markedAt,
+          })
+        }
+
+        let callout = authorsCalloutOf(outcome.kind)
+        if (callout !== null) {
+          let cards = markedAt === null ? editableCards(typed) : typedFinalCards()
+          return dialog(cards, { callout }, IN_THE_WAY)
+        }
+        switch (outcome.kind) {
+          case 'saved': {
+            let toast = authorsSavedToast(outcome.sent, outcome.failed)
+            flashToast(
+              context,
+              toast.message,
+              toast.isError ? 'error' : 'neutral',
+              undefined,
+              toast.detail,
+            )
+            flashIssueFixed(context, { focus: 'articles', issueId: issue.id })
+            return back()
+          }
+          case 'corrected': {
+            if (outcome.count === 0) {
+              flashToast(context, AUTHORS_SAVED_TOAST)
+            } else {
+              let health = jobHealth(
+                await articlesOf(context).runs.latest(APPROVAL_SEND_JOB),
+                now(),
+              )
+              let detail =
+                health.kind === 'running' && health.next !== null
+                  ? `Další běh kolem ${clockTime(health.next)}`
+                  : undefined
+              flashToast(context, CLAUSES_CORRECTED_TOAST, 'neutral', undefined, detail)
+            }
+            flashIssueFixed(context, { focus: 'articles', issueId: issue.id })
+            return back()
+          }
+          case 'agreed': {
+            let toast = agreedMeanwhileToast(outcome.name, outcome.agreedAt, now())
+            flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+            return back()
+          }
+          case 'final-version':
+            flashToast(context, FINAL_VERSION_MEANWHILE_TOAST)
+            return back()
+          case 'cancelled':
+            flashToast(context, FINAL_VERSION_CANCELLED_TOAST)
+            return back()
+          case 'closed':
+            flashToast(context, fixClosedToast(outcome.issueName))
+            return back()
+          default:
+            return notFound()
+        }
       },
 
       async renewLink(context) {

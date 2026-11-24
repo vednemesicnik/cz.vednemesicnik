@@ -69,7 +69,8 @@ function claimedItem(batch: ClaimedBatch) {
     providerEmail: batch.providerEmail,
     providerName: batch.providerName,
     sender: batch.providerEmail,
-    subjectContains: [batch.holder.name],
+    /* The name the request went under, which a rename since does not change (#152). */
+    subjectContains: [batch.requestName],
     subjectPrefix: CONSENT_SUBJECT_PREFIX,
     subjectTag: batch.tag,
   }

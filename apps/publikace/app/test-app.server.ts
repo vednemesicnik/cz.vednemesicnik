@@ -134,8 +134,15 @@ export type TestBrowser = {
   cookie(name: string): string | undefined
   /** `GET`, following no redirect. */
   get(path: string, headers?: HeadersInit): Promise<Response>
-  /** `POST` of a form, with the CSRF token of the page the form is on (`from`). */
-  post(path: string, fields: Record<string, string>, from?: string): Promise<Response>
+  /**
+   * `POST` of a form, with the CSRF token of the page the form is on (`from`). Fields as a
+   * `URLSearchParams` keep a name given more than once, as the author cards send theirs.
+   */
+  post(
+    path: string,
+    fields: Record<string, string> | URLSearchParams,
+    from?: string,
+  ): Promise<Response>
   /** `POST` of a body as it is, repeated fields included, with no CSRF token: a public form. */
   send(path: string, body: URLSearchParams): Promise<Response>
   /** `POST` of raw bytes with the headers given, as the artworks page sends a file. */
@@ -250,8 +257,10 @@ export async function createTestApp(
       get,
       async post(path, fields, from = '/settings') {
         // A token given in the fields is sent as it is, without visiting the page first.
-        let token = fields._csrf ?? (await csrfToken(from))
-        let body = new URLSearchParams({ ...fields, _csrf: token })
+        let given = fields instanceof URLSearchParams ? fields.get('_csrf') : fields._csrf
+        let token = given ?? (await csrfToken(from))
+        let body = new URLSearchParams(fields)
+        body.set('_csrf', token)
         let request = new Request(new URL(path, origin), {
           body,
           headers: { Cookie: cookieHeader(), Origin: origin, Referer: new URL(from, origin).href },

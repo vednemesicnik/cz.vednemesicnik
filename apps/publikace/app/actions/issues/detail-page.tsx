@@ -81,6 +81,8 @@ import { Layout } from '../../ui/layout/component.tsx'
 import { NewTabMark } from '../../ui/new-tab-mark/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
 import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
+import { EDIT_AUTHORS_LABEL, RENAME_ARTICLE_LABEL } from '../../domain/article-fixes.ts'
+import { ArticleFixDialog, type ArticleFixView } from './article-fix-dialogs.tsx'
 import { CopyButton } from '../../ui/public/copy-button/component.tsx'
 import { ShareButton } from '../../ui/public/share-button/component.tsx'
 import { StateFilter } from '../../ui/state-filter/component.tsx'
@@ -243,6 +245,11 @@ export type ArticleRowView = {
   authors: string
   /** _Zrušit předání_ in `⋯`, only on _Dopsáno_ of an issue still open (`12k`). */
   cancelHandoverAction: string | null
+  /**
+   * _Přejmenovat článek…_ and _Upravit autory…_ at the end of `⋯`, each only where it can go
+   * through (`12u`).
+   */
+  fixes: { editAuthorsHref: string | null; renameHref: string | null }
   /** _Zrušit finální verzi_ in `⋯`, on _K souhlasu_ while no run has taken a clause (`12q`). */
   cancelFinalAction: string | null
   documentUrl: string
@@ -394,12 +401,16 @@ export type DetailPageProps = {
   isRenewing?: boolean
   /** Focus on the title, after the issue was renamed and arrived at its new address (`12v`). */
   isTitleFocused?: boolean
+  /** Focus on the heading _Články_, after a fix of an article (`12x`, `12y`). */
+  isArticlesFocused?: boolean
   issue: Issue
   issueMissing?: IssueMissingView | null
   link?: LinkBlockView
   person: PanelPerson
   /** On an active issue with a print folder only (`12t`). */
   print?: PrintSectionView
+  /** _Přejmenovat článek_ or _Upravit autory_ over the detail (`12x`, `12y`). */
+  fixing?: ArticleFixView
   /** The dialog of a new final version over the detail (`12r`). */
   replacing?: FinalVersionDialogProps
   /** _Uzavřít vydání_ or _Znovu otevřít_ over the detail (`12g`, `12h`). */
@@ -689,18 +700,32 @@ const STATE_TONES: Readonly<Record<ArtworkState, StatusTone>> = {
   review: 'waiting',
 }
 
-/** A section of the detail with its count: _Články 0_, named by its heading. */
-function Section(handle: Handle<{ children?: RemixNode; count?: number; title: string }>) {
+/**
+ * A section of the detail with its count: _Články 0_, named by its heading. `isFocused` puts focus
+ * on the heading, which stays where it was while the table under it is sorted anew (`12x`).
+ */
+function Section(
+  handle: Handle<{ children?: RemixNode; count?: number; isFocused?: boolean; title: string }>,
+) {
   let headingId = `section-${handle.id}`
 
   return () => {
-    let { children, count, title } = handle.props
+    let { children, count, isFocused = false, title } = handle.props
+    let content = (
+      <>
+        {title}
+        {count === undefined ? null : <span mix={countStyle}>{count}</span>}
+      </>
+    )
     return (
       <section aria-labelledby={headingId} mix={sectionStyle}>
-        <h2 id={headingId}>
-          {title}
-          {count === undefined ? null : <span mix={countStyle}>{count}</span>}
-        </h2>
+        {isFocused ? (
+          <h2 autofocus id={headingId} tabIndex={-1}>
+            {content}
+          </h2>
+        ) : (
+          <h2 id={headingId}>{content}</h2>
+        )}
         {children}
       </section>
     )
@@ -890,6 +915,17 @@ function ArticleRow(
         { href: article.replaceFinalAction, isSameTab: true, label: REPLACE_FINAL_LABEL },
       )
     }
+    /* The fixes last, after a line of their own, where `12u` puts them in every menu. */
+    let { editAuthorsHref, renameHref } = article.fixes
+    let fixes: ActionMenuItem[] = [
+      ...(renameHref === null
+        ? []
+        : [{ href: renameHref, isSameTab: true, label: RENAME_ARTICLE_LABEL }]),
+      ...(editAuthorsHref === null
+        ? []
+        : [{ href: editAuthorsHref, isSameTab: true, label: EDIT_AUTHORS_LABEL }]),
+    ]
+    if (fixes.length > 0) items.push({ isSeparator: true }, ...fixes)
     return (
       <>
         <TableRow
@@ -1122,13 +1158,14 @@ function Articles(
   handle: Handle<{
     articles: readonly ArticleRowView[]
     csrfToken: string
+    isHeadingFocused: boolean
     missingAddress?: MissingAddressView
   }>,
 ) {
   return () => {
-    let { articles, csrfToken, missingAddress } = handle.props
+    let { articles, csrfToken, isHeadingFocused, missingAddress } = handle.props
     return (
-      <Section count={articles.length} title="Články">
+      <Section count={articles.length} isFocused={isHeadingFocused} title="Články">
         {missingAddress === undefined ? null : (
           <Callout tone="warning">
             <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
@@ -1692,6 +1729,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       isFolderGone = false,
       isRenewing = false,
       isTitleFocused = false,
+      isArticlesFocused = false,
       issue,
       issueMissing = null,
       newGroup,
@@ -1699,6 +1737,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       missingAddress,
       person,
       print,
+      fixing,
       replacing,
       step,
       toasts,
@@ -1720,6 +1759,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
             discarding !== undefined ||
             newGroup !== undefined ||
             replacing !== undefined ||
+            fixing !== undefined ||
             step !== undefined
           }
           person={person}
@@ -1804,6 +1844,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
                 <Articles
                   articles={articles}
                   csrfToken={getCsrfToken(getContext())}
+                  isHeadingFocused={isArticlesFocused}
                   missingAddress={missingAddress}
                 />
                 {groups === undefined ? null : <Groups groups={groups} />}
@@ -1819,6 +1860,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
         )}
         {discarding === undefined ? null : <DiscardDialog discarding={discarding} />}
         {replacing === undefined ? null : <FinalVersionDialog {...replacing} />}
+        {fixing === undefined ? null : <ArticleFixDialog view={fixing} />}
         {step === undefined ? null : <IssueStepDialog step={step} />}
       </Document>
     )

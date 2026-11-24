@@ -353,9 +353,35 @@ export async function cleanUpAbandoned(setup: ArticleSetup): Promise<void> {
 }
 
 async function sendWelcomes(setup: ArticleSetup, article: Article, issue: Issue): Promise<void> {
+  let unsent = article.authors.filter((author) => author.welcomeSentAt === null)
+  await sendWelcomesTo(
+    setup,
+    article,
+    issue,
+    unsent.map((author) => author.position),
+  )
+}
+
+/** What the setup must give to send the welcome (`20d`) from anywhere. */
+export type WelcomeSetup = Pick<ArticleSetup, 'links' | 'mailer' | 'now' | 'origin'> & {
+  articles: Pick<ArticleStore, 'markWelcome'>
+}
+
+/**
+ * The welcome (`20d`) to the authors at these places, each recorded as sent or failed, and the
+ * addresses of each, for the toast of `12y`. It counts against no cap: the caller decides that.
+ */
+export async function sendWelcomesTo(
+  setup: WelcomeSetup,
+  article: Article,
+  issue: Issue,
+  positions: readonly number[],
+): Promise<{ failed: string[]; sent: string[] }> {
+  let sent: string[] = []
+  let failed: string[] = []
   let artworksUrl = await artworksUrlOf(setup, article)
   for (let author of article.authors) {
-    if (author.welcomeSentAt !== null) continue
+    if (!positions.includes(author.position)) continue
     let result = await setup.mailer(
       welcomeEmail({
         articleName: article.name,
@@ -375,10 +401,15 @@ async function sendWelcomes(setup: ArticleSetup, article: Article, issue: Issue)
       result.ok ? 'sent' : 'failed',
       setup.now(),
     )
+    ;(result.ok ? sent : failed).push(author.email)
   }
+  return { failed, sent }
 }
 
-async function artworksUrlOf(setup: ArticleSetup, article: Article): Promise<string> {
+async function artworksUrlOf(
+  setup: Pick<ArticleSetup, 'links' | 'origin'>,
+  article: Article,
+): Promise<string> {
   let links = await setup.links.artworksLinksOf(article.issueId)
   let link = links.get(article.id)
   return link === undefined ? '' : absoluteUrl(setup.origin, artworksLinkPath(link.key))

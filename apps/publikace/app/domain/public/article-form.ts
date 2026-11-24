@@ -70,24 +70,58 @@ function emailMessage(email: string): string | null {
  * _Přidat autora_ at the tenth; a request with more is refused on the group.
  */
 export function checkArticle(input: ArticleInput): ArticleCheck {
-  let name = input.name.normalize('NFC').trim()
-  let cards = input.authors
-    .map((author) => ({
+  let name = checkArticleName(input.name)
+  let authors = checkAuthors(input.authors)
+  let errors = [...(name.ok ? [] : [name.error]), ...authors.errors]
+  if (!name.ok || errors.length > 0) return { authors: authors.authors, errors, ok: false }
+  return { article: { authors: authors.authors, name: name.name }, ok: true }
+}
+
+/** The name alone, for the form and for _Přejmenovat článek_ (`12x`), with the same messages. */
+export function checkArticleName(
+  input: string,
+): { name: string; ok: true } | { error: FieldError; ok: false } {
+  let name = input.normalize('NFC').trim()
+  if (name === '') return { error: { key: 'name', message: EMPTY_ARTICLE_NAME_MESSAGE }, ok: false }
+  if ([...name].length > MAX_ARTICLE_NAME_LENGTH) {
+    return { error: { key: 'name', message: LONG_ARTICLE_NAME_MESSAGE }, ok: false }
+  }
+  return { name, ok: true }
+}
+
+/**
+ * The author cards alone, for the form and for _Upravit autory_ (`12y`), with the same messages.
+ *
+ * After the final version the cards keep their places, so `keepsEmptyCards` turns off dropping an
+ * emptied card, `numbers` gives each card the author's place, and `fixed` holds the addresses of
+ * the authors who agreed and are not in the form: a card may not take one of them either.
+ */
+export function checkAuthors(
+  input: readonly AuthorInput[],
+  options: {
+    fixed?: readonly { email: string; number: number }[]
+    keepsEmptyCards?: boolean
+    numbers?: readonly number[]
+  } = {},
+): { authors: Author[]; errors: FieldError[] } {
+  let isKept = options.keepsEmptyCards === true
+  let cards = input
+    .map((author, index) => ({
       email: author.email.normalize('NFC').trim(),
       name: author.name.normalize('NFC').trim(),
+      number: options.numbers?.[index] ?? index + 1,
     }))
-    .filter((author) => author.name !== '' || author.email !== '')
-  if (cards.length === 0) cards = [{ email: '', name: '' }]
+    .filter((author) => isKept || author.name !== '' || author.email !== '')
+  if (cards.length === 0) cards = [{ email: '', name: '', number: 1 }]
+  if (!isKept) cards = cards.map((card, index) => ({ ...card, number: index + 1 }))
 
   let errors: FieldError[] = []
-  if (name === '') errors.push({ key: 'name', message: EMPTY_ARTICLE_NAME_MESSAGE })
-  else if ([...name].length > MAX_ARTICLE_NAME_LENGTH) {
-    errors.push({ key: 'name', message: LONG_ARTICLE_NAME_MESSAGE })
-  }
-
   let firstWithEmail = new Map<string, number>()
-  cards.forEach((card, index) => {
-    let number = index + 1
+  for (let fixed of options.fixed ?? []) {
+    firstWithEmail.set(fixed.email.normalize('NFC').trim().toLowerCase(), fixed.number)
+  }
+  cards.forEach((card) => {
+    let number = card.number
     if (card.name === '') {
       errors.push({ key: `author-${number}-name`, message: EMPTY_AUTHOR_NAME_MESSAGE })
     } else if ([...card.name].length > MAX_AUTHOR_NAME_LENGTH) {
@@ -106,8 +140,7 @@ export function checkArticle(input: ArticleInput): ArticleCheck {
 
   if (cards.length > MAX_AUTHORS) errors.push({ key: 'authors', message: AUTHOR_LIMIT_NOTE })
 
-  if (errors.length > 0) return { authors: cards, errors, ok: false }
-  return { article: { authors: cards, name }, ok: true }
+  return { authors: cards.map(({ email, name }) => ({ email, name })), errors }
 }
 
 /** The label of the field an error points at, for the summary's links (`20b`). */

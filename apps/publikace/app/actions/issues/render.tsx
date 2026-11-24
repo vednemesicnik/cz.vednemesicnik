@@ -46,13 +46,16 @@ export async function driveView(context: PageContext) {
 }
 
 /*
- * What a fix of an issue leaves for the page it redirects to (`12v`, `12w`): focus on the
- * detail's title after a rename, on the overview's heading after a removal, and the row of an
- * issue renamed from the overview on the tint of a change. Taken once.
+ * What a fix leaves for the page it redirects to (`12v`, `12w`, `12x`, `12y`): focus on the
+ * detail's title after a rename of the issue, on _Články_ after a fix of an article, on the
+ * overview's heading after a removal, and the row of an issue renamed from the overview on the
+ * tint of a change. Taken once.
  */
 const ISSUE_FIXED_SESSION_KEY = 'issueFixed'
 
-export type IssueFixed = { focus: 'heading' } | { focus: 'title' | 'row'; issueId: number }
+export type IssueFixed =
+  | { focus: 'heading' }
+  | { focus: 'articles' | 'title' | 'row'; issueId: number }
 
 export function flashIssueFixed(context: PageContext, fixed: IssueFixed): void {
   ;(context.get(Session) as Session | undefined)?.flash(ISSUE_FIXED_SESSION_KEY, fixed)

@@ -316,6 +316,11 @@ describe('sending a batch', () => {
       )
       assert.ok(message?.htmlBody.includes('Autor: neuveden'))
       assert.ok(message?.htmlBody.includes('Zdroj: https://unsplash.com/photos/jidelna-a8Kq'))
+      /* The name the request went under, which the reply check looks for after a rename. */
+      let named = await harness.app.database.exec(
+        sql`SELECT sent_holder_name FROM artwork_batches WHERE created_at IS NOT NULL`,
+      )
+      assert.equal(named.rows?.[0]?.['sent_holder_name'], 'Školní jídelna po roce')
 
       let again = await submitArtworks(harness.setup, batch(harness.linkKey, ids))
       assert.equal(again.kind, 'sent')

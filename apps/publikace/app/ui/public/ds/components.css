@@ -412,7 +412,10 @@
 .vdm-dialog__text { margin: 0; text-wrap: pretty; }
 /* 12 px between paragraphs in every dialog body (0zgyl1ao). */
 .vdm-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
-.vdm-dialog-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 24px; background: var(--overlay); }
+/* A dialog taller than the window scrolls on the backdrop: a shorter one stays centred, a taller one starts at the top
+   and scrolls to its buttons; the page under it does not move (Rozhodnuto 24. 11. 2026, ta8xzaqr). */
+.vdm-dialog-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; justify-items: center; overflow-y: auto; overscroll-behavior: contain; padding: 24px; background: var(--overlay); }
+.vdm-dialog-backdrop > .vdm-dialog { margin-block: auto; }
 
 /* ---------- Toast ---------- */
 /* A message that wraps keeps the icon on its first line, in a box one line

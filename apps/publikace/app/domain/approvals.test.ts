@@ -79,6 +79,7 @@ const DETAIL: ClauseDetail = {
   authorName: 'Ondřej Beneš',
   error: null,
   id: 7,
+  position: 1,
   replyReceivedAt: null,
   replyText: null,
   sentAt: Temporal.Instant.from('2026-11-12T15:30:00Z'),

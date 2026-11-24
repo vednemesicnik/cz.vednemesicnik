@@ -103,6 +103,11 @@ export type ClaimedBatch = ListedBatch & {
    * failed archive.
    */
   licencesFolderId: string | null
+  /**
+   * The name the batch's request was last sent under, which its subject carries; the holder's name
+   * for a batch sent before the app kept it.
+   */
+  requestName: string
 }
 
 /** A card of _Ke kontrole_: a batch with the article and issue it belongs to. */
@@ -171,6 +176,11 @@ export type ArtworkStore = {
    */
   markMail(id: number, outcome: 'failed' | 'refused' | 'sent', at: Temporal.Instant): Promise<void>
   markRemoved(id: number, at: Temporal.Instant): Promise<void>
+  /**
+   * The name of the article or group the request is about to go under, before every sending: the
+   * reply check looks for it in the subject after the holder is renamed (#152).
+   */
+  recordRequestName(id: number, name: string): Promise<void>
   /** Batch attempts whose cleanup failed, safe to take while other requests run. */
   pendingCleanups(): Promise<BatchRow[]>
   /**
@@ -592,6 +602,12 @@ export function createArtworkStore(database: Database): ArtworkStore {
       )
     },
 
+    async recordRequestName(id, name) {
+      await database.exec(
+        sql`UPDATE artwork_batches SET sent_holder_name = ${name} WHERE id = ${id}`,
+      )
+    },
+
     async pendingCleanups() {
       let result = await database.exec(
         sql`SELECT * FROM artwork_batches
@@ -700,6 +716,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
           sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name,
                 CASE WHEN b.group_id IS NULL THEN 'article' ELSE 'group' END AS holder_kind,
                 i.name AS issue_name,
+                coalesce(b.sent_holder_name, ar.name, g.name) AS request_name,
                 CASE
                   WHEN b.group_id IS NULL AND ar.licences_folder_missing_at IS NULL
                     THEN ar.licences_folder_id
@@ -718,6 +735,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
         return batches.map((batch, index) => ({
           ...batch,
           licencesFolderId: text(rows[index]?.['licences_folder_id']),
+          requestName: String(rows[index]?.['request_name'] ?? batch.holder.name),
         }))
       })
     },

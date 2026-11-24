@@ -2,31 +2,27 @@ import type { Handle } from 'remix/component'
 import { clientEntry, css, on, ref } from 'remix/component'
 
 import {
-  ADD_AUTHOR_LABEL,
   ARTICLE_NAME_LABEL,
   ARTICLE_NAME_PLACEHOLDER,
-  AUTHOR_EMAIL_LABEL,
-  AUTHOR_EMAIL_PLACEHOLDER,
-  AUTHOR_LIMIT_NOTE,
-  AUTHOR_NAME_LABEL,
-  AUTHOR_NAME_PLACEHOLDER,
   type AuthorInput,
   AUTHORS_HINT,
   AUTHORS_LEGEND,
-  authorCardTitle,
   checkArticle,
   CONSENT_SENTENCE,
   CREATE_ARTICLE_LABEL,
   CREATING_ARTICLE_LABEL,
   type FieldError,
-  type FieldKey,
   fieldLabel,
-  MAX_AUTHORS,
-  REMOVE_AUTHOR_LABEL,
-  removeAuthorName,
   REQUIRED_LEGEND,
   summaryTitle,
 } from '../../../domain/public/article-form.ts'
+import {
+  AUTHOR_EMAIL_FIELD,
+  AUTHOR_NAME_FIELD,
+  AuthorCards,
+  FormField,
+  Required,
+} from '../../../ui/public/author-cards/component.tsx'
 
 export type ArticleFormProps = {
   /** The address the form is sent to, the page's own. */
@@ -43,8 +39,7 @@ export type ArticleFormProps = {
 }
 
 /** The names the server reads the cards by, one pair per card in the cards' order. */
-export const AUTHOR_NAME_FIELD = 'author-name'
-export const AUTHOR_EMAIL_FIELD = 'author-email'
+export { AUTHOR_EMAIL_FIELD, AUTHOR_NAME_FIELD }
 
 /** The id of the Callout above the form, which the island focuses after a refused send. */
 export const MESSAGE_ID = 'article-message'
@@ -52,40 +47,6 @@ export const MESSAGE_ID = 'article-message'
 type Card = AuthorInput & { id: number }
 
 const formStyle = css({ display: 'flex', flexDirection: 'column', gap: '20px' })
-
-const cardsStyle = css({ display: 'flex', flexDirection: 'column', gap: '12px' })
-
-const cardStyle = css({
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-lg)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
-  padding: '14px',
-})
-
-const cardHeadStyle = css({
-  alignItems: 'center',
-  display: 'flex',
-  justifyContent: 'space-between',
-  minHeight: '44px',
-})
-
-const cardTitleStyle = css({
-  color: 'var(--text-secondary)',
-  fontSize: '13px',
-  fontWeight: 600,
-})
-
-/* Name and e-mail side by side once the column is 520 px wide (`20a`). */
-const cardFieldsStyle = css({
-  display: 'grid',
-  gap: '12px',
-  gridTemplateColumns: 'minmax(0, 1fr)',
-  '@container (min-width: 520px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
-})
-
-const cardsContainerStyle = css({ containerType: 'inline-size' })
 
 const consentStyle = css({
   color: 'var(--text-secondary)',
@@ -97,17 +58,6 @@ const consentStyle = css({
 /* The form's default button for Enter in a field, which would otherwise be the first submit in
    the form: _Odebrat_ or _Přidat autora_. */
 const defaultSubmitStyle = css({ display: 'none' })
-
-function Required() {
-  return () => (
-    <>
-      {' '}
-      <span aria-hidden="true" class="vdm-field__required">
-        *
-      </span>
-    </>
-  )
-}
 
 /**
  * The form _Nový článek_ (`20a`, `20b`, `20c`): the name, the author cards, the consent sentence
@@ -146,10 +96,6 @@ export const ArticleForm = clientEntry(
 
     function focusById(id: string): void {
       handle.queueTask(() => document.getElementById(id)?.focus())
-    }
-
-    function errorFor(key: FieldKey): string | undefined {
-      return errors.find((error) => error.key === key)?.message
     }
 
     function addCard(): void {
@@ -196,52 +142,6 @@ export const ArticleForm = clientEntry(
       handle.update()
     }
 
-    function field(props: {
-      autocomplete: string
-      error: string | undefined
-      id: string
-      label: string
-      name: string
-      placeholder: string
-      type: 'email' | 'text'
-      value: string
-    }) {
-      let messageId = `${props.id}-error`
-      let inputProps = {
-        'aria-describedby': props.error === undefined ? undefined : messageId,
-        'aria-invalid': props.error === undefined ? undefined : ('true' as const),
-        autocomplete: props.autocomplete,
-        class:
-          props.error === undefined
-            ? 'vdm-field__input'
-            : 'vdm-field__input vdm-field__input--error',
-        defaultValue: props.value,
-        id: props.id,
-        name: props.name,
-        placeholder: props.placeholder,
-        readOnly: isPending,
-        required: true,
-      }
-      return (
-        <div class="vdm-field">
-          <label class="vdm-field__label" for={props.id}>
-            {props.label}
-            <Required />
-          </label>
-          {props.type === 'email' ? (
-            <input {...inputProps} type="email" />
-          ) : (
-            <input {...inputProps} type="text" />
-          )}
-          {props.error === undefined ? null : (
-            <span class="vdm-field__hint vdm-field__hint--error" id={messageId}>
-              {props.error}
-            </span>
-          )}
-        </div>
-      )
-    }
-
     return () => {
       let { action, formKey, isClosed, name } = handle.props
       if (handle.props.errors !== shownErrors) {
@@ -253,7 +153,7 @@ export const ArticleForm = clientEntry(
         shownMessage = handle.props.messageKey
         if (shownMessage !== null) focusById(MESSAGE_ID)
       }
-      let isFull = cards.length >= MAX_AUTHORS
+      let errorFor = (key: FieldError['key']) => errors.find((error) => error.key === key)?.message
 
       return (
         <form
@@ -326,16 +226,17 @@ export const ArticleForm = clientEntry(
           <p class="vdm-form__legend" style={{ margin: 0 }}>
             {REQUIRED_LEGEND}
           </p>
-          {field({
-            autocomplete: 'off',
-            error: errorFor('name'),
-            id: 'article-name',
-            label: ARTICLE_NAME_LABEL,
-            name: 'name',
-            placeholder: ARTICLE_NAME_PLACEHOLDER,
-            type: 'text',
-            value: name,
-          })}
+          <FormField
+            autocomplete="off"
+            error={errorFor('name')}
+            id="article-name"
+            isReadOnly={isPending}
+            label={ARTICLE_NAME_LABEL}
+            name="name"
+            placeholder={ARTICLE_NAME_PLACEHOLDER}
+            type="text"
+            value={name}
+          />
           <fieldset
             aria-describedby={
               errorFor('authors') === undefined ? 'authors-hint' : 'authors-hint authors-error'
@@ -356,84 +257,21 @@ export const ArticleForm = clientEntry(
                 {errorFor('authors')}
               </span>
             )}
-            <div mix={[cardsStyle, cardsContainerStyle]}>
-              {cards.map((card, index) => {
-                let number = index + 1
-                return (
-                  <div
-                    aria-labelledby={`author-${number}-title`}
-                    key={card.id}
-                    mix={cardStyle}
-                    role="group"
-                  >
-                    <div mix={cardHeadStyle}>
-                      <span id={`author-${number}-title`} mix={cardTitleStyle}>
-                        {authorCardTitle(number)}
-                      </span>
-                      {number === 1 ? null : (
-                        <button
-                          aria-label={removeAuthorName(number)}
-                          class="vdm-btn vdm-btn--ghost vdm-btn--sm"
-                          disabled={isPending}
-                          formNoValidate
-                          mix={on('click', (event) => {
-                            event.preventDefault()
-                            removeCard(card.id)
-                          })}
-                          name="intent"
-                          type="submit"
-                          value={`remove-${number}`}
-                        >
-                          {REMOVE_AUTHOR_LABEL}
-                        </button>
-                      )}
-                    </div>
-                    <div mix={cardFieldsStyle}>
-                      {field({
-                        autocomplete: 'name',
-                        error: errorFor(`author-${number}-name`),
-                        id: `author-${number}-name`,
-                        label: AUTHOR_NAME_LABEL,
-                        name: AUTHOR_NAME_FIELD,
-                        placeholder: AUTHOR_NAME_PLACEHOLDER,
-                        type: 'text',
-                        value: card.name,
-                      })}
-                      {field({
-                        autocomplete: 'email',
-                        error: errorFor(`author-${number}-email`),
-                        id: `author-${number}-email`,
-                        label: AUTHOR_EMAIL_LABEL,
-                        name: AUTHOR_EMAIL_FIELD,
-                        placeholder: AUTHOR_EMAIL_PLACEHOLDER,
-                        type: 'email',
-                        value: card.email,
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-              {isFull ? (
-                <span class="vdm-field__hint">{AUTHOR_LIMIT_NOTE}</span>
-              ) : (
-                <div>
-                  <button
-                    class="vdm-btn vdm-btn--outline"
-                    disabled={isPending}
-                    formNoValidate
-                    mix={on('click', (event) => {
-                      event.preventDefault()
-                      addCard()
-                    })}
-                    name="intent"
-                    type="submit"
-                    value="add-author"
-                  >
-                    {ADD_AUTHOR_LABEL}
-                  </button>
-                </div>
-              )}
-            </div>
+            <AuthorCards
+              canAdd
+              cards={cards.map((card, index) => ({
+                email: card.email,
+                key: card.id,
+                kind: 'editable' as const,
+                name: card.name,
+                number: index + 1,
+              }))}
+              errors={errors}
+              isPending={isPending}
+              onAdd={addCard}
+              onRemove={removeCard}
+              removable="not-first"
+            />
           </fieldset>
           <p mix={consentStyle}>{CONSENT_SENTENCE}</p>
           {isClosed ? null : (
