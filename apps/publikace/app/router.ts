@@ -76,7 +76,8 @@ import type { ArticleSetup } from './drive/article-setup.server.ts'
 import { createArtworkFiles } from './drive/artwork-files.server.ts'
 import type { ArtworksSetup } from './drive/artworks-setup.server.ts'
 import { createDriveFolders } from './drive/folders.server.ts'
-import type { IssueSetup } from './drive/issue-setup.server.ts'
+import type { IssueFixSetup } from './drive/issue-setup.server.ts'
+import { createIssueFiles } from './drive/issue-files.server.ts'
 import { createLock } from './drive/one-at-a-time.server.ts'
 import type { RecordQueue } from './drive/record-queue.server.ts'
 import { createRecordSheets } from './drive/sheets.server.ts'
@@ -280,15 +281,18 @@ export function createAppRouter(dependencies: AppDependencies) {
   /* Read once, so the dialog and Nastavení follow the same Registr (`11d`, `14j`). */
   let registryId =
     dependencies.registrySpreadsheetId ?? registrySpreadsheetId(dependencies.environment)
-  let issueSetup: IssueSetup = {
+  let articleSetup = createArticleSetup(dependencies)
+  let artworksSetup = createArtworksSetup(dependencies, articleSetup)
+  let issueSetup: IssueFixSetup = {
+    articles: articleSetup.articles,
+    files: (accessToken) => createIssueFiles({ accessToken, fetch }),
     folders: (accessToken) => createDriveFolders({ accessToken, fetch }),
+    groups: artworksSetup.groups,
     issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(dependencies.environment),
     now,
     store: issueStore,
     token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
   }
-  let articleSetup = createArticleSetup(dependencies)
-  let artworksSetup = createArtworksSetup(dependencies, articleSetup)
   let checkMembership = rememberGroupNames(
     dependencies.checkMembership ?? defaultMembershipCheck(dependencies.environment),
     directory.recordGroupName,

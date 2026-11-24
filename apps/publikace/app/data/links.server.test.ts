@@ -2,7 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import { isLinkKey } from '../domain/link.ts'
-import { createTestApp, seedIssue } from '../test-app.server.ts'
+import { createTestApp, seedIssue, started } from '../test-app.server.ts'
 import { createArticleStore } from './articles.server.ts'
 import { createIssueStore } from './issues.server.ts'
 import { createLinkStore, newLinkKey } from './links.server.ts'
@@ -57,14 +57,16 @@ describe('the link store', () => {
       let id = await seedIssue(app)
       let old = await links.articleLinkOf(id)
       assert.ok(old !== null)
-      let { attempt } = await articles.startAttempt({
-        at: AT,
-        authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
-        formKey: 'form-1',
-        issueId: id,
-        linkId: old.id,
-        name: 'Školní jídelna po roce',
-      })
+      let { attempt } = started(
+        await articles.startAttempt({
+          at: AT,
+          authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
+          formKey: 'form-1',
+          issueId: id,
+          linkId: old.id,
+          name: 'Školní jídelna po roce',
+        }),
+      )
       await articles.setDriveId(attempt.id, 'folder', 'f-a')
       await articles.setDriveId(attempt.id, 'artworks-folder', 'f-a-artworks')
       await articles.setDriveId(attempt.id, 'licences-folder', 'f-a-licences')

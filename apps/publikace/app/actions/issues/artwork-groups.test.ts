@@ -524,7 +524,7 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
       let section = await groupsMarkup(context)
       let text = textOf(section)
       assert.ok(text.includes(GROUP_STEP))
-      assert.match(text, new RegExp(`${GROUP_STOPPED} Zjištěno \\d+\\. \\d+\\. v \\d+:\\d{2}\\.`))
+      assert.match(text, new RegExp(`${GROUP_STOPPED} Zjištěno \\d+\\. \\d+\\. ve? \\d+:\\d{2}\\.`))
       assert.ok(section.includes(`action="${DETAIL}/artwork-groups/${group.id}/folders/check"`))
       /* The „⋯“ held only _Otevřít složku skupiny_, and a missing folder has nothing to open. */
       assert.ok(!section.includes('aria-label="Další akce skupiny Obálka"'))

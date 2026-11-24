@@ -33,6 +33,10 @@ describe('linkState', () => {
     assert.equal(linkState({ revokedAt: null }, { closedAt: TODAY, completedAt: TODAY }), 'gone')
   })
 
+  it('is gone once the issue is removed, whatever state it was in', () => {
+    assert.equal(linkState({ revokedAt: null }, { ...COMPLETE, removedAt: TODAY }), 'gone')
+  })
+
   it('is unknown without a link, or for an issue that never finished', () => {
     assert.equal(linkState(null, COMPLETE), 'unknown')
     assert.equal(linkState({ revokedAt: null }, { closedAt: null, completedAt: null }), 'unknown')

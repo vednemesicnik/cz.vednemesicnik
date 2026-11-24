@@ -52,12 +52,15 @@ import { TableRow } from '../../ui/table-row/component.tsx'
 import { TableRowTitle } from '../../ui/table-row-title/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
+import type { IssueContents } from '../../domain/issue-fixes.ts'
 import {
   FinishIssueForm,
+  fixItems,
   IssueStateTag,
   IssueStepDialog,
   type IssueStepDialogView,
   stepDialogHref,
+  withSeparators,
 } from './issue-parts.tsx'
 
 export type DriveStatus = 'connected' | 'disconnected' | 'not-connected'
@@ -79,6 +82,12 @@ export type OverviewPageProps = {
   dialog?: NewIssueDialog | IssueStepDialogView
   driveAccount: { expectedEmail: string; status: DriveStatus }
   filter: IssueFilter
+  /** Created artwork groups by issue ID; an issue missing here has none. */
+  groupCounts: ReadonlyMap<number, number>
+  /** The issue just renamed from its row, on the tint of a change until the next load (`12u`). */
+  changedIssueId?: number
+  /** Focus on the heading after a removal, as the removed row is gone (`12w`). */
+  isHeadingFocused?: boolean
   /** Whether the deployment names a Registr, for the dialog's sentence about the record. */
   hasRegistry: boolean
   issues: readonly Issue[]
@@ -156,7 +165,12 @@ const dialogFormStyle = css({ display: 'contents' })
 
 /* A guard, because a discriminant of two literals on one member does not narrow the other out. */
 function isStepDialog(dialog: NewIssueDialog | IssueStepDialogView): dialog is IssueStepDialogView {
-  return dialog.kind === 'close' || dialog.kind === 'reopen'
+  return (
+    dialog.kind === 'close' ||
+    dialog.kind === 'reopen' ||
+    dialog.kind === 'rename' ||
+    dialog.kind === 'remove'
+  )
 }
 
 function filterHref(filter: IssueFilter): string {
@@ -169,24 +183,22 @@ function issueHref(issue: Issue): string {
 
 /**
  * The row's „⋯“ (`11a`): the folder, then after a line closing an active issue or reopening a
- * closed one, each a dialog over the overview. An unfinished issue can be neither.
+ * closed one, then the fixes (`12u`), each a dialog over the overview.
  */
-function rowItems(issue: Issue, filter: IssueFilter): ActionMenuItem[] {
+function rowItems(issue: Issue, filter: IssueFilter, contents: IssueContents): ActionMenuItem[] {
   let folderId = issue.folderIds.issue
-  let items: ActionMenuItem[] =
+  let opens: ActionMenuItem[] =
     folderId === null ? [] : [{ href: folderUrl(folderId), label: OPEN_FOLDER_LABEL }]
+  let fixes = fixItems(issue, contents, 'overview', filter)
   let state = issueState(issue)
-  if (state === 'unfinished') return items
+  if (state === 'unfinished') return withSeparators([opens, fixes])
   let isClosed = state === 'closed'
-  return [
-    ...items,
-    ...(items.length === 0 ? [] : [{ isSeparator: true } as const]),
-    {
-      href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'overview', filter),
-      isSameTab: true,
-      label: isClosed ? REOPEN_ISSUE_LABEL : CLOSE_ISSUE_LABEL,
-    },
-  ]
+  let step: ActionMenuItem = {
+    href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'overview', filter),
+    isSameTab: true,
+    label: isClosed ? REOPEN_ISSUE_LABEL : CLOSE_ISSUE_LABEL,
+  }
+  return withSeparators([opens, [step], fixes])
 }
 
 /* What waits on the editors, in the ink of _Čeká na vás_ (`01d`). */
@@ -198,17 +210,24 @@ function IssueRow(
     articles: ApprovedCount
     artworks: ApprovedCount
     filter: IssueFilter
+    groups: number
+    isChanged: boolean
     isLast: boolean
     issue: Issue
     waiting: number
   }>,
 ) {
   return () => {
-    let { articles, artworks, filter, isLast, issue, waiting } = handle.props
+    let { articles, artworks, filter, groups, isChanged, isLast, issue, waiting } = handle.props
     let state = issueState(issue)
 
     return (
-      <TableRow columns={COLUMNS} isLast={isLast} isMuted={state === 'closed'}>
+      <TableRow
+        columns={COLUMNS}
+        isChanged={isChanged}
+        isLast={isLast}
+        isMuted={state === 'closed'}
+      >
         <TableRowTitle href={issueHref(issue)} sub={rowSubtitle(issue)} title={issue.name} />
         <span role="cell">
           <IssueStateTag state={state} />
@@ -243,7 +262,10 @@ function IssueRow(
           </>
         )}
         <span role="cell">
-          <ActionMenu items={rowItems(issue, filter)} label={`Další akce ${issue.name}`} />
+          <ActionMenu
+            items={rowItems(issue, filter, { articles: articles.total, groups })}
+            label={`Další akce ${issue.name}`}
+          />
         </span>
       </TableRow>
     )
@@ -316,13 +338,23 @@ function IssueList(
   handle: Handle<{
     articleCounts: ReadonlyMap<number, ApprovedCount>
     artworkCounts: ReadonlyMap<number, ApprovedCount>
+    changedIssueId: number | undefined
     filter: IssueFilter
+    groupCounts: ReadonlyMap<number, number>
     issues: readonly Issue[]
     waitingCounts: ReadonlyMap<number, number>
   }>,
 ) {
   return () => {
-    let { articleCounts, artworkCounts, filter, issues, waitingCounts } = handle.props
+    let {
+      articleCounts,
+      artworkCounts,
+      changedIssueId,
+      filter,
+      groupCounts,
+      issues,
+      waitingCounts,
+    } = handle.props
     let shown = issues.filter((issue) => isInFilter(issueState(issue), filter))
     let counts: Record<IssueFilter, number> = {
       all: issues.length,
@@ -370,6 +402,8 @@ function IssueList(
                     articles={articleCounts.get(issue.id) ?? NO_COUNT}
                     artworks={artworkCounts.get(issue.id) ?? NO_COUNT}
                     filter={filter}
+                    groups={groupCounts.get(issue.id) ?? 0}
+                    isChanged={issue.id === changedIssueId}
                     isLast={index === shown.length - 1}
                     issue={issue}
                     waiting={waitingCounts.get(issue.id) ?? 0}
@@ -522,8 +556,11 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
       artworkCounts,
       dialog,
       driveAccount,
+      changedIssueId,
       filter,
+      groupCounts,
       hasRegistry,
+      isHeadingFocused = false,
       issues,
       person,
       toasts,
@@ -542,7 +579,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
           toasts={toasts}
         >
           <ListHeader>
-            <ListHeaderTitle>Vydání</ListHeaderTitle>
+            <ListHeaderTitle isFocused={isHeadingFocused}>Vydání</ListHeaderTitle>
             <ListHeaderAction>
               <a class="vdm-btn vdm-btn--primary" href={newIssueHref}>
                 Nové vydání
@@ -561,7 +598,9 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
             <IssueList
               artworkCounts={artworkCounts}
               articleCounts={articleCounts}
+              changedIssueId={changedIssueId}
               filter={filter}
+              groupCounts={groupCounts}
               issues={issues}
               waitingCounts={waitingCounts}
             />

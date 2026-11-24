@@ -96,6 +96,29 @@ import {
   type SubfolderKind,
 } from '../../domain/article-folders.ts'
 import { folderUrl, type Issue, issueState } from '../../domain/issue.ts'
+import {
+  binnedFilesCallout,
+  canRemove,
+  canRename,
+  type FixCallout,
+  type IssueContents,
+  foreignFilesCallout,
+  missingFoldersCallout,
+  movedFolderCallout,
+  REMOVE_DISCONNECTED,
+  REMOVE_RACE_ARTICLE_TOAST,
+  REMOVE_RACE_GROUP_TOAST,
+  REMOVE_UNAVAILABLE,
+  removedToast,
+  REMOVED_ALREADY_TOAST,
+  RENAME_DISCONNECTED,
+  RENAME_ISSUE_FOLDER_MISSING,
+  RENAME_UNAVAILABLE,
+  renameArticlesFolderMissing,
+  renameClosedToast,
+  RENAMED_MEANWHILE_TOAST,
+  RENAMED_TOAST,
+} from '../../domain/issue-fixes.ts'
 import { issueFolderHeading, issueFolderText, shownIssueMark } from '../../domain/issue-folders.ts'
 import {
   absoluteUrl,
@@ -168,7 +191,12 @@ import {
   signaturesLabel,
 } from '../../domain/proofreading-queue.ts'
 import type { FinalVersionDialogProps } from '../../ui/final-version-dialog/component.tsx'
-import { createIssue, finishIssue } from '../../drive/issue-setup.server.ts'
+import {
+  createIssue,
+  finishIssue,
+  removeIssue,
+  renameIssue,
+} from '../../drive/issue-setup.server.ts'
 import { createGroup, groupSetupOf } from '../../drive/group-setup.server.ts'
 import { GROUP_CREATED_TOAST, groupCountText, groupNoteLine } from '../../domain/artwork-group.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
@@ -197,11 +225,13 @@ import { type IssueStepDialogView, type ReturnTo, stepBackHref } from './issue-p
 import type { NewIssueDialog } from './overview-page.tsx'
 import {
   driveView,
+  flashIssueFixed,
   IN_THE_WAY,
   issuesOf,
   type PageContext,
   REFUSED,
   renderOverview,
+  takeIssueFixed,
 } from './render.tsx'
 
 function formText(context: PageContext, name: string): string {
@@ -786,6 +816,7 @@ async function renderDetail(
   } = {},
 ): Promise<Response> {
   let session = context.get(Session) as Session | undefined
+  let fixed = takeIssueFixed(context)
   let { articles, link } = await linkAndArticles(
     context,
     issue,
@@ -802,6 +833,7 @@ async function renderDetail(
       groups={await groupsOf(context, issue, takeGroupChanged(session))}
       isFolderGone={options.isFolderGone}
       isRenewing={options.isRenewing}
+      isTitleFocused={fixed?.focus === 'title' && fixed.issueId === issue.id}
       issue={issue}
       issueMissing={issueMissingView(issue)}
       link={link}
@@ -986,14 +1018,31 @@ function answeredFrom(context: PageContext): { filter: IssueFilter; returnTo: Re
   }
 }
 
-/** The dialog over the page it was asked from. */
+/** The dialog over the page it was asked from; a refused answer with its status. */
 function renderStep(
   context: PageContext & { auth: { identity: Person } },
   step: IssueStepDialogView,
+  status?: number,
 ): Promise<Response> {
   return step.returnTo === 'overview'
-    ? renderOverview(context, context.auth.identity, step.filter, step)
-    : renderDetail(context, step.issue, { step })
+    ? renderOverview(
+        context,
+        context.auth.identity,
+        step.filter,
+        step,
+        status === undefined ? undefined : { status },
+      )
+    : renderDetail(context, step.issue, { status, step })
+}
+
+/** What the issue holds, as its row counts it: created articles and created groups (`12u`). */
+async function contentsOf(context: PageContext, issue: Issue): Promise<IssueContents> {
+  let { articles, artworks } = articlesOf(context)
+  let [created, groups] = await Promise.all([
+    articles.listCreated(issue.id),
+    artworks.groups.listByIssue(issue.id),
+  ])
+  return { articles: created.length, groups: groups.length }
 }
 
 /** The dialog _Nová skupina obrazových děl_ over the detail, with what it was sent (`12e`). */
@@ -1243,6 +1292,177 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let from = answeredFrom(context)
         if (await store.reopen(issue.id)) flashToast(context, reopenedToast(issue.name))
         return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
+      },
+
+      /* `12v`: the dialog with the name in the field, for an issue that is not closed. */
+      async askRename(context) {
+        let { hasRegistry, store } = issuesOf(context)
+        let issue = await store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let from = askedFrom(context)
+        if (!canRename(issue)) return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
+        return renderStep(context, {
+          ...from,
+          hasRegistry,
+          issue,
+          kind: 'rename',
+          name: issue.name,
+          warning: null,
+        })
+      },
+
+      /*
+       * `12v`: by the ID the form carries, so somebody else's rename meanwhile is answered with
+       * what holds now rather than with a 404. A refusal the editor can mend comes back in the
+       * dialog with the name as typed; a race closes it with a toast.
+       */
+      async rename(context) {
+        let { hasRegistry, setup, store } = issuesOf(context)
+        let id = Number(formText(context, 'id'))
+        let issue = Number.isSafeInteger(id) ? await store.findById(id) : null
+        if (issue === null) return notFound()
+        let from = answeredFrom(context)
+        let back = (current: Issue) => stepBackHref(current, from.returnTo, from.filter)
+        if (issue.removedAt !== null) {
+          flashToast(context, REMOVED_ALREADY_TOAST)
+          return redirect(stepBackHref(issue, 'overview', from.filter), 303)
+        }
+        let shownName = formText(context, 'shownName')
+        if (issue.name !== shownName) {
+          flashToast(context, RENAMED_MEANWHILE_TOAST)
+          return redirect(routes.issues.show.href({ name: issue.name }), 303)
+        }
+
+        let typed = formText(context, 'name')
+        let dialog = (extra: { callout?: FixCallout; fieldError?: string }, status: number) =>
+          renderStep(
+            context,
+            { ...from, ...extra, hasRegistry, issue, kind: 'rename', name: typed, warning: null },
+            status,
+          )
+        let checked = checkIssueName(typed)
+        if (!checked.ok) return dialog({ fieldError: checked.message }, REFUSED)
+
+        let outcome = await renameIssue(setup, { id, name: checked.name, shownName })
+        switch (outcome.kind) {
+          case 'renamed':
+            flashToast(context, RENAMED_TOAST)
+            if (from.returnTo === 'overview') {
+              flashIssueFixed(context, { focus: 'row', issueId: outcome.issue.id })
+            } else {
+              flashIssueFixed(context, { focus: 'title', issueId: outcome.issue.id })
+            }
+            return redirect(back(outcome.issue), 303)
+          case 'unchanged':
+            return redirect(back(issue), 303)
+          case 'duplicate':
+            return dialog({ fieldError: duplicateNameMessage(outcome.existingName) }, REFUSED)
+          case 'closed':
+            flashToast(context, renameClosedToast(outcome.issue.name))
+            return redirect(back(outcome.issue), 303)
+          case 'renamed-meanwhile':
+            flashToast(context, RENAMED_MEANWHILE_TOAST)
+            return redirect(routes.issues.show.href({ name: outcome.issue.name }), 303)
+          case 'removed':
+            flashToast(context, REMOVED_ALREADY_TOAST)
+            return redirect(stepBackHref(issue, 'overview', from.filter), 303)
+          case 'issue-folder-missing':
+            return dialog({ callout: RENAME_ISSUE_FOLDER_MISSING }, IN_THE_WAY)
+          case 'articles-folder-missing':
+            return dialog({ callout: renameArticlesFolderMissing(outcome.name) }, IN_THE_WAY)
+          case 'folders-missing': {
+            let named = (each: { fileId: string; name: string }) => ({
+              href: folderUrl(each.fileId),
+              name: each.name,
+            })
+            let callout = missingFoldersCallout(
+              outcome.articles.map(named),
+              outcome.groups.map(named),
+            )
+            return dialog({ callout }, IN_THE_WAY)
+          }
+          case 'files-binned': {
+            let callout = binnedFilesCallout(
+              outcome.files.map((file) => ({
+                href: driveFileUrl(file.fileId),
+                kind: file.holder,
+                name: file.name,
+              })),
+            )
+            return dialog({ callout }, IN_THE_WAY)
+          }
+          case 'not-connected':
+          case 'disconnected':
+            return dialog({ callout: RENAME_DISCONNECTED }, IN_THE_WAY)
+          case 'unavailable':
+            return dialog({ callout: RENAME_UNAVAILABLE }, IN_THE_WAY)
+        }
+      },
+
+      /* `12w`: the dialog, for an issue with no article and no group. */
+      async askRemove(context) {
+        let { hasRegistry, store } = issuesOf(context)
+        let issue = await store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let from = askedFrom(context)
+        if (!canRemove(await contentsOf(context, issue))) {
+          return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
+        }
+        return renderStep(context, { ...from, hasRegistry, issue, kind: 'remove', warning: null })
+      },
+
+      /*
+       * `12w`: always back to the overview, since the detail is gone with the issue. An article or
+       * a group that came meanwhile leaves the issue as it was and opens its detail.
+       */
+      async remove(context) {
+        let { hasRegistry, setup, store } = issuesOf(context)
+        let id = Number(formText(context, 'id'))
+        let issue = Number.isSafeInteger(id) ? await store.findById(id) : null
+        if (issue === null) return notFound()
+        let from = answeredFrom(context)
+        let overview = stepBackHref(issue, 'overview', from.filter)
+        let dialog = (callout: FixCallout) =>
+          renderStep(
+            context,
+            { ...from, callout, hasRegistry, issue, kind: 'remove', warning: null },
+            IN_THE_WAY,
+          )
+
+        let outcome = await removeIssue(setup, { id })
+        switch (outcome.kind) {
+          case 'removed':
+            flashToast(context, removedToast(outcome.issue.name))
+            flashIssueFixed(context, { focus: 'heading' })
+            return redirect(overview, 303)
+          case 'already-removed':
+            flashToast(context, REMOVED_ALREADY_TOAST)
+            return redirect(overview, 303)
+          case 'has-article':
+          case 'has-group':
+            flashToast(
+              context,
+              outcome.kind === 'has-article' ? REMOVE_RACE_ARTICLE_TOAST : REMOVE_RACE_GROUP_TOAST,
+            )
+            return redirect(routes.issues.show.href({ name: outcome.issue.name }), 303)
+          case 'moved':
+            return dialog(movedFolderCallout(folderUrl(outcome.folderId)))
+          case 'foreign':
+            return dialog(
+              foreignFilesCallout(
+                outcome.files.map((file) => ({
+                  folderName: file.folderName,
+                  href: file.isFolder ? folderUrl(file.id) : driveFileUrl(file.id),
+                  name: file.name,
+                })),
+              ),
+            )
+          case 'not-connected':
+          case 'disconnected':
+            return dialog(REMOVE_DISCONNECTED)
+          case 'unavailable':
+            return dialog(REMOVE_UNAVAILABLE)
+        }
       },
 
       async newGroup(context) {

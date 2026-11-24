@@ -3,7 +3,7 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { articleState, waitsOnEditors } from '../domain/article.ts'
-import { createTestApp, seedArticle, seedIssue, type TestApp } from '../test-app.server.ts'
+import { createTestApp, seedArticle, seedIssue, started, type TestApp } from '../test-app.server.ts'
 import { createArticleStore } from './articles.server.ts'
 import { createLinkStore } from './links.server.ts'
 
@@ -25,8 +25,10 @@ describe('the article store', () => {
       let { articles, issueId, link } = await setup(app)
       let attempt = { at: AT, authors: [TEREZA, ONDREJ], formKey: 'k', issueId, linkId: link.id }
 
-      let first = await articles.startAttempt({ ...attempt, name: 'Školní jídelna po roce' })
-      let second = await articles.startAttempt({ ...attempt, name: 'Jiný název' })
+      let first = started(
+        await articles.startAttempt({ ...attempt, name: 'Školní jídelna po roce' }),
+      )
+      let second = started(await articles.startAttempt({ ...attempt, name: 'Jiný název' }))
 
       assert.equal(first.isNew, true)
       assert.equal(second.isNew, false)
@@ -44,14 +46,16 @@ describe('the article store', () => {
     let app = await createTestApp()
     try {
       let { articles, issueId, link } = await setup(app)
-      let { attempt } = await articles.startAttempt({
-        at: AT,
-        authors: [TEREZA],
-        formKey: 'k',
-        issueId,
-        linkId: link.id,
-        name: 'Školní jídelna po roce',
-      })
+      let { attempt } = started(
+        await articles.startAttempt({
+          at: AT,
+          authors: [TEREZA],
+          formKey: 'k',
+          issueId,
+          linkId: link.id,
+          name: 'Školní jídelna po roce',
+        }),
+      )
       assert.deepEqual(await articles.listCreated(issueId), [])
       assert.equal((await articles.countsByIssue()).get(issueId), undefined)
 
@@ -76,14 +80,16 @@ describe('the article store', () => {
     let app = await createTestApp()
     try {
       let { articles, issueId, link } = await setup(app)
-      let { attempt } = await articles.startAttempt({
-        at: AT,
-        authors: [TEREZA],
-        formKey: 'k',
-        issueId,
-        linkId: link.id,
-        name: 'Článek',
-      })
+      let { attempt } = started(
+        await articles.startAttempt({
+          at: AT,
+          authors: [TEREZA],
+          formKey: 'k',
+          issueId,
+          linkId: link.id,
+          name: 'Článek',
+        }),
+      )
       await articles.setDriveId(attempt.id, 'folder', 'f-a')
       await articles.setDriveId(attempt.id, 'artworks-folder', 'f-a-artworks')
       await articles.setDriveId(attempt.id, 'licences-folder', 'f-a-licences')
@@ -98,14 +104,16 @@ describe('the article store', () => {
     let app = await createTestApp()
     try {
       let { articles, issueId, link } = await setup(app)
-      let { attempt } = await articles.startAttempt({
-        at: AT,
-        authors: [TEREZA],
-        formKey: 'k',
-        issueId,
-        linkId: link.id,
-        name: 'Článek',
-      })
+      let { attempt } = started(
+        await articles.startAttempt({
+          at: AT,
+          authors: [TEREZA],
+          formKey: 'k',
+          issueId,
+          linkId: link.id,
+          name: 'Článek',
+        }),
+      )
       await articles.markForCleanup(attempt.id, AT)
       assert.equal((await articles.pendingCleanups()).length, 1)
 
@@ -124,14 +132,16 @@ describe('the article store', () => {
     try {
       let { articles, issueId, link } = await setup(app)
       for (let minute of [0, 30, 59]) {
-        await articles.startAttempt({
-          at: AT.add({ minutes: minute }),
-          authors: [TEREZA],
-          formKey: `k${minute}`,
-          issueId,
-          linkId: link.id,
-          name: 'Článek',
-        })
+        started(
+          await articles.startAttempt({
+            at: AT.add({ minutes: minute }),
+            authors: [TEREZA],
+            formKey: `k${minute}`,
+            issueId,
+            linkId: link.id,
+            name: 'Článek',
+          }),
+        )
       }
 
       assert.equal(await articles.recentAttempts(link.id, AT.add({ minutes: 1 })), 2)
@@ -144,14 +154,16 @@ describe('the article store', () => {
     let app = await createTestApp()
     try {
       let { articles, issueId, link } = await setup(app)
-      let { attempt } = await articles.startAttempt({
-        at: AT,
-        authors: [TEREZA],
-        formKey: 'k',
-        issueId,
-        linkId: link.id,
-        name: 'Článek',
-      })
+      let { attempt } = started(
+        await articles.startAttempt({
+          at: AT,
+          authors: [TEREZA],
+          formKey: 'k',
+          issueId,
+          linkId: link.id,
+          name: 'Článek',
+        }),
+      )
       await articles.setDriveId(attempt.id, 'folder', 'f-a')
       await articles.setDriveId(attempt.id, 'doc', 'd-a')
       await articles.setDriveId(attempt.id, 'meta', 'm-a')
@@ -167,14 +179,16 @@ describe('the article store', () => {
     let app = await createTestApp()
     try {
       let { articles, issueId, link } = await setup(app)
-      let { attempt } = await articles.startAttempt({
-        at: AT,
-        authors: [TEREZA],
-        formKey: 'k',
-        issueId,
-        linkId: link.id,
-        name: 'Článek',
-      })
+      let { attempt } = started(
+        await articles.startAttempt({
+          at: AT,
+          authors: [TEREZA],
+          formKey: 'k',
+          issueId,
+          linkId: link.id,
+          name: 'Článek',
+        }),
+      )
       for (let [kind, id] of [
         ['folder', 'f-a'],
         ['artworks-folder', 'f-a-artworks'],

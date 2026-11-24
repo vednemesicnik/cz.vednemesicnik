@@ -102,11 +102,12 @@ erDiagram
 
   ISSUE {
     int id PK
-    text name "unique regardless of case"
+    text name "unique regardless of case among issues not removed"
     text folder_id "and articles_folder_id, print_folder_id, groups_folder_id"
     instant folder_missing_at "and articles_folder_missing_at, 12j"
     instant completed_at "null while Nedokončené"
     instant closed_at
+    instant removed_at "12w"
     text evidence_spreadsheet_id
   }
   LINK {
@@ -305,19 +306,20 @@ protection back before every write, and never reads a sheet. A column the record
 show needs its trigger changed in a new migration. A group's artworks are rows of _Obrazová díla_
 with the group's name in _Název článku_ and its folder in _ID složky_, as the scripts write them,
 and the Registr's _URL – Vytvořit skupinu obrazových děl_ stays empty: the app hands out no link
-that creates groups (`03` row 6).
+that creates groups (`03` row 6). A removed issue leaves the Registr on the next pass, and its
+Evidence, binned with its folder, is no longer written.
 
 ## Lifecycles
 
 | Thing          | Derived from                                                                                          | In `app/domain/`   |
 | -------------- | ----------------------------------------------------------------------------------------------------- | ------------------ |
-| Issue          | `completed_at` (Nedokončené without it), `closed_at`                                                  | `issue.ts`         |
+| Issue          | `completed_at` (Nedokončené without it), `closed_at`, `removed_at`                                    | `issue.ts`         |
 | Article        | handover and take columns; with a final version standing, the counts of its clauses; `doc_revised_at` | `article.ts`       |
 | Clause         | stored `pending/sent/failed`, then the reply, `consent_verified_at`, `approved_at`, archive failure   | `approvals.ts`     |
 | Artwork batch  | `mail_sent_at` or `mail_failed_at`, the reply, `consent_verified_at`, `approved_at`, `discarded_at`   | `artwork.ts`       |
 | Artwork upload | no `batch_id` while unsent; `removed_at`; binned 24 h after upload if still unsent                    | `artwork.ts`       |
 | Artwork group  | `created_at`; no state of its own, never deleted                                                      | `artwork-group.ts` |
-| Link           | valid; gone once revoked or its issue closed; a key never issued draws the same page                  | `link.ts`          |
+| Link           | valid; gone once revoked, or its issue closed or removed; a key never issued draws the same page      | `link.ts`          |
 
 ## Background work
 

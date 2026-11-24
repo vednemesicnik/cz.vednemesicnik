@@ -357,7 +357,7 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
         let open = await db.exec(
           sql`SELECT i.id FROM issues i LEFT JOIN print_handoffs h ON h.issue_id = i.id
               WHERE i.completed_at IS NOT NULL AND i.closed_at IS NULL
-                AND i.print_folder_id IS NOT NULL
+                AND i.removed_at IS NULL AND i.print_folder_id IS NOT NULL
                 AND (h.claimed_at IS NULL OR h.claimed_at < ${lease})
               ORDER BY i.started_at, i.id
               LIMIT ${ISSUE_CLAIM_LIMIT}`,

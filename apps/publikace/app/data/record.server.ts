@@ -65,7 +65,7 @@ export function createRecordStore(database: Database): RecordStore {
               (SELECT l.key FROM links l WHERE l.issue_id = i.id AND l.kind = 'article'
                ORDER BY l.created_at DESC, l.id DESC LIMIT 1) AS link_key
             FROM issues i
-            WHERE i.completed_at IS NOT NULL
+            WHERE i.completed_at IS NOT NULL AND i.removed_at IS NULL
             ORDER BY i.started_at, i.id`,
       )
       return (result.rows ?? []).map((row) => ({
@@ -116,7 +116,8 @@ export function createRecordStore(database: Database): RecordStore {
 
         await db.exec(
           sql`INSERT INTO record_marks (kind, issue_id)
-              SELECT 'evidence', id FROM issues WHERE completed_at IS NOT NULL
+              SELECT 'evidence', id FROM issues
+              WHERE completed_at IS NOT NULL AND removed_at IS NULL
               ON CONFLICT (kind, issue_id) DO UPDATE
                 SET generation = generation + 1, attempts = 0, retry_at = NULL, last_error = NULL`,
         )

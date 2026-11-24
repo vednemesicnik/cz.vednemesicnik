@@ -105,6 +105,7 @@ describe('one-letter words on the screens', () => {
         `/issues/${ISSUE}`,
         `/issues/${ISSUE}?artworks=all`,
         `/issues/${ISSUE}/close`,
+        `/issues/${ISSUE}/rename`,
         '/review',
         `/review?reply=${batch.id}`,
         '/settings',

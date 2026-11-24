@@ -522,8 +522,14 @@ export type ArticleStore = {
   recentAttempts(linkId: number, since: Temporal.Instant): Promise<number>
   /** Stores a file's ID once; one already stored is never replaced. */
   setDriveId(id: number, kind: DriveFileKind, fileId: string): Promise<void>
-  /** The attempt for this form key, created unless it exists; `isNew` says which. */
-  startAttempt(attempt: NewAttempt): Promise<{ attempt: ArticleRow; isNew: boolean }>
+  /**
+   * The attempt for this form key, created unless it exists; `isNew` says which. `issue-removed`
+   * when the issue was removed after the link was read (`12w`): the removal and the row are
+   * decided by the one write SQLite runs at a time.
+   */
+  startAttempt(
+    attempt: NewAttempt,
+  ): Promise<{ attempt: ArticleRow; isNew: boolean } | 'issue-removed'>
 }
 
 type Row = Record<string, unknown>
@@ -1811,6 +1817,8 @@ export function createArticleStore(database: Database): ArticleStore {
       return database.transaction(async (db) => {
         let existing = await byFormKey(db, attempt.formKey)
         if (existing !== null) return { attempt: existing, isNew: false }
+        let issue = await db.exec(sql`SELECT removed_at FROM issues WHERE id = ${attempt.issueId}`)
+        if (issue.rows?.[0]?.['removed_at'] != null) return 'issue-removed' as const
 
         await db.exec(
           sql`INSERT INTO articles (issue_id, link_id, form_key, name, started_at)

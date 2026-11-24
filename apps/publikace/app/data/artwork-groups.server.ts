@@ -66,6 +66,8 @@ export type GroupStore = {
   listByIssue(issueId: number): Promise<ListedGroup[]>
   markForCleanup(id: number, at: Temporal.Instant): Promise<void>
   markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
+  /** By issue, the committed groups, for whether an issue can be removed (`12u`). */
+  countsByIssue(): Promise<Map<number, number>>
   /** By issue, the committed groups with a folder on record as missing, for _Čeká na vás_. */
   missingCountsByIssue(): Promise<Map<number, number>>
   /**
@@ -79,11 +81,12 @@ export type GroupStore = {
   setDriveId(id: number, kind: GroupDriveFileKind, fileId: string): Promise<void>
   /**
    * The attempt for this form key, created unless it exists; `name-taken` when the issue holds the
-   * name already, which the unique index decides even between two requests at once.
+   * name already, which the unique index decides even between two requests at once;
+   * `issue-removed` when the issue was removed meanwhile (`12w`).
    */
   startAttempt(
     attempt: NewGroupAttempt,
-  ): Promise<{ attempt: GroupRow; isNew: boolean } | 'name-taken'>
+  ): Promise<{ attempt: GroupRow; isNew: boolean } | 'issue-removed' | 'name-taken'>
 }
 
 type Row = Record<string, unknown>
@@ -188,6 +191,16 @@ export function createGroupStore(database: Database): GroupStore {
 
     findById(id) {
       return byId(database, id)
+    },
+
+    async countsByIssue() {
+      let result = await database.exec(
+        sql`SELECT issue_id, count(*) AS count FROM artwork_groups
+            WHERE created_at IS NOT NULL GROUP BY issue_id`,
+      )
+      let counts = new Map<number, number>()
+      for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
+      return counts
     },
 
     async missingCountsByIssue() {
@@ -313,6 +326,8 @@ export function createGroupStore(database: Database): GroupStore {
       return database.transaction(async (db) => {
         let existing = await byFormKey(db, attempt.formKey)
         if (existing !== null) return { attempt: existing, isNew: false }
+        let issue = await db.exec(sql`SELECT removed_at FROM issues WHERE id = ${attempt.issueId}`)
+        if (issue.rows?.[0]?.['removed_at'] != null) return 'issue-removed' as const
         let taken = await db.exec(
           sql`SELECT id FROM artwork_groups
               WHERE issue_id = ${attempt.issueId} AND name_key = ${attempt.nameKey}`,

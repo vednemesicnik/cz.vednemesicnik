@@ -153,13 +153,18 @@ async function create(setup: ArticleSetup, input: NewArticle): Promise<CreateArt
       linkId: link.id,
       name: input.name,
     })
-    return started.attempt
+    return started === 'issue-removed' ? started : started.attempt
   })
   if (attempt === 'limited' || attempt === 'daily-cap') return { kind: attempt }
+  if (attempt === 'issue-removed') return { kind: 'link-gone' }
+  /* Read again now that the attempt holds the issue: a rename that finished before it wrote every
+     `_meta.json` there was, and one still running refuses to finish while this attempt does
+     (`12v`), so the name read here is the one `_meta.json` has to carry. */
+  let named = (await setup.issues.findById(issue.id)) ?? issue
 
   let committed: Article | null = null
   try {
-    if (await makeFiles(setup, files, attempt, issue, articlesFolderId)) {
+    if (await makeFiles(setup, files, attempt, named, articlesFolderId)) {
       committed = await setup.articles.commit(attempt.id, setup.now())
     }
   } catch (error) {

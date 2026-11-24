@@ -1,13 +1,13 @@
 import { createContextKey, type Middleware } from 'remix/router'
 
 import type { IssueStore } from '../data/issues.server.ts'
-import type { IssueSetup } from '../drive/issue-setup.server.ts'
+import type { IssueFixSetup } from '../drive/issue-setup.server.ts'
 
 /** The issues and the way their folders are made. Read with `context.get(Issues)`. */
 export type IssuesContext = {
   /** Whether the deployment names a Registr, for the dialog's sentence about the record (`11d`). */
   hasRegistry: boolean
-  setup: IssueSetup
+  setup: IssueFixSetup
   store: IssueStore
 }
 

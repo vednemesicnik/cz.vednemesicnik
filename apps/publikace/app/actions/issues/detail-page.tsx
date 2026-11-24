@@ -89,12 +89,15 @@ import { TableRow } from '../../ui/table-row/component.tsx'
 import { TableRowTitle } from '../../ui/table-row-title/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
+import type { IssueContents } from '../../domain/issue-fixes.ts'
 import {
   FinishIssueForm,
+  fixItems,
   IssueStateTag,
   IssueStepDialog,
   type IssueStepDialogView,
   stepDialogHref,
+  withSeparators,
 } from './issue-parts.tsx'
 import type { DriveStatus } from './overview-page.tsx'
 import { NBSP, tied } from '../../domain/public/typography.ts'
@@ -389,6 +392,8 @@ export type DetailPageProps = {
   newGroup?: NewGroupDialogView
   /** The question _Vydat nový odkaz_ over the detail (`02d`). */
   isRenewing?: boolean
+  /** Focus on the title, after the issue was renamed and arrived at its new address (`12v`). */
+  isTitleFocused?: boolean
   issue: Issue
   issueMissing?: IssueMissingView | null
   link?: LinkBlockView
@@ -1601,12 +1606,19 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
 /**
  * The issue's „⋯“ in the header. Active (`12a`): the Evidence and the print folder, then after a
  * line _Uzavřít vydání…_. Closed (`12h`): the Evidence and the issue folder, then _Znovu otevřít
- * vydání…_. Unfinished, none. The Evidence only once the record queue created it, a few seconds
- * after the issue is complete (`11d`).
+ * vydání…_. Unfinished (`12i`): the issue folder. The Evidence only once the record queue created
+ * it, a few seconds after the issue is complete (`11d`). The fixes end every menu after a line of
+ * their own, each only where it can go through (`12u`).
  */
-function issueMenuItems(issue: Issue): ActionMenuItem[] {
+function issueMenuItems(issue: Issue, contents: IssueContents): ActionMenuItem[] {
   let state = issueState(issue)
-  if (state === 'unfinished') return []
+  let fixes = fixItems(issue, contents, 'detail')
+  if (state === 'unfinished') {
+    let folderId = issue.folderIds.issue
+    let opens: ActionMenuItem[] =
+      folderId === null ? [] : [{ href: folderUrl(folderId), label: OPEN_FOLDER_LABEL }]
+    return withSeparators([opens, fixes])
+  }
   let isClosed = state === 'closed'
   let folderId = isClosed ? issue.folderIds.issue : issue.folderIds.print
   let opens: ActionMenuItem[] = []
@@ -1619,15 +1631,12 @@ function issueMenuItems(issue: Issue): ActionMenuItem[] {
       label: isClosed ? OPEN_FOLDER_LABEL : OPEN_PRINT_FOLDER_LABEL,
     })
   }
-  return [
-    ...opens,
-    ...(opens.length === 0 ? [] : [{ isSeparator: true } as const]),
-    {
-      href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'detail'),
-      isSameTab: true,
-      label: isClosed ? REOPEN_ISSUE_LABEL : CLOSE_ISSUE_LABEL,
-    },
-  ]
+  let step: ActionMenuItem = {
+    href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'detail'),
+    isSameTab: true,
+    label: isClosed ? REOPEN_ISSUE_LABEL : CLOSE_ISSUE_LABEL,
+  }
+  return withSeparators([opens, [step], fixes])
 }
 
 /** `02d`: renewing takes the link from everybody who has it, so it is asked first. */
@@ -1682,6 +1691,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       groups,
       isFolderGone = false,
       isRenewing = false,
+      isTitleFocused = false,
       issue,
       issueMissing = null,
       newGroup,
@@ -1695,7 +1705,10 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
     } = handle.props
     let state = issueState(issue)
     let folderId = issue.folderIds.issue
-    let issueItems = issueMenuItems(issue)
+    let issueItems = issueMenuItems(issue, {
+      articles: articles.length,
+      groups: groups?.rows.length ?? 0,
+    })
 
     return (
       <Document title={issue.name}>
@@ -1721,7 +1734,13 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
               </a>
               <div mix={titleBarStyle}>
                 <div mix={titleStyle}>
-                  <h1 class="vdm-page-title">{issue.name}</h1>
+                  {isTitleFocused ? (
+                    <h1 autofocus class="vdm-page-title" tabIndex={-1}>
+                      {issue.name}
+                    </h1>
+                  ) : (
+                    <h1 class="vdm-page-title">{issue.name}</h1>
+                  )}
                   <IssueStateTag state={state} />
                 </div>
                 <div mix={headActionsStyle}>

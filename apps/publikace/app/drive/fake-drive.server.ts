@@ -23,7 +23,8 @@ export type FakeFile = FakeFolder & {
 /**
  * One kind of call, for failing it on purpose: `upload` is a small multipart file, `store` a
  * resumable one (an artwork, a licence PDF), `import` a Doc made from HTML, `sheets` every call to
- * the Sheets API and the creation of a spreadsheet.
+ * the Sheets API and the creation of a spreadsheet, `rename` a file's new name, `rewrite` a text
+ * file's content written over.
  */
 export const FAKE_STEPS = [
   'copy',
@@ -32,7 +33,9 @@ export const FAKE_STEPS = [
   'import',
   'permissions',
   'preview',
+  'rename',
   'replace',
+  'rewrite',
   'revisions',
   'sheets',
   'store',
@@ -101,6 +104,8 @@ export type FakeDrive = {
   failStep(step: FakeStep): void
   /** Moving this file to the bin answers 503 until `heal()`; other files go as usual. */
   failTrashOf(id: string): void
+  /** Writing this file's content over answers 503 until `heal()`; other files go as usual. */
+  failRewriteOf(id: string): void
   fetch: typeof globalThis.fetch
   files(): FakeFile[]
   folders(): FakeFolder[]
@@ -167,6 +172,7 @@ export function createFakeDrive(): FakeDrive {
   let losingNames = new Set<string>()
   let failingSteps = new Set<FakeStep>()
   let failingTrashes = new Set<string>()
+  let failingRewrites = new Set<string>()
   let isRestoreFailing = false
   let losingSteps = new Set<FakeStep>()
   let isDown = false
@@ -422,6 +428,16 @@ export function createFakeDrive(): FakeDrive {
       return new Response(FAKE_THUMBNAIL, { headers: { 'Content-Type': 'image/png' } })
     }
 
+    let rewritten = /^\/upload\/drive\/v3\/files\/([^/]+)$/.exec(url.pathname)
+    if (method === 'PATCH' && rewritten !== null) {
+      let file = files.get(decodeURIComponent(rewritten[1] ?? ''))
+      if (file === undefined || !isOnSharedDrives) return failure('File not found', 404)
+      if (url.searchParams.get('uploadType') !== 'media') return failure('bad upload', 400)
+      if (failingSteps.has('rewrite') || failingRewrites.has(file.id)) return failure('down')
+      file.content = String(init?.body)
+      return done('rewrite', file.id)
+    }
+
     if (
       url.pathname === '/upload/drive/v3/files' &&
       url.searchParams.get('uploadType') === 'resumable'
@@ -568,6 +584,20 @@ export function createFakeDrive(): FakeDrive {
         })
       }
       let name = /name = '((?:[^'\\]|\\.)*)'/.exec(query)?.[1]?.replace(/\\(.)/g, '$1')
+      if (name === undefined) {
+        /* Every child not in the bin, as the walk over an issue's folders asks. */
+        let children = [...files.values()].filter(
+          (file) => file.parentId === parent && !isBinned(file),
+        )
+        return Response.json({
+          files: children.map((file) => ({
+            appProperties: file.appProperties,
+            id: file.id,
+            mimeType: file.mimeType,
+            name: file.name,
+          })),
+        })
+      }
       let found = [...files.values()].filter(
         (file) =>
           file.mimeType === FOLDER_TYPE &&
@@ -611,8 +641,13 @@ export function createFakeDrive(): FakeDrive {
     if (method === 'PATCH' && match !== null) {
       let file = files.get(decodeURIComponent(match[1] ?? ''))
       if (file === undefined || !isOnSharedDrives) return failure('File not found', 404)
+      let body = JSON.parse(String(init?.body)) as { name?: string; trashed?: boolean }
+      if (body.name !== undefined) {
+        if (failingSteps.has('rename')) return failure('down')
+        file.name = body.name
+        return done('rename', file.id)
+      }
       if (failingSteps.has('trash')) return failure('down')
-      let body = JSON.parse(String(init?.body)) as { trashed?: boolean }
       if (body.trashed === false) {
         if (isRestoreFailing) return failure('down')
         file.isTrashed = false
@@ -661,6 +696,7 @@ export function createFakeDrive(): FakeDrive {
     },
     touch: (id, at) => void modifiedTimes.set(id, at),
     failTrashOf: (id) => void failingTrashes.add(id),
+    failRewriteOf: (id) => void failingRewrites.add(id),
     fetch,
     files: () => [...files.values()],
     folders: () =>
@@ -675,6 +711,7 @@ export function createFakeDrive(): FakeDrive {
       failingNames.clear()
       failingSteps.clear()
       failingTrashes.clear()
+      failingRewrites.clear()
       isRestoreFailing = false
     },
     loseReplyOnCreate: (name) => void losingNames.add(name),

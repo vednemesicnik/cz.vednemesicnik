@@ -42,6 +42,8 @@ export type Issue = {
   /** When the app found each folder missing, `null` while it is there (`12j`). */
   missing: Record<IssueFolderKind, Temporal.Instant | null>
   name: string
+  /** When an editor-in-chief removed the issue (`12w`); the row stays, out of every list. */
+  removedAt: Temporal.Instant | null
   startedAt: Temporal.Instant
   startedByEmail: string
   startedByName: string

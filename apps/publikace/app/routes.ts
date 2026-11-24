@@ -28,6 +28,13 @@ export const routes = route({
     close: post('/issues/:name/close'),
     askReopen: get('/issues/:name/reopen'),
     reopen: post('/issues/:name/reopen'),
+    /* _Přejmenovat vydání…_ (`12v`) and _Odebrat vydání…_ (`12w`) the same way. Their `POST`
+       finds the issue by the ID the form carries, so a rename meanwhile is answered rather than
+       met by a 404. */
+    askRename: get('/issues/:name/rename'),
+    rename: post('/issues/:name/rename'),
+    askRemove: get('/issues/:name/remove'),
+    remove: post('/issues/:name/remove'),
     /* _Nová skupina obrazových děl_ (`12e`): the dialog at its own address over the detail, as
        _Nové vydání_ over the overview, and `POST` to it creates the group (#133). */
     newGroup: get('/issues/:name/artwork-groups/new'),

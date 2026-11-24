@@ -405,6 +405,23 @@ The Registr and each Evidence follow the database through the record queue (#111
    `[drive] the Registr was not written`, the actions still work, and once the share is back the
    list catches up within the hour the backoff allows.
 
+## Renaming and removing an issue
+
+_Přejmenovat vydání…_ (`12v`) and _Odebrat vydání…_ (`12w`), from the issue's „⋯“ (#151). The suite
+runs both on the fake Drive; what is left is what only the real one shows.
+
+1. Rename an issue that has one article and one group: the issue folder on the shared drive has
+   the new name, `Články`, `_Podklady_pro_tisk` and `Evidence` keep theirs, and the `issue` in the
+   article's and the group's `_meta.json` is the new name. Within a minute the Registr's row has
+   it too. The old address answers 404, the newsroom's link still opens.
+2. Put the group's folder in the bin and rename again: the dialog names the group and nothing
+   changed on Drive. Restore the folder.
+3. Put a file of your own into `Články` of an empty issue and remove the issue: the dialog names
+   the file and the folder stays. Take the file out and remove it again: the issue folder is in
+   the shared drive's bin with everything in it, the Registr's row goes within a minute, the
+   link draws the page of a link that no longer works, and a new issue of the same name can be
+   created.
+
 ## After the run
 
 - [ ] put the origin back by pushing the project from CI (`workflow_dispatch` of `deploy.yml`),

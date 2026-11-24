@@ -1,4 +1,8 @@
+import type { Article, ArticleStore } from '../data/articles.server.ts'
+import type { GroupStore, ListedGroup } from '../data/artwork-groups.server.ts'
 import type { IssueStore } from '../data/issues.server.ts'
+import { articleMeta, META_FILE_NAME } from '../domain/article.ts'
+import { groupMeta } from '../domain/artwork-group.ts'
 import {
   ARTICLES_FOLDER_NAME,
   type FolderKind,
@@ -8,9 +12,13 @@ import {
   PRINT_FOLDER_NAME,
 } from '../domain/issue.ts'
 import type { DriveAccessToken } from './access-token.server.ts'
+import { checkArticleFolders } from './article-folders.server.ts'
 import type { DriveFolders } from './folders.server.ts'
+import type { IssueFiles } from './issue-files.server.ts'
+import { checkIssueFolders } from './issue-folders.server.ts'
 import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
+import { binOwnFolder, type ForeignChild } from './own-folder-bin.server.ts'
 
 /**
  * Creating an issue and finishing one that Drive stopped halfway (`11d`, `12i`, `1jv85zum`).
@@ -182,4 +190,380 @@ async function finish(setup: IssueSetup, issue: Issue): Promise<FinishOutcome> {
 
 async function reload(setup: IssueSetup, issue: Issue): Promise<Issue> {
   return (await setup.store.findByName(issue.name)) ?? issue
+}
+
+/* ---------- Přejmenovat vydání (`12v`) and Odebrat vydání (`12w`) ---------- */
+
+/** What renaming and removing an issue need beside creating one (`12v`, `12w`). */
+export type IssueFixSetup = IssueSetup & {
+  /** The issue's articles, whose `_meta.json` a rename writes over. */
+  articles: Pick<ArticleStore, 'clearMissing' | 'listCreated' | 'markMissing'>
+  files(accessToken: string): IssueFiles
+  /** The issue's artwork groups, whose `_meta.json` a rename writes over too. */
+  groups: Pick<GroupStore, 'clearMissing' | 'listByIssue' | 'markMissing'>
+}
+
+/** A folder or a `_meta.json` named by what it belongs to, for the dialog's Callout. */
+export type NamedFile = { fileId: string; name: string }
+
+export type RenameIssueOutcome =
+  | { issue: Issue; kind: 'renamed' }
+  | { kind: 'unchanged' }
+  | { existingName: string; kind: 'duplicate' }
+  | { issue: Issue; kind: 'closed' }
+  | { issue: Issue; kind: 'renamed-meanwhile' }
+  | { kind: 'removed' }
+  | { kind: 'issue-folder-missing' }
+  | { kind: 'articles-folder-missing'; name: string }
+  | { articles: NamedFile[]; groups: NamedFile[]; kind: 'folders-missing' }
+  | { files: (NamedFile & { holder: 'article' | 'group' })[]; kind: 'files-binned' }
+  | { kind: Unreached }
+
+/**
+ * Both names locked, in one order, so that two renames crossing each other cannot wait on each
+ * other, and neither name can be created or finished meanwhile.
+ */
+function underBothNames<T>(first: string, second: string, run: () => Promise<T>): Promise<T> {
+  let [low, high] = [issueNameKey(first), issueNameKey(second)].sort()
+  if (low === undefined || high === undefined || low === high) {
+    return lock(low ?? issueNameKey(first), run)
+  }
+  return lock(low, () => lock(high, run))
+}
+
+/**
+ * _Přejmenovat vydání_: the folder on Drive and the `issue` in every article's and group's
+ * `_meta.json`, then the row, all or nothing (`12v`, `11c`). Drive comes first, because a name on
+ * Drive is what a person may still see; the row commits only while nothing changed under it, and
+ * otherwise every file goes back to what it was. An article or a group that came meanwhile makes
+ * the rename start over once, since its `_meta.json` must carry the new name too.
+ */
+export function renameIssue(
+  setup: IssueFixSetup,
+  input: { id: number; name: string; shownName: string },
+): Promise<RenameIssueOutcome> {
+  return underBothNames(input.shownName, input.name, async () => {
+    let current = await setup.store.findById(input.id)
+    if (current === null || current.removedAt !== null) return { kind: 'removed' }
+    if (current.name !== input.shownName) return { issue: current, kind: 'renamed-meanwhile' }
+    if (current.closedAt !== null) return { issue: current, kind: 'closed' }
+    if (current.name === input.name) return { kind: 'unchanged' }
+    let taken = await setup.store.findByName(input.name)
+    if (taken !== null && taken.id !== current.id) {
+      return { existingName: taken.name, kind: 'duplicate' }
+    }
+
+    let folderId = current.folderIds.issue
+    /* An issue whose creation stopped before its folder has nothing on Drive to rename. */
+    if (folderId === null) return commitRename(setup, current, input, [], [])
+
+    let token = await setup.token()
+    if (!token.ok) return { kind: token.reason }
+    let outcome = await renameOnDrive(setup, token.accessToken, current, folderId, input)
+    if (outcome !== 'changed') return outcome
+    let again = await setup.store.findById(input.id)
+    if (again === null) return { kind: 'removed' }
+    let retried = await renameOnDrive(setup, token.accessToken, again, folderId, input)
+    return retried === 'changed' ? { kind: 'unavailable' } : retried
+  })
+}
+
+type Undo = () => Promise<boolean>
+
+async function renameOnDrive(
+  setup: IssueFixSetup,
+  accessToken: string,
+  issue: Issue,
+  folderId: string,
+  input: { id: number; name: string; shownName: string },
+): Promise<RenameIssueOutcome | 'changed'> {
+  let files = setup.files(accessToken)
+  let folders = setup.folders(accessToken)
+  let now = () => setup.now()
+
+  if (issue.completedAt === null) {
+    let standing = await folders.standing(folderId)
+    if (standing === 'unavailable') return { kind: 'unavailable' }
+    if (standing !== 'exists') return { kind: 'issue-folder-missing' }
+  } else {
+    let check = await checkIssueFolders({ folders, issues: setup.store, now }, issue)
+    if (check === 'unavailable') return { kind: 'unavailable' }
+    if (check.missing.includes('issue')) return { kind: 'issue-folder-missing' }
+    if (check.missing.includes('articles')) {
+      return { kind: 'articles-folder-missing', name: issue.name }
+    }
+  }
+
+  let articles = await setup.articles.listCreated(issue.id)
+  let groups = await setup.groups.listByIssue(issue.id)
+  let missingArticles: NamedFile[] = []
+  for (let article of articles) {
+    let check = await checkArticleFolders(
+      { articles: setup.articles, folders, now },
+      { ...article, kind: 'article' },
+      ['article'],
+    )
+    if (check === 'unavailable') return { kind: 'unavailable' }
+    if (check.missing.length > 0)
+      missingArticles.push({ fileId: article.folderId, name: article.name })
+  }
+  let missingGroups: NamedFile[] = []
+  for (let group of groups) {
+    let check = await checkArticleFolders(
+      { articles: setup.articles, folders, groups: setup.groups, now },
+      { ...group, kind: 'group' },
+      ['article'],
+    )
+    if (check === 'unavailable') return { kind: 'unavailable' }
+    if (check.missing.length > 0) {
+      missingGroups.push({ fileId: group.folderId ?? '', name: group.name })
+    }
+  }
+  if (missingArticles.length + missingGroups.length > 0) {
+    return { articles: missingArticles, groups: missingGroups, kind: 'folders-missing' }
+  }
+
+  let metas = await metaFilesOf(files, issue, input.name, articles, groups)
+  if (metas === 'unavailable') return { kind: 'unavailable' }
+  let binned = metas.filter((meta) => meta.state === 'binned')
+  if (binned.length > 0) {
+    return {
+      files: binned.map((meta) => ({ fileId: meta.fileId, holder: meta.holder, name: meta.name })),
+      kind: 'files-binned',
+    }
+  }
+
+  let undo: Undo[] = []
+  let recreated = { articles: new Map<number, string>(), groups: new Map<number, string>() }
+  let isWritten = await files.rename(folderId, input.name)
+  if (isWritten) undo.push(() => files.rename(folderId, issue.name))
+  for (let meta of metas) {
+    if (!isWritten) break
+    if (meta.state === 'here') {
+      isWritten = await files.replaceText(meta.fileId, meta.renamed)
+      if (isWritten) undo.push(() => files.replaceText(meta.fileId, meta.current))
+    } else {
+      /* Deleted for good, so restoring it is not possible: written anew where it belongs, with
+         the key of the article's or group's own attempt, as the app's file. */
+      let made = await files.uploadJson(meta.folderId, META_FILE_NAME, meta.renamed, meta.formKey)
+      isWritten = made.ok
+      if (made.ok) {
+        undo.push(() => files.trash(made.id))
+        ;(meta.holder === 'article' ? recreated.articles : recreated.groups).set(meta.id, made.id)
+      }
+    }
+  }
+
+  let committed = isWritten
+    ? await setup.store.rename({
+        expected: {
+          articles: articles.map((each) => each.id),
+          groups: groups.map((each) => each.id),
+        },
+        id: issue.id,
+        metaFiles: recreated,
+        name: input.name,
+        shownName: input.shownName,
+      })
+    : null
+  if (committed === 'renamed') {
+    let renamed = await setup.store.findById(issue.id)
+    return renamed === null ? { kind: 'removed' } : { issue: renamed, kind: 'renamed' }
+  }
+
+  await undoAll(undo)
+  if (committed === null) return { kind: 'unavailable' }
+  if (committed === 'changed') return 'changed'
+  return answerOf(setup, issue.id, committed, input.name)
+}
+
+/** The row alone, for an issue with nothing on Drive yet. */
+async function commitRename(
+  setup: IssueSetup,
+  issue: Issue,
+  input: { name: string; shownName: string },
+  articles: readonly number[],
+  groups: readonly number[],
+): Promise<RenameIssueOutcome> {
+  let committed = await setup.store.rename({
+    expected: { articles, groups },
+    id: issue.id,
+    metaFiles: { articles: new Map(), groups: new Map() },
+    name: input.name,
+    shownName: input.shownName,
+  })
+  if (committed === 'renamed') {
+    let renamed = await setup.store.findById(issue.id)
+    return renamed === null ? { kind: 'removed' } : { issue: renamed, kind: 'renamed' }
+  }
+  /* An unfinished issue takes no article and no group, so nothing can come into it. */
+  if (committed === 'changed') return { kind: 'unavailable' }
+  return answerOf(setup, issue.id, committed, input.name)
+}
+
+/** What a refused commit says, from the row as it stands now. */
+async function answerOf(
+  setup: IssueSetup,
+  id: number,
+  refusal: 'closed' | 'duplicate' | 'removed' | 'renamed-meanwhile',
+  newName: string,
+): Promise<RenameIssueOutcome> {
+  let now = await setup.store.findById(id)
+  if (now === null || refusal === 'removed') return { kind: 'removed' }
+  if (refusal === 'closed') return { issue: now, kind: 'closed' }
+  if (refusal === 'renamed-meanwhile') return { issue: now, kind: 'renamed-meanwhile' }
+  let taken = await setup.store.findByName(newName)
+  return { existingName: taken?.name ?? newName, kind: 'duplicate' }
+}
+
+/** Newest first, as the steps were made; a step Drive would not take back is logged. */
+async function undoAll(undo: readonly Undo[]): Promise<void> {
+  for (let step of [...undo].reverse()) {
+    if (!(await step())) logDriveFailure('a rename was not undone', 'Drive refused a step back')
+  }
+}
+
+type MetaFile = {
+  /** What the file holds now, for putting it back. */
+  current: string
+  fileId: string
+  folderId: string
+  formKey: string
+  holder: 'article' | 'group'
+  id: number
+  name: string
+  renamed: string
+  state: 'binned' | 'deleted' | 'here'
+}
+
+/** Every `_meta.json` of the issue, where Drive has it, and what it holds before and after. */
+async function metaFilesOf(
+  files: IssueFiles,
+  issue: Issue,
+  newName: string,
+  articles: readonly Article[],
+  groups: readonly ListedGroup[],
+): Promise<MetaFile[] | 'unavailable'> {
+  let issueFolderId = issue.folderIds.issue ?? ''
+  let metas: MetaFile[] = []
+  for (let article of articles) {
+    let content = (name: string) =>
+      articleMeta({
+        articleFolderId: article.folderId,
+        articleName: article.name,
+        authors: article.authors,
+        docId: article.docId,
+        issue: name,
+        issueFolderId,
+      })
+    let state = await stateOf(files, article.metaFileId)
+    if (state === 'unavailable') return state
+    metas.push({
+      current: content(issue.name),
+      fileId: article.metaFileId ?? '',
+      folderId: article.folderId,
+      formKey: article.formKey,
+      holder: 'article',
+      id: article.id,
+      name: article.name,
+      renamed: content(newName),
+      state,
+    })
+  }
+  for (let group of groups) {
+    let groupFolderId = group.folderId ?? ''
+    let content = (name: string) =>
+      groupMeta({ groupFolderId, issue: name, issueFolderId, name: group.name, note: group.note })
+    let state = await stateOf(files, group.metaFileId)
+    if (state === 'unavailable') return state
+    metas.push({
+      current: content(issue.name),
+      fileId: group.metaFileId ?? '',
+      folderId: groupFolderId,
+      formKey: group.formKey,
+      holder: 'group',
+      id: group.id,
+      name: group.name,
+      renamed: content(newName),
+      state,
+    })
+  }
+  return metas
+}
+
+async function stateOf(
+  files: IssueFiles,
+  fileId: string | null,
+): Promise<MetaFile['state'] | 'unavailable'> {
+  if (fileId === null) return 'deleted'
+  let location = await files.locate(fileId)
+  if (location.kind === 'unavailable') return 'unavailable'
+  return location.kind === 'binned' ? 'binned' : location.kind === 'deleted' ? 'deleted' : 'here'
+}
+
+export type RemoveIssueOutcome =
+  | { issue: Issue; kind: 'removed' }
+  | { kind: 'already-removed' }
+  | { issue: Issue; kind: 'has-article' | 'has-group' }
+  | { folderId: string; kind: 'moved' }
+  | { files: ForeignChild[]; kind: 'foreign' }
+  | { kind: Unreached }
+
+/**
+ * _Odebrat vydání_: the row is marked first, so its link answers as gone at once and no article
+ * can start in a folder about to go to the bin; then the issue folder goes to the bin with
+ * everything in it, when it holds only what the app made and stands where the app made it.
+ * Anything else takes the mark back and leaves Drive as it was (`12w`).
+ */
+export async function removeIssue(
+  setup: IssueFixSetup,
+  input: { id: number },
+): Promise<RemoveIssueOutcome> {
+  let first = await setup.store.findById(input.id)
+  if (first === null || first.removedAt !== null) return { kind: 'already-removed' }
+  return oneAtATime(first.name, async () => {
+    let issue = await setup.store.findById(input.id)
+    if (issue === null || issue.removedAt !== null) return { kind: 'already-removed' }
+    let folderId = issue.folderIds.issue
+
+    let token: DriveAccessToken | null = null
+    if (folderId !== null) {
+      if (setup.issuesFolderId === '') {
+        logDriveFailure('an issue was not removed', 'ISSUES_FOLDER_ID is empty')
+        return { kind: 'unavailable' }
+      }
+      token = await setup.token()
+      if (!token.ok) return { kind: token.reason }
+    }
+
+    let marked = await setup.store.markRemoved(issue.id, setup.now())
+    if (marked === 'already-removed') return { kind: 'already-removed' }
+    if (marked !== 'removed') return { issue, kind: marked }
+    if (folderId === null || token === null || !token.ok) return { issue, kind: 'removed' }
+
+    let printSheetId = await setup.store.printSheetId(issue.id)
+    let ownIds = new Set(
+      [
+        folderId,
+        issue.folderIds.articles,
+        issue.folderIds.print,
+        issue.groupsFolderId,
+        issue.evidenceSpreadsheetId,
+        printSheetId,
+      ].filter((id): id is string => id !== null),
+    )
+    let binned = await binOwnFolder(setup.files(token.accessToken), {
+      expectedParentId: setup.issuesFolderId,
+      folderId,
+      folderName: issue.name,
+      ownIds,
+    })
+    if (binned.kind === 'binned' || binned.kind === 'already-binned') {
+      return { issue, kind: 'removed' }
+    }
+    await setup.store.unmarkRemoved(issue.id)
+    if (binned.kind === 'moved') return { folderId, kind: 'moved' }
+    if (binned.kind === 'foreign') return { files: binned.files, kind: 'foreign' }
+    return { kind: 'unavailable' }
+  })
 }

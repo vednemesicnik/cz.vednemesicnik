@@ -3,6 +3,8 @@
  * reopening asked from a row, and what the actions of both read from their context.
  */
 
+import { Session } from 'remix/session'
+
 import type { Person } from '../../middleware/auth.server.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { DriveAccount, type DriveAccountContext } from '../../middleware/drive-account.server.ts'
@@ -43,6 +45,27 @@ export async function driveView(context: PageContext) {
   return { expectedEmail: driveAccount.expectedEmail, status }
 }
 
+/*
+ * What a fix of an issue leaves for the page it redirects to (`12v`, `12w`): focus on the
+ * detail's title after a rename, on the overview's heading after a removal, and the row of an
+ * issue renamed from the overview on the tint of a change. Taken once.
+ */
+const ISSUE_FIXED_SESSION_KEY = 'issueFixed'
+
+export type IssueFixed = { focus: 'heading' } | { focus: 'title' | 'row'; issueId: number }
+
+export function flashIssueFixed(context: PageContext, fixed: IssueFixed): void {
+  ;(context.get(Session) as Session | undefined)?.flash(ISSUE_FIXED_SESSION_KEY, fixed)
+}
+
+export function takeIssueFixed(context: PageContext): IssueFixed | null {
+  let session = context.get(Session) as Session | undefined
+  let value = session?.get(ISSUE_FIXED_SESSION_KEY) as IssueFixed | undefined
+  if (value === undefined) return null
+  session?.unset(ISSUE_FIXED_SESSION_KEY)
+  return value
+}
+
 export async function renderOverview(
   context: PageContext,
   editor: Person,
@@ -51,15 +74,24 @@ export async function renderOverview(
   init?: ResponseInit,
 ): Promise<Response> {
   let articles = context.get(Articles) as ArticlesContext
-  let [issues, driveAccount, articleCounts, artworkTotals, articleWaiting, groupsMissing] =
-    await Promise.all([
-      issuesOf(context).store.list(),
-      driveView(context),
-      articles.articles.countsByIssue(),
-      articles.artworks.artworks.countsByIssue(),
-      articles.articles.waitingCountsByIssue(),
-      articles.artworks.groups.missingCountsByIssue(),
-    ])
+  let [
+    issues,
+    driveAccount,
+    articleCounts,
+    artworkTotals,
+    articleWaiting,
+    groupsMissing,
+    groupCounts,
+  ] = await Promise.all([
+    issuesOf(context).store.list(),
+    driveView(context),
+    articles.articles.countsByIssue(),
+    articles.artworks.artworks.countsByIssue(),
+    articles.articles.waitingCountsByIssue(),
+    articles.artworks.groups.missingCountsByIssue(),
+    articles.artworks.groups.countsByIssue(),
+  ])
+  let fixed = takeIssueFixed(context)
   /* _Čeká na vás_ adds up the amber and pink tags of the issue's articles and artworks, one for
      each article or group with a missing folder, and one for the issue's own Callout of a missing
      folder (`11a`, `01d`, `12j`): a Callout counts, not a folder. */
@@ -81,10 +113,13 @@ export async function renderOverview(
     <OverviewPage
       articleCounts={articleCounts}
       artworkCounts={artworkCounts}
+      changedIssueId={fixed?.focus === 'row' ? fixed.issueId : undefined}
       dialog={dialog}
       driveAccount={driveAccount}
       filter={filter}
+      groupCounts={groupCounts}
       hasRegistry={issuesOf(context).hasRegistry}
+      isHeadingFocused={fixed?.focus === 'heading'}
       issues={issues}
       person={editor}
       toasts={context.get(Toasts) as readonly ToastMessage[]}

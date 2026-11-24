@@ -69,7 +69,9 @@ async function writeEvidence(
 ): Promise<SheetsResult> {
   let issue = await queue.issues.findById(issueId)
   let folderId = issue?.folderIds.issue ?? null
-  if (issue === null || issue.completedAt === null || folderId === null) return { ok: true }
+  /* A removed issue's Evidence went to the bin with its folder (`12w`) and is written no more. */
+  if (issue === null || issue.completedAt === null || issue.removedAt !== null) return { ok: true }
+  if (folderId === null) return { ok: true }
 
   let spreadsheetId = issue.evidenceSpreadsheetId
   if (spreadsheetId === null) {

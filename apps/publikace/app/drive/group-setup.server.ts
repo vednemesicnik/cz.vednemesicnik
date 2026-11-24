@@ -54,7 +54,10 @@ export type CreateGroupOutcome =
   | { group: GroupRow; kind: 'created' }
   | { errors: { name: string | null; note: string | null }; kind: 'invalid' }
   | { kind: 'disconnected' | 'not-connected' }
-  /** The issue is not active: unfinished issues and closed ones take no group (`01a`, `12h`). */
+  /**
+   * The issue is not active: unfinished, closed and removed issues take no group (`01a`, `12h`,
+   * `12w`).
+   */
   | { kind: 'not-active' }
   | { kind: 'unavailable' }
 
@@ -90,7 +93,9 @@ async function create(setup: GroupSetup, input: NewGroup): Promise<CreateGroupOu
   if (existing?.createdAt != null) return { group: existing, kind: 'created' }
 
   let issue = await setup.issues.findById(input.issueId)
-  if (issue === null || issueState(issue) !== 'active') return { kind: 'not-active' }
+  if (issue === null || issue.removedAt !== null || issueState(issue) !== 'active') {
+    return { kind: 'not-active' }
+  }
   let issueFolderId = issue.folderIds.issue
   if (issueFolderId === null) return { kind: 'not-active' }
   /* A field the dialog can name is named before anything else, Drive's answer included. */
@@ -130,10 +135,13 @@ async function create(setup: GroupSetup, input: NewGroup): Promise<CreateGroupOu
     let again = checkGroup(input, names)
     return again.ok ? { kind: 'unavailable' } : { errors: again.errors, kind: 'invalid' }
   }
+  if (started === 'issue-removed') return { kind: 'not-active' }
+  /* Read again now that the attempt holds the issue, for the name `_meta.json` carries (`12v`). */
+  let named = (await setup.issues.findById(issue.id)) ?? issue
 
   let committed: GroupRow | null = null
   try {
-    if (await makeFiles(setup, files, started.attempt, issue, issueFolderId, groupsFolderId)) {
+    if (await makeFiles(setup, files, started.attempt, named, issueFolderId, groupsFolderId)) {
       committed = await setup.groups.commit(started.attempt.id, setup.now())
     }
   } catch (error) {

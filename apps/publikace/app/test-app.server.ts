@@ -387,14 +387,16 @@ export async function seedArticle(
   let articleLink = await links.articleLinkOf(issueId)
   if (articleLink === null) throw new Error('The issue has no link for articles.')
   let issue = await createIssueStore(app.database).findById(issueId)
-  let { attempt } = await articles.startAttempt({
-    at: SEEDED_AT,
-    authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
-    formKey: `seeded-${issueId}-${crypto.randomUUID()}`,
-    issueId,
-    linkId: articleLink.id,
-    name,
-  })
+  let { attempt } = started(
+    await articles.startAttempt({
+      at: SEEDED_AT,
+      authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
+      formKey: `seeded-${issueId}-${crypto.randomUUID()}`,
+      issueId,
+      linkId: articleLink.id,
+      name,
+    }),
+  )
   let folderId = `f-article-${attempt.id}`
   app.drive.seedFolder(folderId, name, issue?.folderIds.articles ?? '')
   await articles.setDriveId(attempt.id, 'folder', folderId)
@@ -466,4 +468,10 @@ export async function seedBatch(
   let committed = await artworks.findBatch(batch.id)
   if (committed === null) throw new Error('The batch was not seeded.')
   return committed
+}
+
+/** An attempt a test starts in an issue it never removed. */
+export function started<T>(result: T | 'issue-removed'): T {
+  if (result === 'issue-removed') throw new Error('The issue was removed.')
+  return result
 }

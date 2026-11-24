@@ -180,6 +180,10 @@ When Drive fails at the issue folder itself, nothing is kept: the row goes in th
 the name is free again (`03` row 29). Closing only changes the state. The links stop working, the
 jobs skip the issue, and nothing changes on Drive, sharing included (`12g`, #120).
 
+An _Aktivní_ or _Nedokončené_ issue can be renamed (`12v`), and its old address answers 404. An
+issue with no article and no group can be removed in any state (`12w`), and its name is free
+again.
+
 ## Rules every screen follows
 
 - **The app's database is the truth.** Drive holds the files and Gmail holds the proof of
@@ -192,6 +196,10 @@ jobs skip the issue, and nothing changes on Drive, sharing included (`12g`, #120
 - **Nothing is deleted for good.** The app only bins, and never touches what a person made or
   moved. It never recreates a folder somebody removed. It marks the folder missing, shows it
   (`12j`), and a link page that needs it accepts nothing until it is back.
+- **Any editor-in-chief can mend a mistake made in creating something.** What is written wrong is
+  corrected; what should not exist is removed: binned on the shared drive, its row kept with the
+  time of removal, and not brought back by restoring the folder. A sent e-mail cannot be taken
+  back, and what a consent covers is replaced, never changed or removed (`12u`).
 - **An e-mail goes only after the action is committed**, because a sent e-mail cannot be taken
   back. A failure after the commit never undoes the article or the batch.
 - **The Doc carries only the text.** There is no menu, add-on or link in it. Every step on an
@@ -209,17 +217,17 @@ jobs skip the issue, and nothing changes on Drive, sharing included (`12g`, #120
 
 ## Limits
 
-| What                               | Limit                                                           | Where        |
-| ---------------------------------- | --------------------------------------------------------------- | ------------ |
-| Issue name                         | 100 characters, unique regardless of case                       | `11d`        |
-| Article                            | name up to 200 characters, 1–10 authors with distinct addresses | `20a`        |
-| One newsroom or artworks link      | 30 sends in the last 60 minutes                                 | `02a`        |
-| Uploads through one artworks link  | 60 files in the last 60 minutes, 15 MB each                     | `02a`, `21a` |
-| One batch                          | 20 artworks; the request's attachments up to 25 MB              | `21c`        |
-| Consent requests from one link     | 5 distinct addresses in the last 24 hours                       | `03` row 50  |
-| E-mails started from any link page | 300 a day for the whole app (`PUBLIC_MAIL_PER_DAY`)             | `03` row 50  |
-| An answer from _Ke kontrole_       | plain text, up to 5 000 characters                              | `13d`        |
-| A session                          | 7 days from sign-in, roles re-checked every 10 minutes          | `03` row 3   |
+| What                               | Limit                                                              | Where        |
+| ---------------------------------- | ------------------------------------------------------------------ | ------------ |
+| Issue name                         | 100 characters, unique regardless of case among issues not removed | `11d`        |
+| Article                            | name up to 200 characters, 1–10 authors with distinct addresses    | `20a`        |
+| One newsroom or artworks link      | 30 sends in the last 60 minutes                                    | `02a`        |
+| Uploads through one artworks link  | 60 files in the last 60 minutes, 15 MB each                        | `02a`, `21a` |
+| One batch                          | 20 artworks; the request's attachments up to 25 MB                 | `21c`        |
+| Consent requests from one link     | 5 distinct addresses in the last 24 hours                          | `03` row 50  |
+| E-mails started from any link page | 300 a day for the whole app (`PUBLIC_MAIL_PER_DAY`)                | `03` row 50  |
+| An answer from _Ke kontrole_       | plain text, up to 5 000 characters                                 | `13d`        |
+| A session                          | 7 days from sign-in, roles re-checked every 10 minutes             | `03` row 3   |
 
 ## Old issues and the cutover
 

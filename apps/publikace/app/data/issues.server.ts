@@ -34,17 +34,45 @@ export type IssueStore = {
    * a folder is still missing.
    */
   complete(id: number, when: Temporal.Instant): Promise<void>
+  /**
+   * A removed issue too: the link pages, the answers to a race and the record queue tell it from
+   * one that never existed.
+   */
   findById(id: number): Promise<Issue | null>
-  /** Every issue by its name, case and surrounding spaces aside. */
+  /** Every issue not removed by its name, case and surrounding spaces aside. */
   findByName(name: string): Promise<Issue | null>
   /** The row first, before Drive. A name already in the app is refused, never overwritten. */
   insert(issue: NewIssue): Promise<InsertResult>
-  /** Unfinished first, then active, then closed; newest first in each. */
+  /** Unfinished first, then active, then closed; newest first in each. Removed ones never. */
   list(): Promise<Issue[]>
+  /**
+   * _Odebrat vydání_ (`12w`): sets `removed_at` while the issue holds no article and no group. A
+   * failed attempt waiting for the bin is neither; one still running is, so a link's send that
+   * started before the removal stops it.
+   */
+  markRemoved(id: number, at: Temporal.Instant): Promise<MarkRemovedOutcome>
   /** Marks the folders found missing; a mark already there keeps its first time (`12j`). */
   markMissing(id: number, kinds: readonly IssueFolderKind[], at: Temporal.Instant): Promise<void>
+  /**
+   * The `_Podklady` sheet the print job reported for the issue, an app's own file in its print
+   * folder (#110), or `null` when it reported none.
+   */
+  printSheetId(id: number): Promise<string | null>
   /** Only while Drive refused the issue folder itself, so nothing of the issue exists. */
   remove(id: number): Promise<void>
+  /**
+   * _Přejmenovat vydání_ (`12v`), the database after Drive: the new name only while the issue
+   * still has the name the dialog showed, is neither closed nor removed, holds exactly the
+   * articles and groups whose `_meta.json` Drive was given, and no attempt at another is running.
+   * `metaFiles` are the files written anew for ones deleted for good, by article and group ID.
+   */
+  rename(input: {
+    expected: { articles: readonly number[]; groups: readonly number[] }
+    id: number
+    metaFiles: { articles: ReadonlyMap<number, string>; groups: ReadonlyMap<number, string> }
+    name: string
+    shownName: string
+  }): Promise<RenameOutcome>
   /**
    * _Znovu otevřít_ (`12h`): the same links and jobs work again, because they read the issue's
    * state and never their own copy of it. `false` when the issue was open already.
@@ -56,7 +84,23 @@ export type IssueStore = {
   setFolder(id: number, kind: FolderKind, folderId: string): Promise<void>
   /** Keeps the folder of the issue's artwork groups; one already stored stays. */
   setGroupsFolder(id: number, folderId: string): Promise<void>
+  /** Takes the removal back when Drive refused the bin after it (`12w`). */
+  unmarkRemoved(id: number): Promise<void>
 }
+
+export type MarkRemovedOutcome = 'already-removed' | 'has-article' | 'has-group' | 'removed'
+
+/**
+ * `changed` is an article or a group that came or went, or an attempt at one still running;
+ * `duplicate` a name another issue took meanwhile.
+ */
+export type RenameOutcome =
+  | 'changed'
+  | 'closed'
+  | 'duplicate'
+  | 'removed'
+  | 'renamed'
+  | 'renamed-meanwhile'
 
 type Row = Record<string, unknown>
 
@@ -83,15 +127,26 @@ function toIssue(row: Row): Issue {
       issue: parseStamp(row['folder_missing_at']),
     },
     name: String(row['name']),
+    removedAt: parseStamp(row['removed_at']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
     startedByEmail: String(row['started_by_email']),
     startedByName: String(row['started_by_name']),
   }
 }
 
+/** Every row created, none still running, and the IDs exactly those expected. */
+function isExactly(rows: readonly Row[], expected: readonly number[]): boolean {
+  if (rows.some((row) => row['created_at'] == null)) return false
+  let ids = rows.map((row) => Number(row['id'])).sort((a, b) => a - b)
+  let wanted = [...expected].sort((a, b) => a - b)
+  return ids.length === wanted.length && ids.every((value, index) => value === wanted[index])
+}
+
 export function createIssueStore(database: Database): IssueStore {
   async function byKey(db: Database, key: string): Promise<Issue | null> {
-    let result = await db.exec(sql`SELECT * FROM issues WHERE name_key = ${key}`)
+    let result = await db.exec(
+      sql`SELECT * FROM issues WHERE name_key = ${key} AND removed_at IS NULL`,
+    )
     let row = result.rows?.[0]
     return row === undefined ? null : toIssue(row)
   }
@@ -160,6 +215,7 @@ export function createIssueStore(database: Database): IssueStore {
     async list() {
       let result = await database.exec(
         sql`SELECT * FROM issues
+            WHERE removed_at IS NULL
             ORDER BY
               CASE
                 WHEN closed_at IS NOT NULL THEN 2
@@ -189,8 +245,72 @@ export function createIssueStore(database: Database): IssueStore {
       }
     },
 
+    markRemoved(id, at) {
+      return database.transaction(async (db) => {
+        let result = await db.exec(
+          sql`UPDATE issues SET removed_at = ${stamp(at)}
+              WHERE id = ${id} AND removed_at IS NULL
+                AND NOT EXISTS (SELECT 1 FROM articles
+                                WHERE issue_id = ${id} AND cleanup_at IS NULL)
+                AND NOT EXISTS (SELECT 1 FROM artwork_groups
+                                WHERE issue_id = ${id} AND cleanup_at IS NULL)`,
+        )
+        if ((result.affectedRows ?? 0) === 1) return 'removed'
+        let issue = await db.exec(sql`SELECT removed_at FROM issues WHERE id = ${id}`)
+        if (issue.rows?.[0]?.['removed_at'] != null) return 'already-removed'
+        let article = await db.exec(
+          sql`SELECT 1 FROM articles WHERE issue_id = ${id} AND cleanup_at IS NULL LIMIT 1`,
+        )
+        return (article.rows ?? []).length > 0 ? 'has-article' : 'has-group'
+      })
+    },
+
+    async printSheetId(id) {
+      let result = await database.exec(
+        sql`SELECT sheet_id FROM print_handoffs WHERE issue_id = ${id}`,
+      )
+      return text(result.rows?.[0]?.['sheet_id'])
+    },
+
     async remove(id) {
       await database.exec(sql`DELETE FROM issues WHERE id = ${id}`)
+    },
+
+    rename({ expected, id, metaFiles, name, shownName }) {
+      let trimmed = name.normalize('NFC').trim()
+      let key = issueNameKey(name)
+      return database.transaction(async (db) => {
+        let current = await db.exec(sql`SELECT name, closed_at, removed_at FROM issues
+            WHERE id = ${id}`)
+        let row = current.rows?.[0]
+        if (row === undefined || row['removed_at'] != null) return 'removed'
+        if (row['name'] !== shownName) return 'renamed-meanwhile'
+        if (row['closed_at'] != null) return 'closed'
+
+        /* What the rename wrote on Drive, and nothing else, so an article that came meanwhile
+           never keeps the old name in its `_meta.json`. */
+        let articles = await db.exec(sql`SELECT id, created_at FROM articles
+            WHERE issue_id = ${id} AND cleanup_at IS NULL`)
+        let groups = await db.exec(sql`SELECT id, created_at FROM artwork_groups
+            WHERE issue_id = ${id} AND cleanup_at IS NULL`)
+        if (!isExactly(articles.rows ?? [], expected.articles)) return 'changed'
+        if (!isExactly(groups.rows ?? [], expected.groups)) return 'changed'
+
+        let taken = await db.exec(sql`SELECT 1 FROM issues
+            WHERE name_key = ${key} AND removed_at IS NULL AND id <> ${id}`)
+        if ((taken.rows ?? []).length > 0) return 'duplicate'
+
+        await db.exec(sql`UPDATE issues SET name = ${trimmed}, name_key = ${key} WHERE id = ${id}`)
+        for (let [articleId, fileId] of metaFiles.articles) {
+          await db.exec(sql`UPDATE articles SET meta_file_id = ${fileId} WHERE id = ${articleId}`)
+        }
+        for (let [groupId, fileId] of metaFiles.groups) {
+          await db.exec(
+            sql`UPDATE artwork_groups SET meta_file_id = ${fileId} WHERE id = ${groupId}`,
+          )
+        }
+        return 'renamed'
+      })
     },
 
     async reopen(id) {
@@ -212,6 +332,10 @@ export function createIssueStore(database: Database): IssueStore {
         sql`UPDATE issues SET groups_folder_id = ${folderId}
             WHERE id = ${id} AND groups_folder_id IS NULL`,
       )
+    },
+
+    async unmarkRemoved(id) {
+      await database.exec(sql`UPDATE issues SET removed_at = NULL WHERE id = ${id}`)
     },
 
     async setFolder(id, kind, folderId) {

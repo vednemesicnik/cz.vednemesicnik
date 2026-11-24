@@ -4,6 +4,8 @@ export type TableRowProps = {
   children?: RemixNode
   /** The grid every row of one table shares, head row included. */
   columns: string
+  /** Just changed, on the tint of a change until the next load (`12u`, as `12e`). */
+  isChanged?: boolean
   isHead?: boolean
   isLast?: boolean
   /** A row that is out of play, in tertiary ink: a closed issue. */
@@ -21,6 +23,7 @@ export function TableRow(handle: Handle<TableRowProps>) {
       children,
       columns,
       id,
+      isChanged = false,
       isHead = false,
       isLast = false,
       isMuted = false,
@@ -31,6 +34,7 @@ export function TableRow(handle: Handle<TableRowProps>) {
     if (isMuted) classes.push('vdm-row--muted')
     if (isLast) classes.push('vdm-row--last')
     if (isSelected) classes.push('vdm-row--selected')
+    if (isChanged) classes.push('vdm-changed')
 
     return (
       <div class={classes.join(' ')} id={id} role="row" style={{ gridTemplateColumns: columns }}>
