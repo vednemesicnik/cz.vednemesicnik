@@ -2,7 +2,7 @@
 name: next-issue
 description: After the PR is merged — land the aftermath, bank what survives the issue, and hand off to a fresh context window for the next one. Use once a PR is merged and the work moves on to the next issue.
 argument-hint: [next-issue-number]
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git fetch:*), Bash(ls:*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git fetch:*), Bash(ls:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
 ---
 
 ## Requested next issue number
@@ -94,7 +94,9 @@ Work through these; report what each one did or why it was a no-op.
    worktrees in one pass.
 4. **Confirm the issue closed.** A squash-merged `Closes #<n>` closes it automatically, but
    only if the line survived into the PR body. If it is still open, close it with a comment
-   naming the PR.
+   naming the PR. Closed, its status is _Done_
+   (`gh api repos/{owner}/{repo}/issues/<n> --jq .status.name`); if it is not, set it with
+   `gh api -X PATCH repos/{owner}/{repo}/issues/<n> -f status=Done --jq .status.name`.
 5. **Close the parent epic when its last child lands.** If the retired issue has a parent
    (`gh issue view <n> --json parent`), read that parent's children
    (`gh issue view <epic> --json subIssues`). While any of them is still open, name it and
@@ -137,7 +139,8 @@ What belongs in it:
 ### 🛑 Gate — Follow-ups are offered, not filed
 
 If the issue surfaced work worth doing later, **list it and ask** — one line each, with
-what you would title it. File only what the user picks. The backlog here grows faster than
+what you would title it and its type (_Bug_, _Feature_ or _Task_). File only what the user
+picks, with that type (`gh issue create --type …`); a new issue starts in _Backlog_. The backlog here grows faster than
 it drains, and an agent filing issues on its own initiative is part of why.
 
 ### Phase 3 — Pick the next issue

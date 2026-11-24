@@ -2,7 +2,7 @@
 name: plan-issue
 description: Fetch a GitHub issue and produce a repo-aware implementation plan (plan mode). Use when an issue is about to be worked on and needs a plan before any code is written.
 argument-hint: <issue-number>
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
 ---
 
 ## Requested issue number
@@ -130,8 +130,15 @@ You are preparing an implementation plan for the GitHub issue shown above.
 9. **Save the plan file** once approved: write the same plan to
    `~/.claude/plans/plan-publikace-issue-<number>-<slug>.md`. The `publikace-` part is not
    decoration — `~/.claude/plans/` is shared with `cz.vednemesicnik`, whose issue numbers
-   overlap with this repo's. That file is the only thing this command writes — do not edit
-   the repo or write to GitHub.
+   overlap with this repo's. That file and the issue's status are the only things this command
+   writes — do not edit the repo or write anything else to GitHub.
+
+   **Move the issue to _Todo_** once the plan is approved, so that it shows under _Active_:
+   read its status with `gh api repos/{owner}/{repo}/issues/<number> --jq .status.name`, and
+   only when that is _Backlog_ or empty, set it with
+   `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status=Todo --jq .status.name`.
+   A plan redrawn for an issue already _In progress_ or _In review_ never moves it back.
+   [docs/workflow-skills.md](../../../docs/workflow-skills.md) has which step sets which status.
 
 10. **Close with what is open, in the order it should be done.** `/implement-issue <number>`,
     which picks up that plan file, is **one item on that list, not the list.** Planning almost

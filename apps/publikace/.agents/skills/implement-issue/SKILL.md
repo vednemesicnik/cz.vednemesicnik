@@ -2,7 +2,7 @@
 name: implement-issue
 description: Implement the approved plan for a GitHub issue on a feature branch — autonomous edits, typecheck + tests, Conventional Commits (stops before the PR). Use when a plan for an issue is approved and the code has to be written, or when work resumes on a feature branch that already has one.
 argument-hint: [issue-number]
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(ls:*), Bash(node --version)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(ls:*), Bash(node --version), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
 ---
 
 ## Requested issue number
@@ -73,6 +73,11 @@ Conventional Commits. Stop before pushing and before the PR — that is `/ship-i
    - On a feature branch for a **different** issue: stop and ask. If the new work
      genuinely builds on that unmerged branch, branching off it — a stacked PR — is
      established practice here, but it is the user's call, not an assumption.
+
+   Once on the branch, **move the issue to _In progress_**: read its status with
+   `gh api repos/{owner}/{repo}/issues/<number> --jq .status.name`, and unless it is already
+   _In progress_ or _In review_, set it with
+   `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status='In progress' --jq .status.name`.
 
 5. **Load what governs the files you'll touch** before the first edit: `AGENTS.md`
    (where a change belongs, house style, the things that bite),

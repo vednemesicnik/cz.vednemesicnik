@@ -2,7 +2,7 @@
 name: ship-issue
 description: Close out the implementation on this branch — review + auto-fix, open the PR, get CI green, then ask and land it. Use when the implementation on a feature branch is finished and needs a review pass, a pull request, and merging.
 argument-hint: [issue-number]
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(gh pr checks:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(gh pr checks:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
 ---
 
 ## Requested issue number
@@ -142,6 +142,12 @@ Drive the `commit-push-pr` skill. Enforce the repo's conventions:
 - If the push is rejected by lefthook, read the failure before re-running: Node 24 and an
   unformatted `.claude/settings.local.json` both fail it for reasons unrelated to the
   diff. `--no-verify` is not the fix.
+
+Once the PR exists, **check that the issue is _In review_**:
+`gh api repos/{owner}/{repo}/issues/<number> --jq .status.name`. GitHub moves it there itself
+when a PR into `dev` says `Closes #<n>`, but not for a PR stacked on another branch, where the
+keyword closes nothing. If it is anything else, set it with
+`gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status='In review' --jq .status.name`.
 
 Once the PR exists and you have its URL, retire the plan:
 `rm ~/.claude/plans/plan-publikace-issue-<number>-*.md`. What it was holding now lives in the

@@ -41,6 +41,27 @@ written to be matched, so _"naplánuj #201"_ reaches `/plan-issue` without the n
 That is the reason these are skills rather than commands, and it is worth leaning on — the set is
 large enough that remembering eight names is worse than describing the act.
 
+## The issue's type and status
+
+Every issue carries a type from the organisation: _Bug_ when the app does something other than
+it should, _Feature_ when it does not yet do what the design draws, _Task_ for a deployment, a
+job to set up or anything else that is work rather than behaviour.
+
+Its status on GitHub follows the line of skills, and the _Active_ tab of the issue list shows
+what is _Todo_, _In progress_ or _In review_:
+
+| Status        | Set by                                                                             |
+| ------------- | ---------------------------------------------------------------------------------- |
+| _Backlog_     | GitHub, when the issue is opened                                                   |
+| _Todo_        | `/plan-issue`, once the plan is approved                                           |
+| _In progress_ | `/implement-issue`, once it is on the branch                                       |
+| _In review_   | GitHub, when a PR with `Closes #<n>` opens; `/ship-issue` sets it for a stacked PR |
+| _Done_        | GitHub, when the issue closes; `/next-issue` checks it                             |
+
+A skill never moves an issue back: a plan redrawn for an issue in progress leaves it there. The
+status is read and set through the REST API, `gh api repos/{owner}/{repo}/issues/<n>` and the
+same path with `-X PATCH -f status=…`, because `gh issue` does not know it yet.
+
 ## Where each one stops, and why
 
 The gates are the point of the sequence. A skill that ran past its gate would be deciding
