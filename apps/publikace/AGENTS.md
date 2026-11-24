@@ -231,6 +231,10 @@ files until this one has its own.
 - An issue title is a plain English sentence about the problem, never a `type(scope):` subject.
   That form belongs to commits and PR titles, because the squash turns a PR title into a commit
   on `dev`.
+- An issue is opened with its type in the same command, `gh issue create --type Bug` (or
+  `Feature`, `Task`), whichever skill or session files it. The types are defined in
+  [docs/workflow-skills.md](docs/workflow-skills.md). One opened without it gets it at once with
+  `gh issue edit <n> --type …`.
 - The design's words are Czech and its terms are fixed: _vydání_ (not _číslo_), _obrazové dílo_,
   _poskytovatel_, _souhlas_ — [docs/copy-context.md](docs/copy-context.md) lists them.
 

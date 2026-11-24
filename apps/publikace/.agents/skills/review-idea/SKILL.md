@@ -141,8 +141,10 @@ which of the four it is, and why, in your own voice:
   7 the design citations, 8 and 9 its security section. The issue also says **which sections of
   `product.md`, `architecture.md` or `security.md` it changes, and in what words**, and which
   review finding it resolves: the documents change in the same PR as the code, so the plan and
-  the app never disagree for longer than a branch. An issue that carries all of it is one a
-  planner cannot misread.
+  the app never disagree for longer than a branch. It names its type too, _Bug_, _Feature_ or
+  _Task_ as [docs/workflow-skills.md](../../../docs/workflow-skills.md) defines them, because
+  the issue is opened with it (`gh issue create --type …`). An issue that carries all of it is
+  one a planner cannot misread.
 - **Ask design first.** 6 or 7 unresolved. Run `/ask-design`, and come back to this round with
   the answer — not to `/plan-issue`.
 - **Change the plan.** The proposal is right and the code already does it, or nothing in the
