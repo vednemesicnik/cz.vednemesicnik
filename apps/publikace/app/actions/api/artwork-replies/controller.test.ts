@@ -3,8 +3,9 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { appOrigin } from '../../../auth/environment.server.ts'
+import { createArticleStore } from '../../../data/articles.server.ts'
 import { createArtworkStore } from '../../../data/artworks.server.ts'
-import { batchState } from '../../../domain/artwork.ts'
+import { batchState, batchStateDetail } from '../../../domain/artwork.ts'
 import {
   createTestApp,
   fakeIdentityToken,
@@ -150,6 +151,43 @@ describe('the reply check’s API', () => {
       assert.equal(stored?.consentFileId, 'pdf-1')
       assert.equal(stored?.replyText, null)
       assert.deepEqual((await claim(app)).batches, [])
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('archives a consent once a missing Licence is back, as the step under the article says', async () => {
+    let { app, article, batch, store } = await setup()
+    let articles = createArticleStore(app.database)
+    try {
+      await articles.markMissing(article.articleId, ['licences'], Temporal.Now.instant())
+      let missing = await claim(app)
+      assert.equal(missing.batches[0]?.licencesFolderId, null)
+      await report(app, missing.runKey, [
+        {
+          archive: { error: 'The Licence folder is missing.' },
+          batchId: batch.id,
+          reply: reply('Souhlasím'),
+          state: 'reply_matches',
+        },
+      ])
+      let failed = await store.findBatch(batch.id)
+      assert.equal(failed === null ? null : batchState(failed), 'error')
+      assert.equal(failed === null ? null : batchStateDetail(failed), 'konverzace se neuložila')
+
+      await articles.clearMissing(article.articleId, ['licences'])
+      let back = await claim(app)
+      assert.equal(back.batches[0]?.licencesFolderId, article.licencesFolderId)
+      await report(app, back.runKey, [
+        {
+          archive: { fileId: 'pdf-1' },
+          batchId: batch.id,
+          reply: reply('Souhlasím'),
+          state: 'reply_matches',
+        },
+      ])
+      let approved = await store.findBatch(batch.id)
+      assert.equal(approved === null ? null : batchState(approved), 'approved')
     } finally {
       await app.close()
     }

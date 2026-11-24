@@ -73,24 +73,36 @@ export function headingText(parts: readonly HeadingPart[]): string {
 
 /**
  * The sentences under the step: what the article cannot do and when the app found it (`12j`).
- * The request is named only where a batch waits for _Poslat žádost znovu_, which needs the
- * article's folder and `Licence`. The sentence about consents waits for the reply check to go
- * through the app; until then it would promise what nothing does.
+ * Each sentence stands only where it holds. The request is named only where a batch waits for
+ * _Poslat žádost znovu_, which needs the article's folder and `Licence`. The consents are named
+ * only where `Licence` is missing and a batch still waits for its consent: the reply check records
+ * the consent meanwhile, and archives the conversation on its first run once the folder is back,
+ * when the claim hands it the folder again. Where the step names another folder beside
+ * `Licence`, the sentence names `Licence`, so that it says into which.
  */
 export function missingFoldersLines(view: {
   foundAt: Temporal.Instant
+  hasBatchAwaitingConsent: boolean
   hasBatchToResend: boolean
   missing: readonly ArticleFolderKind[]
 }): string[] {
   let lines = [LINK_STOPPED_TEXT]
-  let isResendStopped = view.missing.includes('article') || view.missing.includes('licences')
+  let isLicenceMissing = view.missing.includes('licences')
+  let isResendStopped = view.missing.includes('article') || isLicenceMissing
   if (view.hasBatchToResend && isResendStopped) lines.push(RESEND_STOPPED_TEXT)
+  if (view.hasBatchAwaitingConsent && isLicenceMissing) {
+    lines.push(CONSENTS_RECORDED_TEXT)
+    lines.push(view.missing.length === 1 ? ARCHIVE_LATER_TEXT : ARCHIVE_LATER_IN_LICENCE_TEXT)
+  }
   lines.push(`Zjištěno ${formatDayMonth(view.foundAt)} ${atTime(view.foundAt)}.`)
   return lines
 }
 
 export const LINK_STOPPED_TEXT = tied`Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat.`
 export const RESEND_STOPPED_TEXT = tied`Žádost o souhlas nejde poslat znovu.`
+export const CONSENTS_RECORDED_TEXT = 'Souhlasy se dál zaznamenávají.'
+export const ARCHIVE_LATER_TEXT = tied`Konverzace se do složky uloží při první kontrole odpovědí po jejím návratu.`
+export const ARCHIVE_LATER_IN_LICENCE_TEXT = tied`Konverzace se do složky Licence uloží při první kontrole odpovědí po jejím návratu.`
 export const CHECK_AGAIN_LABEL = 'Zkontrolovat znovu'
 
 /* The toasts after _Zkontrolovat znovu_ (`12j`). One folder of two back gets the singular error,

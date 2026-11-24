@@ -13,6 +13,7 @@ import {
   consentSubject,
   discardDialogTitle,
   imageTypeOf,
+  isAwaitingConsent,
   isMailError,
   NO_ARTWORKS,
   replyExcerpt,
@@ -138,6 +139,17 @@ describe('batchState', () => {
     let approved = { ...replied, approvedAt: at, replyText: null }
     assert.equal(batchState(approved), 'approved')
     assert.equal(batchStateDetail(approved), 'konverzace v\u00a0Licencích')
+  })
+
+  it('awaits a consent from the request on, until the conversation is in Licence', () => {
+    assert.equal(isAwaitingConsent(sent), true)
+    assert.equal(isAwaitingConsent(replied), true)
+    assert.equal(
+      isAwaitingConsent({ ...replied, archiveFailedAt: at, consentVerifiedAt: at }),
+      true,
+    )
+    assert.equal(isAwaitingConsent({ ...sent, mailSentAt: null }), false)
+    assert.equal(isAwaitingConsent({ ...replied, approvedAt: at }), false)
   })
 })
 

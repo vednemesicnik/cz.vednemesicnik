@@ -147,6 +147,15 @@ export function isMailError(batch: BatchStatus): boolean {
   return batchState(batch) === 'error' && batch.archiveFailedAt === null
 }
 
+/**
+ * A batch whose consent may still come and has yet to be archived in `Licence`: not approved, and
+ * its request went. `12j` calls it „dávka, která čeká na odpověď“; a reply in _Ke kontrole_ and a
+ * failed archive count too, since the reply check archives both once it can.
+ */
+export function isAwaitingConsent(batch: BatchStatus): boolean {
+  return batch.approvedAt === null && !isMailError(batch)
+}
+
 /** The first line of a reply, cut to fit under a tag: _odpověď „ok, souhlas“_ (`01b`). */
 export function replyExcerpt(text: string): string {
   let line = text.trim().split('\n')[0]?.trim() ?? ''

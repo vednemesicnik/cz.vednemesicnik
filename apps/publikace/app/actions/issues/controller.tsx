@@ -72,6 +72,7 @@ import {
   compareArtworks,
   discardedToast,
   driveFileUrl,
+  isAwaitingConsent,
   isMailError,
   NO_ARTWORKS,
   RESEND_DAILY_CAP_TOAST,
@@ -283,9 +284,10 @@ function missingView(
     .map((kind) => article.missing[kind])
     .filter((at): at is Temporal.Instant => at !== null)
     .reduce((first, at) => (Temporal.Instant.compare(at, first) < 0 ? at : first))
-  let hasBatchToResend = batches.some(
-    (batch) => batch.articleId === article.id && isResendable(batch),
-  )
+  let ofArticle = batches.filter((batch) => batch.articleId === article.id)
+  let hasBatchToResend = ofArticle.some(isResendable)
+  /* A closed issue's replies are read by nobody (`12h`), so nothing records its consents. */
+  let hasBatchAwaitingConsent = issue.closedAt === null && ofArticle.some(isAwaitingConsent)
   return {
     /* A closed issue's detail is for reading (`12h`); its records stand as they are. */
     checkAction:
@@ -293,7 +295,12 @@ function missingView(
         ? routes.issues.checkArticleFolders.href({ id: String(article.id), name: issue.name })
         : null,
     heading: missingFoldersHeading(missing),
-    text: missingFoldersLines({ foundAt, hasBatchToResend, missing }).join(' '),
+    text: missingFoldersLines({
+      foundAt,
+      hasBatchAwaitingConsent,
+      hasBatchToResend,
+      missing,
+    }).join(' '),
     urls: subfolderUrls(article),
   }
 }

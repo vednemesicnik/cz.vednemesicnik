@@ -341,11 +341,46 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
         /Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat\. Zjištěno \d+\. \d+\. v{1,2}e? ?\d+:\d{2}\./,
       )
       assert.ok(!text.includes('Žádost o souhlas nejde poslat znovu.'))
+      assert.ok(!text.includes('Souhlasy se dál zaznamenávají.'))
       assert.ok(html.includes(`href="https://drive.google.com/drive/folders/${folders.licences}"`))
       assert.ok(html.includes('/issues/VDM_2026_5/articles/1/folders/check'))
 
       let overview = textOf(await (await context.editor.get('/')).text())
       assert.match(overview, /Aktivní 1 0 schválených 0 1/)
+    }))
+
+  it('says under a missing Licence that the consents of a sent batch keep being recorded', () =>
+    withArtworksLink(async (context) => {
+      let id = await uploadedId(context)
+      await context.visitor.send(`/l/${context.key}/artworks`, sendForm([id]))
+      let folders = await foldersOf(context)
+      context.app.drive.trash(folders.licences)
+      await context.visitor.get(`/l/${context.key}/artworks`)
+
+      let text = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.match(
+        text,
+        /Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat\. Souhlasy se dál zaznamenávají\. Konverzace se do složky uloží při první kontrole odpovědí po jejím návratu\. Zjištěno /,
+      )
+
+      context.app.drive.trash(folders.artworks)
+      await context.visitor.get(`/l/${context.key}/artworks`)
+      let both = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.ok(
+        both.includes(
+          'Konverzace se do složky Licence uloží při první kontrole odpovědí po jejím návratu.',
+        ),
+      )
+
+      /* Closed, nothing reads the replies, so the step promises nothing about them. */
+      await context.editor.post(
+        '/issues/VDM_2026_5/close',
+        { returnTo: 'detail' },
+        '/issues/VDM_2026_5/close',
+      )
+      let closed = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.ok(closed.includes('Obnovte složky'))
+      assert.ok(!closed.includes('Souhlasy se dál zaznamenávají.'))
     }))
 
   it('says what Zkontrolovat znovu found, and the step goes once the folder is back', () =>
@@ -416,6 +451,7 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
           'Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat. Žádost o souhlas nejde poslat znovu.',
         ),
       )
+      assert.ok(!textOf(stopped).includes('Souhlasy se dál zaznamenávají.'))
     }))
 
   it('keeps the dialog Zahodit dávku open when a folder went missing meanwhile', () =>
