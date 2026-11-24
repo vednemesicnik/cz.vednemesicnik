@@ -141,7 +141,7 @@ export function answerCallout(
         text: tied`Pošta odpověď na ${context.email} trvale odmítla.`,
         title: isArticle
           ? 'Pokud potřebujete autorovi odpovědět, zkuste to jinou cestou.'
-          : 'Pokud potřebujete poskytovateli odpovědět, kontaktujte ho jinak.',
+          : 'Pokud potřebujete poskytovateli odpovědět, zkuste to jinou cestou.',
         tone: 'error',
       }
     case 'daily-cap':
@@ -171,7 +171,7 @@ export function answerCallout(
         text: 'Vaše odpověď neodešla.',
         title: isArticle
           ? 'Od autora mezitím přišla odpověď „Souhlasím“.'
-          : 'Díla jsou mezitím schválená, poskytovatel odpověděl „Souhlasím“.',
+          : 'Díla jsou mezitím schválená. Od poskytovatele přišla odpověď „Souhlasím“.',
         tone: 'success',
       }
     case 'closed':

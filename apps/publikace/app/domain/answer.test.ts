@@ -61,6 +61,14 @@ describe('an answer from Ke kontrole', () => {
     )
     assert.equal(answerCallout('approved', { ...context, kind: 'articles' }).tone, 'success')
     assert.equal(
+      answerCallout('refused', { ...context, kind: 'artworks' }).title,
+      'Pokud potřebujete poskytovateli odpovědět, zkuste to jinou cestou.',
+    )
+    assert.equal(
+      answerCallout('approved', { ...context, kind: 'artworks' }).title,
+      'Díla jsou mezitím schválená. Od poskytovatele přišla odpověď „Souhlasím“.',
+    )
+    assert.equal(
       plain(answerCallout('closed', { ...context, kind: 'artworks' }).title),
       'Vydání VDM_2026_5 je mezitím uzavřené.',
     )
