@@ -494,7 +494,8 @@ export type ArticleStore = {
   undoClauseVerification(id: number): Promise<boolean>
   /**
    * The clauses of _Ke kontrole_, the oldest reply first, and the clause `including` names where
-   * it stands, decided or not: the card just decided keeps its place until the next load (`13b`).
+   * it stands, decided, approved or in a closed issue: the card just decided or answered keeps its
+   * place until the next load (`13b`, `13e`).
    */
   reviewQueue(including?: number): Promise<QueuedClause[]>
   /** How many cards of articles _Ke kontrole_ has, for the panel. */
@@ -873,15 +874,21 @@ const REVISED_AFTER_APPROVAL_F = sql`f.doc_revised_at IS NOT NULL AND ${ALL_CLAU
  */
 const APPROVED_F = sql`f.doc_revised_at IS NULL AND ${ALL_CLAUSES_APPROVED_F}`
 
-/* The clauses that could be in the queue; `isQueuedClause` decides. */
-const CLAUSE_QUEUE_CANDIDATES = sql`SELECT c.*, a.name AS article_name, i.name AS issue_name
-  FROM article_clauses c
-  JOIN final_versions f ON f.id = c.final_version_id
-  JOIN articles a ON a.id = c.article_id
-  JOIN issues i ON i.id = a.issue_id
-  WHERE ${STANDING_F} AND i.closed_at IS NULL AND c.approved_at IS NULL
-    AND (c.reply_message_id IS NOT NULL OR c.archive_failed_at IS NOT NULL)
-  ORDER BY coalesce(c.reply_received_at, c.archive_failed_at), c.id`
+/*
+ * The clauses that could be in the queue; `isQueuedClause` decides. The clause `including` names
+ * comes whatever it is now, approved or in a closed issue: an answer that met either stays on its
+ * card until the next load (`13e`), and the typed text with it.
+ */
+function clauseQueueCandidates(including: number | null) {
+  return sql`SELECT c.*, a.name AS article_name, i.name AS issue_name
+    FROM article_clauses c
+    JOIN final_versions f ON f.id = c.final_version_id
+    JOIN articles a ON a.id = c.article_id
+    JOIN issues i ON i.id = a.issue_id
+    WHERE c.id = ${including} OR (${STANDING_F} AND i.closed_at IS NULL AND c.approved_at IS NULL
+      AND (c.reply_message_id IS NOT NULL OR c.archive_failed_at IS NOT NULL))
+    ORDER BY coalesce(c.reply_received_at, c.archive_failed_at), c.id`
+}
 
 /** What _Ke kontrole_ holds of articles: a reply that waits on a person, and a failed archive. */
 function isQueuedClause(row: Row): boolean {
@@ -1705,14 +1712,14 @@ export function createArticleStore(database: Database): ArticleStore {
     },
 
     async reviewQueue(including) {
-      let result = await database.exec(CLAUSE_QUEUE_CANDIDATES)
+      let result = await database.exec(clauseQueueCandidates(including ?? null))
       return (result.rows ?? [])
         .filter((row) => Number(row['id']) === including || isQueuedClause(row))
         .map(toQueuedClause)
     },
 
     async reviewCount() {
-      let result = await database.exec(CLAUSE_QUEUE_CANDIDATES)
+      let result = await database.exec(clauseQueueCandidates(null))
       return (result.rows ?? []).filter(isQueuedClause).length
     },
 

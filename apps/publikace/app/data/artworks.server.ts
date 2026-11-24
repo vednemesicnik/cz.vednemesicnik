@@ -223,7 +223,8 @@ export type ArtworkStore = {
   undoVerification(id: number): Promise<boolean>
   /**
    * The cards of _Ke kontrole_, the oldest reply first, and the batch `including` names where it
-   * stands, decided or not: the card just decided keeps its place until the next load (`13b`).
+   * stands, decided, approved or in a closed issue: the card just decided or answered keeps its
+   * place until the next load (`13b`, `13e`).
    */
   reviewQueue(including?: number): Promise<QueuedBatch[]>
   /** How many cards _Ke kontrole_ has, for the panel. */
@@ -347,17 +348,24 @@ function isQueued(batch: BatchRow): boolean {
   return state === 'review' || (state === 'error' && batch.archiveFailedAt !== null)
 }
 
-/* The batches that could be in the queue; `isQueued` decides. */
-const QUEUE_CANDIDATES = sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name,
-    CASE WHEN b.group_id IS NULL THEN 'article' ELSE 'group' END AS holder_kind,
-    i.name AS issue_name
-  FROM artwork_batches b
-  LEFT JOIN articles ar ON ar.id = b.article_id
-  LEFT JOIN artwork_groups g ON g.id = b.group_id
-  JOIN issues i ON i.id = b.issue_id
-  WHERE b.created_at IS NOT NULL AND b.approved_at IS NULL AND i.closed_at IS NULL
-    AND (b.reply_message_id IS NOT NULL OR b.archive_failed_at IS NOT NULL)
-  ORDER BY coalesce(b.reply_received_at, b.archive_failed_at), b.id`
+/*
+ * The batches that could be in the queue; `isQueued` decides. The batch `including` names comes
+ * whatever it is now, approved or in a closed issue: an answer that met either stays on its card
+ * until the next load (`13e`).
+ */
+function queueCandidates(including: number | null) {
+  return sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name,
+      CASE WHEN b.group_id IS NULL THEN 'article' ELSE 'group' END AS holder_kind,
+      i.name AS issue_name
+    FROM artwork_batches b
+    LEFT JOIN articles ar ON ar.id = b.article_id
+    LEFT JOIN artwork_groups g ON g.id = b.group_id
+    JOIN issues i ON i.id = b.issue_id
+    WHERE b.created_at IS NOT NULL AND (b.id = ${including} OR (
+      b.approved_at IS NULL AND i.closed_at IS NULL
+      AND (b.reply_message_id IS NOT NULL OR b.archive_failed_at IS NOT NULL)))
+    ORDER BY coalesce(b.reply_received_at, b.archive_failed_at), b.id`
+}
 
 async function withArtworks(db: Database, rows: readonly Row[]): Promise<BatchRow[]> {
   if (rows.length === 0) return []
@@ -758,7 +766,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
     },
 
     async reviewQueue(including) {
-      let result = await database.exec(QUEUE_CANDIDATES)
+      let result = await database.exec(queueCandidates(including ?? null))
       let rows = (result.rows ?? []).filter(
         (row) => Number(row['id']) === including || isQueued(toBatch(row, [])),
       )
@@ -766,7 +774,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
     },
 
     async reviewCount() {
-      let result = await database.exec(QUEUE_CANDIDATES)
+      let result = await database.exec(queueCandidates(null))
       return (result.rows ?? []).filter((row) => isQueued(toBatch(row, []))).length
     },
   }

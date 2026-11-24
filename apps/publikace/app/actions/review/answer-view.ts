@@ -27,11 +27,21 @@ import type { QueueCardAnswer, QueueCardAnswers } from './queue-card.tsx'
 export type ComposeFlash = {
   anchor: string
   error?: string
-  refusal?: Extract<AnswerRefusal, 'daily-cap' | 'newer-reply' | 'taken'>
+  refusal?: Extract<AnswerRefusal, 'daily-cap' | 'newer-reply' | LockedRefusal>
   text?: string
 }
 
-const FLASH_REFUSALS = new Set(['daily-cap', 'newer-reply', 'taken'])
+/** Why a card the answer did not reach keeps the text locked, with only _Zavřít_ (`13e`). */
+export type LockedRefusal = Extract<AnswerRefusal, 'approved' | 'closed' | 'taken'>
+
+const LOCKED_REFUSALS = new Set(['approved', 'closed', 'taken'])
+const FLASH_REFUSALS = new Set(['daily-cap', 'newer-reply', ...LOCKED_REFUSALS])
+
+/** The refusal that settles the card and locks the text, if the flash carries one. */
+export function lockedRefusalOf(flash: ComposeFlash | null): LockedRefusal | null {
+  let refusal = flash?.refusal
+  return refusal !== undefined && LOCKED_REFUSALS.has(refusal) ? (refusal as LockedRefusal) : null
+}
 
 /** The flash as it was left, or `null` for anything else in its place. */
 export function composeFlashOf(value: unknown): ComposeFlash | null {
@@ -133,7 +143,7 @@ export function answerFormOf(input: AnswerViewInput): QueueCardAnswer {
     action: input.actions.send,
     answerId: null,
     callout:
-      flash?.refusal === undefined || flash.refusal === 'taken'
+      flash?.refusal === undefined || lockedRefusalOf(flash) !== null
         ? null
         : answerCallout(flash.refusal, context),
     closeLabel: CANCEL_ANSWER_LABEL,
@@ -147,15 +157,16 @@ export function answerFormOf(input: AnswerViewInput): QueueCardAnswer {
 }
 
 /**
- * The card just answered by somebody else while this editor wrote (`13e`): the text that did not
- * go, locked, to be copied, with only _Zavřít_.
+ * The card this editor's answer did not reach (`13e`): somebody else answered the same message,
+ * the consent came, or the issue was closed meanwhile. The text that did not go stands locked, to
+ * be copied, with only _Zavřít_, and the Callout says why.
  */
-export function takenFormOf(input: AnswerViewInput): QueueCardAnswer {
+export function lockedFormOf(input: AnswerViewInput, refusal: LockedRefusal): QueueCardAnswer {
   return {
     action: input.actions.send,
     anchor: input.anchor,
     answerId: null,
-    callout: answerCallout('taken', {
+    callout: answerCallout(refusal, {
       email: input.email,
       issueName: input.issueName,
       kind: input.kind,

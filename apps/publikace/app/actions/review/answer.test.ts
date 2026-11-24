@@ -370,25 +370,97 @@ describe('answering a reply from Ke kontrole', () => {
     }
   })
 
-  it('sends nothing in a closed issue, and gives the text back above the queue once', async () => {
+  it('sends nothing in a closed issue, and keeps the text on the card until the next load', async () => {
     let { app, batch, browser, issueId } = await setup()
     try {
       await replyTo(app, batch, 'Můžu se zeptat?')
       await app.database.exec(
         sql`UPDATE issues SET closed_at = ${'2026-11-19T10:00:00.000Z'} WHERE id = ${issueId}`,
       )
-      await answerBatch(app, browser, batch, ANSWER)
-      let html = plain(await (await browser.get('/review')).text())
-      assert.match(html, /Vydání VDM_2026_5 je mezitím uzavřené\. Odpověď neodešla\./)
-      assert.match(html, /Klára Šimková · klara\.simkova@external\.test/)
-      assert.match(html, /Po dalším načtení stránky už tu text nebude\./)
+      let html = plain(await landing(browser, await answerBatch(app, browser, batch, ANSWER)))
+      assertLockedOnCard(html, 'Vydání VDM_2026_5 je mezitím uzavřené.', 'Odpověď neodešla.')
+      /* The card keeps what it showed: its reply and its tag. */
+      assert.match(html, /Můžu se zeptat\?/)
+      assert.match(html, /Ke kontrole/)
       assert.equal(answersMailed(app).length, 0)
-      assert.doesNotMatch(await (await browser.get('/review')).text(), /Odpověď neodešla/)
+      await assertGoneOnReload(browser)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps the card Schváleno with the text when the consent came meanwhile', async () => {
+    let { app, batch, browser } = await setup()
+    try {
+      await replyTo(app, batch, 'Můžu se zeptat?')
+      let asked = (await createArtworkStore(app.database).findBatch(batch.id))?.replyMessageId
+      await replyTo(app, batch, 'Souhlasím', { isExact: true })
+      let response = await answerBatch(app, browser, batch, ANSWER, asked ?? '')
+      let html = plain(await landing(browser, response))
+      assertLockedOnCard(
+        html,
+        'Díla jsou mezitím schválená. Od poskytovatele přišla odpověď „Souhlasím“.',
+        'Vaše odpověď neodešla.',
+      )
+      assert.match(html, /Schváleno/)
+      assert.match(html, /konverzace v Licencích/)
+      /* The app keeps no text of the message answered, so the card quotes none. */
+      assert.doesNotMatch(html, /Můžu se zeptat\?/)
+      assert.match(html, /href="\/review"[^>]*>Vše<span[^>]*>0<\/span>/)
+      assert.match(html, /href="\/review\?kind=artworks"[^>]*>Obrazová díla<span[^>]*>0<\/span>/)
+      assert.equal(answersMailed(app).length, 0)
+      await assertGoneOnReload(browser)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps the card Schváleno once the conversation is already in Licence', async () => {
+    let { app, batch, browser } = await setup()
+    try {
+      await replyTo(app, batch, 'Můžu se zeptat?')
+      let asked = (await createArtworkStore(app.database).findBatch(batch.id))?.replyMessageId
+      await replyTo(app, batch, 'Souhlasím', { archive: { fileId: 'pdf-1' }, isExact: true })
+      let response = await answerBatch(app, browser, batch, ANSWER, asked ?? '')
+      let html = plain(await landing(browser, response))
+      assertLockedOnCard(
+        html,
+        'Díla jsou mezitím schválená. Od poskytovatele přišla odpověď „Souhlasím“.',
+        'Vaše odpověď neodešla.',
+      )
+      assert.match(html, /Schváleno/)
+      assert.equal(answersMailed(app).length, 0)
+      await assertGoneOnReload(browser)
     } finally {
       await app.close()
     }
   })
 })
+
+/**
+ * The card an answer did not reach, as `13e` draws it: settled in place, the text locked in the
+ * field, the Callout's title over its reason, _Zavřít_ alone and nothing above the queue.
+ */
+function assertLockedOnCard(html: string, title: string, reason: string) {
+  let escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  assert.match(html, /vdm-queue-item--settled/)
+  assert.match(
+    html,
+    new RegExp(`<p class="vdm-callout__title">${escape(title)}</p><p[^>]*>${escape(reason)}</p>`),
+  )
+  assert.match(html, /vdm-field__input--locked[^>]*>[^<]*fotka vyjde uvnitř čísla na straně 12\./)
+  assert.match(html, />Zavřít</)
+  assert.doesNotMatch(html, />Odeslat odpověď</)
+  assert.doesNotMatch(html, /Po dalším načtení stránky už tu text nebude\./)
+}
+
+/** The next load: the card has left the queue, and its text with it. */
+async function assertGoneOnReload(browser: ReturnType<TestApp['browser']>) {
+  let html = await (await browser.get('/review')).text()
+  assert.doesNotMatch(html, /vdm-queue-item--settled/)
+  assert.doesNotMatch(html, /fotka vyjde uvnitř čísla na straně 12\./)
+  assert.doesNotMatch(html, /neodešla/)
+}
 
 describe('an answer still on its way', () => {
   it('cannot be sent again from another tab, and the other editor keeps the text', async () => {
@@ -458,6 +530,34 @@ describe('answering an author from Ke kontrole', () => {
         await browser.get(`/issues/VDM_2026_5?article=${article.articleId}`)
       ).text()
       assert.match(detail, /odpověď odeslána \d+\. \d+\./)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps an author’s card Souhlasí with the text when the author agreed meanwhile', async () => {
+    let { app, article, browser } = await setup()
+    try {
+      let id = await articleReply(app, article.articleId, 'Můžu ještě opravit podtitulek?')
+      await app.database.exec(
+        sql`UPDATE article_clauses SET approved_at = ${Temporal.Now.instant().toString()},
+              consent_file_id = 'pdf-clause', reply_text = NULL WHERE id = ${id}`,
+      )
+      let response = await browser.post(
+        `/review/clauses/${id}/reply`,
+        { reply: 'm-article', text: ANSWER },
+        '/review',
+      )
+      let html = plain(await landing(browser, response))
+      assertLockedOnCard(
+        html,
+        'Od autora mezitím přišla odpověď „Souhlasím“.',
+        'Vaše odpověď neodešla.',
+      )
+      assert.match(html, /Ilustrace k tématu Volby/)
+      assert.match(html, /Souhlasí/)
+      assert.equal(answersMailed(app).length, 0)
+      await assertGoneOnReload(browser)
     } finally {
       await app.close()
     }

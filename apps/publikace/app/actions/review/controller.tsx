@@ -9,7 +9,6 @@ import type { ArtworkStore, QueuedBatch } from '../../data/artworks.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
 import type { PublicMailLog } from '../../data/public-mail.server.ts'
 import {
-  answerCallout,
   type AnswerKind,
   answerSentToast,
   signatureOf,
@@ -17,8 +16,18 @@ import {
   UNSENT_ANSWER_TITLE,
   unsentAnswerLine,
 } from '../../domain/answer.ts'
-import { answeredLine, APPROVAL_SEND_JOB, WAITING_CLAUSE_LABEL } from '../../domain/approvals.ts'
-import { ARTWORK_STATE_LABELS, batchStateDetail, replyExcerpt } from '../../domain/artwork.ts'
+import {
+  AGREED_CLAUSE_LABEL,
+  answeredLine,
+  APPROVAL_SEND_JOB,
+  WAITING_CLAUSE_LABEL,
+} from '../../domain/approvals.ts'
+import {
+  ARTWORK_STATE_LABELS,
+  batchStateDetail,
+  IN_LICENCE_LINE,
+  replyExcerpt,
+} from '../../domain/artwork.ts'
 import { alreadyReplacedToast } from '../../domain/final-version-replacement.ts'
 import { type JobHealth, jobHealth, jobState } from '../../domain/job-run.ts'
 import { REPLY_CHECK_JOB } from '../../domain/reply-check.ts'
@@ -44,7 +53,7 @@ import {
   verifiedTagDetail,
   verifiedToast,
 } from '../../domain/review.ts'
-import { now } from '../../domain/time.ts'
+import { formatMoment, now } from '../../domain/time.ts'
 import type { Mailer } from '../../mail/mailer.server.ts'
 import { requireEditor } from '../../middleware/auth.server.ts'
 import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
@@ -58,7 +67,8 @@ import {
   type AnswerViewInput,
   type ComposeFlash,
   composeFlashOf,
-  takenFormOf,
+  lockedFormOf,
+  lockedRefusalOf,
 } from './answer-view.ts'
 import type { QueueCardView } from './queue-card.tsx'
 import { ReviewPage, type UnsentAnswer } from './review-page.tsx'
@@ -109,17 +119,16 @@ function takeUnsent(session: Session | undefined): UnsentAnswer | null {
   if (value === undefined) return null
   session?.unset(UNSENT_SESSION_KEY)
   if (typeof value !== 'object' || value === null) return null
-  let { line, note, text, title, tone } = value as Record<string, unknown>
+  let { line, note, text, title } = value as Record<string, unknown>
   if (
     typeof line !== 'string' ||
     typeof note !== 'string' ||
     typeof text !== 'string' ||
-    typeof title !== 'string' ||
-    (tone !== 'error' && tone !== 'info' && tone !== 'success')
+    typeof title !== 'string'
   ) {
     return null
   }
-  return { line, note, text, title, tone }
+  return { line, note, text, title }
 }
 
 /** A batch's card is its number, an article's clause `clause-{number}`. */
@@ -232,6 +241,29 @@ function answerInput(
   }
 }
 
+/**
+ * The card an answer did not reach because its consent came or its issue was closed meanwhile
+ * (`13e`): where it was until the next load, counting nowhere, with the text locked under the
+ * Callout that says why and nothing else to act on. Its answers and its header stay as they were.
+ */
+function refusedCard(
+  card: QueueCardView,
+  input: AnswerViewInput,
+  refusal: 'approved' | 'closed',
+): QueueCardView {
+  return {
+    ...card,
+    answer: lockedFormOf(input, refusal),
+    consentAction: null,
+    consentReplyId: null,
+    isSettled: true,
+    jobsHref: null,
+    menu: null,
+    titleHref: null,
+    undoAction: null,
+  }
+}
+
 function cardOf(batch: QueuedBatch, options: CardOptions): QueueCardView {
   let { health, kind, today } = options
   let base = {
@@ -249,12 +281,33 @@ function cardOf(batch: QueuedBatch, options: CardOptions): QueueCardView {
     options,
   )
 
+  /* The answer met a closed issue or a consent that came meanwhile (`13e`). Once the consent
+     came, the works are approved and the conversation is, or is about to be, in Licence; the app
+     keeps no text of the message the editor answered by then, so the card quotes nothing, as a
+     decided one does (`13b`). */
+  let refusal = options.isSettled && input !== null ? lockedRefusalOf(input.flash) : null
+  if (input !== null && (refusal === 'approved' || refusal === 'closed')) {
+    let card = refusedCard(cardOf(batch, { ...options, isSettled: false }), input, refusal)
+    return refusal === 'closed'
+      ? card
+      : {
+          ...card,
+          callout: null,
+          quote: null,
+          tag: {
+            detail: IN_LICENCE_LINE,
+            label: ARTWORK_STATE_LABELS.approved,
+            tone: 'done-outline',
+          },
+        }
+  }
+
   /* The card just answered: the provider is on the move, the answer shows what went (`13e`), and
      an answer that did not go because another one did stands in the form to be copied. */
   if (options.isSettled && batch.answeredAt !== null && input !== null) {
     return {
       ...base,
-      answer: input.flash?.refusal === 'taken' ? takenFormOf(input) : null,
+      answer: refusal === 'taken' ? lockedFormOf(input, 'taken') : null,
       answers: answersListOf(options.answer.answers, {
         isJustAnswered: true,
         messageId: input.messageId,
@@ -408,11 +461,31 @@ function clauseCardOf(clause: QueuedClause, options: CardOptions): QueueCardView
     options,
   )
 
+  /* As for a batch; an author who agreed meanwhile carries the tag the author's row in `12b`
+     gives a clause agreed to. */
+  let refusal = options.isSettled && input !== null ? lockedRefusalOf(input.flash) : null
+  if (input !== null && (refusal === 'approved' || refusal === 'closed')) {
+    let card = refusedCard(clauseCardOf(clause, { ...options, isSettled: false }), input, refusal)
+    let at = clause.replyReceivedAt ?? clause.approvedAt
+    return refusal === 'closed'
+      ? card
+      : {
+          ...card,
+          callout: null,
+          quote: null,
+          tag: {
+            detail: at === null ? undefined : formatMoment(at, today),
+            label: AGREED_CLAUSE_LABEL,
+            tone: 'done',
+          },
+        }
+  }
+
   /* The card just answered, as for a batch; the author's row in `12b` says the same (`0kwr8vpl`). */
   if (options.isSettled && clause.answeredAt !== null && input !== null) {
     return {
       ...base,
-      answer: input.flash?.refusal === 'taken' ? takenFormOf(input) : null,
+      answer: refusal === 'taken' ? lockedFormOf(input, 'taken') : null,
       answers: answersListOf(options.answer.answers, {
         isJustAnswered: true,
         messageId: input.messageId,
@@ -583,9 +656,12 @@ export default function createReviewController(
       case 'newer-reply':
         compose({ refusal: outcome.kind, text: typed })
         return redirect(reopen, 303)
+      /* The card stays where it was until the next load, with the text locked on it (`13e`). */
+      case 'approved':
+      case 'closed':
       case 'taken':
         session?.flash(SETTLED_SESSION_KEY, anchor)
-        compose({ refusal: 'taken', text: typed })
+        compose({ refusal: outcome.kind, text: typed })
         return redirect(back, 303)
       /* The answer on record holds the text and says what came of it. An answer on record that
          is not this editor's, another's attempt or one still on its way, would hide what this
@@ -599,41 +675,22 @@ export default function createReviewController(
             note: UNSENT_ANSWER_NOTE,
             text: typed,
             title: UNSENT_ANSWER_TITLE,
-            tone: 'info',
           } satisfies UnsentAnswer)
         }
         compose({})
         return redirect(reopen, 303)
-      case 'approved':
-      case 'closed':
+      /* The card left the queue some other way and nothing on the page holds the text, so it
+         comes back above the queue to be copied. */
       case 'gone': {
         let recipient = outcome.recipient
-        let isReplaced =
-          outcome.kind === 'gone' &&
-          target.kind === 'articles' &&
-          (await flashIfReplaced(context, target.id))
-        let callout =
-          outcome.kind === 'gone'
-            ? null
-            : answerCallout(outcome.kind, {
-                email: recipient?.email ?? '',
-                issueName: recipient?.issueName ?? '',
-                kind: target.kind,
-              })
+        if (target.kind === 'articles') await flashIfReplaced(context, target.id)
         if (typed.trim() !== '') {
-          let unsent: UnsentAnswer = {
+          session?.flash(UNSENT_SESSION_KEY, {
             line: recipient === null ? '' : unsentAnswerLine(recipient.name, recipient.email),
             note: UNSENT_ANSWER_NOTE,
             text: typed,
-            title: callout === null ? UNSENT_ANSWER_TITLE : `${callout.title} ${callout.text}`,
-            tone:
-              isReplaced || callout === null
-                ? 'info'
-                : callout.tone === 'success'
-                  ? 'success'
-                  : 'error',
-          }
-          session?.flash(UNSENT_SESSION_KEY, unsent)
+            title: UNSENT_ANSWER_TITLE,
+          } satisfies UnsentAnswer)
         }
         return redirect(back, 303)
       }

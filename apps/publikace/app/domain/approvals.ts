@@ -156,6 +156,9 @@ export type ClauseDetail = {
 /** _Čeká na odpověď_: the author is on the move, in the row and on the card just answered. */
 export const WAITING_CLAUSE_LABEL = 'Čeká na odpověď'
 
+/** _Souhlasí_: the author agreed, in the row and on the card an answer met too late (`13e`). */
+export const AGREED_CLAUSE_LABEL = 'Souhlasí'
+
 /** `odpověď odeslána 19. 11.`, under the tag once an answer from _Ke kontrole_ went (`0kwr8vpl`). */
 export function answeredLine(at: Temporal.Instant): string {
   return `odpověď odeslána ${formatDayMonth(at)}`
@@ -227,7 +230,7 @@ export function clauseRowTag(
       return {
         ...tag,
         detail: at === null ? null : formatMoment(at, today),
-        label: 'Souhlasí',
+        label: AGREED_CLAUSE_LABEL,
         tone: 'done',
       }
     }

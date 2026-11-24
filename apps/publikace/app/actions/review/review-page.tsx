@@ -51,9 +51,10 @@ export type ReviewPageProps = {
 }
 
 /**
- * The text of an answer that did not go because its card is gone: decided, approved, in a closed
- * issue or on a final version a newer one replaced. Nothing stores it, so this one load is the
- * last chance to copy it.
+ * The text of an answer that did not go and that no card holds: its card left the queue, decided
+ * or on a final version a newer one replaced, or another answer on record stands in its form.
+ * Nothing stores it, so this one load is the last chance to copy it. A card that stays until the
+ * next load holds its own text locked instead (`13e`).
  */
 export type UnsentAnswer = {
   /** `‹jméno› · ‹adresa›`, who it was for. */
@@ -61,7 +62,6 @@ export type UnsentAnswer = {
   note: string
   text: string
   title: string
-  tone: 'error' | 'info' | 'success'
 }
 const headStyle = css({ display: 'flex', flexDirection: 'column', gap: '6px' })
 
@@ -159,7 +159,7 @@ export function ReviewPage(handle: Handle<ReviewPageProps>) {
           ) : null}
           {unsent === undefined || unsent === null ? null : (
             <div mix={queueStyle}>
-              <Callout tone={unsent.tone}>
+              <Callout tone="info">
                 <p class="vdm-callout__title">{unsent.title}</p>
                 {unsent.line === '' ? null : <p style={{ margin: '0 0 8px' }}>{unsent.line}</p>}
                 <div style={{ margin: '0 0 8px' }}>

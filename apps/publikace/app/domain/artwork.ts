@@ -191,9 +191,12 @@ export const ARTWORK_STATE_LABELS: Readonly<Record<ArtworkState, string>> = {
  */
 export const UNCONFIRMED_SEND_LINE = tied`chybí potvrzení o odeslání žádosti`
 
+/** Under _Schváleno_: the conversation is the proof, archived in `Licence` (`01b`, `13e`). */
+export const IN_LICENCE_LINE = tied`konverzace v Licencích`
+
 /** The line under the tag (`12a`, `01b`, `13c`). */
 export function batchStateDetail(batch: BatchStatus): string {
-  if (batch.approvedAt !== null) return tied`konverzace v Licencích`
+  if (batch.approvedAt !== null) return IN_LICENCE_LINE
   if (batch.archiveFailedAt !== null) return 'konverzace se neuložila'
   if (batch.consentVerifiedAt !== null) {
     return `souhlas zaznamenán ${formatDayMonth(batch.consentVerifiedAt)}`
