@@ -16,6 +16,7 @@ const MARIE = 'marie@vednemesicnik.test'
 const TEREZA = { email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }
 const DETAIL = '/issues/VDM_2026_5'
 const CHECK = '/issues/VDM_2026_5/folders/check'
+const CHECK_MARKED = '/issues/VDM_2026_5/folders/check-marked'
 
 const ARTICLES_STEP =
   'Obnovte složku Články vydání VDM_2026_5 z koše, nebo ji vraťte na sdílený disk Publikace.'
@@ -87,6 +88,15 @@ async function detailText(context: Context): Promise<string> {
   return textOf(await (await context.editor.get(DETAIL)).text())
 }
 
+/**
+ * The detail as a browser ends up with it: the page from the database, its Callouts' check of
+ * the marked folders, and the page again (`12j`).
+ */
+async function checkedDetailText(context: Context): Promise<string> {
+  assert.equal((await context.editor.post(CHECK_MARKED, {}, DETAIL)).status, 204)
+  return detailText(context)
+}
+
 describe('a missing folder of the issue itself (12j, #134)', () => {
   it('shows a Články the newsroom’s page found in the bin under the header, and counts it', () =>
     withIssue(async (context) => {
@@ -135,7 +145,7 @@ describe('a missing folder of the issue itself (12j, #134)', () => {
       let article = await createArticleStore(context.app.database).findById(1)
       assert.ok(article?.missing.article != null)
 
-      let text = await detailText(context)
+      let text = await checkedDetailText(context)
       assert.ok(text.includes(ISSUE_STEP))
       assert.ok(
         text.includes('Z odkazů tohoto vydání teď nejde založit článek ani odeslat díla. Zjištěno'),
@@ -178,7 +188,14 @@ describe('a missing folder of the issue itself (12j, #134)', () => {
       await context.visitor.get(`/l/${context.artworksKey}/artworks`)
       context.app.drive.restore(context.folders.issue)
 
-      let text = await detailText(context)
+      /* The page stands from the database, and asks Drive nothing before it does. */
+      let calls = context.app.drive.calls.length
+      let before = await detailText(context)
+      assert.equal(context.app.drive.calls.length, calls)
+      assert.ok(before.includes(ISSUE_STEP))
+      assert.ok(before.includes(CHECK_MARKED))
+
+      let text = await checkedDetailText(context)
       assert.ok(!text.includes(ISSUE_STEP))
       assert.ok(!text.includes(ARTICLE_STEP))
       assert.ok(!text.includes('Složka je zpátky'))
@@ -192,8 +209,41 @@ describe('a missing folder of the issue itself (12j, #134)', () => {
       await context.visitor.get(`/l/${context.newsroomKey}/article`)
       await context.editor.post(`${DETAIL}/close`, { returnTo: 'detail' }, `${DETAIL}/close`)
 
-      let text = await detailText(context)
+      let text = await checkedDetailText(context)
       assert.ok(text.includes(ARTICLES_STEP))
       assert.ok(!text.includes('Zkontrolovat znovu'))
+      /* No button, and the check still runs once the page stands. */
+      assert.ok(text.includes(CHECK_MARKED))
+    }))
+
+  it('keeps every mark while Drive does not answer the check, and says nothing', () =>
+    withIssue(async (context) => {
+      context.app.drive.trash(context.folders.articles)
+      await context.visitor.get(`/l/${context.newsroomKey}/article`)
+      context.app.drive.restore(context.folders.articles)
+
+      context.app.drive.goDown()
+      let text = await checkedDetailText(context)
+      assert.ok(text.includes(ARTICLES_STEP))
+      assert.ok(!text.includes('Zkuste kontrolu za chvíli znovu.'))
+    }))
+
+  it('answers 404 for an unknown issue and 403 to a proofreader', () =>
+    withIssue(async (context) => {
+      let unknown = await context.editor.post('/issues/VDM_2026_9/folders/check-marked', {}, '/')
+      assert.equal(unknown.status, 404)
+
+      let proofreader = context.app.browser()
+      await proofreader.signInAs(
+        'lenka.svobodova@vednemesicnik.test',
+        'Lenka Svobodová',
+        undefined,
+        {
+          isEditor: false,
+          isProofreader: true,
+        },
+      )
+      let refused = await proofreader.post(CHECK_MARKED, {}, '/proofreading')
+      assert.equal(refused.status, 403)
     }))
 })

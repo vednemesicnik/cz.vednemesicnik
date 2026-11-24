@@ -331,6 +331,7 @@ function missingView(
   let hasBatchAwaitingConsent = issue.closedAt === null && ofHolder.some(isAwaitingConsent)
   let ids = { id: String(holder.id), name: issue.name }
   return {
+    arrivalCheck: routes.issues.checkMarkedFolders.href({ name: issue.name }),
     /* A closed issue's detail is for reading (`12h`); its records stand as they are. */
     checkAction:
       issue.closedAt !== null
@@ -351,13 +352,13 @@ function missingView(
 }
 
 /**
- * The issue, its articles and its groups that have a folder on record as missing, asked again: the
- * record goes for a folder that is back (`12j`). An article's or a group's mark asks after the
- * issue's folders too, because its folder is missing also when the whole issue folder is in the
- * bin, and the bin shows only that one, which the detail then names instead. Without an account
- * or an answer from Drive, the records stand as they are.
+ * The issue, its articles and its groups that have a folder on record as missing, asked again
+ * after the detail stands: the record goes for a folder that is back (`12j`). An article's or a
+ * group's mark asks after the issue's folders too, because its folder is missing also when the
+ * whole issue folder is in the bin, and the bin shows only that one, which the detail then names
+ * instead. Without an account or an answer from Drive, the records stand as they are.
  */
-async function recheckMissing(context: PageContext, issue: Issue): Promise<Issue> {
+async function recheckMissing(context: PageContext, issue: Issue): Promise<void> {
   let { articles, artworks } = articlesOf(context)
   let isMarked = (holder: Pick<FoldersHolder, 'missing'>) => recordedMissing(holder).length > 0
   let marked: ArticleFolderIds[] = [
@@ -369,15 +370,13 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<Issue
       .map((group) => ({ ...group, kind: 'group' as const })),
   ]
   let isIssueMarked = recordedIssueMissing(issue).length > 0
-  if (marked.length === 0 && !isIssueMarked) return issue
+  if (marked.length === 0 && !isIssueMarked) return
   let token = await artworks.token()
-  if (!token.ok) return issue
+  if (!token.ok) return
   let folders = artworks.folders(token.accessToken)
-  let { store } = issuesOf(context)
-  await checkIssueFolders({ folders, issues: store, now }, issue)
+  await checkIssueFolders({ folders, issues: issuesOf(context).store, now }, issue)
   let deps = { articles, folders, groups: artworks.groups, now }
   for (let holder of marked) await checkArticleFolders(deps, holder)
-  return (await store.findById(issue.id)) ?? issue
 }
 
 /**
@@ -401,6 +400,7 @@ function issueMissingView(issue: Issue): IssueMissingView | null {
   let mark = shownIssueMark(issue)
   if (mark === null) return null
   return {
+    arrivalCheck: routes.issues.checkMarkedFolders.href({ name: issue.name }),
     checkAction:
       issue.closedAt === null ? routes.issues.checkIssueFolders.href({ name: issue.name }) : null,
     heading: issueFolderHeading(mark.kind, issue.name),
@@ -1077,13 +1077,23 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
 
-        let [checked] = await Promise.all([
-          recheckMissing(context, issue),
-          recheckDocRevisions(context, issue),
-        ])
-        return renderDetail(context, checked, {
+        /* The one Drive call left before the page (#101). The folders on record as missing
+           are asked after it stands, by `checkMarkedFolders` (`12j`). */
+        await recheckDocRevisions(context, issue)
+        return renderDetail(context, issue, {
           isFolderGone: takeFolderGone(context.get(Session), issue.name),
         })
+      },
+
+      /* `12j`: what the detail's Callouts ask once the page stands. The records change and the
+         Callouts read them on the page's next render, so this says nothing: no toast, whether
+         Drive answered or not, and never a redirect, because the page's island fetches it and
+         reloads the page itself. */
+      async checkMarkedFolders(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        await recheckMissing(context, issue)
+        return new Response(null, { status: 204 })
       },
 
       /* `12j`: every folder of the article asked again, then back to the detail with what came

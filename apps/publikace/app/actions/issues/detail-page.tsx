@@ -106,6 +106,7 @@ import {
   handOverButtonLabel,
   HANDING_OVER_LABEL,
 } from '../../domain/handover.ts'
+import { FolderCheck } from '../../ui/public/folder-check/component.tsx'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 import { CANCEL_FINAL_LABEL, OPEN_PDF_LABEL } from '../../domain/proofreading-queue.ts'
 import { REPLACE_FINAL_LABEL } from '../../domain/final-version-replacement.ts'
@@ -158,6 +159,8 @@ export type LinkBlockView = {
  * (`12j`).
  */
 export type MissingFoldersView = {
+  /** Where the detail's own check posts once the page stands (`12j`). */
+  arrivalCheck: string
   /** Where _Zkontrolovat znovu_ posts; `null` in a closed issue, whose detail is for reading. */
   checkAction: string | null
   /** The step, the subfolders' names in it linking to the very folder on Drive. */
@@ -169,6 +172,8 @@ export type MissingFoldersView = {
 
 /** The Callout under the header while the issue's `Články` or its own folder is missing (`12j`). */
 export type IssueMissingView = {
+  /** Where the detail's own check posts once the page stands (`12j`). */
+  arrivalCheck: string
   /** Where _Zkontrolovat znovu_ posts; `null` in a closed issue, whose detail is for reading. */
   checkAction: string | null
   heading: string
@@ -639,6 +644,9 @@ const replacedQuoteStyle = css({
   '& blockquote': { margin: 0, whiteSpace: 'pre-line' },
 })
 
+/* The containing block of the waitline along a missing folder's Callout. */
+const checkedCalloutStyle = css({ position: 'relative' })
+
 /* The Callout of a missing folder belongs to the row above it, inside the same table (`12j`). */
 const bandStyle = css({ padding: '0 20px 16px' })
 const bandRuleStyle = css({ borderBottom: '1px solid var(--border)' })
@@ -775,11 +783,13 @@ function MissingFoldersCallout(handle: Handle<{ missing: MissingFoldersView }>) 
   return () => {
     let { missing } = handle.props
     return (
-      <Callout tone="error">
-        <FolderHeading heading={missing.heading} urls={missing.urls} />
-        <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
-        {missing.checkAction === null ? null : <CheckAgainForm action={missing.checkAction} />}
-      </Callout>
+      <div mix={checkedCalloutStyle}>
+        <Callout tone="error">
+          <FolderHeading heading={missing.heading} urls={missing.urls} />
+          <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
+          <FolderCheckActions missing={missing} />
+        </Callout>
+      </div>
     )
   }
 }
@@ -797,14 +807,27 @@ function MissingFoldersBand(handle: Handle<{ isLast: boolean; missing: MissingFo
   }
 }
 
-/** _Zkontrolovat znovu_, with _Kontroluje se…_ while Drive is asked (`12j`). */
-function CheckAgainForm(handle: Handle<{ action: string }>) {
-  return () => (
-    <form action={handle.props.action} class="vdm-callout__actions" method="post">
-      <CsrfField />
-      <PendingActions emphasis="outline" label={CHECK_AGAIN_LABEL} pendingLabel={CHECKING_LABEL} />
-    </form>
-  )
+/**
+ * _Zkontrolovat znovu_, with _Kontroluje se…_ while Drive is asked, and the check that starts
+ * once the page stands (`12j`). A closed issue's Callout has no button, but is asked all the same.
+ */
+function FolderCheckActions(
+  handle: Handle<{ missing: Pick<MissingFoldersView, 'arrivalCheck' | 'checkAction'> }>,
+) {
+  return () => {
+    let { arrivalCheck, checkAction } = handle.props.missing
+    return (
+      <FolderCheck
+        action={
+          checkAction === null
+            ? null
+            : { href: checkAction, label: CHECK_AGAIN_LABEL, pendingLabel: CHECKING_LABEL }
+        }
+        arrivalCheck={arrivalCheck}
+        csrfToken={getCsrfToken(getContext())}
+      />
+    )
+  }
 }
 
 /**
@@ -815,13 +838,15 @@ function IssueMissingCallout(handle: Handle<{ missing: IssueMissingView }>) {
   return () => {
     let { missing } = handle.props
     return (
-      <Callout tone="error">
-        <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
-          {missing.heading}
-        </p>
-        <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
-        {missing.checkAction === null ? null : <CheckAgainForm action={missing.checkAction} />}
-      </Callout>
+      <div mix={checkedCalloutStyle}>
+        <Callout tone="error">
+          <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+            {missing.heading}
+          </p>
+          <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
+          <FolderCheckActions missing={missing} />
+        </Callout>
+      </div>
     )
   }
 }

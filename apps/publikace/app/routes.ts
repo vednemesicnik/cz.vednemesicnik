@@ -47,6 +47,9 @@ export const routes = route({
     /* `12j`: _Zkontrolovat znovu_ under the header of an issue whose `Články`, or whose own
        folder, was found missing. */
     checkIssueFolders: post('/issues/:name/folders/check'),
+    /* `12j`: the detail's own check of every folder on record as missing, which its Callouts
+       start once the page stands, so that Drive never holds the page back. */
+    checkMarkedFolders: post('/issues/:name/folders/check-marked'),
     /* `12k`: _Předat ke korektuře_ and _Zrušit předání_ act at once, with no dialog, and the
        toast's _Vrátit_ sends the other one (`12l`). With `?undo=` each takes back only the step
        it was offered for. */

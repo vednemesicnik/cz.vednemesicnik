@@ -194,6 +194,8 @@ In order: each check uses what the one before it made.
       bin, and whether it offers to restore it there: the link stays only if it does.
     - Restore it, then _Zkontrolovat znovu_: _Složka je zpátky na sdíleném disku Publikace._, and
       the Callout is gone. Nothing was created on Drive in between.
+    - Bin it again, open the link to mark it, restore it and open the issue's page: it stands at
+      once with the Callout and _Kontroluje se…_, then the Callout goes without a toast (#149).
 
 ## Proofreaders in the app
 

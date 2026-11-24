@@ -599,10 +599,13 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
       await context.app.browser().get(`/l/${group.link?.key}/artworks`)
       context.app.drive.restore(group.folderId)
 
+      let check = () => context.editor.post(`${DETAIL}/folders/check-marked`, {}, DETAIL)
       context.app.drive.goDown()
+      assert.equal((await check()).status, 204)
       assert.ok(textOf(await (await context.editor.get(DETAIL)).text()).includes(GROUP_STEP))
       context.app.drive.heal()
 
+      assert.equal((await check()).status, 204)
       let text = textOf(await (await context.editor.get(DETAIL)).text())
       assert.ok(!text.includes(GROUP_STEP))
       assert.ok(!text.includes('Složka je zpátky'))
@@ -622,6 +625,7 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
         (await createGroupStore(context.app.database).findById(group.id))?.missing.article != null,
       )
 
+      await context.editor.post(`${DETAIL}/folders/check-marked`, {}, DETAIL)
       let text = textOf(await (await context.editor.get(DETAIL)).text())
       assert.ok(text.includes('Obnovte složku vydání VDM_2026_5'))
       assert.ok(!text.includes(GROUP_STEP))

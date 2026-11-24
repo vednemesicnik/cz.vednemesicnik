@@ -423,6 +423,7 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
       await context.visitor.get(`/l/${context.key}/artworks`)
       context.app.drive.restore(folders.artworks)
 
+      await context.editor.post('/issues/VDM_2026_5/folders/check-marked', {}, '/issues/VDM_2026_5')
       let text = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
       assert.ok(!text.includes('Zkontrolovat znovu'))
       assert.ok(!text.includes('Složka je zpátky'))
