@@ -42,6 +42,8 @@ export const routes = route({
     discardBatch: post('/issues/:name/artworks/batches/:id/discard'),
     /* `12j`: _Zkontrolovat znovu_ under an article whose folder was found missing. */
     checkArticleFolders: post('/issues/:name/articles/:id/folders/check'),
+    /* `12j`: _Zkontrolovat znovu_ in a group whose folder was found missing. */
+    checkGroupFolders: post('/issues/:name/artwork-groups/:id/folders/check'),
     /* `12j`: _Zkontrolovat znovu_ under the header of an issue whose `Články`, or whose own
        folder, was found missing. */
     checkIssueFolders: post('/issues/:name/folders/check'),

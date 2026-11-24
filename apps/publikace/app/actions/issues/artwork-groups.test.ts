@@ -491,3 +491,154 @@ describe('the group store', () => {
       )
     }))
 })
+
+const GROUP_STEP = 'Obnovte složku skupiny z koše, nebo ji vraťte na sdílený disk Publikace.'
+const GROUP_STOPPED = 'Z odkazu skupiny teď nejde díla nahrát ani odeslat.'
+
+/** The group and its folders, as the group store keeps them. */
+async function groupOf(context: Context, name: string) {
+  let [group] = (await createGroupStore(context.app.database).listByIssue(context.issueId)).filter(
+    (each) => each.name === name,
+  )
+  assert.ok(group?.folderId != null && group.licencesFolderId != null && group.link !== null)
+  return { ...group, folderId: group.folderId, licencesFolderId: group.licencesFolderId }
+}
+
+/** The section _Skupiny obrazových děl_ as markup, up to the next section. */
+async function groupsMarkup(context: Context): Promise<string> {
+  let html = await (await context.editor.get(DETAIL)).text()
+  return html.slice(
+    html.indexOf('aria-labelledby="groups-title"'),
+    html.indexOf('aria-labelledby="artworks-title"'),
+  )
+}
+
+describe('a group’s missing folder in the detail (12j, #145)', () => {
+  it('shows the group’s own folder in its frame, without Otevřít složku skupiny, and counts it', () =>
+    withIssue(async (context) => {
+      await createGroup(context, { name: 'Obálka' })
+      let group = await groupOf(context, 'Obálka')
+      context.app.drive.trash(group.folderId)
+      await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+
+      let section = await groupsMarkup(context)
+      let text = textOf(section)
+      assert.ok(text.includes(GROUP_STEP))
+      assert.match(text, new RegExp(`${GROUP_STOPPED} Zjištěno \\d+\\. \\d+\\. v \\d+:\\d{2}\\.`))
+      assert.ok(section.includes(`action="${DETAIL}/artwork-groups/${group.id}/folders/check"`))
+      /* The „⋯“ held only _Otevřít složku skupiny_, and a missing folder has nothing to open. */
+      assert.ok(!section.includes('aria-label="Další akce skupiny Obálka"'))
+
+      let overview = textOf(await (await context.editor.get('/')).text())
+      assert.ok(overview.includes('0 článků · 0 děl · 1 čeká na vás'))
+      assert.equal(
+        (await createGroupStore(context.app.database).missingCountsByIssue()).get(context.issueId),
+        1,
+      )
+    }))
+
+  it('names Licence with its link and the consents, and keeps the group’s folder to open', () =>
+    withIssue(async (context) => {
+      await createGroup(context, { name: 'Obálka' })
+      let group = await groupOf(context, 'Obálka')
+      assert.equal((await sendBatch(context, group.link?.key ?? '')).status, 200)
+      context.app.drive.trash(group.licencesFolderId)
+      await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+
+      let section = await groupsMarkup(context)
+      let text = textOf(section)
+      assert.ok(text.includes('Obnovte složku Licence'))
+      assert.ok(
+        section.includes(`https://drive.google.com/drive/folders/${group.licencesFolderId}`),
+      )
+      assert.ok(
+        text.includes(
+          `${GROUP_STOPPED} Souhlasy se dál zaznamenávají. Konverzace se do složky uloží při první kontrole odpovědí po jejím návratu.`,
+        ),
+      )
+      assert.ok(section.includes('aria-label="Další akce skupiny Obálka"'))
+    }))
+
+  it('says what Zkontrolovat znovu found, and the Callout goes once the folder is back', () =>
+    withIssue(async (context) => {
+      await createGroup(context, { name: 'Obálka' })
+      let group = await groupOf(context, 'Obálka')
+      context.app.drive.trash(group.folderId)
+      await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+      let check = () =>
+        context.editor.post(`${DETAIL}/artwork-groups/${group.id}/folders/check`, {}, '/')
+
+      assert.equal((await check()).status, 303)
+      let still = textOf(await (await context.editor.get(DETAIL)).text())
+      assert.ok(
+        still.includes(
+          'Obnovte složku z koše, nebo ji vraťte na sdílený disk Publikace. Stále není dostupná.',
+        ),
+      )
+
+      context.app.drive.restore(group.folderId)
+      await check()
+      let back = textOf(await (await context.editor.get(DETAIL)).text())
+      assert.ok(back.includes('Složka je zpátky na sdíleném disku Publikace.'))
+      assert.ok(!back.includes(GROUP_STEP))
+      let marks = await createGroupStore(context.app.database).findById(group.id)
+      assert.equal(marks?.missing.article, null)
+    }))
+
+  it('answers 404 for a group of another issue or none', () =>
+    withIssue(async (context) => {
+      let missing = await context.editor.post(`${DETAIL}/artwork-groups/99/folders/check`, {}, '/')
+      assert.equal(missing.status, 404)
+    }))
+
+  it('drops the mark when the detail finds the folder back, and keeps it while Drive is down', () =>
+    withIssue(async (context) => {
+      await createGroup(context, { name: 'Obálka' })
+      let group = await groupOf(context, 'Obálka')
+      context.app.drive.trash(group.folderId)
+      await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+      context.app.drive.restore(group.folderId)
+
+      context.app.drive.goDown()
+      assert.ok(textOf(await (await context.editor.get(DETAIL)).text()).includes(GROUP_STEP))
+      context.app.drive.heal()
+
+      let text = textOf(await (await context.editor.get(DETAIL)).text())
+      assert.ok(!text.includes(GROUP_STEP))
+      assert.ok(!text.includes('Složka je zpátky'))
+      let overview = textOf(await (await context.editor.get('/')).text())
+      assert.ok(!overview.includes('čeká na vás'))
+    }))
+
+  it('hides under a binned issue folder, which is counted once', () =>
+    withIssue(async (context) => {
+      await createGroup(context, { name: 'Obálka' })
+      let group = await groupOf(context, 'Obálka')
+      let issue = await createIssueStore(context.app.database).findById(context.issueId)
+      assert.ok(issue?.folderIds.issue != null)
+      context.app.drive.trash(issue.folderIds.issue)
+      await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+      assert.ok(
+        (await createGroupStore(context.app.database).findById(group.id))?.missing.article != null,
+      )
+
+      let text = textOf(await (await context.editor.get(DETAIL)).text())
+      assert.ok(text.includes('Obnovte složku vydání VDM_2026_5'))
+      assert.ok(!text.includes(GROUP_STEP))
+      let overview = textOf(await (await context.editor.get('/')).text())
+      assert.ok(overview.includes('0 článků · 0 děl · 1 čeká na vás'))
+    }))
+
+  it('keeps the step on a closed issue, without Zkontrolovat znovu', () =>
+    withIssue(async (context) => {
+      await createGroup(context, { name: 'Obálka' })
+      let group = await groupOf(context, 'Obálka')
+      context.app.drive.trash(group.folderId)
+      await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+      await context.editor.post(`${DETAIL}/close`, { returnTo: 'detail' }, `${DETAIL}/close`)
+
+      let text = textOf(await groupsMarkup(context))
+      assert.ok(text.includes(GROUP_STEP))
+      assert.ok(!text.includes('Zkontrolovat znovu'))
+    }))
+})

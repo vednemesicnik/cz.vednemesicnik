@@ -66,6 +66,8 @@ export type GroupStore = {
   listByIssue(issueId: number): Promise<ListedGroup[]>
   markForCleanup(id: number, at: Temporal.Instant): Promise<void>
   markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
+  /** By issue, the committed groups with a folder on record as missing, for _Čeká na vás_. */
+  missingCountsByIssue(): Promise<Map<number, number>>
   /**
    * Every name in the issue by its key, as the dialog checks it: the groups and the attempts under
    * way. A failed attempt waiting for its cleanup is no group and does not count, though it holds
@@ -186,6 +188,24 @@ export function createGroupStore(database: Database): GroupStore {
 
     findById(id) {
       return byId(database, id)
+    },
+
+    async missingCountsByIssue() {
+      /* A group's three folders are one Callout, so one item (`12j`). With the issue folder in
+         the bin its one Callout stands for every folder in it, so the groups are not counted
+         beside it. */
+      let result = await database.exec(
+        sql`SELECT issue_id, count(*) AS count FROM artwork_groups
+            WHERE created_at IS NOT NULL
+              AND issue_id NOT IN (SELECT id FROM issues WHERE folder_missing_at IS NOT NULL)
+              AND (folder_missing_at IS NOT NULL
+                OR artworks_folder_missing_at IS NOT NULL
+                OR licences_folder_missing_at IS NOT NULL)
+            GROUP BY issue_id`,
+      )
+      let counts = new Map<number, number>()
+      for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
+      return counts
     },
 
     async listByIssue(issueId) {

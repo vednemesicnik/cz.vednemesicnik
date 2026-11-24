@@ -51,18 +51,23 @@ export async function renderOverview(
   init?: ResponseInit,
 ): Promise<Response> {
   let articles = context.get(Articles) as ArticlesContext
-  let [issues, driveAccount, articleCounts, artworkTotals, articleWaiting] = await Promise.all([
-    issuesOf(context).store.list(),
-    driveView(context),
-    articles.articles.countsByIssue(),
-    articles.artworks.artworks.countsByIssue(),
-    articles.articles.waitingCountsByIssue(),
-  ])
+  let [issues, driveAccount, articleCounts, artworkTotals, articleWaiting, groupsMissing] =
+    await Promise.all([
+      issuesOf(context).store.list(),
+      driveView(context),
+      articles.articles.countsByIssue(),
+      articles.artworks.artworks.countsByIssue(),
+      articles.articles.waitingCountsByIssue(),
+      articles.artworks.groups.missingCountsByIssue(),
+    ])
   /* _Čeká na vás_ adds up the amber and pink tags of the issue's articles and artworks, one for
-     each article with a missing folder, and one for the issue's own Callout of a missing folder
-     (`11a`, `01d`, `12j`): a Callout counts, not a folder. */
+     each article or group with a missing folder, and one for the issue's own Callout of a missing
+     folder (`11a`, `01d`, `12j`): a Callout counts, not a folder. */
   let artworkCounts = new Map<number, ApprovedCount>()
   let waitingCounts = new Map(articleWaiting)
+  for (let [issueId, count] of groupsMissing) {
+    waitingCounts.set(issueId, (waitingCounts.get(issueId) ?? 0) + count)
+  }
   for (let issue of issues) {
     if (shownIssueMark(issue) === null) continue
     waitingCounts.set(issue.id, (waitingCounts.get(issue.id) ?? 0) + 1)

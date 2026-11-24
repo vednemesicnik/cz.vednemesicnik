@@ -111,10 +111,16 @@ import type {
   Article,
   ArticleRow,
   HandoverOutcome,
+  MissingFolders,
   ReplaceFinalOutcome,
 } from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
-import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
+import type { DriveAccessToken } from '../../drive/access-token.server.ts'
+import {
+  type ArticleFolderIds,
+  checkArticleFolders,
+  recordedMissing,
+} from '../../drive/article-folders.server.ts'
 import { checkIssueFolders, recordedIssueMissing } from '../../drive/issue-folders.server.ts'
 import { discardBatch, holderOf, resendBatch } from '../../drive/artworks-setup.server.ts'
 import { checkAllDocRevisions } from '../../drive/doc-revisions.server.ts'
@@ -297,53 +303,71 @@ function isResendable(batch: BatchRow): boolean {
   return isMailError(batch) && batch.mailRefusedAt === null
 }
 
-/** The Callout under the article's row, or `null` while all three folders are there (`12j`). */
+/** An article or a group, as far as its missing folders and its Callout go (`12j`). */
+type FoldersHolder = ArticleFolderIds & { missing: MissingFolders }
+
+/**
+ * The Callout under an article's row or in a group's, or `null` while all three folders are there
+ * (`12j`).
+ */
 function missingView(
   issue: Issue,
-  article: Article,
+  holder: FoldersHolder,
   batches: readonly BatchRow[],
 ): MissingFoldersView | null {
   /* With the issue folder in the bin, its one Callout stands for every folder in it (`12j`). */
   if (issue.missing.issue !== null) return null
-  let missing = recordedMissing(article)
+  let missing = recordedMissing(holder)
   if (missing.length === 0) return null
   let foundAt = missing
-    .map((kind) => article.missing[kind])
+    .map((kind) => holder.missing[kind])
     .filter((at): at is Temporal.Instant => at !== null)
     .reduce((first, at) => (Temporal.Instant.compare(at, first) < 0 ? at : first))
-  let ofArticle = batches.filter((batch) => batch.articleId === article.id)
-  let hasBatchToResend = ofArticle.some(isResendable)
+  let ofHolder = batches.filter((batch) =>
+    holder.kind === 'group' ? batch.groupId === holder.id : batch.articleId === holder.id,
+  )
+  let hasBatchToResend = ofHolder.some(isResendable)
   /* A closed issue's replies are read by nobody (`12h`), so nothing records its consents. */
-  let hasBatchAwaitingConsent = issue.closedAt === null && ofArticle.some(isAwaitingConsent)
+  let hasBatchAwaitingConsent = issue.closedAt === null && ofHolder.some(isAwaitingConsent)
+  let ids = { id: String(holder.id), name: issue.name }
   return {
     /* A closed issue's detail is for reading (`12h`); its records stand as they are. */
     checkAction:
-      issue.closedAt === null
-        ? routes.issues.checkArticleFolders.href({ id: String(article.id), name: issue.name })
-        : null,
-    heading: missingFoldersHeading(missing),
+      issue.closedAt !== null
+        ? null
+        : holder.kind === 'group'
+          ? routes.issues.checkGroupFolders.href(ids)
+          : routes.issues.checkArticleFolders.href(ids),
+    heading: missingFoldersHeading(missing, holder.kind),
     text: missingFoldersLines({
       foundAt,
       hasBatchAwaitingConsent,
       hasBatchToResend,
+      holder: holder.kind,
       missing,
     }).join(' '),
-    urls: subfolderUrls(article),
+    urls: subfolderUrls(holder),
   }
 }
 
 /**
- * The issue and its articles that have a folder on record as missing, asked again: the record goes
- * for a folder that is back (`12j`). An article's mark asks after the issue's folders too, because
- * an article's folder is missing also when the whole issue folder is in the bin, and the bin shows
- * only that one, which the detail then names instead. Without an account or an answer from
- * Drive, the records stand as they are.
+ * The issue, its articles and its groups that have a folder on record as missing, asked again: the
+ * record goes for a folder that is back (`12j`). An article's or a group's mark asks after the
+ * issue's folders too, because its folder is missing also when the whole issue folder is in the
+ * bin, and the bin shows only that one, which the detail then names instead. Without an account
+ * or an answer from Drive, the records stand as they are.
  */
 async function recheckMissing(context: PageContext, issue: Issue): Promise<Issue> {
   let { articles, artworks } = articlesOf(context)
-  let marked = (await articles.listCreated(issue.id)).filter(
-    (article) => recordedMissing(article).length > 0,
-  )
+  let isMarked = (holder: Pick<FoldersHolder, 'missing'>) => recordedMissing(holder).length > 0
+  let marked: ArticleFolderIds[] = [
+    ...(await articles.listCreated(issue.id))
+      .filter(isMarked)
+      .map((article) => ({ ...article, kind: 'article' as const })),
+    ...(await artworks.groups.listByIssue(issue.id))
+      .filter(isMarked)
+      .map((group) => ({ ...group, kind: 'group' as const })),
+  ]
   let isIssueMarked = recordedIssueMissing(issue).length > 0
   if (marked.length === 0 && !isIssueMarked) return issue
   let token = await artworks.token()
@@ -351,9 +375,25 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<Issue
   let folders = artworks.folders(token.accessToken)
   let { store } = issuesOf(context)
   await checkIssueFolders({ folders, issues: store, now }, issue)
-  let deps = { articles, folders, now }
-  for (let article of marked) await checkArticleFolders(deps, { ...article, kind: 'article' })
+  let deps = { articles, folders, groups: artworks.groups, now }
+  for (let holder of marked) await checkArticleFolders(deps, holder)
   return (await store.findById(issue.id)) ?? issue
+}
+
+/**
+ * The toast of a _Zkontrolovat znovu_ that got no token for Drive (`12j`): the account's own step
+ * where it is not connected or was disconnected, the check's where Drive did not answer.
+ */
+function flashTokenFailure(
+  context: Parameters<typeof flashToast>[0],
+  token: Extract<DriveAccessToken, { ok: false }>,
+  expectedEmail: string,
+): void {
+  if (token.reason === 'not-connected')
+    flashToast(context, notConnectedToast(expectedEmail), 'error')
+  else if (token.reason === 'disconnected')
+    flashToast(context, disconnectedBanner(expectedEmail), 'error')
+  else flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
 }
 
 /** The Callout under the header while the issue's `Články` or its own folder is missing. */
@@ -560,7 +600,7 @@ async function linkAndArticles(
       authors: authorsLine(article.authors),
       documentUrl: documentUrl(article.docId),
       id: article.id,
-      missing: missingView(issue, article, batches),
+      missing: missingView(issue, { ...article, kind: 'article' }, batches),
       name: article.name,
       pdfUrl: finalVersion === null ? null : driveFileUrl(finalVersion.pdfFileId),
       state: articleStateTag(article),
@@ -706,16 +746,23 @@ async function groupsOf(
   if (state === 'unfinished') return undefined
   let { artworks, origin } = articlesOf(context)
   let groups = await artworks.groups.listByIssue(issue.id)
+  let batches = await artworks.artworks.listByIssue(issue.id)
   return {
     newHref: state === 'active' ? routes.issues.newGroup.href({ name: issue.name }) : null,
     rows: groups.map((group) => {
       let url = group.link === null ? null : absoluteUrl(origin, artworksLinkPath(group.link.key))
       return {
         count: groupCountText(group.artworks),
-        folderHref: group.folderId === null ? null : folderUrl(group.folderId),
+        /* A missing folder has nothing to open (`12j`); a missing `Obrazová díla` or `Licence`
+           leaves the group's own folder where it is. */
+        folderHref:
+          group.folderId === null || group.missing.article !== null
+            ? null
+            : folderUrl(group.folderId),
         id: group.id,
         isChanged: group.id === changedId,
         isClosed: state === 'closed',
+        missing: missingView(issue, { ...group, kind: 'group' }, batches),
         name: group.name,
         noteLine: group.note === '' ? null : groupNoteLine(group.note),
         shown: url === null ? null : shownUrl(url),
@@ -1051,21 +1098,49 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           : null
         if (article === null) return notFound()
         let back = () => redirect(detailHref(issue, filterOf(context)), 303)
-        let { expectedEmail } = context.get(DriveAccount)
 
         let token = await artworks.token()
         if (!token.ok) {
-          if (token.reason === 'not-connected')
-            flashToast(context, notConnectedToast(expectedEmail), 'error')
-          else if (token.reason === 'disconnected')
-            flashToast(context, disconnectedBanner(expectedEmail), 'error')
-          else flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
+          flashTokenFailure(context, token, context.get(DriveAccount).expectedEmail)
           return back()
         }
         let checked = recordedMissing(article)
         let check = await checkArticleFolders(
           { articles, folders: artworks.folders(token.accessToken), now },
           { ...article, kind: 'article' },
+        )
+        if (check === 'unavailable') {
+          flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
+          return back()
+        }
+        let toast = checkedToast(checked, check.missing)
+        flashToast(context, toast.text, toast.tone === 'error' ? 'error' : undefined)
+        return back()
+      },
+
+      /* `12j`: every folder of the group asked again, then back to the detail with what came of
+         it, as under an article. */
+      async checkGroupFolders(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let { articles, artworks } = articlesOf(context)
+        let groupId = Number(context.params.id)
+        let group = Number.isSafeInteger(groupId)
+          ? ((await artworks.groups.listByIssue(issue.id)).find((each) => each.id === groupId) ??
+            null)
+          : null
+        if (group === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+
+        let token = await artworks.token()
+        if (!token.ok) {
+          flashTokenFailure(context, token, context.get(DriveAccount).expectedEmail)
+          return back()
+        }
+        let checked = recordedMissing(group)
+        let check = await checkArticleFolders(
+          { articles, folders: artworks.folders(token.accessToken), groups: artworks.groups, now },
+          { ...group, kind: 'group' },
         )
         if (check === 'unavailable') {
           flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
@@ -1084,15 +1159,10 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await store.findByName(context.params.name)
         if (issue === null) return notFound()
         let back = () => redirect(detailHref(issue, filterOf(context)), 303)
-        let { expectedEmail } = context.get(DriveAccount)
 
         let token = await articlesOf(context).artworks.token()
         if (!token.ok) {
-          if (token.reason === 'not-connected')
-            flashToast(context, notConnectedToast(expectedEmail), 'error')
-          else if (token.reason === 'disconnected')
-            flashToast(context, disconnectedBanner(expectedEmail), 'error')
-          else flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
+          flashTokenFailure(context, token, context.get(DriveAccount).expectedEmail)
           return back()
         }
         /* The toast speaks of the folder the Callout named, never of one it kept quiet about. */
@@ -1536,7 +1606,10 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
             return renderDetail(context, issue, {
               discarding: {
                 ...discardingView(context, issue, batch),
-                folderGone: { heading: missingFoldersHeading(outcome.missing), urls },
+                folderGone: {
+                  heading: missingFoldersHeading(outcome.missing, batch.holder.kind),
+                  urls,
+                },
               },
               status: IN_THE_WAY,
             })

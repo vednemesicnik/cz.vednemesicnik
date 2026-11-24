@@ -153,7 +153,10 @@ export type LinkBlockView = {
   usage: string
 }
 
-/** The Callout under an article's row whose folder, or a folder in it, is missing (`12j`). */
+/**
+ * The Callout under an article's row, or in a group's, whose folder or a folder in it is missing
+ * (`12j`).
+ */
 export type MissingFoldersView = {
   /** Where _Zkontrolovat znovu_ posts; `null` in a closed issue, whose detail is for reading. */
   checkAction: string | null
@@ -341,6 +344,8 @@ export type GroupRowView = {
   isChanged: boolean
   /** The issue is closed: the link stands struck through, with nothing to copy (`12h`). */
   isClosed: boolean
+  /** The `12j` Callout in the group's frame, or `null` while its folders are there. */
+  missing: MissingFoldersView | null
   name: string
   /** `Pro grafika: …`, or `null` for a group without a note. */
   noteLine: string | null
@@ -765,17 +770,27 @@ function FolderHeading(
   }
 }
 
+/** The step, what the row cannot do, and _Zkontrolovat znovu_ (`12j`). */
+function MissingFoldersCallout(handle: Handle<{ missing: MissingFoldersView }>) {
+  return () => {
+    let { missing } = handle.props
+    return (
+      <Callout tone="error">
+        <FolderHeading heading={missing.heading} urls={missing.urls} />
+        <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
+        {missing.checkAction === null ? null : <CheckAgainForm action={missing.checkAction} />}
+      </Callout>
+    )
+  }
+}
+
 function MissingFoldersBand(handle: Handle<{ isLast: boolean; missing: MissingFoldersView }>) {
   return () => {
     let { isLast, missing } = handle.props
     return (
       <div mix={isLast ? bandStyle : [bandStyle, bandRuleStyle]} role="row">
         <div role="cell">
-          <Callout tone="error">
-            <FolderHeading heading={missing.heading} urls={missing.urls} />
-            <p style={{ margin: missing.checkAction === null ? 0 : '0 0 8px' }}>{missing.text}</p>
-            {missing.checkAction === null ? null : <CheckAgainForm action={missing.checkAction} />}
-          </Callout>
+          <MissingFoldersCallout missing={missing} />
         </div>
       </div>
     )
@@ -1336,6 +1351,12 @@ function GroupRow(handle: Handle<{ group: GroupRowView }>) {
             <ActionMenu items={items} label={groupMenuLabel(group.name)} />
           )}
         </div>
+        {/* Inside the group's frame, under its link, as `12j` draws it. */}
+        {group.missing === null ? null : (
+          <div mix={bandStyle}>
+            <MissingFoldersCallout missing={group.missing} />
+          </div>
+        )}
       </div>
     )
   }

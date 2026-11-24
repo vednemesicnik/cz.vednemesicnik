@@ -7,6 +7,7 @@ import { createArticleStore } from './data/articles.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
 import { clauseState } from './domain/approvals.ts'
 import { batchState } from './domain/artwork.ts'
+import { createGroupStore } from './data/artwork-groups.server.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { answeredAtOf } from './data/consent-patch.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
@@ -122,6 +123,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
   let links = createLinkStore(app.database)
   let articles = createArticleStore(app.database)
   let batchStore = createArtworkStore(app.database)
+  let groups = createGroupStore(app.database)
   let origin = appOrigin(environment)
   let sessionCookieName = createSessionCookie(environment).name
 
@@ -245,6 +247,18 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         </td>
       </tr>`
     })
+    /* Each group made in the detail, with its three folders to bin or restore (`12j`). */
+    let groupRows = (await groups.listByIssue(issueId)).map((group) => {
+      let path =
+        group.link === null ? null : routes.links.artworks.show.href({ key: group.link.key })
+      return html`<tr>
+        <td>${group.name}</td>
+        <td>${path === null ? '—' : html`<a href="${path}">${path}</a>`}</td>
+        ${folderCell('Group folder', group.folderId)}
+        ${folderCell('Obrazová díla', group.artworksFolderId)}
+        ${folderCell('Licence', group.licencesFolderId)}
+      </tr>`
+    })
     /* Every live batch of the issue, with what a run of the reply check could find for it. */
     let batchRows = (await batchStore.listByIssue(issueId)).map(
       (batch) =>
@@ -331,6 +345,16 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
       <p>Article page: <a href="${article}">${article}</a></p>
       <table>
         ${artworksRows}
+      </table>
+      <p>Groups, made with <em>Nová skupina</em> in the issue's detail:</p>
+      <table>
+        ${
+          groupRows.length === 0
+            ? html`<tr>
+                <td>none yet</td>
+              </tr>`
+            : groupRows
+        }
       </table>
       <p>
         ${button('/sign-in', `Sign in as ${MARIE.email}`)}
