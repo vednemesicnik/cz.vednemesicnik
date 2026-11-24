@@ -1,4 +1,4 @@
-import { consentIdempotencyKey, consentSubject } from '../domain/artwork.ts'
+import { consentIdempotencyKey, consentSubject, type HolderName } from '../domain/artwork.ts'
 import { keepOneLetterWords } from '../domain/public/typography.ts'
 import {
   ASSOCIATION_ID,
@@ -36,11 +36,12 @@ export type ConsentArtwork = {
 }
 
 export type ConsentDetails = {
-  articleName: string
   artworks: readonly ConsentArtwork[]
   /** The licence PDFs in the artworks' order, base64. */
   attachments: readonly MailAttachment[]
   formKey: string
+  /** The article or the artwork group the batch was sent to, which only the subject names. */
+  holder: HolderName
   issueName: string
   tag: string
   to: string
@@ -82,7 +83,7 @@ function terms(issueName: string, artworks: readonly ConsentArtwork[]): string {
 }
 
 export function consentEmail(details: ConsentDetails): MailMessage {
-  let subject = consentSubject(details.articleName, details.issueName, details.tag)
+  let subject = consentSubject(details.holder, details.issueName, details.tag)
   let body = [
     `<p style="${PARAGRAPH_STYLE}">Dobrý den,</p>`,
     `<p style="${PARAGRAPH_STYLE}">${keepOneLetterWords('v souvislosti s připravovanou publikací vašich obrazových děl v časopisu Vedneměsíčník vás prosíme o potvrzení níže uvedeného souhlasu s jejich užitím.')}</p>`,

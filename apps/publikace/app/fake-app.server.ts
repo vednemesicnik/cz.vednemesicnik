@@ -249,7 +249,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
     let batchRows = (await batchStore.listByIssue(issueId)).map(
       (batch) =>
         html`<tr>
-          <td>${batch.articleName}</td>
+          <td>${batch.holder.name}</td>
           <td>${batch.providerName}</td>
           <td>${batchState(batch)}</td>
           <td>

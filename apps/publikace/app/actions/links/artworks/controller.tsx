@@ -30,6 +30,7 @@ import type { Bytes } from '../../../drive/artwork-files.server.ts'
 import {
   type ArtworksTarget,
   removeArtwork,
+  holderOf,
   resolveArtworksLink,
   type SubmitOutcome,
   submitArtworks,
@@ -40,7 +41,7 @@ import { DriveAccount, type DriveAccountContext } from '../../../middleware/driv
 import { routes } from '../../../routes.ts'
 import type { LinkPreview } from '../../../ui/link-page/component.tsx'
 import type { PageWarning } from '../article-page.tsx'
-import { ArtworksFormPage, ArtworksSentPage } from './page.tsx'
+import { ArtworksFormPage, ArtworksSentPage, type PageHolder } from './page.tsx'
 import { LinkGonePage } from '../link-gone-page.tsx'
 import {
   ARTWORK_AUTHOR_FIELD,
@@ -139,16 +140,17 @@ async function warningOnOpen(
     {
       articles: artworks.articles,
       folders: artworks.folders(token.accessToken),
+      groups: artworks.groups,
       now: artworks.now,
     },
-    target.article,
+    target.holder,
   )
   return check !== 'unavailable' && check.missing.length > 0 ? 'folder-gone' : undefined
 }
 
 function renderForm(
   context: LinkContext,
-  articleName: string,
+  holder: PageHolder,
   state: FormState,
   init?: ResponseInit,
 ): Response | Promise<Response> {
@@ -156,10 +158,10 @@ function renderForm(
   return context.render(
     <ArtworksFormPage
       action={routes.links.artworks.submit.href({ key })}
-      articleName={articleName}
       cards={state.cards}
       errors={state.errors ?? []}
       formKey={state.formKey}
+      holder={holder}
       isClosed={state.isClosed ?? false}
       message={state.message}
       messageKey={state.messageKey}
@@ -179,12 +181,12 @@ function renderSent(
   return context.render(
     <ArtworksSentPage
       action={routes.links.artworks.submit.href({ key: context.params.key })}
-      articleName={outcome.articleName}
       artworks={outcome.batch.artworks.map((artwork) => ({
         author: artwork.author,
         name: artwork.originalName,
         source: artwork.source,
       }))}
+      holder={outcome.holder}
       isRefused={outcome.kind === 'refused'}
       preview={previewOf(context)}
       provider={{ email: outcome.batch.providerEmail, name: outcome.batch.providerName }}
@@ -307,7 +309,7 @@ export default function createArtworksController() {
       async show(context) {
         let target = await targetOf(context)
         if (target === null) return goneResponse(context)
-        return renderForm(context, target.article.name, {
+        return renderForm(context, target.holder, {
           cards: [],
           formKey: crypto.randomUUID(),
           provider: { email: '', name: '' },
@@ -389,7 +391,7 @@ export default function createArtworksController() {
            with nothing in the address. */
         if (form.intent === 'another') {
           if (target === null) return goneResponse(context)
-          return renderForm(context, target.article.name, {
+          return renderForm(context, target.holder, {
             cards: [],
             formKey: crypto.randomUUID(),
             provider: form.provider,
@@ -415,14 +417,12 @@ export default function createArtworksController() {
               return renderSent(context, outcome)
             }
           }
-          let article =
-            link?.articleId == null ? null : await setup.articles.findById(link.articleId)
-          if (link === null || link.kind !== 'artworks' || article === null) {
-            return goneResponse(context)
-          }
+          let holder =
+            link === null || link.kind !== 'artworks' ? null : await holderOf(setup, link)
+          if (holder === null) return goneResponse(context)
           return renderForm(
             context,
-            article.name,
+            holder,
             answered({
               cards: [],
               formKey: form.formKey,
@@ -439,7 +439,7 @@ export default function createArtworksController() {
         if (!check.ok) {
           return renderForm(
             context,
-            target.article.name,
+            target.holder,
             { ...kept, errors: check.errors },
             { status: REFUSED },
           )
@@ -459,14 +459,14 @@ export default function createArtworksController() {
           case 'link-gone':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({ ...kept, isClosed: true, message: LINK_GONE_ON_SEND }),
               { status: GONE },
             )
           case 'discarded':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({
                 ...kept,
                 cards: [],
@@ -478,47 +478,47 @@ export default function createArtworksController() {
           case 'folder-gone':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({ ...kept, message: FOLDER_GONE_ON_SEND, warning: 'folder-gone' }),
               { status: IN_THE_WAY },
             )
           case 'limited':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({ ...kept, message: SUBMIT_LIMIT_ON_SEND }),
               { status: IN_THE_WAY },
             )
           case 'recipients':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({ ...kept, message: RECIPIENT_LIMIT_ON_SEND }),
               { status: IN_THE_WAY },
             )
           case 'daily-cap':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({ ...kept, message: DAILY_CAP_ON_SEND }),
               { status: IN_THE_WAY },
             )
           case 'unavailable':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({ ...kept, message: UNAVAILABLE_ON_SEND }),
               { status: IN_THE_WAY },
             )
           /* A card the server no longer holds for this page, one the 24-hour sweep took: the page
              is drawn with what is left, and the island drops the rest. */
           case 'stale':
-            return renderForm(context, target.article.name, kept, { status: IN_THE_WAY })
+            return renderForm(context, target.holder, kept, { status: IN_THE_WAY })
           case 'disconnected':
           case 'not-connected':
             return renderForm(
               context,
-              target.article.name,
+              target.holder,
               answered({ ...kept, warning: 'disconnected' }),
               { status: IN_THE_WAY },
             )

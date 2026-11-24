@@ -66,7 +66,11 @@ describe('imageTypeOf', () => {
 describe('consentSubject', () => {
   it('starts with the prefix the reply check allows and ends with the tag', () => {
     assert.equal(
-      consentSubject('Školní jídelna po roce', 'VDM_2026_5', '20261118T134500'),
+      consentSubject(
+        { kind: 'article', name: 'Školní jídelna po roce' },
+        'VDM_2026_5',
+        '20261118T134500',
+      ),
       'Žádost o potvrzení souhlasu s užitím obrazových děl ke článku „Školní jídelna po roce“ – VDM_2026_5 [20261118T134500]',
     )
   })
@@ -225,7 +229,7 @@ describe('the short lines', () => {
 
   it('agree with the count', () => {
     assert.equal(
-      sentLead(2, 'Školní jídelna po roce'),
+      sentLead(2, { kind: 'article', name: 'Školní jídelna po roce' }),
       '2 díla k\u00a0článku „Školní jídelna po roce“ jsou nahraná.',
     )
     assert.equal(resendLabel(2), 'Poslat žádost znovu · 2 díla')

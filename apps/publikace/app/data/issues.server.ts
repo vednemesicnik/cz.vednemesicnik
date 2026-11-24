@@ -50,6 +50,8 @@ export type IssueStore = {
   setEvidence(id: number, spreadsheetId: string): Promise<void>
   /** Stores a folder's ID once; a folder already stored is never replaced. */
   setFolder(id: number, kind: FolderKind, folderId: string): Promise<void>
+  /** Keeps the folder of the issue's artwork groups; one already stored stays. */
+  setGroupsFolder(id: number, folderId: string): Promise<void>
 }
 
 type Row = Record<string, unknown>
@@ -70,6 +72,7 @@ function toIssue(row: Row): Issue {
       issue: text(row['folder_id']),
       print: text(row['print_folder_id']),
     },
+    groupsFolderId: text(row['groups_folder_id']),
     id: Number(row['id']),
     name: String(row['name']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
@@ -164,6 +167,13 @@ export function createIssueStore(database: Database): IssueStore {
       await database.exec(
         sql`UPDATE issues SET evidence_spreadsheet_id = ${spreadsheetId}
             WHERE id = ${id} AND evidence_spreadsheet_id IS NULL`,
+      )
+    },
+
+    async setGroupsFolder(id, folderId) {
+      await database.exec(
+        sql`UPDATE issues SET groups_folder_id = ${folderId}
+            WHERE id = ${id} AND groups_folder_id IS NULL`,
       )
     },
 

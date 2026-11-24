@@ -89,17 +89,21 @@ erDiagram
   FINAL_VERSION ||--|{ ARTICLE_CLAUSE : "one per author"
   FINAL_VERSION |o--o| FINAL_VERSION : "replaces"
   ARTICLE ||--o{ ARTWORK_BATCH : "receives"
+  ISSUE ||--o{ ARTWORK_GROUP : "holds"
+  ARTWORK_GROUP ||--o| LINK : "artworks link"
+  ARTWORK_GROUP ||--o{ ARTWORK_BATCH : "receives"
   ARTWORK_BATCH ||--|{ ARTWORK : "sent together"
   ARTWORK_BATCH ||--o{ CONSENT_ANSWER : "answered"
   ARTICLE_CLAUSE ||--o{ CONSENT_ANSWER : "answered"
   ISSUE ||--o| PRINT_HANDOFF : "print folder"
   ARTICLE ||--o| PRINT_ARTICLE : "copied"
   ARTWORK ||--o| PRINT_ARTWORK : "copied"
+  ARTWORK_GROUP ||--o| PRINT_GROUP : "copied"
 
   ISSUE {
     int id PK
     text name "unique regardless of case"
-    text folder_id "and articles_folder_id, print_folder_id"
+    text folder_id "and articles_folder_id, print_folder_id, groups_folder_id"
     instant completed_at "null while Nedokončené"
     instant closed_at
     text evidence_spreadsheet_id
@@ -108,8 +112,16 @@ erDiagram
     int id PK
     text key "12 random characters"
     text kind "article or artworks"
-    int article_id FK "artworks links only"
+    int article_id FK "an article's artworks link"
+    int group_id FK "a group's artworks link"
     instant revoked_at
+  }
+  ARTWORK_GROUP {
+    int id PK
+    text name "unique in the issue regardless of case"
+    text note "for the designer"
+    text folder_id "and meta, artworks, licences"
+    instant created_at "null until committed"
   }
   ARTICLE {
     int id PK
@@ -178,7 +190,15 @@ erDiagram
     int artwork_id PK
     text copy_file_id
   }
+  PRINT_GROUP {
+    int group_id PK
+    text folder_id
+  }
 ```
+
+An artworks link, a batch and an artwork belong to exactly one article or one artwork group, which
+a `CHECK` on each table holds (#133). Code that does not care which reads both as a _holder_:
+the folder with `Obrazová díla` and `Licence` in it, and the name the e-mails and the record show.
 
 ## Flows
 
@@ -221,7 +241,7 @@ sequenceDiagram
   participant R as Reply_Check
   actor E as Editor-in-chief
   P->>A: each file as it is chosen (60 an hour, 15 MB)
-  A->>D: upload to Obrazová díla as sha256.ext
+  A->>D: upload to the article's or the group's Obrazová díla as sha256.ext
   P->>A: Odeslat díla, author and source of each
   A->>D: a licence PDF per artwork into Licence
   A->>A: commit the batch
@@ -271,7 +291,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  W["Any write to an issue,<br/>article, clause or batch"] --> T["SQLite trigger marks<br/>the Registr or the Evidence"]
+  W["Any write to an issue, article,<br/>clause, group or batch"] --> T["SQLite trigger marks<br/>the Registr or the Evidence"]
   T --> Q["Record queue<br/>every 30 s, 20 marks a pass"]
   N["Nightly: everything marked<br/>24 h after the last full pass"] --> Q
   Q -- "rewrite the whole list" --> S["Registr: list Vydání z aplikace<br/>Evidence: Články, Redakční doložky,<br/>Obrazová díla"]
@@ -281,28 +301,32 @@ flowchart LR
 The app writes the record after the database, never inside an action. A sheet that does not
 answer delays the record and blocks nothing. The app writes only its own list, puts its
 protection back before every write, and never reads a sheet. A column the record begins to
-show needs its trigger changed in a new migration.
+show needs its trigger changed in a new migration. A group's artworks are rows of _Obrazová díla_
+with the group's name in _Název článku_ and its folder in _ID složky_, as the scripts write them,
+and the Registr's _URL – Vytvořit skupinu obrazových děl_ stays empty: the app hands out no link
+that creates groups (`03` row 6).
 
 ## Lifecycles
 
-| Thing          | Derived from                                                                                          | In `app/domain/` |
-| -------------- | ----------------------------------------------------------------------------------------------------- | ---------------- |
-| Issue          | `completed_at` (Nedokončené without it), `closed_at`                                                  | `issue.ts`       |
-| Article        | handover and take columns; with a final version standing, the counts of its clauses; `doc_revised_at` | `article.ts`     |
-| Clause         | stored `pending/sent/failed`, then the reply, `consent_verified_at`, `approved_at`, archive failure   | `approvals.ts`   |
-| Artwork batch  | `mail_sent_at` or `mail_failed_at`, the reply, `consent_verified_at`, `approved_at`, `discarded_at`   | `artwork.ts`     |
-| Artwork upload | no `batch_id` while unsent; `removed_at`; binned 24 h after upload if still unsent                    | `artwork.ts`     |
-| Link           | valid; gone once revoked or its issue closed; a key never issued draws the same page                  | `link.ts`        |
+| Thing          | Derived from                                                                                          | In `app/domain/`   |
+| -------------- | ----------------------------------------------------------------------------------------------------- | ------------------ |
+| Issue          | `completed_at` (Nedokončené without it), `closed_at`                                                  | `issue.ts`         |
+| Article        | handover and take columns; with a final version standing, the counts of its clauses; `doc_revised_at` | `article.ts`       |
+| Clause         | stored `pending/sent/failed`, then the reply, `consent_verified_at`, `approved_at`, archive failure   | `approvals.ts`     |
+| Artwork batch  | `mail_sent_at` or `mail_failed_at`, the reply, `consent_verified_at`, `approved_at`, `discarded_at`   | `artwork.ts`       |
+| Artwork upload | no `batch_id` while unsent; `removed_at`; binned 24 h after upload if still unsent                    | `artwork.ts`       |
+| Artwork group  | `created_at`; no state of its own, never deleted                                                      | `artwork-group.ts` |
+| Link           | valid; gone once revoked or its issue closed; a key never issued draws the same page                  | `link.ts`          |
 
 ## Background work
 
 **In the app's process**
 
-| Work                  | When                                                           | Does                                                   |
-| --------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
-| Record queue          | every 30 s, and everything again 24 h after the last full pass | writes the Registr and each Evidence from the database |
-| Cleanup after a crash | at startup and at the next send through the same path          | bins uncommitted article attempts and artwork batches  |
-| Unsent uploads        | at startup and on every upload                                 | bins uploads that waited 24 hours unsent               |
+| Work                  | When                                                           | Does                                                            |
+| --------------------- | -------------------------------------------------------------- | --------------------------------------------------------------- |
+| Record queue          | every 30 s, and everything again 24 h after the last full pass | writes the Registr and each Evidence from the database          |
+| Cleanup after a crash | at startup and at the next send through the same path          | bins uncommitted article and group attempts and artwork batches |
+| Unsent uploads        | at startup and on every upload                                 | bins uploads that waited 24 hours unsent                        |
 
 **Apps Script jobs that talk to the app**, all as `publikace.app@` on their own triggers:
 
@@ -321,6 +345,10 @@ digest, one run is enough (`14i`).
 
 **The API is a contract with the scripts.** It is versioned (`/api/v1`), and a field is never
 renamed in place. A change to what an endpoint takes or returns is a change in the script too.
+Artwork groups were added that way (#133): `artwork-replies/claim` gives each batch a `kind`
+(`article` or `artwork-group`) beside `articleName`, which carries the group's name for a group,
+and `print-handoff/claim` gives each issue its `groups` with their notes, which `…/report` takes
+back the same way and a job written before groups leaves out.
 
 ## Configuration
 

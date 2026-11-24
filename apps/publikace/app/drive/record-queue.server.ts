@@ -87,17 +87,18 @@ async function writeEvidence(
   }
 
   let articles = await queue.articles.listCreated(issueId)
-  let byId = new Map(articles.map((article) => [article.id, article]))
   let clauses = await queue.articles.listClausesForRecord(issueId)
+  /* A group's rows carry its name and its folder where an article's carry the article's, as the
+     scripts' rows for a group do (#133). */
   let batches = (await queue.artworks.listByIssue(issueId)).flatMap((batch) => {
-    let article = byId.get(batch.articleId)
-    if (article === undefined) return []
+    if (batch.holder.folderId === null) return []
     return [
       {
         ...batch,
-        articleFolderId: article.folderId,
+        articleFolderId: batch.holder.folderId,
+        articleName: batch.holder.name,
         artworks: batch.artworks.filter((artwork) => artwork.removedAt === null),
-        licencesFolderId: article.licencesFolderId,
+        licencesFolderId: batch.holder.licencesFolderId,
       },
     ]
   })

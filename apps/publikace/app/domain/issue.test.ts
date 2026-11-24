@@ -40,6 +40,7 @@ function issue(overrides: Partial<Issue> = {}): Issue {
     completedAt: NOVEMBER,
     evidenceSpreadsheetId: null,
     folderIds: { articles: 'f-articles', issue: 'f-issue', print: 'f-print' },
+    groupsFolderId: null,
     id: 1,
     name: 'VDM_2026_6',
     startedAt: NOVEMBER,

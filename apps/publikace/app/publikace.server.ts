@@ -29,6 +29,7 @@ import { DEFAULT_PUBLIC_MAIL_PER_DAY } from './domain/artwork.ts'
 import { now } from './domain/time.ts'
 import { cleanUpAbandoned } from './drive/article-setup.server.ts'
 import { cleanUpAbandonedArtworks } from './drive/artworks-setup.server.ts'
+import { cleanUpAbandonedGroups, groupSetupOf } from './drive/group-setup.server.ts'
 import { startRecordQueue } from './drive/record-queue.server.ts'
 import {
   createAppRouter,
@@ -100,16 +101,18 @@ export async function createPublikace(environment: Environment): Promise<Publika
     }
 
     /*
-     * Before the first request, no request is running, so every article attempt and artwork batch
-     * left uncommitted is one a crash or a failed cleanup left behind: its files go to the bin now
-     * (`11c`), and so does every upload that waited 24 hours unsent (`21d`). A Drive that does not
-     * answer delays it to the next send and does not stop the app.
+     * Before the first request, no request is running, so every article attempt, artwork group
+     * attempt and artwork batch left uncommitted is one a crash or a failed cleanup left behind:
+     * its files go to the bin now (`11c`), and so does every upload that waited 24 hours unsent
+     * (`21d`). A Drive that does not answer delays it to the next send and does not stop the app.
      */
     let setup = { database: database.database, environment }
     try {
       let articleSetup = createArticleSetup(setup)
       await cleanUpAbandoned(articleSetup)
-      await cleanUpAbandonedArtworks(createArtworksSetup(setup, articleSetup))
+      let artworksSetup = createArtworksSetup(setup, articleSetup)
+      await cleanUpAbandonedGroups(groupSetupOf(articleSetup, artworksSetup))
+      await cleanUpAbandonedArtworks(artworksSetup)
     } catch (error) {
       console.error('[drive] the cleanup at startup did not run:', error)
     }

@@ -14,7 +14,7 @@ import { parseStamp, stamp } from '../domain/time.ts'
 /**
  * The shared links in the app's database (`02a`). An issue's link for new articles comes into
  * being when the issue is complete and is replaced, never edited; an article's link for its
- * artworks comes into being with the article.
+ * artworks comes into being with the article, and an artwork group's with the group.
  */
 
 export type LinkStore = {
@@ -54,10 +54,11 @@ export function newLinkKey(): string {
   return key
 }
 
-function toLink(row: Row): Link {
+export function toLink(row: Row): Link {
   return {
-    articleId: row['article_id'] === null ? null : Number(row['article_id']),
+    articleId: row['article_id'] == null ? null : Number(row['article_id']),
     createdAt: parseStamp(row['created_at']) ?? EPOCH,
+    groupId: row['group_id'] == null ? null : Number(row['group_id']),
     id: Number(row['id']),
     issueId: Number(row['issue_id']),
     key: String(row['key']),
@@ -77,12 +78,20 @@ async function validArticleLink(db: Database, issueId: number): Promise<Link | n
 /** Inserts a link with a fresh key, within whatever transaction `db` is. */
 export async function insertLink(
   db: Database,
-  link: { articleId: number | null; at: Temporal.Instant; issueId: number; kind: LinkKind },
+  link: {
+    articleId: number | null
+    at: Temporal.Instant
+    /** The artwork group an artworks link uploads to, in place of an article (#133). */
+    groupId?: number
+    issueId: number
+    kind: LinkKind
+  },
 ): Promise<Link> {
   let key = newLinkKey()
   await db.exec(
-    sql`INSERT INTO links (key, kind, issue_id, article_id, created_at)
-        VALUES (${key}, ${link.kind}, ${link.issueId}, ${link.articleId}, ${stamp(link.at)})`,
+    sql`INSERT INTO links (key, kind, issue_id, article_id, group_id, created_at)
+        VALUES (${key}, ${link.kind}, ${link.issueId}, ${link.articleId}, ${link.groupId ?? null},
+          ${stamp(link.at)})`,
   )
   let result = await db.exec(sql`SELECT * FROM links WHERE key = ${key}`)
   let row = result.rows?.[0]

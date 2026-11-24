@@ -41,6 +41,11 @@ export function articleFolderTag(articleId: number): string {
   return `article_${articleId}`
 }
 
+/** The tag of an artwork group's folder inside the print folder (#133). */
+export function groupFolderTag(groupId: number): string {
+  return `group_${groupId}`
+}
+
 /** The tag of the copy of one approved final version of an article. */
 export function textCopyTag(articleId: number, finalVersionId: number): string {
   return `text_${articleId}_${finalVersionId}`

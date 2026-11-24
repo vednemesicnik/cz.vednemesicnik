@@ -23,6 +23,7 @@ import {
   DISCARD_UNAVAILABLE_TITLE,
   discardDialogText,
   discardDialogTitle,
+  type HolderName,
   isWaiting,
   PROVIDER_COLUMN,
   STATE_COLUMN,
@@ -47,6 +48,7 @@ import {
   issueState,
   LINK_PLACEHOLDER_TEXT,
   missingFolders,
+  notConnectedDialogMessage,
   OPEN_EVIDENCE_LABEL,
   OPEN_FOLDER_LABEL,
   OPEN_PRINT_FOLDER_LABEL,
@@ -113,6 +115,27 @@ import {
 import { SHOW_REPLY_LABEL } from '../../domain/approvals.ts'
 import { DETAILS_LABEL } from '../../domain/jobs.ts'
 import { spreadsheetUrl } from '../../domain/record.ts'
+import {
+  CREATE_GROUP_LABEL,
+  CREATE_GROUP_PENDING_LABEL,
+  CREATE_GROUP_UNAVAILABLE_TEXT,
+  CREATE_GROUP_UNAVAILABLE_TITLE,
+  GROUP_NAME_LABEL,
+  GROUP_NAME_PLACEHOLDER,
+  GROUP_NOTE_HINT,
+  GROUP_NOTE_LABEL,
+  GROUP_NOTE_PLACEHOLDER,
+  groupMenuLabel,
+  GROUPS_EMPTY_TEXT,
+  GROUPS_SECTION_TITLE,
+  NEW_GROUP_DIALOG_TEXT,
+  NEW_GROUP_DIALOG_TITLE,
+  NEW_GROUP_LABEL,
+  OPEN_GROUP_FOLDER_LABEL,
+  OPTIONAL_MARK,
+} from '../../domain/artwork-group.ts'
+import { disconnectedBanner } from '../../domain/drive-account.ts'
+import { REQUIRED_LEGEND } from '../../domain/public/article-form.ts'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
 export type LinkBlockView = {
@@ -247,7 +270,6 @@ export type MissingAddressView = {
  * batch's actions stand on each of its rows, and act on all of them (`12o`).
  */
 export type ArtworkRowView = {
-  articleName: string
   author: string
   /**
    * Resend and discard, for a batch in _Chyba_ of an issue still open; each `null` while a folder
@@ -255,6 +277,8 @@ export type ArtworkRowView = {
    */
   batchActions: { count: number; discardHref: string | null; resendAction: string | null } | null
   driveUrl: string
+  /** The article or the group the artwork belongs to, the line under its name (`12a`). */
+  holderName: string
   id: number
   name: string
   providerEmail: string
@@ -274,10 +298,10 @@ export type ArtworksView = {
 /** The question _Zahodit dávku_ over the detail (`12o`). */
 export type DiscardView = {
   action: string
-  articleName: string
   cancelHref: string
   count: number
   email: string
+  holder: HolderName
   /** The confirm met a folder gone meanwhile: nothing went to the bin (`12o`). */
   folderGone?: { heading: readonly HeadingPart[]; urls: MissingFoldersView['urls'] }
   /**
@@ -299,14 +323,51 @@ const DISCARD_REFUSALS: Record<DiscardRefusal, { text: string; title: string }> 
 /** _Podklady pro tisk_ (`12t`): the line, the print folder, and the job's history its link opens. */
 export type PrintSectionView = { folderHref: string; jobHref: string; line: PrintLine }
 
+/** One artwork group's row in _Skupiny obrazových děl_ (`12a`, `12e`). */
+export type GroupRowView = {
+  count: string
+  folderHref: string | null
+  id: number
+  /** Just created: highlighted with focus on _Kopírovat_ until the next load (`12e`). */
+  isChanged: boolean
+  /** The issue is closed: the link stands struck through, with nothing to copy (`12h`). */
+  isClosed: boolean
+  name: string
+  /** `Pro grafika: …`, or `null` for a group without a note. */
+  noteLine: string | null
+  shown: string | null
+  url: string | null
+}
+
+export type GroupsView = {
+  /** _Nová skupina_, on an active issue only. */
+  newHref: string | null
+  rows: readonly GroupRowView[]
+}
+
+/** The dialog _Nová skupina obrazových děl_ over the detail (`12e`). */
+export type NewGroupDialogView = {
+  action: string
+  cancelHref: string
+  errors: { name: string | null; note: string | null }
+  formKey: string
+  /** Drive did not answer, or the account is not connected: the fields stay as they were. */
+  refusal: 'disconnected' | 'not-connected' | 'unavailable' | null
+  values: { name: string; note: string }
+}
+
 export type DetailPageProps = {
   articles: readonly ArticleRowView[]
   missingAddress?: MissingAddressView
   artworks: ArtworksView
   discarding?: DiscardView
   driveAccount: { expectedEmail: string; status: DriveStatus }
+  /** The issue's artwork groups (`12a`); none on an unfinished issue. */
+  groups?: GroupsView
   /** _Dokončit vydání_ found the stored issue folder gone, so it created nothing (`12i`). */
   isFolderGone?: boolean
+  /** _Nová skupina obrazových děl_ over the detail (`12e`). */
+  newGroup?: NewGroupDialogView
   /** The question _Vydat nový odkaz_ over the detail (`02d`). */
   isRenewing?: boolean
   issue: Issue
@@ -1062,7 +1123,7 @@ function ArtworkRow(
         <TableRowTitle
           href={artwork.driveUrl}
           isNewTab
-          sub={artwork.articleName}
+          sub={artwork.holderName}
           title={artwork.name}
         />
         <span mix={providerStyle} role="cell">
@@ -1212,6 +1273,202 @@ function Artworks(handle: Handle<{ artworks: ArtworksView; csrfToken: string }>)
   }
 }
 
+const groupNoteStyle = css({ overflowWrap: 'anywhere' })
+
+/** One group: its name and count, its note, its link to copy and its „⋯“ (`12a`). */
+function GroupRow(handle: Handle<{ group: GroupRowView }>) {
+  return () => {
+    let { group } = handle.props
+    let items: ActionMenuItem[] =
+      group.folderHref === null ? [] : [{ href: group.folderHref, label: OPEN_GROUP_FOLDER_LABEL }]
+    return (
+      <div class={group.isChanged ? 'vdm-changed' : undefined}>
+        <div mix={linkRowStyle}>
+          <div mix={linkBodyStyle}>
+            <span mix={linkLabelStyle}>
+              {group.name} <span mix={countInLabelStyle}>{group.count}</span>
+            </span>
+            {group.noteLine === null ? null : (
+              <span mix={[metaStyle, groupNoteStyle]}>{group.noteLine}</span>
+            )}
+            {group.url === null || group.shown === null ? null : group.isClosed ? (
+              <span>
+                <del mix={closedLinkStyle}>{group.shown}</del>
+              </span>
+            ) : (
+              <CopyButton isFocused={group.isChanged} shown={group.shown} value={group.url} />
+            )}
+          </div>
+          {/* Opening the folder writes nothing, so it stays on a closed issue too (`12h`). */}
+          {items.length === 0 ? null : (
+            <ActionMenu items={items} label={groupMenuLabel(group.name)} />
+          )}
+        </div>
+      </div>
+    )
+  }
+}
+
+const countInLabelStyle = css({ color: 'var(--text-secondary)', fontWeight: 400 })
+
+const groupListStyle = css({
+  '& > * + *': { borderTop: '1px solid var(--border)' },
+})
+
+/** `12a`, `12c`: the issue's artwork groups, the newest first, and _Nová skupina_. */
+function Groups(handle: Handle<{ groups: GroupsView }>) {
+  return () => {
+    let { groups } = handle.props
+    return (
+      <section aria-labelledby="groups-title" mix={sectionStyle}>
+        <div mix={sectionBarStyle}>
+          <h2 id="groups-title">
+            {GROUPS_SECTION_TITLE}
+            <span mix={countStyle}>{groups.rows.length}</span>
+          </h2>
+          {groups.newHref === null ? null : (
+            <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={groups.newHref}>
+              {NEW_GROUP_LABEL}
+            </a>
+          )}
+        </div>
+        {groups.rows.length === 0 ? (
+          <EmptyState>
+            <EmptyStateText>{GROUPS_EMPTY_TEXT}</EmptyStateText>
+          </EmptyState>
+        ) : (
+          <div mix={linkBoxStyle}>
+            <div mix={groupListStyle}>
+              {groups.rows.map((group) => (
+                <GroupRow group={group} key={group.id} />
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    )
+  }
+}
+
+/* The form is the dialog's body and its actions both, as on _Nové vydání_. */
+const dialogFormStyle = css({ display: 'contents' })
+
+/**
+ * `12e`, at `/issues/{name}/artwork-groups/new` over the detail. A refused name or note comes
+ * back with the fields as they were typed; so does a Drive that did not answer, with the step in
+ * a Callout above them, as on _Nové vydání_ (`11c`).
+ */
+function NewGroupDialog(
+  handle: Handle<{ dialog: NewGroupDialogView; driveAccount: DetailPageProps['driveAccount'] }>,
+) {
+  return () => {
+    let { dialog, driveAccount } = handle.props
+    let { errors, refusal, values } = dialog
+    let nameError = errors.name === null ? undefined : 'group-name-error'
+    let noteMessage = errors.note === null ? 'group-note-hint' : 'group-note-error'
+    return (
+      <Dialog maxWidth="500px">
+        <DialogTitle>{NEW_GROUP_DIALOG_TITLE}</DialogTitle>
+        <form action={dialog.action} method="post" mix={dialogFormStyle} noValidate>
+          <CsrfField />
+          <input name="formKey" type="hidden" value={dialog.formKey} />
+          <div class="vdm-dialog__body">
+            {refusal === 'not-connected' ? (
+              <Callout tone="warning">
+                <p style={{ margin: 0 }}>{notConnectedDialogMessage(driveAccount.expectedEmail)}</p>
+              </Callout>
+            ) : refusal === 'disconnected' ? (
+              <Callout tone="error">
+                <p style={{ margin: 0 }}>{disconnectedBanner(driveAccount.expectedEmail)}</p>
+              </Callout>
+            ) : refusal === 'unavailable' ? (
+              <Callout tone="error">
+                <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+                  {CREATE_GROUP_UNAVAILABLE_TITLE}
+                </p>
+                <p style={{ margin: 0 }}>{CREATE_GROUP_UNAVAILABLE_TEXT}</p>
+              </Callout>
+            ) : null}
+            <p class="vdm-dialog__text" style={{ margin: 0 }}>
+              {NEW_GROUP_DIALOG_TEXT}
+            </p>
+            <p class="vdm-form__legend" style={{ margin: 0 }}>
+              {REQUIRED_LEGEND}
+            </p>
+            <div class="vdm-field">
+              <label class="vdm-field__label" for="group-name">
+                {GROUP_NAME_LABEL}{' '}
+                <span aria-hidden="true" class="vdm-field__required">
+                  *
+                </span>
+              </label>
+              <input
+                aria-describedby={nameError}
+                aria-invalid={nameError === undefined ? undefined : 'true'}
+                autocomplete="off"
+                autofocus={errors.name !== null || errors.note === null}
+                class={
+                  nameError === undefined
+                    ? 'vdm-field__input'
+                    : 'vdm-field__input vdm-field__input--error'
+                }
+                id="group-name"
+                name="name"
+                placeholder={GROUP_NAME_PLACEHOLDER}
+                required
+                type="text"
+                defaultValue={values.name}
+              />
+              {errors.name === null ? null : (
+                <span class="vdm-field__hint vdm-field__hint--error" id="group-name-error">
+                  {errors.name}
+                </span>
+              )}
+            </div>
+            <div class="vdm-field">
+              <label class="vdm-field__label" for="group-note">
+                {GROUP_NOTE_LABEL} <span class="vdm-field__optional">{OPTIONAL_MARK}</span>
+              </label>
+              <textarea
+                aria-describedby={noteMessage}
+                aria-invalid={errors.note === null ? undefined : 'true'}
+                autofocus={errors.name === null && errors.note !== null ? true : undefined}
+                class={
+                  errors.note === null
+                    ? 'vdm-field__input vdm-field__textarea'
+                    : 'vdm-field__input vdm-field__textarea vdm-field__input--error'
+                }
+                id="group-note"
+                name="note"
+                defaultValue={values.note}
+                placeholder={GROUP_NOTE_PLACEHOLDER}
+                rows={3}
+              />
+              {errors.note === null ? (
+                <span class="vdm-field__hint" id="group-note-hint">
+                  {GROUP_NOTE_HINT}
+                </span>
+              ) : (
+                <span class="vdm-field__hint vdm-field__hint--error" id="group-note-error">
+                  {errors.note}
+                </span>
+              )}
+            </div>
+          </div>
+          <div class="vdm-dialog__actions">
+            <PendingActions
+              cancel={{ href: dialog.cancelHref, label: 'Zrušit' }}
+              emphasis="primary"
+              label={CREATE_GROUP_LABEL}
+              pendingLabel={CREATE_GROUP_PENDING_LABEL}
+            />
+          </div>
+        </form>
+      </Dialog>
+    )
+  }
+}
+
 /** `12o`: discarding takes the batch's files to the bin, so it is asked first. */
 function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
   return () => {
@@ -1246,9 +1503,7 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
               </Callout>
             </div>
           )}
-          <p class="vdm-dialog__text">
-            {discardDialogText(discarding.articleName, discarding.email)}
-          </p>
+          <p class="vdm-dialog__text">{discardDialogText(discarding.holder, discarding.email)}</p>
         </div>
         <form action={discarding.action} class="vdm-dialog__actions" method="post">
           <CsrfField />
@@ -1336,8 +1591,8 @@ function RenewDialog(handle: Handle<{ issue: Issue }>) {
  *
  * An unfinished issue (`12i`) has one action, and the place where the link for the newsroom
  * will stand without the link, so nobody copies it before it is valid. An active one has its
- * link, its articles and its artworks in the drawn order (`12a`, `12c`); artwork groups and the
- * material for print are later work, and stand there once their data exists.
+ * link, its articles, its artwork groups, its artworks and its material for print in the drawn
+ * order (`12a`, `12c`); a closed one the same, without what writes (`12h`).
  */
 export function DetailPage(handle: Handle<DetailPageProps>) {
   return () => {
@@ -1346,9 +1601,11 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       artworks,
       discarding,
       driveAccount,
+      groups,
       isFolderGone = false,
       isRenewing = false,
       issue,
+      newGroup,
       link,
       missingAddress,
       person,
@@ -1367,7 +1624,11 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
           active="issues"
           driveAccount={driveAccount}
           isInert={
-            isRenewing || discarding !== undefined || replacing !== undefined || step !== undefined
+            isRenewing ||
+            discarding !== undefined ||
+            newGroup !== undefined ||
+            replacing !== undefined ||
+            step !== undefined
           }
           person={person}
           title={issue.name}
@@ -1446,6 +1707,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
                   csrfToken={getCsrfToken(getContext())}
                   missingAddress={missingAddress}
                 />
+                {groups === undefined ? null : <Groups groups={groups} />}
                 <Artworks artworks={artworks} csrfToken={getCsrfToken(getContext())} />
                 {print === undefined ? null : <PrintSection print={print} />}
               </>
@@ -1453,6 +1715,9 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
           </div>
         </Layout>
         {isRenewing ? <RenewDialog issue={issue} /> : null}
+        {newGroup === undefined ? null : (
+          <NewGroupDialog dialog={newGroup} driveAccount={driveAccount} />
+        )}
         {discarding === undefined ? null : <DiscardDialog discarding={discarding} />}
         {replacing === undefined ? null : <FinalVersionDialog {...replacing} />}
         {step === undefined ? null : <IssueStepDialog step={step} />}

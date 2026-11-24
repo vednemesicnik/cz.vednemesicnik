@@ -5,6 +5,7 @@ import {
   articleFolderTag,
   artworkCopyTag,
   CLAIM_MINUTES,
+  groupFolderTag,
   ISSUE_CLAIM_LIMIT,
   type PrintSummary,
   textCopyTag,
@@ -61,8 +62,31 @@ export type ClaimedArticle = {
   } | null
 }
 
+/** What an artwork group's folder inside the print folder holds, as the job reported it (#133). */
+export type GroupCopy = {
+  artworks: { artworkId: number; fileId: string; name: string }[]
+  folderId: string
+  lastImageNumber: number
+}
+
+/**
+ * One artwork group as a claim hands it to the job (#133): its artworks with consent, and its note
+ * for the designer, which goes to the _Podklady_ sheet. A group with no artwork with consent and no
+ * copy is left out, so an empty group gets no folder.
+ */
+export type ClaimedGroup = {
+  artworks: ClaimedArticle['artworks']
+  copy: GroupCopy | null
+  folderTag: string
+  groupId: number
+  name: string
+  note: string
+  sourceFolderId: string
+}
+
 export type ClaimedIssue = {
   articles: ClaimedArticle[]
+  groups: ClaimedGroup[]
   issueId: number
   issueName: string
   printFolderId: string
@@ -72,6 +96,8 @@ export type ClaimedIssue = {
 /** What a run did with one issue. An article left out was not reached and stays as it was. */
 export type IssueReport = {
   articles: { articleId: number; copy: ArticleCopy | null }[]
+  /** Left out by a job written before groups (#133), which leaves every group as it was. */
+  groups?: { copy: GroupCopy | null; groupId: number }[]
   isComplete: boolean
   issueId: number
   sheetId: string | null
@@ -166,24 +192,30 @@ async function approvedTexts(
   return texts
 }
 
-/** The artworks of each article whose conversation is in `Licence` (`01b` _Schváleno_). */
+/**
+ * The artworks of each article and of each artwork group whose conversation is in `Licence`
+ * (`01b` _Schváleno_), keyed `article:<id>` and `group:<id>`.
+ */
 async function consentedArtworks(
   db: Database,
   issueIds: string,
-): Promise<Map<number, ClaimedArticle['artworks']>> {
+): Promise<Map<string, ClaimedArticle['artworks']>> {
   let result = await db.exec(
-    sql`SELECT a.id, a.article_id, a.drive_file_id, a.stored_name, a.author, a.source
+    sql`SELECT a.id, a.article_id, a.group_id, a.drive_file_id, a.stored_name, a.author, a.source
         FROM artworks a JOIN artwork_batches b ON b.id = a.batch_id
         WHERE b.issue_id IN (SELECT value FROM json_each(${issueIds}))
           AND b.created_at IS NOT NULL AND b.discarded_at IS NULL AND b.approved_at IS NOT NULL
           AND a.removed_at IS NULL
         ORDER BY b.created_at, b.id, a.position, a.id`,
   )
-  let byArticle = new Map<number, ClaimedArticle['artworks']>()
+  let byHolder = new Map<string, ClaimedArticle['artworks']>()
   for (let row of result.rows ?? []) {
-    let articleId = Number(row['article_id'])
+    let holder =
+      row['group_id'] == null
+        ? `article:${Number(row['article_id'])}`
+        : `group:${Number(row['group_id'])}`
     let artworkId = Number(row['id'])
-    let list = byArticle.get(articleId) ?? []
+    let list = byHolder.get(holder) ?? []
     list.push({
       artworkId,
       author: text(row['author']) ?? '',
@@ -192,9 +224,75 @@ async function consentedArtworks(
       source: text(row['source']) ?? '',
       storedName: String(row['stored_name']),
     })
-    byArticle.set(articleId, list)
+    byHolder.set(holder, list)
   }
-  return byArticle
+  return byHolder
+}
+
+async function groupCopiesOf(db: Database, issueIds: string): Promise<Map<number, GroupCopy>> {
+  let groups = await db.exec(
+    sql`SELECT * FROM print_groups WHERE issue_id IN (SELECT value FROM json_each(${issueIds}))`,
+  )
+  let artworks = await db.exec(
+    sql`SELECT w.* FROM print_group_artworks w JOIN print_groups p ON p.group_id = w.group_id
+        WHERE p.issue_id IN (SELECT value FROM json_each(${issueIds}))
+        ORDER BY w.name`,
+  )
+  let copies = new Map<number, GroupCopy>()
+  for (let row of groups.rows ?? []) {
+    copies.set(Number(row['group_id']), {
+      artworks: [],
+      folderId: String(row['folder_id']),
+      lastImageNumber: Number(row['last_image_number']),
+    })
+  }
+  for (let row of artworks.rows ?? []) {
+    copies.get(Number(row['group_id']))?.artworks.push({
+      artworkId: Number(row['artwork_id']),
+      fileId: String(row['copy_file_id']),
+      name: String(row['name']),
+    })
+  }
+  return copies
+}
+
+/** What the job reported of a group of the issue it holds; a group of another issue is ignored. */
+async function recordGroup(
+  db: Database,
+  issueId: number,
+  group: NonNullable<IssueReport['groups']>[number],
+): Promise<void> {
+  let found = await db.exec(
+    sql`SELECT 1 FROM artwork_groups WHERE id = ${group.groupId} AND issue_id = ${issueId}
+          AND created_at IS NOT NULL`,
+  )
+  if ((found.rows ?? []).length === 0) return
+  let { copy } = group
+  if (copy === null) {
+    await db.exec(sql`DELETE FROM print_groups WHERE group_id = ${group.groupId}`)
+    return
+  }
+  await db.exec(
+    sql`INSERT INTO print_groups (group_id, issue_id, folder_id, last_image_number)
+        VALUES (${group.groupId}, ${issueId}, ${copy.folderId}, ${copy.lastImageNumber})
+        ON CONFLICT (group_id) DO UPDATE SET
+          folder_id = excluded.folder_id,
+          last_image_number = max(last_image_number, excluded.last_image_number)`,
+  )
+  await db.exec(sql`DELETE FROM print_group_artworks WHERE group_id = ${group.groupId}`)
+  if (copy.artworks.length === 0) return
+  /* As for an article: one statement, only this group's artworks, the list's order. */
+  await db.exec(
+    sql`INSERT INTO print_group_artworks (artwork_id, group_id, copy_file_id, name)
+        SELECT a.id, ${group.groupId},
+          json_extract(c.value, '$.fileId'), json_extract(c.value, '$.name')
+        FROM json_each(${JSON.stringify(copy.artworks)}) AS c
+        JOIN artworks AS a ON a.id = json_extract(c.value, '$.artworkId')
+                          AND a.group_id = ${group.groupId}
+        WHERE true
+        ORDER BY c.key
+        ON CONFLICT (artwork_id) DO NOTHING`,
+  )
 }
 
 async function recordArticle(
@@ -294,7 +392,7 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
           let articleId = Number(row['id'])
           let claimed: ClaimedArticle = {
             articleId,
-            artworks: artworks.get(articleId) ?? [],
+            artworks: artworks.get(`article:${articleId}`) ?? [],
             copy: copies.get(articleId) ?? null,
             docId: String(row['doc_id']),
             folderTag: articleFolderTag(articleId),
@@ -308,8 +406,31 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
           let issueId = Number(row['issue_id'])
           byIssue.set(issueId, [...(byIssue.get(issueId) ?? []), claimed])
         }
+        let groups = await db.exec(
+          sql`SELECT id, issue_id, name, note, folder_id FROM artwork_groups
+              WHERE issue_id IN (SELECT value FROM json_each(${ids})) AND created_at IS NOT NULL
+              ORDER BY created_at, id`,
+        )
+        let groupCopies = await groupCopiesOf(db, ids)
+        let groupsByIssue = new Map<number, ClaimedGroup[]>()
+        for (let row of groups.rows ?? []) {
+          let groupId = Number(row['id'])
+          let claimed: ClaimedGroup = {
+            artworks: artworks.get(`group:${groupId}`) ?? [],
+            copy: groupCopies.get(groupId) ?? null,
+            folderTag: groupFolderTag(groupId),
+            groupId,
+            name: String(row['name']),
+            note: text(row['note']) ?? '',
+            sourceFolderId: String(row['folder_id']),
+          }
+          if (claimed.artworks.length === 0 && claimed.copy === null) continue
+          let issueId = Number(row['issue_id'])
+          groupsByIssue.set(issueId, [...(groupsByIssue.get(issueId) ?? []), claimed])
+        }
         return (issues.rows ?? []).map((row: Row) => ({
           articles: byIssue.get(Number(row['id'])) ?? [],
+          groups: groupsByIssue.get(Number(row['id'])) ?? [],
           issueId: Number(row['id']),
           issueName: String(row['name']),
           printFolderId: String(row['print_folder_id']),
@@ -326,6 +447,7 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
         )
         if ((held.rows ?? []).length === 0) return 'unknown'
         for (let article of report.articles) await recordArticle(db, report.issueId, article)
+        for (let group of report.groups ?? []) await recordGroup(db, report.issueId, group)
         await db.exec(
           sql`UPDATE print_handoffs
               SET sheet_id = coalesce(${report.sheetId}, sheet_id),
@@ -345,6 +467,9 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
                WHERE p.issue_id = h.issue_id AND p.text_file_id IS NOT NULL) AS texts,
               (SELECT count(*) FROM print_artworks w
                JOIN print_articles p ON p.article_id = w.article_id
+               WHERE p.issue_id = h.issue_id) +
+              (SELECT count(*) FROM print_group_artworks w
+               JOIN print_groups p ON p.group_id = w.group_id
                WHERE p.issue_id = h.issue_id) AS artworks
             FROM print_handoffs h WHERE h.issue_id = ${issueId}`,
       )

@@ -28,6 +28,10 @@ export const routes = route({
     close: post('/issues/:name/close'),
     askReopen: get('/issues/:name/reopen'),
     reopen: post('/issues/:name/reopen'),
+    /* _Nová skupina obrazových děl_ (`12e`): the dialog at its own address over the detail, as
+       _Nové vydání_ over the overview, and `POST` to it creates the group (#133). */
+    newGroup: get('/issues/:name/artwork-groups/new'),
+    createGroup: post('/issues/:name/artwork-groups/new'),
     /* _Vydat nový odkaz_ asks at an address of its own, as a removal does (`02d`). */
     askRenewLink: get('/issues/:name/link/renew'),
     renewLink: post('/issues/:name/link/renew'),

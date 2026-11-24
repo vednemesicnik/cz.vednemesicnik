@@ -229,6 +229,11 @@ export function articleBadge(articleName: string): string {
   return tied`K článku ${articleName}`
 }
 
+/** `21a`: the same badge for an artwork group's link (#133). */
+export function groupBadge(groupName: string): string {
+  return tied`Ke skupině ${groupName}`
+}
+
 export const PROVIDER_LEGEND = 'Kdo díla poskytuje'
 export const PROVIDER_HINT = tied`Uveďte jméno a e-mail osoby, která dává souhlas s užitím děl. Autora díla uvedete u každého díla zvlášť.`
 export const PROVIDER_NAME_LABEL = tied`Jméno a příjmení`

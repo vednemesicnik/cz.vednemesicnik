@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { createArticleStore } from '../data/articles.server.ts'
+import { createGroupStore } from '../data/artwork-groups.server.ts'
 import { createArtworkStore } from '../data/artworks.server.ts'
 import { createIssueStore } from '../data/issues.server.ts'
 import { createLinkStore } from '../data/links.server.ts'
@@ -63,6 +64,7 @@ async function withHarness(
       artworks: createArtworkStore(app.database),
       files: (accessToken) => createArtworkFiles({ accessToken, fetch: app.drive.fetch }),
       folders: (accessToken) => createDriveFolders({ accessToken, fetch: app.drive.fetch }),
+      groups: createGroupStore(app.database),
       issues: createIssueStore(app.database),
       links: createLinkStore(app.database),
       mailLog: createPublicMailLog(app.database),

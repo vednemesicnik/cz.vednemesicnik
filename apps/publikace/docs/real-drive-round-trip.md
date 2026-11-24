@@ -365,6 +365,22 @@ the suite covers what the app stores and shows. What is left is what only real G
 4. Stop the Mailer's deployment, answer, start it again and use _Odeslat znovu_: the provider gets
    one e-mail.
 
+## An artwork group
+
+A group is made in the issue detail (#133, `12e`) and uploads like an article. The suite runs it on
+the fake Drive; what is left is what only the real one shows.
+
+1. _Nová skupina_ with a name and a note: the issue folder gets `Skupiny obrazových děl`, and in
+   it the group's folder with `Obrazová díla`, `Licence` and `_meta.json`, whose `kind` is
+   `artwork-group` and whose `note` is the note. A second group goes into the same
+   `Skupiny obrazových děl`.
+2. Open the group's link from another browser: _Ke skupině ‹název›_ and the note under the title.
+   Upload and send: the request's subject says _ze skupiny „‹název›“_, the licences land in the
+   group's `Licence`, the artworks in its `Obrazová díla`.
+3. Reply „Souhlasím“ and let the reply check run: the archived PDF lands in the group's `Licence`.
+   Until `SCRIPT__Publication__Artwork_Replies` reads `kind`, its header says _Článek_.
+4. The Evidence's _Obrazová díla_ has the group's rows with its name and folder within a minute.
+
 ## The record
 
 The Registr and each Evidence follow the database through the record queue (#111), a pass every

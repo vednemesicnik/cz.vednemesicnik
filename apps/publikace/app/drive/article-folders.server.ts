@@ -1,10 +1,13 @@
 import type { ArticleRow, ArticleStore } from '../data/articles.server.ts'
+import type { GroupStore } from '../data/artwork-groups.server.ts'
 import type { ArticleFolderKind } from '../domain/article-folders.ts'
+import type { HolderKind } from '../domain/artwork.ts'
 import type { DriveFolders, FolderStanding } from './folders.server.ts'
 
 /**
  * Whether an article's folder and the two inside it are where the app left them, and the record
- * of it on the article (`12j`, `2kig3d8m`). Every place that runs into a folder asks here: the
+ * of it on the article (`12j`, `2kig3d8m`). An artwork group has the same three folders and the
+ * same record, kept on the group (#133). Every place that runs into a folder asks here: the
  * link's page and its upload and send, _Poslat žádost znovu_, _Zahodit dávku_, the issue detail
  * and _Zkontrolovat znovu_. A folder found missing is marked, one found again loses its mark, and
  * none is ever created again.
@@ -13,13 +16,19 @@ import type { DriveFolders, FolderStanding } from './folders.server.ts'
 export type ArticleFoldersDeps = {
   articles: Pick<ArticleStore, 'clearMissing' | 'markMissing'>
   folders: DriveFolders
+  /** Where a group's record goes; only the checks that may meet a group pass it. */
+  groups?: Pick<GroupStore, 'clearMissing' | 'markMissing'>
   now(): Temporal.Instant
 }
 
+/**
+ * An article's folders or a group's. `kind` is never left to a default: an article and a group
+ * can share an ID, and a mark recorded on the wrong one would go unseen.
+ */
 export type ArticleFolderIds = Pick<
   ArticleRow,
   'artworksFolderId' | 'folderId' | 'id' | 'licencesFolderId'
->
+> & { kind: HolderKind }
 
 export type FolderCheck = { missing: ArticleFolderKind[] } | 'unavailable'
 
@@ -57,8 +66,10 @@ export async function checkArticleFolders(
     return isArticleMissing ? standing === 'gone' : standing !== 'exists'
   })
   let found = kinds.filter((kind) => !missing.includes(kind))
-  if (missing.length > 0) await deps.articles.markMissing(article.id, missing, deps.now())
-  if (found.length > 0) await deps.articles.clearMissing(article.id, found)
+  let record = article.kind === 'group' ? deps.groups : deps.articles
+  if (record === undefined) throw new Error('A group was checked without the groups store.')
+  if (missing.length > 0) await record.markMissing(article.id, missing, deps.now())
+  if (found.length > 0) await record.clearMissing(article.id, found)
   return { missing }
 }
 

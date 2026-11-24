@@ -68,3 +68,27 @@ exception is a migration that has not left its branch: roll it back locally with
 
 `db/migrations/20261117120000_access_and_sessions/up.sql` shows all of it but a foreign key,
 with a comment above each table saying what a row is.
+
+## Rebuilding a table
+
+SQLite cannot drop a `NOT NULL` or change a `CHECK` in place, so such a change rebuilds the
+table: a new table, every row copied, the old one dropped, the new one renamed, and its indexes
+and triggers made again, since they go with the old table. `20261203120000_artwork_groups`
+rebuilds `links`, `artwork_batches` and `artworks` this way and is the example to copy.
+
+- **The runner's transaction is turned off** with `-- data-table/transaction: none`, because
+  `PRAGMA foreign_keys` changes nothing inside a transaction. With foreign keys on, dropping a
+  table that rows refer to would delete or refuse them.
+- **The script keeps its own frame**: `PRAGMA foreign_keys = OFF; BEGIN;` at the top, `COMMIT;
+  PRAGMA foreign_keys = ON;` at the bottom. It lands whole or not at all, and the keys are on
+  again for the app.
+- **One table at a time.** A rename makes SQLite read every trigger again, and a trigger that
+  names a table dropped and not yet renamed fails it.
+- **A test migrates a seeded database through it**: the rows the old tables held, then
+  `PRAGMA foreign_key_check` empty, `integrity_check` `ok`, and the triggers still firing.
+  `app/data/artwork-groups-migration.server.test.ts` does it, and rolls back with `down.sql`.
+- **Out of the runner's transaction, the journal is written after the script's own `COMMIT`.**
+  A process killed between the two leaves the schema changed and the migration unrecorded, and
+  the next start fails on the first statement that cannot run twice. `pnpm db:status` then shows
+  it `pending` while the tables say otherwise: insert its journal row by hand, with the checksum
+  `remix db` reports, rather than editing the migration.

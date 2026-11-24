@@ -24,7 +24,7 @@ function ownText(html: string, typed: readonly string[]): string {
 
 function message() {
   return consentEmail({
-    articleName: 'Školní jídelna <po> roce',
+    holder: { kind: 'article', name: 'Školní jídelna <po> roce' },
     artworks: [
       {
         author: 'Ondřej "Beneš" <b>',
@@ -95,7 +95,7 @@ describe('the consent request', () => {
 
   it('keeps every one-letter word of its own with the next, the terms included, and typed values as typed', () => {
     let sent = consentEmail({
-      articleName: 'Obědy v jídelně',
+      holder: { kind: 'article', name: 'Obědy v jídelně' },
       artworks: [
         {
           author: 'Jan z Brna',

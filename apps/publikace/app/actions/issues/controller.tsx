@@ -114,7 +114,7 @@ import type {
 } from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
 import { checkArticleFolders, recordedMissing } from '../../drive/article-folders.server.ts'
-import { discardBatch, resendBatch } from '../../drive/artworks-setup.server.ts'
+import { discardBatch, holderOf, resendBatch } from '../../drive/artworks-setup.server.ts'
 import { checkAllDocRevisions } from '../../drive/doc-revisions.server.ts'
 import {
   cancelFinalVersion,
@@ -161,6 +161,8 @@ import {
 } from '../../domain/proofreading-queue.ts'
 import type { FinalVersionDialogProps } from '../../ui/final-version-dialog/component.tsx'
 import { createIssue, finishIssue } from '../../drive/issue-setup.server.ts'
+import { createGroup, groupSetupOf } from '../../drive/group-setup.server.ts'
+import { GROUP_CREATED_TOAST, groupCountText, groupNoteLine } from '../../domain/artwork-group.ts'
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { type Person, requireEditor } from '../../middleware/auth.server.ts'
 import { DriveAccount } from '../../middleware/drive-account.server.ts'
@@ -174,8 +176,10 @@ import {
   type ClausesView,
   DetailPage,
   type DiscardView,
+  type GroupsView,
   type LinkBlockView,
   type MissingAddressView,
+  type NewGroupDialogView,
   type MissingFoldersView,
   type PrintSectionView,
   type ReplacedVersionView,
@@ -218,6 +222,24 @@ function takeFolderGone(session: Session | undefined, name: string): boolean {
  * focuses _Kopírovat_ until the next load (`12c`, `02d`). By name, and taken once.
  */
 const LINK_CHANGED_SESSION_KEY = 'issueLinkChanged'
+
+/*
+ * The artwork group just created, so the detail it redirects to puts it first, highlighted, with
+ * focus on its _Kopírovat_ until the next load (`12e`). By its ID, and taken once.
+ */
+const GROUP_CHANGED_SESSION_KEY = 'artworkGroupChanged'
+
+function flashGroupChanged(session: Session | undefined, groupId: number): void {
+  session?.flash(GROUP_CHANGED_SESSION_KEY, String(groupId))
+}
+
+function takeGroupChanged(session: Session | undefined): number | null {
+  let value = session?.get(GROUP_CHANGED_SESSION_KEY)
+  if (value === undefined) return null
+  session?.unset(GROUP_CHANGED_SESSION_KEY)
+  let id = Number(value)
+  return Number.isSafeInteger(id) ? id : null
+}
 
 function flashLinkChanged(session: Session | undefined, name: string): void {
   session?.flash(LINK_CHANGED_SESSION_KEY, name)
@@ -319,7 +341,7 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<void>
   let token = await artworks.token()
   if (!token.ok) return
   let deps = { articles, folders: artworks.folders(token.accessToken), now }
-  for (let article of marked) await checkArticleFolders(deps, article)
+  for (let article of marked) await checkArticleFolders(deps, { ...article, kind: 'article' })
 }
 
 /**
@@ -577,13 +599,18 @@ async function artworksOf(
 ): Promise<ArtworksView> {
   let { articles, artworks } = articlesOf(context)
   let batches = await artworks.artworks.listByIssue(issue.id)
-  let missingOf = new Map<number, ArticleFolderKind[]>(
-    (await articles.listCreated(issue.id)).map((article) => [article.id, recordedMissing(article)]),
-  )
+  let missingOf = new Map<string, ArticleFolderKind[]>([
+    ...(await articles.listCreated(issue.id)).map(
+      (article) => [`article:${article.id}`, recordedMissing(article)] as const,
+    ),
+    ...(await artworks.groups.listByIssue(issue.id)).map(
+      (group) => [`group:${group.id}`, recordedMissing(group)] as const,
+    ),
+  ])
   let isOpen = issue.closedAt === null
   let all: (ArtworkRowView & { uploadedAt: Temporal.Instant })[] = batches.flatMap((batch) => {
     let state: ArtworkState = batchState(batch)
-    let missing = missingOf.get(batch.articleId) ?? []
+    let missing = missingOf.get(`${batch.holder.kind}:${batch.holder.id}`) ?? []
     let query = filter === 'all' ? '' : `?artworks=${filter}`
     let ids = { id: String(batch.id), name: issue.name }
     let actions =
@@ -599,10 +626,10 @@ async function artworksOf(
           }
         : null
     return batch.artworks.map((artwork) => ({
-      articleName: batch.articleName,
       author: artwork.author ?? 'neuveden',
       batchActions: actions,
       driveUrl: driveFileUrl(artwork.driveFileId),
+      holderName: batch.holder.name,
       id: artwork.id,
       name: artwork.originalName,
       providerEmail: batch.providerEmail,
@@ -642,6 +669,38 @@ function overviewFilterOf(context: PageContext): IssueFilter {
   return parseIssueFilter(context.url.searchParams.get('state'))
 }
 
+/**
+ * _Skupiny obrazových děl_ (`12a`, `12c`, `12h`): every group of a complete issue, the newest
+ * first, with _Nová skupina_ while the issue is active. An unfinished issue has none (`01a`).
+ */
+async function groupsOf(
+  context: PageContext,
+  issue: Issue,
+  changedId: number | null,
+): Promise<GroupsView | undefined> {
+  let state = issueState(issue)
+  if (state === 'unfinished') return undefined
+  let { artworks, origin } = articlesOf(context)
+  let groups = await artworks.groups.listByIssue(issue.id)
+  return {
+    newHref: state === 'active' ? routes.issues.newGroup.href({ name: issue.name }) : null,
+    rows: groups.map((group) => {
+      let url = group.link === null ? null : absoluteUrl(origin, artworksLinkPath(group.link.key))
+      return {
+        count: groupCountText(group.artworks),
+        folderHref: group.folderId === null ? null : folderUrl(group.folderId),
+        id: group.id,
+        isChanged: group.id === changedId,
+        isClosed: state === 'closed',
+        name: group.name,
+        noteLine: group.note === '' ? null : groupNoteLine(group.note),
+        shown: url === null ? null : shownUrl(url),
+        url,
+      }
+    }),
+  }
+}
+
 async function renderDetail(
   context: PageContext & { auth: { identity: Person } },
   issue: Issue,
@@ -649,6 +708,7 @@ async function renderDetail(
     discarding?: DiscardView
     isFolderGone?: boolean
     isRenewing?: boolean
+    newGroup?: NewGroupDialogView
     replacing?: FinalVersionDialogProps
     status?: number
     step?: IssueStepDialogView
@@ -668,10 +728,12 @@ async function renderDetail(
       artworks={await artworksOf(context, issue, filterOf(context))}
       discarding={options.discarding}
       driveAccount={await driveView(context)}
+      groups={await groupsOf(context, issue, takeGroupChanged(session))}
       isFolderGone={options.isFolderGone}
       isRenewing={options.isRenewing}
       issue={issue}
       link={link}
+      newGroup={options.newGroup}
       person={context.auth.identity}
       print={await printOf(context, issue)}
       replacing={options.replacing}
@@ -745,10 +807,10 @@ function discardingView(context: PageContext, issue: Issue, batch: ListedBatch):
   let filter = filterOf(context)
   return {
     action: `${routes.issues.discardBatch.href({ id: String(batch.id), name: issue.name })}${filter === 'all' ? '' : `?artworks=${filter}`}`,
-    articleName: batch.articleName,
     cancelHref: detailHref(issue, filter),
     count: batch.artworks.length,
     email: batch.providerEmail,
+    holder: { kind: batch.holder.kind, name: batch.holder.name },
   }
 }
 
@@ -862,6 +924,18 @@ function renderStep(
     : renderDetail(context, step.issue, { step })
 }
 
+/** The dialog _Nová skupina obrazových děl_ over the detail, with what it was sent (`12e`). */
+function newGroupDialog(
+  issue: Issue,
+  state: Omit<NewGroupDialogView, 'action' | 'cancelHref'>,
+): NewGroupDialogView {
+  return {
+    ...state,
+    action: routes.issues.createGroup.href({ name: issue.name }),
+    cancelHref: routes.issues.show.href({ name: issue.name }),
+  }
+}
+
 function notFound(): Response {
   return new Response('Not Found', { status: 404 })
 }
@@ -963,7 +1037,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let checked = recordedMissing(article)
         let check = await checkArticleFolders(
           { articles, folders: artworks.folders(token.accessToken), now },
-          article,
+          { ...article, kind: 'article' },
         )
         if (check === 'unavailable') {
           flashToast(context, CHECK_UNAVAILABLE_TOAST, 'error')
@@ -1026,6 +1100,59 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let from = answeredFrom(context)
         if (await store.reopen(issue.id)) flashToast(context, reopenedToast(issue.name))
         return redirect(stepBackHref(issue, from.returnTo, from.filter), 303)
+      },
+
+      async newGroup(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null || issueState(issue) !== 'active') return notFound()
+        return renderDetail(context, issue, {
+          newGroup: newGroupDialog(issue, {
+            errors: { name: null, note: null },
+            formKey: crypto.randomUUID(),
+            refusal: null,
+            values: { name: '', note: '' },
+          }),
+        })
+      },
+
+      async createGroup(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null || issueState(issue) !== 'active') return notFound()
+        let editor = context.auth.identity
+        let values = { name: formText(context, 'name'), note: formText(context, 'note') }
+        let typedKey = formText(context, 'formKey')
+        let formKey = /^[0-9a-f-]{36}$/.test(typedKey) ? typedKey : crypto.randomUUID()
+        let again = (
+          errors: NewGroupDialogView['errors'],
+          refusal: NewGroupDialogView['refusal'],
+          status: number,
+        ) =>
+          renderDetail(context, issue, {
+            newGroup: newGroupDialog(issue, { errors, formKey, refusal, values }),
+            status,
+          })
+
+        let { artworks, setup } = articlesOf(context)
+        let outcome = await createGroup(groupSetupOf(setup, artworks), {
+          ...values,
+          formKey,
+          issueId: issue.id,
+          startedBy: { email: editor.email, name: editor.displayName },
+        })
+        switch (outcome.kind) {
+          case 'created':
+            flashToast(context, GROUP_CREATED_TOAST)
+            flashGroupChanged(context.get(Session), outcome.group.id)
+            return redirect(routes.issues.show.href({ name: issue.name }), 303)
+          case 'invalid':
+            return again(outcome.errors, null, REFUSED)
+          case 'not-active':
+            return notFound()
+          case 'unavailable':
+          case 'disconnected':
+          case 'not-connected':
+            return again({ name: null, note: null }, outcome.kind, IN_THE_WAY)
+        }
       },
 
       async askRenewLink(context) {
@@ -1341,8 +1468,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
             return back()
           /* A folder went missing while the dialog was open: it stays open and says which. */
           case 'folder-gone': {
-            let article = await articlesOf(context).articles.findById(batch.articleId)
-            let urls = article === null ? {} : subfolderUrls(article)
+            let holder = await holderOf(articlesOf(context).artworks, batch)
+            let urls = holder === null ? {} : subfolderUrls(holder)
             return renderDetail(context, issue, {
               discarding: {
                 ...discardingView(context, issue, batch),

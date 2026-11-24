@@ -5,6 +5,7 @@ import type { JobRunStore } from '../../../data/job-runs.server.ts'
 import type {
   ArticleCopy,
   ClaimedIssue,
+  GroupCopy,
   IssueReport,
   PrintHandoffStore,
 } from '../../../data/print-handoff.server.ts'
@@ -34,11 +35,21 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
  *    the copies of what is no longer listed: an artwork that lost its consent, or a whole article
  *    with neither text nor artworks. A text revised after its version, or a version that is no
  *    longer standing, keeps the copy it has, flagged `isTextChanged`.
+ *
+ *    Beside the articles, `groups` (#133): per artwork group with an artwork with consent or a copy,
+ *    its `name`, its `note` for the designer, which goes to the _Podklady_ sheet beside each of its
+ *    artworks, its source folder (`sourceFolderId`), `artworks` as above and `copy`, its folder in
+ *    the print folder as the last report left it. A group gets a folder named after it, tagged
+ *    `folderTag`, and its artworks as `obr-NN`, as an article's do; an empty group gets none.
  * 2. `report` with the run's key gives, per issue it worked on, the sheet, whether it got through
  *    the whole issue (`isComplete`), and per article it reached the copy now in the folder, or
- *    `null` once the folder is gone. An article left out stays as it was. It closes the run.
+ *    `null` once the folder is gone; per group the same in `groups`. A report without `groups`
+ *    leaves every group as it was, and its `isComplete` then speaks for the articles alone: the
+ *    job is written against this version (#119), so none that predates groups is deployed. An
+ *    article or a group left out stays as it was. It closes the run.
  *    Besides the limits on one issue and one article, the report as a whole holds at most
- *    `MAX_REPORT_ARTICLES` articles and `MAX_REPORT_ARTWORKS` artworks, or nothing is recorded.
+ *    `MAX_REPORT_ARTICLES` articles and groups together and `MAX_REPORT_ARTWORKS` artworks, or
+ *    nothing is recorded.
  *
  * Every file the job makes carries its tag in `appProperties` under `publikaceHandoff`:
  * `folderTag` on an article's folder, `copyTag` on a text or an artwork. Before it creates one, the
@@ -120,9 +131,56 @@ function readCopy(value: unknown): ArticleCopy | null | undefined {
   }
 }
 
+function readArtworkCopies(artworks: unknown): ArticleCopy['artworks'] | undefined {
+  if (!Array.isArray(artworks) || artworks.length > MAX_ARTWORKS) return undefined
+  let copies: ArticleCopy['artworks'] = []
+  for (let artwork of artworks as unknown[]) {
+    if (typeof artwork !== 'object' || artwork === null) return undefined
+    let { artworkId, fileId, name } = artwork as Record<string, unknown>
+    if (!isId(artworkId) || !isText(fileId, MAX_ID_LENGTH) || !isText(name, MAX_NAME_LENGTH)) {
+      return undefined
+    }
+    copies.push({ artworkId, fileId, name })
+  }
+  return copies
+}
+
+function readGroupCopy(value: unknown): GroupCopy | null | undefined {
+  if (value === null) return null
+  if (typeof value !== 'object' || Array.isArray(value)) return undefined
+  let { artworks, folderId, lastImageNumber } = value as Record<string, unknown>
+  let copies = readArtworkCopies(artworks)
+  if (
+    copies === undefined ||
+    !isText(folderId, MAX_ID_LENGTH) ||
+    typeof lastImageNumber !== 'number' ||
+    !Number.isInteger(lastImageNumber) ||
+    lastImageNumber < 0 ||
+    lastImageNumber > MAX_IMAGE_NUMBER
+  ) {
+    return undefined
+  }
+  return { artworks: copies, folderId, lastImageNumber }
+}
+
+/** The report's `groups`, `[]` when a job written before groups leaves it out. */
+function readGroups(value: unknown): NonNullable<IssueReport['groups']> | null {
+  if (value === undefined) return []
+  if (!Array.isArray(value) || value.length > MAX_ARTICLES) return null
+  let read: NonNullable<IssueReport['groups']> = []
+  for (let group of value as unknown[]) {
+    if (typeof group !== 'object' || group === null) return null
+    let fields = group as Record<string, unknown>
+    let copy = readGroupCopy(fields['copy'])
+    if (!isId(fields['groupId']) || copy === undefined) return null
+    read.push({ copy, groupId: fields['groupId'] })
+  }
+  return read
+}
+
 function readIssue(value: unknown): IssueReport | null {
   if (typeof value !== 'object' || value === null) return null
-  let { articles, isComplete, issueId, sheetId } = value as Record<string, unknown>
+  let { articles, groups, isComplete, issueId, sheetId } = value as Record<string, unknown>
   if (
     !isId(issueId) ||
     typeof isComplete !== 'boolean' ||
@@ -140,15 +198,24 @@ function readIssue(value: unknown): IssueReport | null {
     if (!isId(fields['articleId']) || copy === undefined) return null
     read.push({ articleId: fields['articleId'], copy })
   }
-  return { articles: read, isComplete, issueId, sheetId: (sheetId as string | null) ?? null }
+  let readGroupList = readGroups(groups)
+  if (readGroupList === null) return null
+  return {
+    articles: read,
+    groups: readGroupList,
+    isComplete,
+    issueId,
+    sheetId: (sheetId as string | null) ?? null,
+  }
 }
 
 function isWithinTotals(issues: readonly IssueReport[]): boolean {
   let articles = 0
   let artworks = 0
   for (let issue of issues) {
-    articles += issue.articles.length
+    articles += issue.articles.length + (issue.groups?.length ?? 0)
     for (let article of issue.articles) artworks += article.copy?.artworks.length ?? 0
+    for (let group of issue.groups ?? []) artworks += group.copy?.artworks.length ?? 0
   }
   return articles <= MAX_REPORT_ARTICLES && artworks <= MAX_REPORT_ARTWORKS
 }

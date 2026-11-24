@@ -88,8 +88,9 @@ and it is why a link is never put where it would be read by more people than it 
 - **A key is 12 characters of 62, drawn without bias from a CSPRNG**, about 71 bits. It carries no
   Drive ID and no name. An unknown key and a revoked one draw the same page.
 - **A link does one thing in one place.** An article link creates articles in its issue. An
-  artworks link uploads to its one article. A form key of another link is refused, and an upload
-  is removed only by the form that made it.
+  artworks link uploads to its one article or its one artwork group. Only an editor-in-chief
+  creates a group, in the issue detail, so no link creates one. A form key of another link is
+  refused, and an upload is removed only by the form that made it.
 - **Limits stop a mistake and an abuse.** 30 sends an hour per link, 60 uploads an hour per
   artworks link, consent requests to at most 5 addresses a day per link, and a daily cap on all
   e-mails started from link pages ([product.md](product.md#limits)).

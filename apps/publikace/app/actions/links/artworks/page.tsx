@@ -7,13 +7,17 @@ import {
   CONSENT_CALLOUT_NOTE,
   CONSENT_CALLOUT_TITLE,
   consentCalloutText,
+  type HolderKind,
+  type HolderName,
   refusedOnSent,
   SENT_TITLE,
   sentArtworkLine,
   sentLead,
 } from '../../../domain/artwork.ts'
+import { groupNoteLine } from '../../../domain/artwork-group.ts'
 import {
   articleBadge,
+  groupBadge,
   ARTWORKS_DISCONNECTED_WARNING,
   type ArtworkFieldError,
   ARTWORKS_PAGE_LEAD,
@@ -31,12 +35,18 @@ import {
   PROVIDER_NAME_FIELD,
 } from './public/artworks-form.tsx'
 
+/**
+ * What the link uploads to, as the page names it: an article, or an artwork group with its note
+ * for the designer, empty when it has none (#133).
+ */
+export type PageHolder = { kind: HolderKind; name: string; note: string }
+
 export type ArtworksFormPageProps = {
   action: string
-  articleName: string
   cards: readonly ArtworkCard[]
   errors: readonly ArtworkFieldError[]
   formKey: string
+  holder: PageHolder
   isClosed: boolean
   /** The answer to a send that did not go, above the form (`21d`). */
   message?: ArtworksMessage
@@ -53,8 +63,8 @@ export type ArtworksFormPageProps = {
 
 export type ArtworksSentPageProps = {
   action: string
-  articleName: string
   artworks: readonly { author: string | null; name: string; source: string | null }[]
+  holder: HolderName
   /** The Mailer refused the request for good: the editors-in-chief take it from here (`21d`). */
   isRefused: boolean
   preview: LinkPreview
@@ -92,18 +102,38 @@ const listStyle = css({
   '& small': { color: 'var(--text-secondary)', display: 'block', fontSize: '13px' },
 })
 
-function Heading(handle: Handle<{ articleName: string }>) {
-  return () => (
-    <div mix={titleStyle}>
-      <span>
-        <span class="vdm-badge vdm-badge--emerald">{articleBadge(handle.props.articleName)}</span>
-      </span>
-      <h1 class="vdm-page-title" style={{ margin: 0 }}>
-        {ARTWORKS_PAGE_TITLE}
-      </h1>
-      <p mix={leadStyle}>{ARTWORKS_PAGE_LEAD}</p>
-    </div>
-  )
+const noteStyle = css({
+  color: 'var(--text-secondary)',
+  fontSize: '14px',
+  lineHeight: 1.5,
+  margin: 0,
+  overflowWrap: 'anywhere',
+})
+
+/**
+ * The badge names what the link uploads to. A group's note for the designer stands under the
+ * title, so that an illustrator knows which texts the artworks go with (`21a`); an article has none.
+ */
+function Heading(handle: Handle<{ holder: PageHolder }>) {
+  return () => {
+    let { holder } = handle.props
+    return (
+      <div mix={titleStyle}>
+        <span>
+          <span class="vdm-badge vdm-badge--emerald">
+            {holder.kind === 'group' ? groupBadge(holder.name) : articleBadge(holder.name)}
+          </span>
+        </span>
+        <h1 class="vdm-page-title" style={{ margin: 0 }}>
+          {ARTWORKS_PAGE_TITLE}
+        </h1>
+        {holder.kind === 'group' && holder.note !== '' ? (
+          <p mix={noteStyle}>{groupNoteLine(holder.note)}</p>
+        ) : null}
+        <p mix={leadStyle}>{ARTWORKS_PAGE_LEAD}</p>
+      </div>
+    )
+  }
 }
 
 /** `21a`, `21b`, `21d`: the form, with what stands in the way above it. */
@@ -112,7 +142,7 @@ export function ArtworksFormPage(handle: Handle<ArtworksFormPageProps>) {
     let props = handle.props
     return (
       <LinkPage preview={props.preview} title={ARTWORKS_PAGE_TITLE}>
-        <Heading articleName={props.articleName} />
+        <Heading holder={props.holder} />
         {/* A missing folder's warning is the island's, which takes it away once an upload gets
             through; the disconnected account's stays as the server drew it. */}
         {props.warning !== 'disconnected' ? null : props.message === undefined &&
@@ -156,7 +186,7 @@ export function ArtworksFormPage(handle: Handle<ArtworksFormPageProps>) {
  */
 export function ArtworksSentPage(handle: Handle<ArtworksSentPageProps>) {
   return () => {
-    let { action, articleName, artworks, isRefused, preview, provider } = handle.props
+    let { action, artworks, holder, isRefused, preview, provider } = handle.props
     let refused = refusedOnSent(provider.email)
     return (
       <LinkPage preview={preview} title={SENT_TITLE}>
@@ -176,7 +206,7 @@ export function ArtworksSentPage(handle: Handle<ArtworksSentPageProps>) {
             </svg>
           </span>
           <ArrivalHeading text={SENT_TITLE} />
-          <p mix={leadStyle}>{sentLead(artworks.length, articleName)}</p>
+          <p mix={leadStyle}>{sentLead(artworks.length, holder)}</p>
         </div>
         {isRefused ? (
           <Callout tone="warning">

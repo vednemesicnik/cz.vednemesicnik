@@ -15,7 +15,7 @@ Evidence sheets, and the editors-in-chief watched the sheets to see where things
 
 Publikace replaces those pages with one app, `publikace.vednemesicnik.cz`. There:
 
-- the editors-in-chief create an issue and send out its links;
+- the editors-in-chief create an issue and its artwork groups, and send out their links;
 - they see every article and artwork of the issue on one screen;
 - they decide the replies that were not exactly „Souhlasím“;
 - the proofreaders take their texts.
@@ -25,15 +25,15 @@ Drive folder.
 
 ## People
 
-| Who                        | How they get in                                                                                              | What they can do                                                                                                                                           |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Editor-in-chief**        | Google sign-in, an account on `AUTHORIZED_DOMAIN` named in Přístup or in a Google group listed there         | everything on `/`, `/issues/…`, `/review`, `/settings`; on `/proofreading` cancel any take and mark a final version for any article (`00b`)                |
-| **Administrator**          | an editor-in-chief whose named account carries the flag, never a group; the first from `INITIAL_ADMIN_EMAIL` | the above, plus change Přístup and the proofreaders' address (`14a`, `14f`, `03` rows 26 and 58)                                                           |
-| **Proofreader**            | Google sign-in; the address in Nastavení › Korektura, or a member of that group                              | only `/proofreading`, across every open issue: take a text, cancel their own take, mark the final version of their own take (`15a`, `10d`)                 |
-| **Editorial board member** | the issue's link `/l/{key}/article`, no sign-in                                                              | create an article in that one issue (`20a`)                                                                                                                |
-| **Author**                 | the welcome e-mail: the Doc's link and the article's artworks link                                           | write in the Doc (the link is the right to edit it), upload artworks to their article, consent to the final version by replying „Souhlasím“ (`20d`, `20f`) |
-| **Artwork provider**       | the article's link `/l/{key}/artworks`, no sign-in                                                           | upload artworks to that one article and consent by replying „Souhlasím“ (`21a`, `21c`)                                                                     |
-| **Graphic designer**       | the issue's `_Podklady_pro_tisk` folder, shared by its link                                                  | take the approved texts and artworks; never uses the app (`12t`)                                                                                           |
+| Who                        | How they get in                                                                                              | What they can do                                                                                                                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Editor-in-chief**        | Google sign-in, an account on `AUTHORIZED_DOMAIN` named in Přístup or in a Google group listed there         | everything on `/`, `/issues/…`, `/review`, `/settings`, creating an issue's artwork groups (`12e`) included; on `/proofreading` cancel any take and mark a final version for any article (`00b`) |
+| **Administrator**          | an editor-in-chief whose named account carries the flag, never a group; the first from `INITIAL_ADMIN_EMAIL` | the above, plus change Přístup and the proofreaders' address (`14a`, `14f`, `03` rows 26 and 58)                                                                                                 |
+| **Proofreader**            | Google sign-in; the address in Nastavení › Korektura, or a member of that group                              | only `/proofreading`, across every open issue: take a text, cancel their own take, mark the final version of their own take (`15a`, `10d`)                                                       |
+| **Editorial board member** | the issue's link `/l/{key}/article`, no sign-in                                                              | create an article in that one issue (`20a`)                                                                                                                                                      |
+| **Author**                 | the welcome e-mail: the Doc's link and the article's artworks link                                           | write in the Doc (the link is the right to edit it), upload artworks to their article, consent to the final version by replying „Souhlasím“ (`20d`, `20f`)                                       |
+| **Artwork provider**       | an article's or an artwork group's link `/l/{key}/artworks`, no sign-in                                      | upload artworks to that one article or group and consent by replying „Souhlasím“ (`21a`, `21c`)                                                                                                  |
+| **Graphic designer**       | the issue's `_Podklady_pro_tisk` folder, shared by its link                                                  | take the approved texts and artworks; never uses the app (`12t`)                                                                                                                                 |
 
 A person may be both an editor-in-chief and a proofreader, and then has both sets of rights. Only
 a proofreader takes a text: an editor-in-chief who is not one can cancel a take, not make one.
@@ -52,6 +52,7 @@ flowchart TB
   subgraph Editors["Editors-in-chief"]
     I["Create the issue<br/>11d"] --> L["Share the newsroom link<br/>02b"]
     H["Hand over to proofreading<br/>12k"]
+    G2["Create an artwork group<br/>and send its link · 12e"]
     R["Decide a reply<br/>13a"]
     C["Close the issue<br/>12g"]
   end
@@ -71,6 +72,7 @@ flowchart TB
     J3["Fill the print folder<br/>12t"]
   end
   L --> A
+  G2 --> U
   D --> H
   H --> G
   F --> J1
@@ -152,6 +154,14 @@ stateDiagram-v2
 A discarded batch keeps its row, and every reply to it, even „Souhlasím“, goes to _Ke kontrole_
 (`13g`).
 
+### Artwork group
+
+Artworks that belong to no single article, a cover or the illustrations to several texts, go to
+an artwork group (`12e`). It has no state of its own: it exists once it is created, with its folder
+and its link, and its batches go through the states above, as an article's do. Only the
+editors-in-chief create one, two groups of one issue never share a name (`03` rows 6 and 7), and
+no group is ever deleted. Its note for the designer reaches the print folder with its artworks.
+
 ### Issue
 
 ```mermaid
@@ -216,7 +226,8 @@ jobs skip the issue, and nothing changes on Drive, sharing included (`12g`, #120
 Issues created before the app stay on the scripts and the sheets until none of them is open
 (`00c`, `03` row 11). The app does not show them, so that no issue has two paths that write it.
 The scripts that serve them keep running beside the jobs that talk to the app:
-`Approval_Send`, `Artwork_Upload`, `Designer_Handoff`, `Article_Approve` and `Comment_Digest`.
+`Approval_Send`, `Artwork_Upload`, `Artwork_Group_Create`, `Designer_Handoff`, `Article_Approve`
+and `Comment_Digest`.
 The newsroom moves to the app only once the run against the real Drive
 ([real-drive-round-trip.md](real-drive-round-trip.md)) has passed locally and again in
 production.

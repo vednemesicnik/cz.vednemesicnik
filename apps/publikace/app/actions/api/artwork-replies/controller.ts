@@ -50,21 +50,26 @@ function readResult(value: unknown): { batchId: number; report: BatchReport } | 
   return report === null ? null : { batchId, report }
 }
 
-/** One batch as the job gets it: what Reply_Check is asked, and what the archived PDF says. */
+/**
+ * One batch as the job gets it: what Reply_Check is asked, and what the archived PDF says.
+ * `articleName` is the name of what the batch was sent to, a group's too; `kind` says which, so the
+ * PDF can call it a group (#133). It is a field added beside the old ones, never in place of one.
+ */
 function claimedItem(batch: ClaimedBatch) {
   return {
-    articleName: batch.articleName,
+    articleName: batch.holder.name,
     batchId: batch.id,
     /* An exact „Souhlasím“ archives at once, except on a discarded batch (`01b`). */
     canArchiveExactReply: batch.discardedAt === null,
     expectedReply: EXPECTED_REPLY,
     isVerified: batch.consentVerifiedAt !== null,
     issueName: batch.issueName,
+    kind: batch.holder.kind === 'group' ? 'artwork-group' : 'article',
     licencesFolderId: batch.licencesFolderId,
     providerEmail: batch.providerEmail,
     providerName: batch.providerName,
     sender: batch.providerEmail,
-    subjectContains: [batch.articleName],
+    subjectContains: [batch.holder.name],
     subjectPrefix: CONSENT_SUBJECT_PREFIX,
     subjectTag: batch.tag,
   }

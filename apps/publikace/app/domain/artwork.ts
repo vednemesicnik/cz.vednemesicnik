@@ -78,8 +78,23 @@ export function batchTag(instant: Temporal.Instant): string {
  */
 export const CONSENT_SUBJECT_PREFIX = 'Žádost o potvrzení souhlasu s užitím obrazových děl'
 
-export function consentSubject(articleName: string, issueName: string, tag: string): string {
-  return `${CONSENT_SUBJECT_PREFIX} ke článku „${articleName}“ – ${issueName} [${tag}]`
+/**
+ * What a batch, an upload and an artworks link belong to: an article or an artwork group (#133).
+ * A group has no Doc and no authors, and its link is the one the editors-in-chief hand out.
+ */
+export type HolderKind = 'article' | 'group'
+
+/** A batch's holder as far as its words go: which kind, and its name. */
+export type HolderName = { kind: HolderKind; name: string }
+
+/**
+ * The request's subject. Only the words between the prefix and the name depend on the holder;
+ * a group's is the copywriter's (`kef75qeh`): _ze skupiny_, because the provider who reads it may
+ * never have seen the upload page that says _Ke skupině_.
+ */
+export function consentSubject(holder: HolderName, issueName: string, tag: string): string {
+  let target = holder.kind === 'group' ? 'ze skupiny' : 'ke článku'
+  return `${CONSENT_SUBJECT_PREFIX} ${target} „${holder.name}“ – ${issueName} [${tag}]`
 }
 
 /** The Mailer's idempotency key of a batch's request: a resend from anywhere is the same e-mail. */
@@ -318,12 +333,19 @@ export const SENT_TITLE = 'Díky, díla máme'
 
 /**
  * `2 díla k článku „…“ jsou nahraná.` The drawing has two; one and five or more follow Czech
- * agreement, not yet through the copywriter.
+ * agreement, not yet through the copywriter. A group's three forms are the copywriter's
+ * (`kef75qeh`): _nově_, because the group may hold artworks from an earlier batch.
  */
-export function sentLead(count: number, articleName: string): string {
-  if (count === 1) return tied`1 dílo k článku „${articleName}“ je nahrané.`
-  if (count >= 2 && count <= 4) return tied`${count} díla k článku „${articleName}“ jsou nahraná.`
-  return tied`${count} děl k článku „${articleName}“ je nahraných.`
+export function sentLead(count: number, holder: HolderName): string {
+  let { name } = holder
+  if (holder.kind === 'group') {
+    if (count === 1) return tied`Ve skupině „${name}“ je nově nahrané 1 dílo.`
+    if (count >= 2 && count <= 4) return tied`Ve skupině „${name}“ jsou nově nahraná ${count} díla.`
+    return tied`Ve skupině „${name}“ je nově nahraných ${count} děl.`
+  }
+  if (count === 1) return tied`1 dílo k článku „${name}“ je nahrané.`
+  if (count >= 2 && count <= 4) return tied`${count} díla k článku „${name}“ jsou nahraná.`
+  return tied`${count} děl k článku „${name}“ je nahraných.`
 }
 
 export const CONSENT_CALLOUT_TITLE = 'Ještě souhlas e-mailem'
@@ -403,8 +425,16 @@ export function discardDialogTitle(count: number): string {
   return `Zahodit dávku ${count} ${count === 1 ? 'díla' : 'děl'}?`
 }
 
-export function discardDialogText(articleName: string, email: string): string {
-  return tied`Díla k článku „${articleName}“ i jejich PDF se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (${email}) žádné upozornění neodejde. Dokud odkaz platí, lze jím díla nahrát znovu.`
+/**
+ * A group's text is the copywriter's (`kef75qeh`): _z této dávky_, so that it does not read as the
+ * whole group going to the bin, and the group named as staying even when it is left empty. Its last
+ * sentence is the article's, which stays true once a group's link can be renewed.
+ */
+export function discardDialogText(holder: HolderName, email: string): string {
+  if (holder.kind === 'group') {
+    return tied`Díla z této dávky i PDF jejich licencí se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (${email}) žádné upozornění neodejde. Skupina „${holder.name}“ zůstane i prázdná. Dokud odkaz platí, lze jím díla nahrát znovu.`
+  }
+  return tied`Díla k článku „${holder.name}“ i jejich PDF se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (${email}) žádné upozornění neodejde. Dokud odkaz platí, lze jím díla nahrát znovu.`
 }
 
 export const DISCARD_CONFIRM_LABEL = 'Zahodit dávku'

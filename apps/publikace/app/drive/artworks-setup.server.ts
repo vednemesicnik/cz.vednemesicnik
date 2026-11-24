@@ -1,11 +1,14 @@
 import { createHash, randomUUID } from 'node:crypto'
 
-import type { ArticleRow, ArticleStore } from '../data/articles.server.ts'
-import type { ArtworkRow, ArtworkStore, BatchRow } from '../data/artworks.server.ts'
+import type { ArticleStore } from '../data/articles.server.ts'
+import type { GroupStore } from '../data/artwork-groups.server.ts'
+import type { ArtworkRow, ArtworkStore, BatchRow, HolderRef } from '../data/artworks.server.ts'
 import type { IssueStore } from '../data/issues.server.ts'
 import type { LinkStore } from '../data/links.server.ts'
 import type { PublicMailLog } from '../data/public-mail.server.ts'
 import {
+  type HolderKind,
+  type HolderName,
   imageTypeOf,
   RECIPIENTS_PER_DAY_PER_LINK,
   SUBMITS_PER_HOUR,
@@ -28,13 +31,14 @@ import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
 
 /**
- * The artworks sent through an article's link (`21a`–`21d`), and what the editors-in-chief do with
- * a batch (`12a`, `12o`).
+ * The artworks sent through an article's or an artwork group's link (`21a`–`21d`), and what the
+ * editors-in-chief do with a batch (`12a`, `12o`). Both are a _holder_ here: a folder with
+ * `Obrazová díla` and `Licence` inside, which a link uploads to (#133).
  *
- * A file is stored on Drive the moment it is chosen, in the article's `Obrazová díla`, tagged with
+ * A file is stored on Drive the moment it is chosen, in the holder's `Obrazová díla`, tagged with
  * its own upload key, and belongs to the page that uploaded it until a batch takes it; one never
  * sent goes to the bin 24 hours later. A batch's licences and their temporary Docs go to
- * `Licence`. Nothing happens while one of the article's three folders is missing (`12j`).
+ * `Licence`. Nothing happens while one of the holder's three folders is missing (`12j`).
  *
  * _Odeslat díla_ is all or nothing, as every action but the issue is (`11c`): the batch's row
  * comes first, each licence's IDs are stored the moment Drive returns them, and when a step fails
@@ -51,6 +55,7 @@ export type ArtworksSetup = {
   artworks: ArtworkStore
   files(accessToken: string): ArtworkFiles
   folders(accessToken: string): DriveFolders
+  groups: GroupStore
   issues: IssueStore
   links: LinkStore
   mailLog: PublicMailLog
@@ -61,32 +66,74 @@ export type ArtworksSetup = {
   token(): Promise<DriveAccessToken>
 }
 
-/** A committed article with its folder and the two inside it. */
-export type ArtworksArticle = ArticleRow & {
+/**
+ * What a batch or an upload belongs to, as far as Drive and the words go: an article or an
+ * artwork group, its folder and the two inside it. A group has a note for the designer; an
+ * article's is empty.
+ */
+export type ArtworksHolder = HolderName & {
+  artworksFolderId: string | null
+  createdAt: Temporal.Instant | null
+  folderId: string | null
+  id: number
+  issueId: number
+  kind: HolderKind
+  licencesFolderId: string | null
+  note: string
+}
+
+/** A committed holder with its folder and the two inside it, which a link may upload to. */
+export type ReadyHolder = ArtworksHolder & {
   artworksFolderId: string
   folderId: string
   licencesFolderId: string
 }
 
-/** What a link of artworks answers through: the link, its issue and its committed article. */
+/** What a link of artworks answers through: the link, its issue and its committed holder. */
 export type ArtworksTarget = {
-  article: ArtworksArticle
+  holder: ReadyHolder
   issue: Issue
   link: Link
 }
 
-function folderDeps(setup: ArtworksSetup, accessToken: string): ArticleFoldersDeps {
-  return { articles: setup.articles, folders: setup.folders(accessToken), now: setup.now }
+/** The article or the group an upload, a batch or a link belongs to, `null` once it is gone. */
+export async function holderOf(
+  setup: Pick<ArtworksSetup, 'articles' | 'groups'>,
+  ref: { articleId: number | null; groupId: number | null },
+): Promise<ArtworksHolder | null> {
+  if (ref.groupId !== null) {
+    let group = await setup.groups.findById(ref.groupId)
+    return group === null ? null : { ...group, kind: 'group' }
+  }
+  if (ref.articleId === null) return null
+  let article = await setup.articles.findById(ref.articleId)
+  return article === null ? null : { ...article, kind: 'article', note: '' }
 }
 
-/** `folder-gone` when any of the three is missing, which the check records on the article. */
+/** What the store takes for the holder: its ID under the kind's own column. */
+function refOf(holder: Pick<ArtworksHolder, 'id' | 'kind'>): HolderRef {
+  return holder.kind === 'group'
+    ? { articleId: null, groupId: holder.id }
+    : { articleId: holder.id, groupId: null }
+}
+
+function folderDeps(setup: ArtworksSetup, accessToken: string): ArticleFoldersDeps {
+  return {
+    articles: setup.articles,
+    folders: setup.folders(accessToken),
+    groups: setup.groups,
+    now: setup.now,
+  }
+}
+
+/** `folder-gone` when any of the three is missing, which the check records on the holder. */
 async function foldersOf(
   setup: ArtworksSetup,
   accessToken: string,
-  article: ArtworksArticle,
+  holder: ArtworksHolder,
   which?: readonly ArticleFolderKind[],
 ): Promise<'folder-gone' | 'present' | 'unavailable'> {
-  let check = await checkArticleFolders(folderDeps(setup, accessToken), article, which)
+  let check = await checkArticleFolders(folderDeps(setup, accessToken), holder, which)
   if (check === 'unavailable') return 'unavailable'
   return check.missing.length > 0 ? 'folder-gone' : 'present'
 }
@@ -127,34 +174,34 @@ async function withBodySlot<T>(run: () => Promise<T>): Promise<T> {
 }
 
 /**
- * The link, when it is a valid link of artworks to a committed article with its two folders;
- * `null` otherwise. An article without them exists only in databases from before the folders,
- * and is no target.
+ * The link, when it is a valid link of artworks to a committed article or group with its two
+ * folders; `null` otherwise. An article without them exists only in databases from before the
+ * folders, and is no target.
  */
 export async function resolveArtworksLink(
-  setup: Pick<ArtworksSetup, 'articles' | 'issues' | 'links'>,
+  setup: Pick<ArtworksSetup, 'articles' | 'groups' | 'issues' | 'links'>,
   key: string,
 ): Promise<ArtworksTarget | null> {
   let link = await setup.links.findByKey(key)
-  if (link === null || link.kind !== 'artworks' || link.articleId === null) return null
+  if (link === null || link.kind !== 'artworks') return null
   let issue = await setup.issues.findById(link.issueId)
   if (linkState(link, issue) !== 'valid' || issue === null) return null
-  let article = await setup.articles.findById(link.articleId)
+  let holder = await holderOf(setup, link)
   if (
-    article === null ||
-    article.createdAt === null ||
-    article.folderId === null ||
-    article.artworksFolderId === null ||
-    article.licencesFolderId === null
+    holder === null ||
+    holder.createdAt === null ||
+    holder.folderId === null ||
+    holder.artworksFolderId === null ||
+    holder.licencesFolderId === null
   ) {
     return null
   }
   return {
-    article: {
-      ...article,
-      artworksFolderId: article.artworksFolderId,
-      folderId: article.folderId,
-      licencesFolderId: article.licencesFolderId,
+    holder: {
+      ...holder,
+      artworksFolderId: holder.artworksFolderId,
+      folderId: holder.folderId,
+      licencesFolderId: holder.licencesFolderId,
     },
     issue,
     link,
@@ -188,14 +235,14 @@ export async function uploadArtwork(
 ): Promise<UploadOutcome> {
   let target = await resolveArtworksLink(setup, upload.linkKey)
   if (target === null) return { kind: 'link-gone' }
-  let { article, link } = target
+  let { holder, link } = target
 
   let token = await setup.token()
   if (!token.ok) return { kind: token.reason }
   let files = setup.files(token.accessToken)
   await sweepExpired(setup, files)
 
-  let folders = await foldersOf(setup, token.accessToken, article)
+  let folders = await foldersOf(setup, token.accessToken, holder)
   if (folders !== 'present') return { kind: folders }
 
   /* The count and the reservation in one step per link, before the body is read, so uploads in
@@ -225,7 +272,7 @@ async function store(
   setup: ArtworksSetup,
   files: ArtworkFiles,
   upload: NewUpload,
-  { article, link }: ArtworksTarget,
+  { holder, link }: ArtworksTarget,
 ): Promise<UploadOutcome> {
   let bytes = await upload.readBody()
   if (bytes === 'cut') return { kind: 'unavailable' }
@@ -239,10 +286,10 @@ async function store(
   let storedName = `${createHash('sha256').update(bytes).digest('hex')}${extension}`
   let uploadKey = randomUUID()
 
-  let stored = await files.upload(article.artworksFolderId, storedName, mimeType, bytes, uploadKey)
+  let stored = await files.upload(holder.artworksFolderId, storedName, mimeType, bytes, uploadKey)
   if (!stored.ok) {
     /* A reply lost on the way back leaves a file only its key finds. */
-    let lost = await files.findTagged(article.artworksFolderId, uploadKey)
+    let lost = await files.findTagged(holder.artworksFolderId, uploadKey)
     if (lost === null) logDriveFailure('an upload whose reply was lost was not found', uploadKey)
     for (let id of lost ?? []) await files.trash(id)
     return { kind: 'unavailable' }
@@ -250,7 +297,7 @@ async function store(
   let artwork: ArtworkRow
   try {
     artwork = await setup.artworks.addUpload({
-      articleId: article.id,
+      ...refOf(holder),
       at: setup.now(),
       driveFileId: stored.id,
       formKey: upload.formKey,
@@ -303,7 +350,7 @@ export async function removeArtwork(
     let isGone = await trashIfInFolder(
       setup.files(token.accessToken),
       artwork.driveFileId,
-      target.article.artworksFolderId,
+      target.holder.artworksFolderId,
     )
     if (!isGone) return 'unavailable'
     await setup.artworks.markRemoved(artwork.id, setup.now())
@@ -328,15 +375,15 @@ async function sweepExpired(setup: ArtworksSetup, files: ArtworkFiles): Promise<
   await lock.ifFree('artworks:sweep', async () => {
     let before = setup.now().subtract({ hours: UNSENT_UPLOAD_HOURS })
     for (let artwork of await setup.artworks.expiredUploads(before)) {
-      let article = await setup.articles.findById(artwork.articleId)
+      let holder = await holderOf(setup, artwork)
       await lock.ifFree(`artworks:${artwork.formKey}`, async () => {
         /* Read again under the page's key: a send may have taken it into a batch meanwhile. */
         let current = await setup.artworks.findUpload(artwork.id)
         if (current === null || current.batchId !== null || current.removedAt !== null) return
         let isGone =
-          article?.artworksFolderId == null
+          holder?.artworksFolderId == null
             ? true
-            : await trashIfInFolder(files, artwork.driveFileId, article.artworksFolderId)
+            : await trashIfInFolder(files, artwork.driveFileId, holder.artworksFolderId)
         if (isGone) await setup.artworks.markRemoved(artwork.id, setup.now())
       })
     }
@@ -353,7 +400,7 @@ export type NewBatch = {
   provider: { email: string; name: string }
 }
 
-export type SentBatch = { articleName: string; batch: BatchRow }
+export type SentBatch = { batch: BatchRow; holder: HolderName }
 
 export type SubmitOutcome =
   | ({ kind: 'sent' } & SentBatch)
@@ -381,7 +428,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
 
   let target = await resolveArtworksLink(setup, input.linkKey)
   if (target === null) return { kind: 'link-gone' }
-  let { article, issue } = target
+  let { holder, issue } = target
 
   let token = await setup.token()
   if (!token.ok) return { kind: token.reason }
@@ -400,7 +447,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
   )
   if (!input.artworks.every((artwork) => unsent.has(artwork.id))) return { kind: 'stale' }
 
-  let folders = await foldersOf(setup, token.accessToken, article)
+  let folders = await foldersOf(setup, token.accessToken, holder)
   if (folders !== 'present') return { kind: folders }
 
   /* The limits and the row in one step per link, so sends in parallel cannot all pass them. */
@@ -423,7 +470,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
     if (!(await reservePublicMail(setup, 'consent', 1))) return { kind: 'daily-cap' as const }
     try {
       let { batch } = await setup.artworks.startBatch({
-        articleId: article.id,
+        ...refOf(holder),
         artworks: input.artworks,
         at,
         formKey: input.formKey,
@@ -445,7 +492,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
   let pdfs: Map<number, Bytes> | null = null
   let committed: BatchRow | null = null
   try {
-    pdfs = await makeLicences(setup, files, started.batch, article.licencesFolderId)
+    pdfs = await makeLicences(setup, files, started.batch, holder.licencesFolderId)
     if (pdfs !== null) committed = await setup.artworks.commitBatch(started.batch.id, setup.now())
   } catch (error) {
     logDriveFailure(
@@ -454,27 +501,30 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
     )
   }
   if (committed === null || pdfs === null) {
-    await cleanUp(setup, files, started.batch, article.licencesFolderId)
-    let after = await foldersOf(setup, token.accessToken, article)
+    await cleanUp(setup, files, started.batch, holder.licencesFolderId)
+    let after = await foldersOf(setup, token.accessToken, holder)
     return { kind: after === 'folder-gone' ? 'folder-gone' : 'unavailable' }
   }
 
   let attachments = committed.artworks.map((artwork) =>
     licenceAttachment(artwork.licenceHash ?? '', pdfs.get(artwork.id) ?? new Uint8Array()),
   )
-  return sendRequest(setup, committed, article.name, issue.name, attachments)
+  return sendRequest(setup, committed, holder, issue.name, attachments)
 }
 
 /** A second send of a committed batch: its answer, or its request retried once more. */
 async function replay(setup: ArtworksSetup, batch: BatchRow): Promise<SubmitOutcome> {
-  let article = await setup.articles.findById(batch.articleId)
-  let articleName = article?.name ?? ''
+  let found = await holderOf(setup, batch)
+  let holder: HolderName = {
+    kind: found?.kind ?? (batch.groupId === null ? 'article' : 'group'),
+    name: found?.name ?? '',
+  }
   if (batch.discardedAt !== null) return { kind: 'discarded' }
-  if (batch.mailSentAt !== null) return { articleName, batch, kind: 'sent' }
-  if (batch.mailRefusedAt !== null) return { articleName, batch, kind: 'refused' }
+  if (batch.mailSentAt !== null) return { batch, holder, kind: 'sent' }
+  if (batch.mailRefusedAt !== null) return { batch, holder, kind: 'refused' }
   let resent = await resendRequest(setup, batch)
-  if (resent.kind === 'sent') return { articleName, batch: resent.batch, kind: 'sent' }
-  if (resent.kind === 'refused') return { articleName, batch: resent.batch, kind: 'refused' }
+  if (resent.kind === 'sent') return { batch: resent.batch, holder, kind: 'sent' }
+  if (resent.kind === 'refused') return { batch: resent.batch, holder, kind: 'refused' }
   if (resent.kind === 'daily-cap') return { kind: 'daily-cap' }
   return { kind: 'unavailable' }
 }
@@ -591,8 +641,8 @@ async function cleanUpMarked(
   ) {
     return
   }
-  let article = await setup.articles.findById(current.articleId)
-  await cleanUp(setup, files, current, article?.licencesFolderId ?? null)
+  let holder = await holderOf(setup, current)
+  await cleanUp(setup, files, current, holder?.licencesFolderId ?? null)
 }
 
 /**
@@ -631,13 +681,13 @@ export function reservePublicMail(
 async function sendRequest(
   setup: ArtworksSetup,
   batch: BatchRow,
-  articleName: string,
+  holder: HolderName,
   issueName: string,
   attachments: MailAttachment[],
 ): Promise<SubmitOutcome> {
+  let named: HolderName = { kind: holder.kind, name: holder.name }
   let result = await setup.mailer(
     consentEmail({
-      articleName,
       artworks: batch.artworks.map((artwork) => ({
         author: artwork.author,
         pdfHash: artwork.licenceHash ?? '',
@@ -646,6 +696,7 @@ async function sendRequest(
       })),
       attachments,
       formKey: batch.formKey,
+      holder: named,
       issueName,
       tag: batch.tag,
       to: batch.providerEmail,
@@ -658,8 +709,8 @@ async function sendRequest(
       : 'failed'
   await setup.artworks.markMail(batch.id, outcome, setup.now())
   let current = (await setup.artworks.findBatch(batch.id)) ?? batch
-  if (outcome === 'sent') return { articleName, batch: current, kind: 'sent' }
-  if (outcome === 'refused') return { articleName, batch: current, kind: 'refused' }
+  if (outcome === 'sent') return { batch: current, holder: named, kind: 'sent' }
+  if (outcome === 'refused') return { batch: current, holder: named, kind: 'refused' }
   return { kind: 'unavailable' }
 }
 
@@ -687,15 +738,15 @@ async function resendRequest(setup: ArtworksSetup, batch: BatchRow): Promise<Res
     return { kind: 'gone' }
   if (current.mailSentAt !== null) return { kind: 'already-sent' }
   let issue = await setup.issues.findById(current.issueId)
-  let article = await setup.articles.findById(current.articleId)
-  if (issue === null || article === null) return { kind: 'gone' }
+  let holder = await holderOf(setup, current)
+  if (issue === null || holder === null) return { kind: 'gone' }
   if (issue.closedAt !== null) return { kind: 'closed' }
 
   let token = await setup.token()
   if (!token.ok) return { kind: token.reason }
   /* The PDFs are in `Licence`: the folders come first, so a missing one is named as a folder
      and not as a PDF of the batch (`12o`). */
-  let check = await checkArticleFolders(folderDeps(setup, token.accessToken), article, [
+  let check = await checkArticleFolders(folderDeps(setup, token.accessToken), holder, [
     'article',
     'licences',
   ])
@@ -716,7 +767,7 @@ async function resendRequest(setup: ArtworksSetup, batch: BatchRow): Promise<Res
   }
   if (!(await reservePublicMail(setup, 'consent', 1))) return { kind: 'daily-cap' }
 
-  let sent = await sendRequest(setup, current, article.name, issue.name, attachments)
+  let sent = await sendRequest(setup, current, holder, issue.name, attachments)
   if (sent.kind === 'sent' || sent.kind === 'refused') return { batch: sent.batch, kind: sent.kind }
   return { kind: 'unavailable' }
 }
@@ -753,8 +804,8 @@ export async function discardBatch(setup: ArtworksSetup, batchId: number): Promi
     if (current === null || current.createdAt === null || current.discardedAt !== null)
       return { kind: 'gone' }
     let issue = await setup.issues.findById(current.issueId)
-    let article = await setup.articles.findById(current.articleId)
-    if (issue === null || article?.folderId == null) return { kind: 'gone' }
+    let holder = await holderOf(setup, current)
+    if (issue === null || holder?.folderId == null) return { kind: 'gone' }
     if (issue.closedAt !== null) return { kind: 'closed' }
     /* Only a batch in _Chyba_: one whose request reached the provider meanwhile is theirs now. */
     if (current.mailSentAt !== null) return { kind: 'already-sent' }
@@ -766,10 +817,10 @@ export async function discardBatch(setup: ArtworksSetup, batchId: number): Promi
     }
     /* A file in a folder that is in the bin would come back with the folder, as a file of a
        batch the app holds discarded: nothing goes while one of the three is missing (`12o`). */
-    let check = await checkArticleFolders(folderDeps(setup, token.accessToken), article)
+    let check = await checkArticleFolders(folderDeps(setup, token.accessToken), holder)
     if (check === 'unavailable') return { isPartlyBinned: false, kind: 'unavailable' }
     if (check.missing.length > 0) return { kind: 'folder-gone', missing: check.missing }
-    let { artworksFolderId, licencesFolderId } = article
+    let { artworksFolderId, licencesFolderId } = holder
     if (artworksFolderId === null || licencesFolderId === null) return { kind: 'gone' }
     let files = setup.files(token.accessToken)
     let placed = current.artworks.flatMap((artwork) =>

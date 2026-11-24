@@ -57,6 +57,7 @@ import { createSessionCookie, createSignedInUntilCookie } from './auth/session.s
 import { createAccessDirectory } from './data/access.server.ts'
 import { createAnswerStore } from './data/answers.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
+import { createGroupStore } from './data/artwork-groups.server.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { createDriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
@@ -218,6 +219,7 @@ export function createArtworksSetup(
     artworks: createArtworkStore(dependencies.database),
     files: (accessToken) => createArtworkFiles({ accessToken, fetch }),
     folders: articleSetup.folders,
+    groups: createGroupStore(dependencies.database),
     issues: articleSetup.issues,
     links: articleSetup.links,
     mailLog: articleSetup.mailLog,

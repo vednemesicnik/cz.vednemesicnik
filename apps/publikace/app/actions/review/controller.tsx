@@ -239,7 +239,7 @@ function cardOf(batch: QueuedBatch, options: CardOptions): QueueCardView {
     answers: null,
     id: String(batch.id),
     kind: kindLine(batch.artworks.length, batch.issueName),
-    title: batch.articleName,
+    title: batch.holder.name,
   }
   let ids = { id: String(batch.id) }
   let target: AnswerTarget = { id: batch.id, kind: 'artworks' }

@@ -14,10 +14,14 @@ async function setup(app: TestApp) {
   let article = await seedArticle(app, issueId)
   let artworks = createArtworkStore(app.database)
   let count = 0
-  async function upload(formKey: string, extra: Partial<NewUpload> = {}) {
+  async function upload(
+    formKey: string,
+    extra: Partial<Omit<NewUpload, 'articleId' | 'groupId'>> = {},
+  ) {
     count += 1
     return artworks.addUpload({
       articleId: article.articleId,
+      groupId: null,
       at: AT,
       driveFileId: `img-${count}`,
       formKey,
@@ -173,7 +177,8 @@ describe('the artwork store', () => {
         waiting: 0,
       })
       let [listed] = await artworks.listByIssue(issueId)
-      assert.equal(listed?.articleName, 'Školní jídelna po roce')
+      assert.equal(listed?.holder.name, 'Školní jídelna po roce')
+      assert.equal(listed?.holder.kind, 'article')
 
       await artworks.discardBatch(started.id, AT)
       assert.deepEqual(await artworks.listByIssue(issueId), [])

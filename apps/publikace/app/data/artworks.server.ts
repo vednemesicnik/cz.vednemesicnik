@@ -1,7 +1,13 @@
 import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
-import type { ArtworkCounts, ArtworkState, BatchStatus } from '../domain/artwork.ts'
+import type {
+  ArtworkCounts,
+  ArtworkState,
+  BatchStatus,
+  HolderKind,
+  HolderName,
+} from '../domain/artwork.ts'
 import { batchState, batchTag, isWaiting, NO_ARTWORKS } from '../domain/artwork.ts'
 import type { ApprovedCount } from '../domain/issue.ts'
 import {
@@ -23,11 +29,13 @@ import { answeredAtOf, applyConsentPatch } from './consent-patch.server.ts'
  */
 
 export type ArtworkRow = {
-  articleId: number
+  /** The article the upload belongs to, or `null` for a group's (`groupId`). */
+  articleId: number | null
   author: string | null
   batchId: number | null
   driveFileId: string
   formKey: string
+  groupId: number | null
   id: number
   isReadable: boolean
   licenceDocId: string | null
@@ -46,7 +54,8 @@ export type ArtworkRow = {
 }
 
 export type BatchRow = BatchStatus & {
-  articleId: number
+  /** The article the batch was sent to, or `null` for a group's (`groupId`). */
+  articleId: number | null
   archiveError: string | null
   /** The batch's artworks in their order. */
   artworks: ArtworkRow[]
@@ -59,6 +68,7 @@ export type BatchRow = BatchStatus & {
   consentVerifiedByName: string | null
   createdAt: Temporal.Instant | null
   formKey: string
+  groupId: number | null
   id: number
   issueId: number
   linkId: number
@@ -71,13 +81,27 @@ export type BatchRow = BatchStatus & {
   tag: string
 }
 
-/** A batch as the issue's detail lists it, with the article it belongs to. */
-export type ListedBatch = BatchRow & { articleName: string; createdAt: Temporal.Instant }
+/**
+ * The article or the group a listed batch belongs to: its name, and its folder and `Licence`, which
+ * the Evidence names. The folders are `null` where a listing does not read them.
+ */
+export type ListedHolder = HolderName & {
+  folderId: string | null
+  /** The holder's ID under its own kind: an article's or a group's. */
+  id: number
+  licencesFolderId: string | null
+}
+
+/** A batch as the issue's detail lists it, with the article or the group it belongs to. */
+export type ListedBatch = BatchRow & { createdAt: Temporal.Instant; holder: ListedHolder }
 
 /** A batch handed to a run of the reply check, with what the archived PDF says and where it goes. */
 export type ClaimedBatch = ListedBatch & {
   issueName: string
-  /** `null` when the article's `Licence` was found missing: the job then reports a failed archive. */
+  /**
+   * `null` when the article's or the group's `Licence` was found missing: the job then reports a
+   * failed archive.
+   */
   licencesFolderId: string | null
 }
 
@@ -86,8 +110,10 @@ export type QueuedBatch = ListedBatch & { issueName: string }
 
 export type ReportAnswer = 'accepted' | 'superseded' | 'unknown'
 
-export type NewUpload = {
-  articleId: number
+/** What an upload or a batch goes to: one article or one group, never both. */
+export type HolderRef = { articleId: number; groupId?: null } | { articleId: null; groupId: number }
+
+export type NewUpload = HolderRef & {
   at: Temporal.Instant
   driveFileId: string
   formKey: string
@@ -100,8 +126,7 @@ export type NewUpload = {
   uploadKey: string
 }
 
-export type NewBatch = {
-  articleId: number
+export type NewBatch = HolderRef & {
   artworks: readonly { author: string; id: number; source: string }[]
   at: Temporal.Instant
   formKey: string
@@ -119,7 +144,10 @@ export type ArtworkStore = {
    * how many wait on the editors.
    */
   countsByIssue(): Promise<Map<number, ApprovedCount & { waiting: number }>>
-  /** The artworks of the issue's committed batches per article, by their state (`12a`). */
+  /**
+   * The artworks of the issue's committed batches per article, by their state (`12a`). A group's
+   * batches are not here: the group's row counts them itself.
+   */
   countsByArticle(issueId: number): Promise<Map<number, ArtworkCounts>>
   commitBatch(id: number, at: Temporal.Instant): Promise<BatchRow>
   /**
@@ -210,15 +238,32 @@ function text(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
+function idOrNull(value: unknown): number | null {
+  return value === null || value === undefined ? null : Number(value)
+}
+
+/** The holder a listed row carries, from the `holder_*` columns its query selects. */
+function holderOf(row: Row | undefined): ListedHolder {
+  let kind: HolderKind = row?.['holder_kind'] === 'group' ? 'group' : 'article'
+  return {
+    folderId: text(row?.['holder_folder_id']),
+    id: Number(kind === 'group' ? row?.['group_id'] : row?.['article_id']),
+    kind,
+    licencesFolderId: text(row?.['holder_licences_folder_id']),
+    name: String(row?.['holder_name'] ?? ''),
+  }
+}
+
 function toArtwork(row: Row): ArtworkRow {
   let position = row['position']
   let batchId = row['batch_id']
   return {
-    articleId: Number(row['article_id']),
+    articleId: idOrNull(row['article_id']),
     author: text(row['author']),
     batchId: batchId === null || batchId === undefined ? null : Number(batchId),
     driveFileId: String(row['drive_file_id']),
     formKey: String(row['form_key']),
+    groupId: idOrNull(row['group_id']),
     id: Number(row['id']),
     isReadable: Number(row['is_readable']) === 1,
     licenceDocId: text(row['licence_doc_id']),
@@ -243,7 +288,7 @@ function toBatch(row: Row, artworks: ArtworkRow[]): BatchRow {
     approvedAt: parseStamp(row['approved_at']),
     archiveError: text(row['archive_error']),
     archiveFailedAt: parseStamp(row['archive_failed_at']),
-    articleId: Number(row['article_id']),
+    articleId: idOrNull(row['article_id']),
     artworks,
     checkedAt: parseStamp(row['checked_at']),
     claimedAt: parseStamp(row['claimed_at']),
@@ -256,6 +301,7 @@ function toBatch(row: Row, artworks: ArtworkRow[]): BatchRow {
     createdAt: parseStamp(row['created_at']),
     discardedAt: parseStamp(row['discarded_at']),
     formKey: String(row['form_key']),
+    groupId: idOrNull(row['group_id']),
     id: Number(row['id']),
     isExactConsent: Number(row['is_exact_consent']) === 1,
     issueId: Number(row['issue_id']),
@@ -274,13 +320,20 @@ function toBatch(row: Row, artworks: ArtworkRow[]): BatchRow {
   }
 }
 
-/** The batches as `listByIssue` and the queue give them, with their article's and issue's names. */
+/**
+ * The batches as `listByIssue` and the queue give them, with their article's or group's name and
+ * their issue's. Every such query joins the batch's holder the same way:
+ *
+ *   LEFT JOIN articles ar ON ar.id = b.article_id LEFT JOIN artwork_groups g ON g.id = b.group_id
+ *
+ * and selects `coalesce(ar.name, g.name) AS holder_name` and `holder_kind`.
+ */
 async function listed(db: Database, rows: readonly Row[]): Promise<QueuedBatch[]> {
   let batches = await withArtworks(db, rows)
   return batches.map((batch, index) => ({
     ...batch,
-    articleName: String(rows[index]?.['article_name'] ?? ''),
     createdAt: batch.createdAt ?? EPOCH,
+    holder: holderOf(rows[index]),
     issueName: String(rows[index]?.['issue_name'] ?? ''),
   }))
 }
@@ -295,9 +348,12 @@ function isQueued(batch: BatchRow): boolean {
 }
 
 /* The batches that could be in the queue; `isQueued` decides. */
-const QUEUE_CANDIDATES = sql`SELECT b.*, ar.name AS article_name, i.name AS issue_name
+const QUEUE_CANDIDATES = sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name,
+    CASE WHEN b.group_id IS NULL THEN 'article' ELSE 'group' END AS holder_kind,
+    i.name AS issue_name
   FROM artwork_batches b
-  JOIN articles ar ON ar.id = b.article_id
+  LEFT JOIN articles ar ON ar.id = b.article_id
+  LEFT JOIN artwork_groups g ON g.id = b.group_id
   JOIN issues i ON i.id = b.issue_id
   WHERE b.created_at IS NOT NULL AND b.approved_at IS NULL AND i.closed_at IS NULL
     AND (b.reply_message_id IS NOT NULL OR b.archive_failed_at IS NOT NULL)
@@ -335,15 +391,18 @@ async function batchById(db: Database, id: number): Promise<BatchRow | null> {
 }
 
 /**
- * A tag the article has not used yet: the batch's start in Prague time, a second later for every
- * batch of the same article that already holds it, so the reply check never pairs two.
+ * A tag the article or the group has not used yet: the batch's start in Prague time, a second
+ * later for every batch of the same holder that already holds it, so the reply check never pairs
+ * two.
  */
-async function freeTag(db: Database, articleId: number, at: Temporal.Instant): Promise<string> {
+async function freeTag(db: Database, holder: HolderRef, at: Temporal.Instant): Promise<string> {
   let candidate = at
   for (;;) {
     let tag = batchTag(candidate)
     let taken = await db.exec(
-      sql`SELECT 1 FROM artwork_batches WHERE article_id = ${articleId} AND tag = ${tag}`,
+      holder.groupId == null
+        ? sql`SELECT 1 FROM artwork_batches WHERE article_id = ${holder.articleId} AND tag = ${tag}`
+        : sql`SELECT 1 FROM artwork_batches WHERE group_id = ${holder.groupId} AND tag = ${tag}`,
     )
     if ((taken.rows ?? []).length === 0) return tag
     candidate = candidate.add({ seconds: 1 })
@@ -361,9 +420,10 @@ export function createArtworkStore(database: Database): ArtworkStore {
 
     async addUpload(upload) {
       await database.exec(
-        sql`INSERT INTO artworks (link_id, article_id, form_key, upload_key, drive_file_id,
-              original_name, stored_name, mime_type, size, is_readable, uploaded_at)
-            VALUES (${upload.linkId}, ${upload.articleId}, ${upload.formKey}, ${upload.uploadKey},
+        sql`INSERT INTO artworks (link_id, article_id, group_id, form_key, upload_key,
+              drive_file_id, original_name, stored_name, mime_type, size, is_readable, uploaded_at)
+            VALUES (${upload.linkId}, ${upload.articleId}, ${upload.groupId ?? null}, ${upload.formKey},
+              ${upload.uploadKey},
               ${upload.driveFileId}, ${upload.originalName}, ${upload.storedName}, ${upload.mimeType},
               ${upload.size}, ${upload.isReadable ? 1 : 0}, ${stamp(upload.at)})`,
       )
@@ -397,6 +457,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
       )
       let counts = new Map<number, ArtworkCounts>()
       for (let row of result.rows ?? []) {
+        if (row['article_id'] == null) continue
         let articleId = Number(row['article_id'])
         let state: ArtworkState = batchState(toBatch(row, []))
         let current = counts.get(articleId) ?? NO_ARTWORKS
@@ -477,8 +538,13 @@ export function createArtworkStore(database: Database): ArtworkStore {
 
     async listByIssue(issueId) {
       let result = await database.exec(
-        sql`SELECT b.*, ar.name AS article_name
-            FROM artwork_batches b JOIN articles ar ON ar.id = b.article_id
+        sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name,
+              CASE WHEN b.group_id IS NULL THEN 'article' ELSE 'group' END AS holder_kind,
+              coalesce(ar.folder_id, g.folder_id) AS holder_folder_id,
+              coalesce(ar.licences_folder_id, g.licences_folder_id) AS holder_licences_folder_id
+            FROM artwork_batches b
+            LEFT JOIN articles ar ON ar.id = b.article_id
+            LEFT JOIN artwork_groups g ON g.id = b.group_id
             WHERE b.issue_id = ${issueId} AND b.created_at IS NOT NULL AND b.discarded_at IS NULL
             ORDER BY b.created_at DESC, b.id DESC`,
       )
@@ -562,11 +628,12 @@ export function createArtworkStore(database: Database): ArtworkStore {
         let existing = await batchByFormKey(db, batch.formKey)
         if (existing !== null) return { batch: existing, isNew: false }
 
-        let tag = await freeTag(db, batch.articleId, batch.at)
+        let tag = await freeTag(db, batch, batch.at)
         await db.exec(
-          sql`INSERT INTO artwork_batches (issue_id, article_id, link_id, form_key, provider_name,
-                provider_email, tag, started_at)
-              VALUES (${batch.issueId}, ${batch.articleId}, ${batch.linkId}, ${batch.formKey},
+          sql`INSERT INTO artwork_batches (issue_id, article_id, group_id, link_id, form_key,
+                provider_name, provider_email, tag, started_at)
+              VALUES (${batch.issueId}, ${batch.articleId}, ${batch.groupId ?? null}, ${batch.linkId},
+                ${batch.formKey},
                 ${batch.provider.name}, ${batch.provider.email}, ${tag}, ${stamp(batch.at)})`,
         )
         let inserted = await batchByFormKey(db, batch.formKey)
@@ -622,11 +689,18 @@ export function createArtworkStore(database: Database): ArtworkStore {
               WHERE id IN (SELECT value FROM json_each(${idList}))`,
         )
         let claimed = await db.exec(
-          sql`SELECT b.*, ar.name AS article_name, i.name AS issue_name,
-                CASE WHEN ar.licences_folder_missing_at IS NULL THEN ar.licences_folder_id END
-                  AS licences_folder_id
+          sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name,
+                CASE WHEN b.group_id IS NULL THEN 'article' ELSE 'group' END AS holder_kind,
+                i.name AS issue_name,
+                CASE
+                  WHEN b.group_id IS NULL AND ar.licences_folder_missing_at IS NULL
+                    THEN ar.licences_folder_id
+                  WHEN b.group_id IS NOT NULL AND g.licences_folder_missing_at IS NULL
+                    THEN g.licences_folder_id
+                END AS licences_folder_id
               FROM artwork_batches b
-              JOIN articles ar ON ar.id = b.article_id
+              LEFT JOIN articles ar ON ar.id = b.article_id
+              LEFT JOIN artwork_groups g ON g.id = b.group_id
               JOIN issues i ON i.id = b.issue_id
               WHERE b.id IN (SELECT value FROM json_each(${idList}))
               ORDER BY coalesce(b.checked_at, ''), b.id`,

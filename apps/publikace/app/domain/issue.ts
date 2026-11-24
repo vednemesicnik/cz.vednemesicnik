@@ -30,6 +30,8 @@ export type Issue = {
   /** The issue's Evidence, which the record queue creates once the issue is complete (#111). */
   evidenceSpreadsheetId: string | null
   folderIds: Record<FolderKind, string | null>
+  /** `Skupiny obrazových děl`, made with the issue's first artwork group and `null` until then. */
+  groupsFolderId: string | null
   id: number
   name: string
   startedAt: Temporal.Instant

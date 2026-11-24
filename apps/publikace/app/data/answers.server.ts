@@ -137,9 +137,11 @@ type Card = {
 
 async function batchCard(db: Database, id: number): Promise<Card | null> {
   let result = await db.exec(
-    sql`SELECT b.*, ar.name AS article_name, i.name AS issue_name, i.closed_at AS issue_closed_at
+    sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name, i.name AS issue_name,
+          i.closed_at AS issue_closed_at
         FROM artwork_batches b
-        JOIN articles ar ON ar.id = b.article_id
+        LEFT JOIN articles ar ON ar.id = b.article_id
+        LEFT JOIN artwork_groups g ON g.id = b.group_id
         JOIN issues i ON i.id = b.issue_id
         WHERE b.id = ${id} AND b.created_at IS NOT NULL`,
   )
@@ -168,7 +170,14 @@ async function batchCard(db: Database, id: number): Promise<Card | null> {
       email: String(row['provider_email']),
       issueName,
       name: String(row['provider_name']),
-      subject: consentSubject(String(row['article_name']), issueName, String(row['tag'])),
+      subject: consentSubject(
+        {
+          kind: row['group_id'] == null ? 'article' : 'group',
+          name: String(row['holder_name']),
+        },
+        issueName,
+        String(row['tag']),
+      ),
     },
     replyMessageId: status.replyMessageId,
     replyReceivedAt: parseStamp(row['reply_received_at']),
