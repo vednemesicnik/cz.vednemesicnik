@@ -17,7 +17,8 @@ import {
   editAuthorsNote,
   FINAL_VERSION_CANCELLED_TOAST,
   FINAL_VERSION_MEANWHILE_TOAST,
-  fixClosedToast,
+  authorsClosedToast,
+  articleRenameClosedToast,
   isAgreed,
   RENAME_ARTICLE_DISCONNECTED,
   RENAME_ARTICLE_DOC_MISSING,
@@ -1890,7 +1891,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
             return back()
           }
           case 'closed':
-            flashToast(context, fixClosedToast(outcome.issueName))
+            flashToast(context, articleRenameClosedToast(outcome.issueName))
             return back()
           case 'gone':
             return notFound()
@@ -2056,7 +2057,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
             flashToast(context, FINAL_VERSION_CANCELLED_TOAST)
             return back()
           case 'closed':
-            flashToast(context, fixClosedToast(outcome.issueName))
+            flashToast(context, authorsClosedToast(outcome.issueName))
             return back()
           default:
             return notFound()

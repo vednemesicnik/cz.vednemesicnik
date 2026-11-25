@@ -111,8 +111,8 @@ export const RENAME_ARTICLE_META_BINNED: FixCallout = {
 
 export const EDIT_AUTHORS_TITLE = 'Upravit autory'
 export const SAVE_AUTHORS_LABEL = 'Uložit autory'
-/* Formed as `12v`'s _Vydání se přejmenovává…_; `12y` draws no pending state. */
-export const SAVE_AUTHORS_PENDING_LABEL = 'Autoři se ukládají…'
+/* `12y` draws no pending state; the cards above it say what is saved. */
+export const SAVE_AUTHORS_PENDING_LABEL = 'Ukládá se…'
 export const AGREED_AUTHOR_TAG = AGREED_CLAUSE_LABEL
 
 /** The line under the title: which article, and after the final version what may change. */
@@ -197,7 +197,14 @@ export const AUTHORS_META_BINNED: FixCallout = {
   title: [META_BINNED_STEP],
 }
 
-/** A fix on an article of an issue closed meanwhile: what holds now, as `12h` reads. */
-export function fixClosedToast(issueName: string): string {
-  return tied`Vydání ${issueName} je uzavřené. Článek v něm už nejde upravit.`
+/**
+ * A fix on an article of an issue closed meanwhile, as `12h` reads: one sentence per action,
+ * since the Doc stays editable after the close and only the fix is refused.
+ */
+export function articleRenameClosedToast(issueName: string): string {
+  return tied`Vydání ${issueName} je uzavřené. Článek už nejde přejmenovat.`
+}
+
+export function authorsClosedToast(issueName: string): string {
+  return tied`Vydání ${issueName} je uzavřené. Údaje o autorech už nejde uložit.`
 }
