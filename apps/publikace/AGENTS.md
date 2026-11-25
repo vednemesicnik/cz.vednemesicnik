@@ -242,6 +242,11 @@ files until this one has its own.
 - An issue title is a plain English sentence about the problem, never a `type(scope):` subject.
   That form belongs to commits and PR titles, because the squash turns a PR title into a commit
   on `dev`.
+- Before an issue is filed, three questions decide it
+  ([docs/workflow-skills.md](docs/workflow-skills.md) § Filing an issue): an open issue that
+  would carry it gets a comment instead, it is the size of one PR, and until `v1.0.0` one the
+  release does not need is labelled `can wait`. The agent decides and files; it does not ask the
+  user to pick follow-ups.
 - An issue is opened with its type in the same command, `gh issue create --type Bug` (or
   `Feature`, `Task`), whichever skill or session files it. The types are defined in
   [docs/workflow-skills.md](docs/workflow-skills.md). One opened without it gets it at once with

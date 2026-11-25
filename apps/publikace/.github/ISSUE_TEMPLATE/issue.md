@@ -9,6 +9,9 @@ title: ''
      "fix(card): …". Name the area inside the sentence when it matters.
 
      A proposal goes through /review-idea before it gets here, and its answers become this body.
+     Check first that no open issue would carry it, and that it is the size of one PR. Until
+     v1.0.0, label it `can wait` when the release does not need it — docs/workflow-skills.md
+     § Filing an issue.
      Headings are a skeleton, not a form — rename, merge or drop them when the issue reads
      better without. -->
 

@@ -144,7 +144,12 @@ which of the four it is, and why, in your own voice:
   the app never disagree for longer than a branch. It names its type too, _Bug_, _Feature_ or
   _Task_ as [docs/workflow-skills.md](../../../docs/workflow-skills.md) defines them, because
   the issue is opened with it (`gh issue create --type …`). An issue that carries all of it is
-  one a planner cannot misread.
+  one a planner cannot misread. Before the text is written, put the three questions of
+  [docs/workflow-skills.md](../../../docs/workflow-skills.md) § Filing an issue to it: when an
+  open issue already carries the work, the verdict is a comment on that issue (and its title
+  rewritten if the scope widens), not a new one; when it is the size of two PRs, it is two issues,
+  or an epic; and until `v1.0.0` it says whether the release needs it, the text carrying
+  `--label "can wait"` when it does not, with the reason in a sentence.
 - **Ask design first.** 6 or 7 unresolved. Run `/ask-design`, and come back to this round with
   the answer — not to `/plan-issue`.
 - **Change the plan.** The proposal is right and the code already does it, or nothing in the

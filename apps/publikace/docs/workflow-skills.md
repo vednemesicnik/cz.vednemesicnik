@@ -62,6 +62,48 @@ A skill never moves an issue back: a plan redrawn for an issue in progress leave
 status is read and set through the REST API, `gh api repos/{owner}/{repo}/issues/<n>` and the
 same path with `-X PATCH -f status=…`, because `gh issue` does not know it yet.
 
+## Filing an issue
+
+Whichever skill or session files an issue, it answers three questions first, in this order. The
+agent answers them and files; it does not hand the user a list of follow-ups to tick, because it
+holds the context and the user does not. It reports what it filed, what it added to an open issue
+and what it left out, one line each.
+
+**1. Does an open issue carry it already?** Read the open issues by their bodies, not only their
+titles (`gh issue list --limit 100`, then `gh issue view` on the ones near it). Work the same PR
+would touch anyway — the same screen, the same flow, the same files, the same blocker — goes into
+that issue as a comment saying what it adds and why it belongs there. When it widens what the
+issue is about, the title is rewritten to cover both, and a `can wait` issue that takes on
+something the release needs loses the label. A new issue is for work no open one would carry.
+
+**2. Is it the size of one PR?** An issue is one change a reviewer reads in one sitting and the
+app can ship on its own: one behaviour on its surfaces, one job, one fix with its cause.
+
+- **Too big** when it ships in parts that each work alone, or joins surfaces that do not need
+  each other — a screen and a script in another repository, two unrelated flows. Split it; when
+  the parts serve one aim, they are sub-issues of an epic.
+- **Too small** when it needs no plan of its own: a string, a token, a few lines. It goes into
+  the open issue nearest to it, or is made when a change next touches that file. Nothing is filed
+  to sweep such things across the app.
+- **A bug no open issue carries is filed however small it is.** The size rule folds work into
+  other issues; it never drops it.
+
+**3. Does the release need it?** Until `v1.0.0`, the release that first runs on Fly.io
+([branching-model.md](branching-model.md)) and lets the newsroom switch the scripts off, every
+issue is weighed against it. The release needs an issue when without it the app cannot do its job
+for the newsroom, loses or corrupts data, sends a wrong e-mail, leaves a door
+[security.md](security.md) does not guard, or keeps the cutover from happening. Everything else —
+polish, a departure from the drawing that misleads nobody, a convenience, a second way to do
+something that already works — is labelled **`can wait`**: good to have, blocks nothing the app
+does, and nothing about it is critical. The test is one question: would the newsroom switch the
+scripts off without it? If yes, it can wait.
+
+The label goes on in the same command as the type,
+`gh issue create --type Feature --label "can wait"`, and an issue opened without the weighing gets
+it at once with `gh issue edit <n> --add-label "can wait"`. `/next-issue` picks a `can wait`
+issue only once no issue the release needs can be worked on. From `v1.0.0` on the label is no
+longer given, and the issues still carrying it are weighed again as ordinary work.
+
 ## Where each one stops, and why
 
 The gates are the point of the sequence. A skill that ran past its gate would be deciding

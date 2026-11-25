@@ -101,8 +101,7 @@ Work through these; report what each one did or why it was a no-op.
    (`gh issue view <n> --json parent`), read that parent's children
    (`gh issue view <epic> --json subIssues`). While any of them is still open, name it and
    move on. When they are all closed, **offer to close the epic** — with a comment saying
-   what it covered — and leave the decision to the user, the way follow-ups are offered
-   rather than filed. Nothing else in the pipeline looks at this: `/ship-issue` says
+   what it covered — and leave the decision to the user. Nothing else in the pipeline looks at this: `/ship-issue` says
    _parent_ about a branch in a stack, not about an issue, so an epic whose last child has
    landed stays open until somebody notices. #173 is how this step got here.
 6. **Retire the plan file** if `/ship-issue` did not: `rm ~/.claude/plans/plan-publikace-issue-<n>-*.md`.
@@ -143,12 +142,18 @@ What belongs in it:
   purpose, a deploy not yet verified;
 - **the leftovers from Phase 1.7** that were not cleaned up, and any pair Phase 1.8 offered.
 
-### 🛑 Gate — Follow-ups are offered, not filed
+### 🛑 Gate — Follow-ups are weighed, then filed or folded
 
-If the issue surfaced work worth doing later, **list it and ask** — one line each, with
-what you would title it and its type (_Bug_, _Feature_ or _Task_). File only what the user
-picks, with that type (`gh issue create --type …`); a new issue starts in _Backlog_. The backlog here grows faster than
-it drains, and an agent filing issues on its own initiative is part of why.
+If the issue surfaced work worth doing later, **decide each item yourself** on the three
+questions of [docs/workflow-skills.md](../../../docs/workflow-skills.md) § Filing an issue: an
+open issue that carries it gets a comment, a change too small for a plan waits for the next change
+to that file, and only what is left becomes a new issue, with its type and, until `v1.0.0`,
+`can wait` when the release does not need it. A new issue starts in _Backlog_. Do not ask the user
+which to file: you hold the context. Ask only when an item turns on something only they know, with
+your recommendation first. Report one line per item: filed as #n, added to #n, or left out and why.
+
+The backlog grows faster than it drains when every finding becomes an issue, so the default for a
+small one is the open issue beside it, not a new number.
 
 ### Phase 3 — Pick the next issue
 
@@ -156,10 +161,16 @@ Use `$ARGUMENTS` if it is non-empty. Otherwise read the "Open issues" list above
 fetched with `--limit 50` on purpose, because `gh issue list` defaults to 20 and this
 backlog is longer than that; issues have gone unseen for a day that way.
 
-Recommend one, in a sentence, with the reason — unblocked, adjacent to what just shipped,
-or blocking something else. Say plainly if the honest recommendation is that the top
-candidates are all blocked on a design answer. **The pick is the user's**; do not start
-planning it here, and do not read the issue body into this window.
+Until `v1.0.0`, the issues the release needs come first and a `can wait` one is picked only
+when none of them can be worked on ([docs/workflow-skills.md](../../../docs/workflow-skills.md)
+§ Filing an issue); an open issue that carries neither verdict is weighed now and labelled if it
+can wait. Within each group, older issues go before newer ones, and each one's blocker is checked
+rather than assumed: a hand step, a decision that is yours, a merged PR waiting on a manual check.
+
+Recommend one, in a sentence, with the reason — needed for the release, unblocked, adjacent to
+what just shipped, or blocking something else. Say plainly if the honest recommendation is that
+the top candidates are all blocked on a design answer. Do not start planning it here, and do not
+read the issue body into this window.
 
 ### Phase 4 — Hand over to a clean window
 
