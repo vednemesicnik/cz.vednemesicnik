@@ -7,14 +7,21 @@
  */
 
 import { type ClauseState, AGREED_CLAUSE_LABEL } from './approvals.ts'
-import type { FinalVersion } from './article.ts'
-import type { CalloutPart, FixCallout } from './issue-fixes.ts'
+import type { ArticleState, FinalVersion } from './article.ts'
+import {
+  type CalloutPart,
+  type FixCallout,
+  type ForeignFile,
+  type ForeignFilesWords,
+  foreignFilesCallout,
+} from './issue-fixes.ts'
 import { type ArticleStep, whoOf } from './article.ts'
-import { formatMoment } from './time.ts'
+import { formatDayMonth, formatMoment } from './time.ts'
 import { tied } from './public/typography.ts'
 
 export const RENAME_ARTICLE_LABEL = 'Přejmenovat článek…'
 export const EDIT_AUTHORS_LABEL = 'Upravit autory…'
+export const REMOVE_ARTICLE_LABEL = 'Odebrat článek…'
 
 /**
  * A clause whose author agreed: the reply was a consent, exact or decided, archived or not yet
@@ -43,6 +50,19 @@ export function canEditAuthors(article: FixedArticle, isIssueOpen: boolean): boo
   if (!isIssueOpen) return false
   let { finalVersion } = article
   return finalVersion === null || finalVersion.authors.some((author) => !isAgreed(author.state))
+}
+
+/**
+ * Only what nobody proofreads and nothing holds a consent for (`12u`): _Píše se_ or _Dopsáno_,
+ * with no batch that is not discarded, in an issue still open. A discarded batch does not count,
+ * as the row's „—“ does not count it.
+ */
+export function canRemoveArticle(
+  state: ArticleState,
+  liveBatches: number,
+  isIssueOpen: boolean,
+): boolean {
+  return isIssueOpen && (state === 'writing' || state === 'handedOver') && liveBatches === 0
 }
 
 const NOTHING_CHANGED = 'Nic se nezměnilo.'
@@ -212,4 +232,91 @@ export function articleRenameClosedToast(issueName: string): string {
 
 export function authorsClosedToast(issueName: string): string {
   return tied`Vydání ${issueName} je uzavřené. Údaje o autorech už nejde uložit.`
+}
+
+/* ---------- Odebrat článek (`12z`) ---------- */
+
+export const REMOVE_ARTICLE_TITLE = 'Odebrat článek?'
+export const REMOVE_ARTICLE_CONFIRM_LABEL = 'Odebrat článek'
+
+/** The discarded batches of the article, and whether a reply to one waits in _Ke kontrole_. */
+export type DiscardedBatches = { count: number; isReplyWaiting: boolean }
+
+/**
+ * The dialog's paragraphs in `12z`'s order: the folder, where the article stops being seen and the
+ * link that stops working, that the bin gives nothing back, the mail. The last speaks of the
+ * replies to discarded batches, which the app no longer reads once the article is gone.
+ */
+export function removeArticleDialogText(
+  name: string,
+  state: 'handedOver' | 'writing',
+  isFolderInBin: boolean,
+  discarded: DiscardedBatches,
+): string[] {
+  let paragraphs = [
+    isFolderInBin
+      ? tied`Složka článku už je v koši sdíleného disku Publikace.`
+      : tied`Složka článku „${name}“ se přesune do koše sdíleného disku Publikace i s dokumentem a vším ostatním, co v ní je.`,
+    state === 'handedOver'
+      ? tied`Článek zmizí z vydání, z Evidence i ze stránky Korektura. V dalších ranních přehledech už nebude. Odkaz na nahrání děl k článku přestane platit.`
+      : tied`Článek zmizí z vydání a z Evidence. Odkaz na nahrání děl k článku přestane platit.`,
+    tied`Obnovením složky z koše se článek do aplikace nevrátí.`,
+    tied`Odebráním článku se žádný e-mail nepošle.`,
+  ]
+  if (discarded.count === 0) return paragraphs
+  let batches = discarded.count === 1 ? 'k zahozené dávce' : 'k zahozeným dávkám'
+  let reply = tied`Pokud ještě přijde odpověď na žádost ${batches}, najdete ji jen ve schránce publikace@.`
+  let waiting = tied`Odebráním článku zmizí z části Ke kontrole i odpověď, která tam už čeká.`
+  return [...paragraphs, discarded.isReplyWaiting ? `${reply} ${waiting}` : reply]
+}
+
+export const ARTICLE_REMOVED_TOAST = tied`Složka článku je v koši sdíleného disku Publikace.`
+
+/* The races of `12z`: the step wrote nothing and says what holds now. */
+export const REMOVE_ARTICLE_ARTWORKS_TOAST = tied`K článku mezitím přišla obrazová díla. Článek zůstal ve vydání.`
+
+/** A proofreader took it meanwhile: the sentence and line of the handover's race (`12l`). */
+export function removeArticleTakenToast(step: ArticleStep): ToastText {
+  return {
+    detail: tied`od ${formatDayMonth(step.at)} · ${whoOf(step)}`,
+    message: tied`Korektura už probíhá. Článek zůstal ve vydání.`,
+  }
+}
+
+export function removeArticleClosedToast(issueName: string): string {
+  return tied`Vydání ${issueName} je uzavřené. Článek zůstal ve vydání.`
+}
+
+const ARTICLE_UNCHANGED = tied`Článek zůstal, jak byl.`
+
+export const REMOVE_ARTICLE_UNAVAILABLE: FixCallout = {
+  text: [tied`${ARTICLE_UNCHANGED} Disk teď neodpovídá.`],
+  title: [tied`Zkuste článek odebrat za chvíli znovu.`],
+}
+
+export const REMOVE_ARTICLE_DISCONNECTED: FixCallout = {
+  text: [tied`Pak zkuste článek odebrat znovu.`],
+  title: [DISCONNECTED_STEP],
+}
+
+/** The article folder is not in `Články` of its issue, so it stays where it is (`12z`). */
+export function movedArticleFolderCallout(folderHref: string, issueName: string): FixCallout {
+  return {
+    text: [tied`Teď je jinde, a tak článek zůstal, jak byl.`],
+    title: [
+      'Vraťte ',
+      { href: folderHref, text: 'složku článku' },
+      tied` do složky Články vydání ${issueName}.`,
+    ],
+  }
+}
+
+const ARTICLE_FOREIGN_WORDS: ForeignFilesWords = {
+  kept: ARTICLE_UNCHANGED,
+  step: tied`Přesuňte ze složky článku soubory, které do ní nedala aplikace.`,
+}
+
+/** Files a person put into the article's folders (`12z`), named as `12w` names them. */
+export function articleForeignFilesCallout(files: readonly ForeignFile[]): FixCallout {
+  return foreignFilesCallout(files, ARTICLE_FOREIGN_WORDS)
 }

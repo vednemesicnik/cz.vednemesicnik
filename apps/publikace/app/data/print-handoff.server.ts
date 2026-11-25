@@ -302,7 +302,7 @@ async function recordArticle(
 ): Promise<void> {
   let found = await db.exec(
     sql`SELECT 1 FROM articles WHERE id = ${article.articleId} AND issue_id = ${issueId}
-          AND created_at IS NOT NULL`,
+          AND created_at IS NOT NULL AND removed_at IS NULL`,
   )
   if ((found.rows ?? []).length === 0) return
   let { copy } = article
@@ -381,6 +381,7 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
         let articles = await db.exec(
           sql`SELECT id, issue_id, name, doc_id, folder_id FROM articles
               WHERE issue_id IN (SELECT value FROM json_each(${ids})) AND created_at IS NOT NULL
+                AND removed_at IS NULL
               ORDER BY started_at, id`,
         )
         let texts = await approvedTexts(db, ids)

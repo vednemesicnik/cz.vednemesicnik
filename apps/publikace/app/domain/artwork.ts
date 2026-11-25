@@ -429,15 +429,50 @@ export function discardDialogTitle(count: number): string {
 }
 
 /**
- * A group's text is the copywriter's (`kef75qeh`): _z této dávky_, so that it does not read as the
- * whole group going to the bin, and the group named as staying even when it is left empty. Its last
- * sentence is the article's, which stays true once a group's link can be renewed.
+ * The dialog's paragraphs: what goes to the bin, then, once the request went (`isRequestSent`),
+ * that it cannot be taken back and where a reply to it lands (`786r4cpa`), then what the provider
+ * gets. A group's text is the copywriter's (`kef75qeh`): _z této dávky_, so that it does not read
+ * as the whole group going to the bin, and the group named as staying even when it is left empty.
+ * Its last sentence is the article's, which stays true once a group's link can be renewed.
  */
-export function discardDialogText(holder: HolderName, email: string): string {
-  if (holder.kind === 'group') {
-    return tied`Díla z této dávky i PDF jejich licencí se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (${email}) žádné upozornění neodejde. Skupina „${holder.name}“ zůstane i prázdná. Dokud odkaz platí, lze jím díla nahrát znovu.`
-  }
-  return tied`Díla k článku „${holder.name}“ i jejich PDF se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (${email}) žádné upozornění neodejde. Dokud odkaz platí, lze jím díla nahrát znovu.`
+export function discardDialogText(
+  holder: HolderName,
+  email: string,
+  isRequestSent: boolean,
+): string[] {
+  let bin =
+    holder.kind === 'group'
+      ? tied`Díla z této dávky i PDF jejich licencí se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat.`
+      : tied`Díla k článku „${holder.name}“ i jejich PDF se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat.`
+  let provider =
+    holder.kind === 'group'
+      ? tied`Poskytovateli (${email}) žádné upozornění neodejde. Skupina „${holder.name}“ zůstane i prázdná. Dokud odkaz platí, lze jím díla nahrát znovu.`
+      : tied`Poskytovateli (${email}) žádné upozornění neodejde. Dokud odkaz platí, lze jím díla nahrát znovu.`
+  if (!isRequestSent) return [bin, provider]
+  return [
+    bin,
+    tied`Žádost o souhlas už odešla a vzít ji zpět nejde. Pokud na ni přijde odpověď, najdete ji v části Ke kontrole, i kdyby zněla „Souhlasím“.`,
+    provider,
+  ]
+}
+
+/**
+ * Whether _Zahodit dávku_ stands in the batch's „⋯“ (`12u`, `12o`): a request that never went
+ * (_Chyba_ of the mail), one at the provider or one whose reply waits in _Ke kontrole_. Not an
+ * approved batch, whose licence holds, nor one whose consent _Je to souhlas_ recorded, even while
+ * it still stands at the provider, nor a _Chyba_ of the archive, which is a consent on its way.
+ */
+export function canDiscardBatch(batch: BatchStatus): boolean {
+  if (batch.approvedAt !== null || batch.consentVerifiedAt !== null) return false
+  if (isMailError(batch)) return true
+  let state = batchState(batch)
+  return state === 'provider' || state === 'review'
+}
+
+/** The request reached the provider, so the dialog says it cannot be taken back (`12o`). */
+export function isRequestSent(batch: BatchStatus): boolean {
+  let state = batchState(batch)
+  return state === 'provider' || state === 'review'
 }
 
 export const DISCARD_CONFIRM_LABEL = 'Zahodit dávku'
@@ -461,6 +496,10 @@ export const RESEND_REFUSED_TOAST = tied`Zahoďte dávku. Pošta žádost trvale
 export const RESEND_DAILY_CAP_TOAST = tied`Zkuste žádost poslat později. Dnes už z formulářů Publikace odešlo příliš mnoho e-mailů.`
 
 /** `2 díla i jejich PDF jsou v koši…`; one and five or more by agreement, not yet through copy. */
+/* `12o`: the discard met an approval or a recorded consent meanwhile, and wrote nothing. */
+export const DISCARD_APPROVED_TOAST = tied`Dávka je mezitím schválená. Zahodit ji už nejde.`
+export const DISCARD_VERIFIED_TOAST = tied`Souhlas s dávkou je mezitím zaznamenaný. Zahodit ji už nejde.`
+
 export function discardedToast(count: number): string {
   if (count === 1) return tied`1 dílo i jeho PDF je v koši sdíleného disku Publikace.`
   if (count >= 2 && count <= 4) {

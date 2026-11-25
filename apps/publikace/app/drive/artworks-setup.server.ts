@@ -2,14 +2,22 @@ import { createHash, randomUUID } from 'node:crypto'
 
 import type { ArticleStore } from '../data/articles.server.ts'
 import type { GroupStore } from '../data/artwork-groups.server.ts'
-import type { ArtworkRow, ArtworkStore, BatchRow, HolderRef } from '../data/artworks.server.ts'
+import {
+  type ArtworkRow,
+  type ArtworkStore,
+  type BatchRow,
+  type HolderRef,
+  HolderRemovedError,
+} from '../data/artworks.server.ts'
 import type { IssueStore } from '../data/issues.server.ts'
 import type { LinkStore } from '../data/links.server.ts'
 import type { PublicMailLog } from '../data/public-mail.server.ts'
 import {
+  canDiscardBatch,
   type HolderKind,
   type HolderName,
   imageTypeOf,
+  isRequestSent,
   RECIPIENTS_PER_DAY_PER_LINK,
   SUBMITS_PER_HOUR,
   UNSENT_UPLOAD_HOURS,
@@ -80,6 +88,8 @@ export type ArtworksHolder = HolderName & {
   kind: HolderKind
   licencesFolderId: string | null
   note: string
+  /** When the article was removed (`12z`); a group is never removed yet, so `null`. */
+  removedAt: Temporal.Instant | null
 }
 
 /** A committed holder with its folder and the two inside it, which a link may upload to. */
@@ -103,7 +113,7 @@ export async function holderOf(
 ): Promise<ArtworksHolder | null> {
   if (ref.groupId !== null) {
     let group = await setup.groups.findById(ref.groupId)
-    return group === null ? null : { ...group, kind: 'group' }
+    return group === null ? null : { ...group, kind: 'group', removedAt: null }
   }
   if (ref.articleId === null) return null
   let article = await setup.articles.findById(ref.articleId)
@@ -185,8 +195,8 @@ export async function resolveArtworksLink(
   let link = await setup.links.findByKey(key)
   if (link === null || link.kind !== 'artworks') return null
   let issue = await setup.issues.findById(link.issueId)
-  if (linkState(link, issue) !== 'valid' || issue === null) return null
   let holder = await holderOf(setup, link)
+  if (linkState(link, issue, holder) !== 'valid' || issue === null) return null
   if (
     holder === null ||
     holder.createdAt === null ||
@@ -480,6 +490,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
       })
       return { batch, kind: 'started' as const }
     } catch (error) {
+      if (error instanceof HolderRemovedError) return { kind: 'link-gone' as const }
       logDriveFailure(
         'an artwork batch was not started',
         error instanceof Error ? error.message : 'unknown error',
@@ -783,7 +794,7 @@ export async function resendBatch(setup: ArtworksSetup, batchId: number): Promis
 
 export type DiscardOutcome =
   | { batch: BatchRow; kind: 'discarded' }
-  | { kind: 'already-sent' | 'closed' | 'gone' }
+  | { kind: 'already-sent' | 'approved' | 'closed' | 'gone' | 'verified' }
   | { kind: 'disconnected' | 'not-connected' }
   | { kind: 'folder-gone'; missing: ArticleFolderKind[] }
   /** `isPartlyBinned`: Drive refused to take back a file this attempt had put in the bin. */
@@ -796,9 +807,18 @@ export type DiscardOutcome =
  *
  * All or nothing (`11c`): where every file is gets asked before any goes, and when Drive stops
  * midway, what this attempt put in the bin comes back out and nothing is marked. A file Drive
- * would not take back stays in the bin, logged; the next discard counts it as done.
+ * would not take back stays in the bin, logged; the next discard counts it as done. An approval
+ * or a consent recorded with _Je to souhlas_ can come at any moment while the request is out, and
+ * the mark is what decides: one that came first takes the files back out too (`12o`).
+ *
+ * `wasSent` is what the dialog showed. One opened before the request went did not say that it
+ * cannot be taken back, so a request sent meanwhile sends the editor back to the table.
  */
-export async function discardBatch(setup: ArtworksSetup, batchId: number): Promise<DiscardOutcome> {
+export async function discardBatch(
+  setup: ArtworksSetup,
+  batchId: number,
+  wasSent: boolean,
+): Promise<DiscardOutcome> {
   let batch = await setup.artworks.findBatch(batchId)
   if (batch === null) return { kind: 'gone' }
   return lock(`artworks:${batch.formKey}`, async () => {
@@ -809,8 +829,10 @@ export async function discardBatch(setup: ArtworksSetup, batchId: number): Promi
     let holder = await holderOf(setup, current)
     if (issue === null || holder?.folderId == null) return { kind: 'gone' }
     if (issue.closedAt !== null) return { kind: 'closed' }
-    /* Only a batch in _Chyba_: one whose request reached the provider meanwhile is theirs now. */
-    if (current.mailSentAt !== null) return { kind: 'already-sent' }
+    if (current.approvedAt !== null) return { kind: 'approved' }
+    if (current.consentVerifiedAt !== null) return { kind: 'verified' }
+    if (!wasSent && isRequestSent(current)) return { kind: 'already-sent' }
+    if (!canDiscardBatch(current)) return { kind: 'gone' }
 
     let token = await setup.token()
     if (!token.ok) {
@@ -839,18 +861,25 @@ export async function discardBatch(setup: ArtworksSetup, batchId: number): Promi
       if (place.kind === 'here' && place.parents.includes(file.folderId)) ours.push(file.id)
     }
     let tried: string[] = []
+    let restore = async () => {
+      let isPartlyBinned = false
+      for (let back of tried) {
+        if (!(await files.restore(back))) isPartlyBinned = true
+      }
+      return isPartlyBinned
+    }
     for (let id of ours) {
       /* Tried before it is trashed: a reply Drive lost leaves the file in the bin as well, and
          taking back one that never went changes nothing. */
       tried.push(id)
       if (await files.trash(id)) continue
-      let isPartlyBinned = false
-      for (let back of tried) {
-        if (!(await files.restore(back))) isPartlyBinned = true
-      }
-      return { isPartlyBinned, kind: 'unavailable' }
+      return { isPartlyBinned: await restore(), kind: 'unavailable' }
     }
-    await setup.artworks.discardBatch(current.id, setup.now())
-    return { batch: current, kind: 'discarded' }
+    let marked = await setup.artworks.discardBatch(current.id, setup.now())
+    if (marked === 'discarded') return { batch: current, kind: 'discarded' }
+    if (await restore()) {
+      logDriveFailure('a discarded batch was not restored', 'Drive refused to take a file back')
+    }
+    return { kind: marked }
   })
 }

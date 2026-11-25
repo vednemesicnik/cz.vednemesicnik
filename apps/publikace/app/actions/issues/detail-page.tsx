@@ -81,7 +81,11 @@ import { Layout } from '../../ui/layout/component.tsx'
 import { NewTabMark } from '../../ui/public/new-tab-mark/component.tsx'
 import type { PanelPerson } from '../../ui/panel/component.tsx'
 import { ActionMenu, type ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
-import { EDIT_AUTHORS_LABEL, RENAME_ARTICLE_LABEL } from '../../domain/article-fixes.ts'
+import {
+  EDIT_AUTHORS_LABEL,
+  REMOVE_ARTICLE_LABEL,
+  RENAME_ARTICLE_LABEL,
+} from '../../domain/article-fixes.ts'
 import { ArticleFixDialog, type ArticleFixView } from './article-fix-dialogs.tsx'
 import { CopyButton } from '../../ui/public/copy-button/component.tsx'
 import { ShareButton } from '../../ui/public/share-button/component.tsx'
@@ -246,10 +250,10 @@ export type ArticleRowView = {
   /** _Zrušit předání_ in `⋯`, only on _Dopsáno_ of an issue still open (`12k`). */
   cancelHandoverAction: string | null
   /**
-   * _Přejmenovat článek…_ and _Upravit autory…_ at the end of `⋯`, each only where it can go
-   * through (`12u`).
+   * _Přejmenovat článek…_, _Upravit autory…_ and _Odebrat článek…_ at the end of `⋯`, each only
+   * where it can go through (`12u`).
    */
-  fixes: { editAuthorsHref: string | null; renameHref: string | null }
+  fixes: { editAuthorsHref: string | null; removeHref: string | null; renameHref: string | null }
   /** _Zrušit finální verzi_ in `⋯`, on _K souhlasu_ while no run has taken a clause (`12q`). */
   cancelFinalAction: string | null
   documentUrl: string
@@ -329,6 +333,8 @@ export type DiscardView = {
   count: number
   email: string
   holder: HolderName
+  /** The request reached the provider: the dialog says it cannot be taken back (`12o`). */
+  isRequestSent: boolean
   /** The confirm met a folder gone meanwhile: nothing went to the bin (`12o`). */
   folderGone?: { heading: readonly HeadingPart[]; urls: MissingFoldersView['urls'] }
   /**
@@ -916,7 +922,7 @@ function ArticleRow(
       )
     }
     /* The fixes last, after a line of their own, where `12u` puts them in every menu. */
-    let { editAuthorsHref, renameHref } = article.fixes
+    let { editAuthorsHref, removeHref, renameHref } = article.fixes
     let fixes: ActionMenuItem[] = [
       ...(renameHref === null
         ? []
@@ -924,6 +930,9 @@ function ArticleRow(
       ...(editAuthorsHref === null
         ? []
         : [{ href: editAuthorsHref, isSameTab: true, label: EDIT_AUTHORS_LABEL }]),
+      ...(removeHref === null
+        ? []
+        : [{ href: removeHref, isSameTab: true, label: REMOVE_ARTICLE_LABEL }]),
     ]
     if (fixes.length > 0) items.push({ isSeparator: true }, ...fixes)
     return (
@@ -1618,10 +1627,15 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
               </Callout>
             </div>
           )}
-          <p class="vdm-dialog__text">{discardDialogText(discarding.holder, discarding.email)}</p>
+          {discardDialogText(discarding.holder, discarding.email, discarding.isRequestSent).map(
+            (paragraph) => (
+              <p class="vdm-dialog__text">{paragraph}</p>
+            ),
+          )}
         </div>
         <form action={discarding.action} class="vdm-dialog__actions" method="post">
           <CsrfField />
+          <input name="wasSent" type="hidden" value={String(discarding.isRequestSent)} />
           {/* Focus starts on the way back, so Enter on arrival never discards anything. */}
           <a autofocus class="vdm-btn vdm-btn--ghost vdm-btn--sm" href={discarding.cancelHref}>
             {DISCARD_CANCEL_LABEL}

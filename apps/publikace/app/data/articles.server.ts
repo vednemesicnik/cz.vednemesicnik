@@ -77,6 +77,8 @@ export type ArticleRow = {
    * when, and when it was cancelled, which is what the restore must find unchanged.
    */
   cancelledProofreading: (Proofreading & { cancelledAt: Temporal.Instant }) | null
+  /** When an editor-in-chief removed it (`12z`); a removed article is in no list or count. */
+  removedAt: Temporal.Instant | null
   startedAt: Temporal.Instant
 }
 
@@ -285,6 +287,19 @@ export type HandoverOutcome =
   | { kind: 'proofreading'; step: ArticleStep }
   | { kind: 'gone' }
 
+/**
+ * What _Odebrat článek_ came to (`12z`). Only `removed` wrote anything. Otherwise the article now
+ * stands as the outcome says: taken by a proofreader (with who and since when), holding a batch
+ * that is not discarded, in a closed issue, past _Dopsáno_, or removed or never created.
+ */
+export type RemoveArticleOutcome =
+  | { kind: 'removed' }
+  | { kind: 'already-removed' }
+  | { kind: 'proofreading'; step: ArticleStep }
+  | { kind: 'has-artworks' }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'too-late' }
+
 /** What a confirmed digest told, each with the time it carried, so a change since survives. */
 export type { DigestCandidate }
 
@@ -359,6 +374,15 @@ export type ArticleStore = {
   listForQueue(): Promise<QueueArticle[]>
   /** The articles in _Dopsáno_ of open issues: the number beside _Korektura_ in the panel. */
   queueCount(): Promise<number>
+  /**
+   * _Odebrat článek_ (`12z`): marks the article removed while it is in _Píše se_ or _Dopsáno_ of an
+   * open issue and has no batch that is not discarded, an upload still being sent counted. Its
+   * unsent uploads take the same time, so the sweep of unsent uploads leaves them to the folder's
+   * bin. Drive is binned after, so a refusal there is the caller's to undo with `unmarkRemoved`.
+   */
+  markRemoved(id: number, at: Temporal.Instant): Promise<RemoveArticleOutcome>
+  /** Takes back a removal that Drive did not finish, its unsent uploads with it. */
+  unmarkRemoved(id: number, at: Temporal.Instant): Promise<void>
   /** Records what a digest the Mailer confirmed told, where nothing changed since. */
   markAnnounced(digest: AnnouncedDigest, at: Temporal.Instant): Promise<void>
   /** The issue's created articles, newest first. */
@@ -649,6 +673,7 @@ function toRow(
     name: String(row['name']),
     proofreading: toProofreading(row, false),
     cancelledProofreading: toCancelledProofreading(row),
+    removedAt: parseStamp(row['removed_at']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
   }
 }
@@ -683,7 +708,7 @@ function toCancelledHandover(row: Row): ArticleRow['cancelledHandover'] {
 
 /** Why a step on the handover wrote nothing, read from the article as it now is. */
 function refusalOf(row: ArticleRow | null): HandoverOutcome {
-  if (row === null || row.createdAt === null) return { kind: 'gone' }
+  if (row === null || row.createdAt === null || row.removedAt !== null) return { kind: 'gone' }
   if (row.proofreading !== null) return { kind: 'proofreading', step: row.proofreading }
   if (row.handover !== null) return { kind: 'handed-over', step: row.handover }
   return { kind: 'not-handed-over' }
@@ -692,7 +717,7 @@ function refusalOf(row: ArticleRow | null): HandoverOutcome {
 /** Where a step on the take left the article, read from it as it now is, its issue included. */
 async function proofreadingRefusalOf(db: Database, id: number): Promise<ProofreadingOutcome> {
   let row = await byId(db, id)
-  if (row === null || row.createdAt === null) return { kind: 'gone' }
+  if (row === null || row.createdAt === null || row.removedAt !== null) return { kind: 'gone' }
   let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
   let issueRow = issue.rows?.[0]
   if (issueRow === undefined) return { kind: 'gone' }
@@ -708,7 +733,7 @@ async function withIssue(
   id: number,
 ): Promise<{ issueName: string; isClosed: boolean; row: ArticleRow } | null> {
   let row = await byId(db, id)
-  if (row === null || row.createdAt === null) return null
+  if (row === null || row.createdAt === null || row.removedAt !== null) return null
   let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
   let issueRow = issue.rows?.[0]
   if (issueRow === undefined) return null
@@ -1057,7 +1082,7 @@ export function createArticleStore(database: Database): ArticleStore {
         sql`SELECT issue_id, count(*) AS total,
               sum(id IN (SELECT f.article_id FROM final_versions f
                          WHERE ${STANDING_F} AND ${APPROVED_F})) AS approved
-            FROM articles WHERE created_at IS NOT NULL GROUP BY issue_id`,
+            FROM articles WHERE created_at IS NOT NULL AND removed_at IS NULL GROUP BY issue_id`,
       )
       let counts = new Map<number, ApprovedCount>()
       for (let row of result.rows ?? []) {
@@ -1089,6 +1114,7 @@ export function createArticleStore(database: Database): ArticleStore {
             FROM articles
             JOIN issues ON issues.id = articles.issue_id
             WHERE articles.id = ${id} AND articles.created_at IS NOT NULL
+              AND articles.removed_at IS NULL
               AND articles.handed_over_at IS NOT NULL`,
       )
       let row = result.rows?.[0]
@@ -1109,7 +1135,7 @@ export function createArticleStore(database: Database): ArticleStore {
           sql`UPDATE articles
               SET handed_over_at = ${stamp(at)}, handed_over_by_email = ${by.email},
                   handed_over_by_name = ${by.name}, handover_cancelled_at = NULL
-              WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
+              WHERE id = ${id} AND created_at IS NOT NULL AND removed_at IS NULL AND ${NO_TAKE}
                 AND (handed_over_at IS NULL OR handover_cancelled_at IS NOT NULL)`,
         )
         if ((result.affectedRows ?? 0) > 0) return { at, kind: 'done' }
@@ -1123,12 +1149,14 @@ export function createArticleStore(database: Database): ArticleStore {
           handedOverAt === undefined
             ? await db.exec(
                 sql`UPDATE articles SET handover_cancelled_at = ${stamp(at)}
-                    WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
+                    WHERE id = ${id} AND created_at IS NOT NULL
+                      AND removed_at IS NULL AND ${NO_TAKE}
                       AND handed_over_at IS NOT NULL AND handover_cancelled_at IS NULL`,
               )
             : await db.exec(
                 sql`UPDATE articles SET handover_cancelled_at = ${stamp(at)}
-                    WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
+                    WHERE id = ${id} AND created_at IS NOT NULL
+                      AND removed_at IS NULL AND ${NO_TAKE}
                       AND handed_over_at = ${stamp(handedOverAt)}
                       AND handover_cancelled_at IS NULL`,
               )
@@ -1141,7 +1169,7 @@ export function createArticleStore(database: Database): ArticleStore {
       return database.transaction(async (db) => {
         let result = await db.exec(
           sql`UPDATE articles SET handover_cancelled_at = NULL
-              WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE}
+              WHERE id = ${id} AND created_at IS NOT NULL AND removed_at IS NULL AND ${NO_TAKE}
                 AND handover_cancelled_at = ${stamp(cancelledAt)}`,
         )
         let row = await byId(db, id)
@@ -1157,6 +1185,7 @@ export function createArticleStore(database: Database): ArticleStore {
         sql`SELECT articles.*, issues.name AS issue_name FROM articles
             JOIN issues ON issues.id = articles.issue_id
             WHERE issues.closed_at IS NULL AND articles.created_at IS NOT NULL
+              AND articles.removed_at IS NULL
               AND (articles.proofread_at IS NULL OR articles.proofreading_cancelled_at IS NOT NULL)
               AND articles.handed_over_at IS NOT NULL
               AND (articles.handover_cancelled_at IS NULL
@@ -1181,6 +1210,7 @@ export function createArticleStore(database: Database): ArticleStore {
         sql`SELECT articles.*, issues.name AS issue_name FROM articles
             JOIN issues ON issues.id = articles.issue_id
             WHERE issues.closed_at IS NULL AND articles.created_at IS NOT NULL
+              AND articles.removed_at IS NULL
             ORDER BY articles.created_at, articles.id`,
       )
       let rows = result.rows ?? []
@@ -1202,7 +1232,7 @@ export function createArticleStore(database: Database): ArticleStore {
     async queueCount() {
       let result = await database.exec(
         sql`SELECT count(*) AS count FROM articles
-            WHERE created_at IS NOT NULL AND ${NO_TAKE} AND ${IN_OPEN_ISSUE}
+            WHERE created_at IS NOT NULL AND removed_at IS NULL AND ${NO_TAKE} AND ${IN_OPEN_ISSUE}
               AND handed_over_at IS NOT NULL AND handover_cancelled_at IS NULL`,
       )
       return Number(result.rows?.[0]?.['count'] ?? 0)
@@ -1237,7 +1267,8 @@ export function createArticleStore(database: Database): ArticleStore {
             FROM article_clauses c
             JOIN final_versions f ON f.id = c.final_version_id
             JOIN articles a ON a.id = c.article_id
-            WHERE a.issue_id = ${issueId} AND a.created_at IS NOT NULL AND f.cancelled_at IS NULL`,
+            WHERE a.issue_id = ${issueId} AND a.created_at IS NOT NULL
+              AND a.removed_at IS NULL AND f.cancelled_at IS NULL`,
       )
       return (result.rows ?? []).map((row) => ({
         ...toClauseStatus(row),
@@ -1261,7 +1292,8 @@ export function createArticleStore(database: Database): ArticleStore {
 
     async listCreated(issueId) {
       let result = await database.exec(
-        sql`SELECT * FROM articles WHERE issue_id = ${issueId} AND created_at IS NOT NULL
+        sql`SELECT * FROM articles
+            WHERE issue_id = ${issueId} AND created_at IS NOT NULL AND removed_at IS NULL
             ORDER BY created_at DESC, id DESC`,
       )
       return (await withAuthors(database, result.rows ?? [])).map(asArticle)
@@ -1307,7 +1339,8 @@ export function createArticleStore(database: Database): ArticleStore {
           sql`UPDATE articles
               SET proofread_at = ${stamp(at)}, proofread_by_email = ${by.email},
                   proofread_by_name = ${by.name}, proofreading_cancelled_at = NULL
-              WHERE id = ${id} AND created_at IS NOT NULL AND ${NO_TAKE} AND ${IN_OPEN_ISSUE}
+              WHERE id = ${id} AND created_at IS NOT NULL
+                AND removed_at IS NULL AND ${NO_TAKE} AND ${IN_OPEN_ISSUE}
                 ${standingHandover}`,
         )
         if ((result.affectedRows ?? 0) > 0) {
@@ -1328,7 +1361,8 @@ export function createArticleStore(database: Database): ArticleStore {
           options.owner === undefined ? sql`` : sql`AND proofread_by_email = ${options.owner}`
         let result = await db.exec(
           sql`UPDATE articles SET proofreading_cancelled_at = ${stamp(at)}
-              WHERE id = ${id} AND created_at IS NOT NULL AND proofread_at IS NOT NULL
+              WHERE id = ${id} AND created_at IS NOT NULL
+                AND removed_at IS NULL AND proofread_at IS NOT NULL
                 AND proofreading_cancelled_at IS NULL AND ${IN_OPEN_ISSUE} AND ${NO_FINAL_VERSION}
                 ${take} ${owner}`,
         )
@@ -1346,7 +1380,7 @@ export function createArticleStore(database: Database): ArticleStore {
           options.owner === undefined ? sql`` : sql`AND proofread_by_email = ${options.owner}`
         let result = await db.exec(
           sql`UPDATE articles SET proofreading_cancelled_at = NULL
-              WHERE id = ${id} AND created_at IS NOT NULL
+              WHERE id = ${id} AND created_at IS NOT NULL AND removed_at IS NULL
                 AND proofreading_cancelled_at = ${stamp(cancelledAt)} AND ${IN_OPEN_ISSUE} ${owner}`,
         )
         let row = await byId(db, id)
@@ -1567,6 +1601,7 @@ export function createArticleStore(database: Database): ArticleStore {
               JOIN articles a ON a.id = c.article_id
               JOIN issues i ON i.id = a.issue_id
               WHERE c.state = 'pending' AND ${STANDING_F} AND i.closed_at IS NULL
+                AND a.removed_at IS NULL
                 AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
               ORDER BY f.marked_at, c.id
               LIMIT ${CLAIM_LIMIT}`,
@@ -1675,7 +1710,7 @@ export function createArticleStore(database: Database): ArticleStore {
               JOIN articles a ON a.id = c.article_id
               JOIN issues i ON i.id = a.issue_id
               WHERE c.state != 'pending' AND c.approved_at IS NULL AND ${STANDING_F}
-                AND i.closed_at IS NULL
+                AND i.closed_at IS NULL AND a.removed_at IS NULL
                 AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
               ORDER BY coalesce(c.checked_at, ''), c.id
               LIMIT ${REPLY_CLAIM_LIMIT}`,
@@ -1833,7 +1868,7 @@ export function createArticleStore(database: Database): ArticleStore {
                         WHERE ${STANDING_F} AND ${WAITS_ON_EDITORS})
                   OR id IN (SELECT f.article_id FROM final_versions f
                             WHERE ${STANDING_F} AND ${REVISED_AFTER_APPROVAL_F})) AS is_tagged
-              FROM articles WHERE created_at IS NOT NULL
+              FROM articles WHERE created_at IS NOT NULL AND removed_at IS NULL
             )
             GROUP BY issue_id
             HAVING count > 0`,
@@ -1883,6 +1918,48 @@ export function createArticleStore(database: Database): ArticleStore {
           sql`UPDATE articles SET meta_file_id = ${fileId} WHERE id = ${id} AND meta_file_id IS NULL`,
         )
       }
+    },
+
+    markRemoved(id, at) {
+      return database.transaction(async (db) => {
+        let row = await byId(db, id)
+        if (row === null || row.createdAt === null) return { kind: 'already-removed' }
+        if (row.removedAt !== null) return { kind: 'already-removed' }
+        let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
+        let issueRow = issue.rows?.[0]
+        if (issueRow === undefined) return { kind: 'already-removed' }
+        if (issueRow['closed_at'] !== null) {
+          return { issueName: String(issueRow['name']), kind: 'closed' }
+        }
+        if (row.proofreading !== null) return { kind: 'proofreading', step: row.proofreading }
+        if (row.finalVersion !== null) return { kind: 'too-late' }
+        /* A batch the provider's page started and has not committed yet counts: its licences are
+           on their way into the folder that would go to the bin. One left to the cleanup does not. */
+        let batches = await db.exec(
+          sql`SELECT count(*) AS count FROM artwork_batches
+              WHERE article_id = ${id} AND discarded_at IS NULL
+                AND (created_at IS NOT NULL OR cleanup_at IS NULL)`,
+        )
+        if (Number(batches.rows?.[0]?.['count'] ?? 0) > 0) return { kind: 'has-artworks' }
+        await db.exec(sql`UPDATE articles SET removed_at = ${stamp(at)} WHERE id = ${id}`)
+        await db.exec(
+          sql`UPDATE artworks SET removed_at = ${stamp(at)}
+              WHERE article_id = ${id} AND batch_id IS NULL AND removed_at IS NULL`,
+        )
+        return { kind: 'removed' }
+      })
+    },
+
+    unmarkRemoved(id, at) {
+      return database.transaction(async (db) => {
+        await db.exec(
+          sql`UPDATE artworks SET removed_at = NULL
+              WHERE article_id = ${id} AND batch_id IS NULL AND removed_at = ${stamp(at)}`,
+        )
+        await db.exec(
+          sql`UPDATE articles SET removed_at = NULL WHERE id = ${id} AND removed_at = ${stamp(at)}`,
+        )
+      })
     },
 
     rename(input) {

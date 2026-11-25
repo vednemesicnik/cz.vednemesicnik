@@ -152,7 +152,8 @@ export function createLinkStore(database: Database): LinkStore {
     async usage(linkId) {
       let result = await database.exec(
         sql`SELECT count(*) AS count, max(created_at) AS last_at
-            FROM articles WHERE link_id = ${linkId} AND created_at IS NOT NULL`,
+            FROM articles
+            WHERE link_id = ${linkId} AND created_at IS NOT NULL AND removed_at IS NULL`,
       )
       let row = result.rows?.[0] ?? {}
       return { count: Number(row['count'] ?? 0), lastAt: parseStamp(row['last_at']) }

@@ -5,6 +5,8 @@ import { getCsrfToken } from 'remix/middleware/csrf'
 
 import {
   EDIT_AUTHORS_TITLE,
+  REMOVE_ARTICLE_CONFIRM_LABEL,
+  REMOVE_ARTICLE_TITLE,
   RENAME_ARTICLE_CONFIRM_LABEL,
   RENAME_ARTICLE_PENDING_LABEL,
   RENAME_ARTICLE_TEXT,
@@ -36,9 +38,18 @@ export type RenameArticleView = {
 /** _Upravit autory_ (`12y`) over the detail: the island's props but the token, read here. */
 export type EditAuthorsView = Omit<AuthorsFormProps, 'csrfToken'>
 
+/** _Odebrat článek_ (`12z`) over the detail: its paragraphs, and a Callout once Drive refused. */
+export type RemoveArticleView = {
+  action: string
+  callout?: FixCallout
+  cancelHref: string
+  paragraphs: readonly string[]
+}
+
 export type ArticleFixView =
   | ({ kind: 'rename' } & RenameArticleView)
   | ({ kind: 'authors' } & EditAuthorsView)
+  | ({ kind: 'remove' } & RemoveArticleView)
 
 /* The form holds the body and the actions, so the field goes with the button while the dialog's
    own gaps still fall between them. */
@@ -48,6 +59,7 @@ export function ArticleFixDialog(handle: Handle<{ view: ArticleFixView }>) {
   return () => {
     let { view } = handle.props
     if (view.kind === 'rename') return <RenameArticleDialog view={view} />
+    if (view.kind === 'remove') return <RemoveArticleDialog view={view} />
     let { kind: _kind, ...form } = view
     return (
       <Dialog maxWidth="540px">
@@ -86,6 +98,37 @@ function RenameArticleDialog(handle: Handle<{ view: RenameArticleView }>) {
               pendingLabel={RENAME_ARTICLE_PENDING_LABEL}
             />
           </div>
+        </form>
+      </Dialog>
+    )
+  }
+}
+
+/**
+ * `12z`: red only in the button, as `12w`; the article is not named in the title, since the row
+ * stands under the dialog and the first paragraph names it. Focus starts on the way back, so Enter
+ * on arrival never removes anything.
+ */
+function RemoveArticleDialog(handle: Handle<{ view: RemoveArticleView }>) {
+  return () => {
+    let { action, callout, cancelHref, paragraphs } = handle.props.view
+    return (
+      <Dialog maxWidth="480px">
+        <DialogTitle>{REMOVE_ARTICLE_TITLE}</DialogTitle>
+        <div class="vdm-dialog__body">
+          {callout === undefined ? null : <FixCalloutView callout={callout} />}
+          {paragraphs.map((paragraph) => (
+            <p class="vdm-dialog__text">{paragraph}</p>
+          ))}
+        </div>
+        <form action={action} class="vdm-dialog__actions" method="post">
+          <CsrfField />
+          <a autofocus class="vdm-btn vdm-btn--ghost vdm-btn--sm" href={cancelHref}>
+            Zrušit
+          </a>
+          <button class="vdm-btn vdm-btn--danger vdm-btn--sm" type="submit">
+            {REMOVE_ARTICLE_CONFIRM_LABEL}
+          </button>
         </form>
       </Dialog>
     )

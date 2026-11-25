@@ -257,6 +257,61 @@ describe('the artworks in the issue detail', () => {
       assert.ok(!after.includes('chybí potvrzení o odeslání žádosti'))
     }))
 
+  it('discards a batch at the provider, saying first that the request cannot be taken back', () =>
+    withArtworksLink(async (context) => {
+      let id = await uploadedId(context)
+      await context.visitor.send(`/l/${context.key}/artworks`, sendForm([id]))
+      let path = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      let detail = await (await context.editor.get('/issues/VDM_2026_5')).text()
+      assert.ok(detail.includes(path))
+      assert.ok(!detail.includes('/issues/VDM_2026_5/artworks/batches/1/resend'))
+
+      let dialog = textOf(await (await context.editor.get(path)).text())
+      assert.ok(
+        dialog.includes(
+          'Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Žádost o souhlas už odešla a vzít ji zpět nejde. Pokud na ni přijde odpověď, najdete ji v části Ke kontrole, i kdyby zněla „Souhlasím“. Poskytovateli',
+        ),
+      )
+      let mailBefore = context.app.mail.length
+      assert.equal((await context.editor.post(path, { wasSent: 'true' }, path)).status, 303)
+      let after = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
+      assert.ok(after.includes('1 dílo i jeho PDF je v koši sdíleného disku Publikace.'))
+      assert.equal(context.app.mail.length, mailBefore)
+    }))
+
+  it('says nothing of a sent request in Chyba, and offers no discard once a consent stands', () =>
+    withArtworksLink(async (context) => {
+      let id = await uploadedId(context)
+      await context.visitor.send(`/l/${context.key}/artworks`, sendForm([id]))
+      let path = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      await context.app.database.exec({
+        text: 'UPDATE artwork_batches SET mail_sent_at = NULL',
+        values: [],
+      } as never)
+      let dialog = textOf(await (await context.editor.get(path)).text())
+      assert.ok(!dialog.includes('Žádost o souhlas už odešla'))
+
+      /* _Je to souhlas_ recorded while the batch still stands at the provider (`12u`). */
+      await context.app.database.exec({
+        text: `UPDATE artwork_batches SET mail_sent_at = '2026-11-20T09:00:00.000Z',
+          consent_verified_at = '2026-11-20T09:00:00.000Z',
+          consent_verified_by_email = 'marie@vednemesicnik.test'`,
+        values: [],
+      } as never)
+      let detail = await (await context.editor.get('/issues/VDM_2026_5')).text()
+      assert.ok(!detail.includes(path))
+      assert.equal((await context.editor.get(path)).status, 303)
+
+      /* A failed archive is a consent on its way to `Licence`, not a request to take back. */
+      await context.app.database.exec({
+        text: `UPDATE artwork_batches SET consent_verified_at = NULL,
+          consent_verified_by_email = NULL, archive_failed_at = '2026-11-20T09:00:00.000Z',
+          archive_error = 'quota'`,
+        values: [],
+      } as never)
+      assert.ok(!(await (await context.editor.get('/issues/VDM_2026_5')).text()).includes(path))
+    }))
+
   it('resends the request of a batch in Chyba from the row', () =>
     withArtworksLink(async (context) => {
       let id = await uploadedId(context)

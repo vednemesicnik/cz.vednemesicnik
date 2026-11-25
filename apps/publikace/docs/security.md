@@ -86,7 +86,8 @@ and it is why a link is never put where it would be read by more people than it 
 ### Links
 
 - **A key is 12 characters of 62, drawn without bias from a CSPRNG**, about 71 bits. It carries no
-  Drive ID and no name. An unknown key and a revoked one draw the same page.
+  Drive ID and no name. An unknown key and a revoked one draw the same page, as does a key of a
+  removed issue, article or group.
 - **A link does one thing in one place.** An article link creates articles in its issue. An
   artworks link uploads to its one article or its one artwork group. Only an editor-in-chief
   creates a group, in the issue detail, so no link creates one. A form key of another link is

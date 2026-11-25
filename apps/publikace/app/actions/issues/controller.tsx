@@ -10,9 +10,19 @@ import {
   AUTHORS_SAVED_TOAST,
   AUTHORS_UNAVAILABLE,
   authorsSavedToast,
+  ARTICLE_REMOVED_TOAST,
+  articleForeignFilesCallout,
   canEditAuthors,
+  canRemoveArticle,
   canRenameArticle,
   CLAUSES_CORRECTED_TOAST,
+  movedArticleFolderCallout,
+  REMOVE_ARTICLE_ARTWORKS_TOAST,
+  REMOVE_ARTICLE_DISCONNECTED,
+  REMOVE_ARTICLE_UNAVAILABLE,
+  removeArticleClosedToast,
+  removeArticleDialogText,
+  removeArticleTakenToast,
   editAuthorsLead,
   editAuthorsNote,
   FINAL_VERSION_CANCELLED_TOAST,
@@ -38,6 +48,7 @@ import {
   type ArticleFixSetup,
   editAuthors,
   type EditAuthorsFixOutcome,
+  removeArticle,
   renameArticle,
 } from '../../drive/article-fixes.server.ts'
 import {
@@ -116,11 +127,15 @@ import {
   type ArtworkState,
   batchState,
   batchStateDetail,
+  canDiscardBatch,
   compareArtworks,
+  DISCARD_APPROVED_TOAST,
+  DISCARD_VERIFIED_TOAST,
   discardedToast,
   driveFileUrl,
   isAwaitingConsent,
   isMailError,
+  isRequestSent,
   NO_ARTWORKS,
   RESEND_DAILY_CAP_TOAST,
   RESEND_DISCONNECTED_TOAST,
@@ -669,6 +684,9 @@ async function linkAndArticles(
         editAuthorsHref: canEditAuthors(article, isOpen)
           ? withFilter(routes.issues.askEditAuthors.href(ids), filter)
           : null,
+        removeHref: canRemoveArticle(state, totalOf(articleCounts), isOpen)
+          ? withFilter(routes.issues.askRemoveArticle.href(ids), filter)
+          : null,
         renameHref: canRenameArticle(article, isOpen)
           ? withFilter(routes.issues.askRenameArticle.href(ids), filter)
           : null,
@@ -762,18 +780,20 @@ async function artworksOf(
     let missing = missingOf.get(`${batch.holder.kind}:${batch.holder.id}`) ?? []
     let query = filter === 'all' ? '' : `?artworks=${filter}`
     let ids = { id: String(batch.id), name: issue.name }
-    let actions =
-      isMailError(batch) && isOpen
-        ? {
-            count: batch.artworks.length,
-            discardHref: canDiscard(missing)
-              ? `${routes.issues.askDiscardBatch.href(ids)}${query}`
-              : null,
-            resendAction: canResend(missing)
-              ? `${routes.issues.resendBatch.href(ids)}${query}`
-              : null,
-          }
+    /* _Poslat žádost znovu_ only while the request never went; _Zahodit dávku_ also once it did,
+       until the batch is approved or its consent recorded (`12u`). */
+    let discardHref =
+      isOpen && canDiscardBatch(batch) && canDiscard(missing)
+        ? `${routes.issues.askDiscardBatch.href(ids)}${query}`
         : null
+    let resendAction =
+      isOpen && isMailError(batch) && canResend(missing)
+        ? `${routes.issues.resendBatch.href(ids)}${query}`
+        : null
+    let actions =
+      discardHref === null && resendAction === null
+        ? null
+        : { count: batch.artworks.length, discardHref, resendAction }
     return batch.artworks.map((artwork) => ({
       author: artwork.author ?? 'neuveden',
       batchActions: actions,
@@ -980,6 +1000,32 @@ function renameViewOf(
   }
 }
 
+/** The dialog of `12z` over the detail, with what it says about the discarded batches. */
+async function removeViewOf(
+  context: PageContext,
+  issue: Issue,
+  article: Article,
+  callout?: FixCallout,
+): Promise<ArticleFixView> {
+  let filter = filterOf(context)
+  let ids = { id: String(article.id), name: issue.name }
+  let discarded = await articlesOf(context).artworks.artworks.discardedOf(article.id)
+  let state: 'handedOver' | 'writing' =
+    articleState(article) === 'handedOver' ? 'handedOver' : 'writing'
+  return {
+    action: withFilter(routes.issues.removeArticle.href(ids), filter),
+    cancelHref: detailHref(issue, filter),
+    kind: 'remove',
+    paragraphs: removeArticleDialogText(
+      article.name,
+      state,
+      article.missing.article !== null,
+      discarded,
+    ),
+    ...(callout === undefined ? {} : { callout }),
+  }
+}
+
 /** Cards to type into, numbered in their order: before the final version, every author's. */
 function editableCards(authors: readonly { email: string; name: string }[]): AuthorCardView[] {
   return authors.map((author, index) => ({
@@ -1090,6 +1136,7 @@ function discardingView(context: PageContext, issue: Issue, batch: ListedBatch):
     count: batch.artworks.length,
     email: batch.providerEmail,
     holder: { kind: batch.holder.kind, name: batch.holder.name },
+    isRequestSent: isRequestSent(batch),
   }
 }
 
@@ -1907,6 +1954,81 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         }
       },
 
+      /* `12z`: the dialog, while the article can be removed. */
+      async askRemoveArticle(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let article = issue === null ? null : await articleOf(context, issue, context.params.id)
+        if (issue === null || article === null) return notFound()
+        let counts = await articlesOf(context).artworks.artworks.countsByArticle(issue.id)
+        let liveBatches = totalOf(counts.get(article.id) ?? NO_ARTWORKS)
+        if (!canRemoveArticle(articleState(article), liveBatches, issue.closedAt === null)) {
+          return redirect(detailHref(issue, filterOf(context)), 303)
+        }
+        return renderDetail(context, issue, { fixing: await removeViewOf(context, issue, article) })
+      },
+
+      /*
+       * `12z`: the row and the folder together, or neither. A refusal on Drive the editor can
+       * mend stays in the dialog; what changed meanwhile reloads the detail with the reason.
+       */
+      async removeArticle(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let filter = filterOf(context)
+        let back = () => redirect(detailHref(issue, filter), 303)
+        let article = await articleOf(context, issue, context.params.id)
+        if (article === null) {
+          /* Removed in another tab: the row's absence says it, so no toast. */
+          let row = await articlesOf(context).articles.findById(Number(context.params.id))
+          return row?.issueId === issue.id && row.removedAt !== null ? back() : notFound()
+        }
+        let dialog = async (callout: FixCallout) =>
+          renderDetail(context, issue, {
+            fixing: await removeViewOf(context, issue, article, callout),
+            status: IN_THE_WAY,
+          })
+
+        let outcome = await removeArticle(articleFixSetupOf(context), { id: article.id })
+        switch (outcome.kind) {
+          case 'removed':
+            flashToast(context, ARTICLE_REMOVED_TOAST)
+            flashIssueFixed(context, { focus: 'articles', issueId: issue.id })
+            return back()
+          case 'already-removed':
+          case 'gone':
+          case 'too-late':
+            return back()
+          case 'proofreading': {
+            let toast = removeArticleTakenToast(outcome.step)
+            flashToast(context, toast.message, 'neutral', undefined, toast.detail)
+            return back()
+          }
+          case 'has-artworks':
+            flashToast(context, REMOVE_ARTICLE_ARTWORKS_TOAST)
+            return back()
+          case 'closed':
+            flashToast(context, removeArticleClosedToast(outcome.issueName))
+            return back()
+          case 'moved':
+            return dialog(movedArticleFolderCallout(folderUrl(outcome.folderId), issue.name))
+          case 'foreign':
+            return dialog(
+              articleForeignFilesCallout(
+                outcome.files.map((file) => ({
+                  folderName: file.folderName,
+                  href: file.isFolder ? folderUrl(file.id) : driveFileUrl(file.id),
+                  name: file.name,
+                })),
+              ),
+            )
+          case 'not-connected':
+          case 'disconnected':
+            return dialog(REMOVE_ARTICLE_DISCONNECTED)
+          case 'unavailable':
+            return dialog(REMOVE_ARTICLE_UNAVAILABLE)
+        }
+      },
+
       /* `12y`: the cards of the authors as they are, before the final version or after it. */
       async askEditAuthors(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
@@ -2220,8 +2342,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         let batch = issue === null ? null : await batchOf(context, issue, context.params.id)
         if (issue === null || batch === null || issue.closedAt !== null) return notFound()
-        /* Only a batch in _Chyba_ is discarded; a sent one goes back to the table. */
-        if (batch.mailSentAt !== null) return redirect(detailHref(issue, filterOf(context)), 303)
+        /* An approved batch, or one whose consent was recorded, goes back to the table. */
+        if (!canDiscardBatch(batch)) return redirect(detailHref(issue, filterOf(context)), 303)
         return renderDetail(context, issue, { discarding: discardingView(context, issue, batch) })
       },
 
@@ -2230,10 +2352,18 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let batch = issue === null ? null : await batchOf(context, issue, context.params.id)
         if (issue === null || batch === null) return notFound()
         let back = () => redirect(detailHref(issue, filterOf(context)), 303)
-        let outcome = await discardBatch(articlesOf(context).artworks, batch.id)
+        let wasSent = formText(context, 'wasSent') === 'true'
+        let outcome = await discardBatch(articlesOf(context).artworks, batch.id, wasSent)
         switch (outcome.kind) {
           case 'discarded':
             flashToast(context, discardedToast(outcome.batch.artworks.length))
+            return back()
+          /* The job or another editor got there first: nothing went to the bin (`12o`). */
+          case 'approved':
+            flashToast(context, DISCARD_APPROVED_TOAST)
+            return back()
+          case 'verified':
+            flashToast(context, DISCARD_VERIFIED_TOAST)
             return back()
           /* A folder went missing while the dialog was open: it stays open and says which. */
           case 'folder-gone': {
@@ -2265,8 +2395,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
               discarding: { ...discardingView(context, issue, batch), refusal: 'disconnected' },
               status: IN_THE_WAY,
             })
-          /* The provider's page sent the request while the dialog was open: nothing to discard,
-             the table now says _U poskytovatele_. */
+          /* The provider's page sent the request while a dialog that did not say so was open:
+             nothing to discard, the table now says _U poskytovatele_. */
           case 'already-sent':
             return back()
           case 'closed':

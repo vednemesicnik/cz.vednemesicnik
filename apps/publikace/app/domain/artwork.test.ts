@@ -9,12 +9,15 @@ import {
   batchStateDetail,
   type BatchStatus,
   batchTag,
+  canDiscardBatch,
   compareArtworks,
   consentSubject,
+  discardDialogText,
   discardDialogTitle,
   imageTypeOf,
   isAwaitingConsent,
   isMailError,
+  isRequestSent,
   NO_ARTWORKS,
   replyExcerpt,
   resendLabel,
@@ -336,5 +339,48 @@ describe('approvedArtworksLine (11a)', () => {
     assert.equal(line(1, 5), '1 schválené')
     assert.equal(line(3, 5), '3 schválená')
     assert.equal(line(7, 13), '7 schválených')
+  })
+})
+
+describe('Zahodit dávku (12o, 12u)', () => {
+  let at = Temporal.Instant.from('2026-11-18T12:45:00Z')
+  let sent: BatchStatus = {
+    answeredAt: null,
+    approvedAt: null,
+    archiveFailedAt: null,
+    consentVerifiedAt: null,
+    discardedAt: null,
+    isExactConsent: false,
+    mailRefusedAt: null,
+    mailSentAt: at,
+    replyMessageId: null,
+    replyText: null,
+  }
+
+  it('stands on a request never confirmed, one at the provider and one in Ke kontrole', () => {
+    assert.equal(canDiscardBatch({ ...sent, mailSentAt: null }), true)
+    assert.equal(canDiscardBatch({ ...sent, mailRefusedAt: at, mailSentAt: null }), true)
+    assert.equal(canDiscardBatch(sent), true)
+    assert.equal(canDiscardBatch({ ...sent, replyMessageId: 'm-1', replyText: 'Napíšu.' }), true)
+  })
+
+  it('does not stand on an approved batch, a recorded consent or a failed archive', () => {
+    assert.equal(canDiscardBatch({ ...sent, approvedAt: at }), false)
+    assert.equal(canDiscardBatch({ ...sent, consentVerifiedAt: at }), false)
+    assert.equal(canDiscardBatch({ ...sent, archiveFailedAt: at, replyMessageId: 'm-1' }), false)
+  })
+
+  it('says the request cannot be taken back only once it went', () => {
+    assert.equal(isRequestSent(sent), true)
+    assert.equal(isRequestSent({ ...sent, mailSentAt: null }), false)
+    let holder = { kind: 'article' as const, name: 'Školní jídelna po roce' }
+    let before = discardDialogText(holder, 'tereza.vlkova@external.test', false)
+    let after = discardDialogText(holder, 'tereza.vlkova@external.test', true)
+    assert.equal(before.length, 2)
+    assert.deepEqual([after[0], after[2]], before)
+    assert.equal(
+      after[1]?.replaceAll('\u00a0', ' '),
+      'Žádost o souhlas už odešla a vzít ji zpět nejde. Pokud na ni přijde odpověď, najdete ji v části Ke kontrole, i kdyby zněla „Souhlasím“.',
+    )
   })
 })

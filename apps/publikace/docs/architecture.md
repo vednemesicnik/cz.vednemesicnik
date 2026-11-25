@@ -133,6 +133,7 @@ erDiagram
     instant created_at "null until committed"
     instant handed_over_at
     instant proofread_at "and the proofreader"
+    instant removed_at "12z"
   }
   ARTICLE_AUTHOR {
     int article_id PK
@@ -315,15 +316,15 @@ Evidence, binned with its folder, is no longer written.
 
 ## Lifecycles
 
-| Thing          | Derived from                                                                                          | In `app/domain/`   |
-| -------------- | ----------------------------------------------------------------------------------------------------- | ------------------ |
-| Issue          | `completed_at` (Nedokončené without it), `closed_at`, `removed_at`                                    | `issue.ts`         |
-| Article        | handover and take columns; with a final version standing, the counts of its clauses; `doc_revised_at` | `article.ts`       |
-| Clause         | stored `pending/sent/failed`, then the reply, `consent_verified_at`, `approved_at`, archive failure   | `approvals.ts`     |
-| Artwork batch  | `mail_sent_at` or `mail_failed_at`, the reply, `consent_verified_at`, `approved_at`, `discarded_at`   | `artwork.ts`       |
-| Artwork upload | no `batch_id` while unsent; `removed_at`; binned 24 h after upload if still unsent                    | `artwork.ts`       |
-| Artwork group  | `created_at`; no state of its own, never deleted                                                      | `artwork-group.ts` |
-| Link           | valid; gone once revoked, or its issue closed or removed; a key never issued draws the same page      | `link.ts`          |
+| Thing          | Derived from                                                                                                             | In `app/domain/`   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| Issue          | `completed_at` (Nedokončené without it), `closed_at`, `removed_at`                                                       | `issue.ts`         |
+| Article        | handover and take columns; with a final version standing, the counts of its clauses; `doc_revised_at`; `removed_at`      | `article.ts`       |
+| Clause         | stored `pending/sent/failed`, then the reply, `consent_verified_at`, `approved_at`, archive failure                      | `approvals.ts`     |
+| Artwork batch  | `mail_sent_at` or `mail_failed_at`, the reply, `consent_verified_at`, `approved_at`, `discarded_at`                      | `artwork.ts`       |
+| Artwork upload | no `batch_id` while unsent; `removed_at`; binned 24 h after upload if still unsent                                       | `artwork.ts`       |
+| Artwork group  | `created_at`; no state of its own, never deleted                                                                         | `artwork-group.ts` |
+| Link           | valid; gone once revoked, or its issue closed or removed, or its article removed; a key never issued draws the same page | `link.ts`          |
 
 ## Background work
 
@@ -344,7 +345,8 @@ Evidence, binned with its folder, is no longer written.
 | `SCRIPT__Publication__Print_Handoff`       | 6 h              | `print-handoff/claim`, `…/report`   | no (#119)                   |
 | `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00 | `proofreading-digest/run`           | no (#86)                    |
 
-Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A report must
+Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A claim leaves out
+a removed article, its clauses and its batches, discarded ones included (`12z`). A report must
 carry the run's key. Every e-mail carries a Mailer idempotency key, so a run that dies between
 sending and reporting does not send twice. `/settings/jobs` shows each job's last run (`14d`).
 Once two runs in a row fail or overdue, a banner appears over every editor's screen; for the

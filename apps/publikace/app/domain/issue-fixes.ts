@@ -268,11 +268,22 @@ export function movedFolderCallout(folderHref: string): FixCallout {
 /** A file the app did not make, and the folder it is in. */
 export type ForeignFile = NamedTarget & { folderName: string }
 
+/** The words around the files: the step, and what stayed, the issue's unless an article's. */
+export type ForeignFilesWords = { kept: string; step: string }
+
+const ISSUE_FOREIGN_WORDS: ForeignFilesWords = {
+  kept: ISSUE_UNCHANGED,
+  step: tied`Přesuňte ze složky vydání soubory, které do ní nedala aplikace.`,
+}
+
 /**
- * Files a person put into the issue's folders (`12w`): a sentence for each folder, at most three
- * files named across all of them, then _a ‹n› dalších_.
+ * Files a person put into the issue's folders (`12w`) or an article's (`12z`): a sentence for each
+ * folder, at most three files named across all of them, then _a ‹n› dalších_.
  */
-export function foreignFilesCallout(files: readonly ForeignFile[]): FixCallout {
+export function foreignFilesCallout(
+  files: readonly ForeignFile[],
+  words: ForeignFilesWords = ISSUE_FOREIGN_WORDS,
+): FixCallout {
   let shown = files.slice(0, 3)
   let folders = [...new Set(shown.map((file) => file.folderName))]
   let text: CalloutPart[] = []
@@ -290,9 +301,6 @@ export function foreignFilesCallout(files: readonly ForeignFile[]): FixCallout {
     if (isLast && files.length > 3) text.push(tied` a ${files.length - 3} dalších`)
     text.push('.')
   })
-  text.push(` ${ISSUE_UNCHANGED}`)
-  return {
-    text,
-    title: [tied`Přesuňte ze složky vydání soubory, které do ní nedala aplikace.`],
-  }
+  text.push(` ${words.kept}`)
+  return { text, title: [words.step] }
 }

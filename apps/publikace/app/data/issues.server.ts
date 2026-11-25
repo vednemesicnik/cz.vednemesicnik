@@ -47,8 +47,8 @@ export type IssueStore = {
   list(): Promise<Issue[]>
   /**
    * _Odebrat vydání_ (`12w`): sets `removed_at` while the issue holds no article and no group. A
-   * failed attempt waiting for the bin is neither; one still running is, so a link's send that
-   * started before the removal stops it.
+   * failed attempt waiting for the bin is neither, nor is a removed article; one still running
+   * is, so a link's send that started before the removal stops it.
    */
   markRemoved(id: number, at: Temporal.Instant): Promise<MarkRemovedOutcome>
   /** Marks the folders found missing; a mark already there keeps its first time (`12j`). */
@@ -251,7 +251,8 @@ export function createIssueStore(database: Database): IssueStore {
           sql`UPDATE issues SET removed_at = ${stamp(at)}
               WHERE id = ${id} AND removed_at IS NULL
                 AND NOT EXISTS (SELECT 1 FROM articles
-                                WHERE issue_id = ${id} AND cleanup_at IS NULL)
+                                WHERE issue_id = ${id} AND cleanup_at IS NULL
+                                  AND removed_at IS NULL)
                 AND NOT EXISTS (SELECT 1 FROM artwork_groups
                                 WHERE issue_id = ${id} AND cleanup_at IS NULL)`,
         )
@@ -259,7 +260,8 @@ export function createIssueStore(database: Database): IssueStore {
         let issue = await db.exec(sql`SELECT removed_at FROM issues WHERE id = ${id}`)
         if (issue.rows?.[0]?.['removed_at'] != null) return 'already-removed'
         let article = await db.exec(
-          sql`SELECT 1 FROM articles WHERE issue_id = ${id} AND cleanup_at IS NULL LIMIT 1`,
+          sql`SELECT 1 FROM articles
+              WHERE issue_id = ${id} AND cleanup_at IS NULL AND removed_at IS NULL LIMIT 1`,
         )
         return (article.rows ?? []).length > 0 ? 'has-article' : 'has-group'
       })
@@ -290,7 +292,7 @@ export function createIssueStore(database: Database): IssueStore {
         /* What the rename wrote on Drive, and nothing else, so an article that came meanwhile
            never keeps the old name in its `_meta.json`. */
         let articles = await db.exec(sql`SELECT id, created_at FROM articles
-            WHERE issue_id = ${id} AND cleanup_at IS NULL`)
+            WHERE issue_id = ${id} AND cleanup_at IS NULL AND removed_at IS NULL`)
         let groups = await db.exec(sql`SELECT id, created_at FROM artwork_groups
             WHERE issue_id = ${id} AND cleanup_at IS NULL`)
         if (!isExactly(articles.rows ?? [], expected.articles)) return 'changed'

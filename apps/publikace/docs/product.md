@@ -134,6 +134,9 @@ final version, and after it only an author who has not agreed, whose request is 
 under a new key (`12y`). A new or corrected address gets the welcome e-mail; an address that
 disappears gets nothing, and whoever already had the link can still edit the Doc.
 
+An article in _Píše se_ or _Dopsáno_ with no batch that is not discarded can be removed (`12z`). A
+removed article has no tag and appears nowhere.
+
 ### Artwork batch
 
 One upload is one batch: one _Odeslat díla_, one consent request and one tag shared by all its
@@ -154,10 +157,14 @@ stateDiagram-v2
   review --> approved: Je to souhlas, then the job archives
   provider --> approved: „Souhlasím“, archived by the job
   error --> [*]: Zahodit dávku, 12o
+  provider --> [*]: Zahodit dávku, 12o
+  review --> [*]: Zahodit dávku, 12o
 ```
 
 A discarded batch keeps its row, and every reply to it, even „Souhlasím“, goes to _Ke kontrole_
-(`13g`).
+(`13g`), unless its article or group is removed. The app then reads no reply to it, and the
+conversation stays in `publikace@` (`12z`). A batch approved, or with a consent recorded by _Je
+to souhlas_, cannot be discarded.
 
 ### Artwork group
 

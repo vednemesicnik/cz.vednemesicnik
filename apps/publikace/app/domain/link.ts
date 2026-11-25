@@ -38,9 +38,9 @@ export type Link = {
 export type LinkUsage = { count: number; lastAt: Temporal.Instant | null }
 
 /**
- * Whether a link answers. `gone` is a replaced link or one of a closed or removed issue (410);
- * `unknown` a key nobody issued (404). Both draw the same page, so nobody learns that a key exists
- * (`02e`).
+ * Whether a link answers. `gone` is a replaced link, one of a closed or removed issue, or a link of
+ * artworks whose article was removed (410, `02f`); `unknown` a key nobody issued (404). Both draw
+ * the same page, so nobody learns that a key exists (`02e`).
  */
 export type LinkState = 'gone' | 'unknown' | 'valid'
 
@@ -51,9 +51,16 @@ export function linkState(
     completedAt: Temporal.Instant | null
     removedAt?: Temporal.Instant | null
   } | null,
+  /** The article or group a link of artworks uploads to, when it is one. */
+  holder?: { removedAt: Temporal.Instant | null } | null,
 ): LinkState {
   if (link === null || issue === null || issue.completedAt === null) return 'unknown'
-  if (link.revokedAt !== null || issue.closedAt !== null || (issue.removedAt ?? null) !== null) {
+  if (
+    link.revokedAt !== null ||
+    issue.closedAt !== null ||
+    (issue.removedAt ?? null) !== null ||
+    (holder?.removedAt ?? null) !== null
+  ) {
     return 'gone'
   }
   return 'valid'

@@ -67,7 +67,7 @@ describe('a group’s words', () => {
     assert.equal(plain(sentLead(3, group)), 'Ve skupině „Obálka“ jsou nově nahraná 3 díla.')
     assert.equal(plain(sentLead(5, group)), 'Ve skupině „Obálka“ je nově nahraných 5 děl.')
     assert.equal(
-      plain(discardDialogText(group, 'klara.simkova@external.test')),
+      plain(discardDialogText(group, 'klara.simkova@external.test', false).join(' ')),
       'Díla z této dávky i PDF jejich licencí se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (klara.simkova@external.test) žádné upozornění neodejde. Skupina „Obálka“ zůstane i prázdná. Dokud odkaz platí, lze jím díla nahrát znovu.',
     )
   })

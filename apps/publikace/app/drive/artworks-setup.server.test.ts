@@ -483,7 +483,7 @@ describe('the editors’ actions on a batch', () => {
         let ids = [await uploaded(harness)]
         await submitArtworks(harness.setup, batch(harness.linkKey, ids))
         let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
-        let outcome = await discardBatch(harness.setup, stored?.id ?? 0)
+        let outcome = await discardBatch(harness.setup, stored?.id ?? 0, false)
         assert.equal(outcome.kind, 'discarded')
         assert.equal(live(harness.drive).length, 0)
         assert.notEqual(
@@ -503,8 +503,74 @@ describe('the editors’ actions on a batch', () => {
       let ids = [await uploaded(harness)]
       await submitArtworks(harness.setup, batch(harness.linkKey, ids))
       let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
-      assert.equal((await discardBatch(harness.setup, stored?.id ?? 0)).kind, 'already-sent')
+      assert.equal((await discardBatch(harness.setup, stored?.id ?? 0, false)).kind, 'already-sent')
       assert.ok(live(harness.drive).length > 0)
+    }))
+
+  it('discards a batch whose request went, from a dialog that said so (12o)', () =>
+    withHarness(async (harness) => {
+      let ids = [await uploaded(harness)]
+      await submitArtworks(harness.setup, batch(harness.linkKey, ids))
+      let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
+      assert.ok(stored?.mailSentAt != null)
+      let mailBefore = harness.mail.length
+      assert.equal((await discardBatch(harness.setup, stored.id, true)).kind, 'discarded')
+      assert.equal(live(harness.drive).length, 0)
+      assert.equal(harness.mail.length, mailBefore)
+    }))
+
+  it('refuses an approved batch and one whose consent was recorded, and bins nothing', () =>
+    withHarness(async (harness) => {
+      let ids = [await uploaded(harness)]
+      await submitArtworks(harness.setup, batch(harness.linkKey, ids))
+      let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
+      assert.ok(stored !== null)
+      let before = live(harness.drive).length
+      await harness.app.database.exec(
+        sql`UPDATE artwork_batches SET consent_verified_at = ${START.toString()},
+              consent_verified_by_email = 'marie@vednemesicnik.test'
+            WHERE id = ${stored.id}`,
+      )
+      assert.equal((await discardBatch(harness.setup, stored.id, true)).kind, 'verified')
+      await harness.app.database.exec(
+        sql`UPDATE artwork_batches SET approved_at = ${START.toString()}, consent_file_id = 'c-1'
+            WHERE id = ${stored.id}`,
+      )
+      assert.equal((await discardBatch(harness.setup, stored.id, true)).kind, 'approved')
+      assert.equal(live(harness.drive).length, before)
+    }))
+
+  it('takes the files back out of the bin when an approval or a consent came meanwhile', () =>
+    withHarness(async (harness) => {
+      let ids = [await uploaded(harness)]
+      await submitArtworks(harness.setup, batch(harness.linkKey, ids))
+      let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
+      assert.ok(stored !== null)
+      let before = live(harness.drive).length
+      let store = harness.setup.artworks
+      /* What reaches the batch between the check and the mark: the job, then _Je to souhlas_. */
+      let meanwhile = sql`UPDATE artwork_batches SET approved_at = ${START.toString()},
+          consent_file_id = 'c-1' WHERE id = ${stored.id}`
+      harness.setup.artworks = {
+        ...store,
+        async discardBatch(id, at) {
+          await harness.app.database.exec(meanwhile)
+          return store.discardBatch(id, at)
+        },
+      }
+      assert.equal((await discardBatch(harness.setup, stored.id, true)).kind, 'approved')
+      assert.equal(live(harness.drive).length, before)
+      assert.equal((await store.findBatch(stored.id))?.discardedAt, null)
+
+      await harness.app.database.exec(
+        sql`UPDATE artwork_batches SET approved_at = NULL, consent_file_id = NULL
+            WHERE id = ${stored.id}`,
+      )
+      meanwhile = sql`UPDATE artwork_batches SET consent_verified_at = ${START.toString()},
+              consent_verified_by_email = 'marie@vednemesicnik.test'
+          WHERE id = ${stored.id}`
+      assert.equal((await discardBatch(harness.setup, stored.id, true)).kind, 'verified')
+      assert.equal(live(harness.drive).length, before)
     }))
 
   it('tags a batch’s licences apart from any form key, so a cleanup reaches only them', () =>
@@ -639,7 +705,7 @@ describe('a missing folder of the article (12j)', () => {
         let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
         harness.drive.trash(harness.artworksFolderId)
 
-        let outcome = await discardBatch(harness.setup, stored?.id ?? 0)
+        let outcome = await discardBatch(harness.setup, stored?.id ?? 0, false)
         assert.deepEqual(outcome, { kind: 'folder-gone', missing: ['artworks'] })
         let artwork = stored?.artworks[0]
         let kept = harness.drive
@@ -657,7 +723,7 @@ describe('a missing folder of the article (12j)', () => {
         let stored = await twoArtworkBatch(harness)
         harness.drive.failTrashOf(stored.artworks[1]?.driveFileId ?? '')
 
-        assert.deepEqual(await discardBatch(harness.setup, stored.id), {
+        assert.deepEqual(await discardBatch(harness.setup, stored.id, false), {
           isPartlyBinned: false,
           kind: 'unavailable',
         })
@@ -665,7 +731,7 @@ describe('a missing folder of the article (12j)', () => {
         assert.equal((await harness.setup.artworks.findBatch(stored.id))?.discardedAt, null)
 
         harness.drive.heal()
-        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'discarded')
+        assert.equal((await discardBatch(harness.setup, stored.id, false)).kind, 'discarded')
         assert.equal(binned(harness.drive, stored).length, 4)
       },
       { isMailFailing: true },
@@ -679,7 +745,7 @@ describe('a missing folder of the article (12j)', () => {
         harness.drive.trash(pdf)
         harness.drive.failTrashOf(stored.artworks[1]?.driveFileId ?? '')
 
-        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'unavailable')
+        assert.equal((await discardBatch(harness.setup, stored.id, false)).kind, 'unavailable')
         assert.deepEqual(binned(harness.drive, stored), [pdf])
       },
       { isMailFailing: true },
@@ -691,7 +757,7 @@ describe('a missing folder of the article (12j)', () => {
         let stored = await twoArtworkBatch(harness)
         harness.drive.loseReplyOnStep('trash')
 
-        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'unavailable')
+        assert.equal((await discardBatch(harness.setup, stored.id, false)).kind, 'unavailable')
         assert.deepEqual(binned(harness.drive, stored), [])
       },
       { isMailFailing: true },
@@ -704,7 +770,7 @@ describe('a missing folder of the article (12j)', () => {
         harness.drive.failTrashOf(stored.artworks[1]?.driveFileId ?? '')
         harness.drive.failRestore()
 
-        assert.deepEqual(await discardBatch(harness.setup, stored.id), {
+        assert.deepEqual(await discardBatch(harness.setup, stored.id, false), {
           isPartlyBinned: true,
           kind: 'unavailable',
         })
@@ -712,7 +778,7 @@ describe('a missing folder of the article (12j)', () => {
         assert.equal((await harness.setup.artworks.findBatch(stored.id))?.discardedAt, null)
 
         harness.drive.heal()
-        assert.equal((await discardBatch(harness.setup, stored.id)).kind, 'discarded')
+        assert.equal((await discardBatch(harness.setup, stored.id, false)).kind, 'discarded')
         assert.equal(binned(harness.drive, stored).length, 4)
       },
       { isMailFailing: true },

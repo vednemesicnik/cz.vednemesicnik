@@ -131,6 +131,17 @@ export type NewUpload = HolderRef & {
   uploadKey: string
 }
 
+/**
+ * A batch whose article was removed while its page was sending (`12z`). Thrown rather than
+ * answered, as every other failure of `startBatch` is, because only the page's send meets it.
+ */
+export class HolderRemovedError extends Error {
+  constructor() {
+    super('The article of the batch was removed.')
+    this.name = 'HolderRemovedError'
+  }
+}
+
 export type NewBatch = HolderRef & {
   artworks: readonly { author: string; id: number; source: string }[]
   at: Temporal.Instant
@@ -160,8 +171,20 @@ export type ArtworkStore = {
    * unsent and without the fields the attempt gave them.
    */
   discardAttempt(id: number): Promise<void>
-  /** The editors discarded a committed batch: it stays as a record, its files are in the bin. */
-  discardBatch(id: number, at: Temporal.Instant): Promise<void>
+  /**
+   * The editors discarded a committed batch: it stays as a record, its files are in the bin. Only
+   * while it is neither approved nor has a consent recorded by _Je to souhlas_; otherwise it
+   * answers which of them came meanwhile and writes nothing (`12o`).
+   */
+  discardBatch(
+    id: number,
+    at: Temporal.Instant,
+  ): Promise<'approved' | 'discarded' | 'gone' | 'verified'>
+  /**
+   * How many of the article's batches are discarded, and whether a reply to one of them waits in
+   * _Ke kontrole_: what the dialog of `12z` says before the app stops reading those replies.
+   */
+  discardedOf(articleId: number): Promise<{ count: number; isReplyWaiting: boolean }>
   /** Uploads never sent and never removed, uploaded before a moment (`21d`, 24 hours). */
   expiredUploads(before: Temporal.Instant): Promise<ArtworkRow[]>
   findBatch(id: number): Promise<BatchRow | null>
@@ -197,6 +220,7 @@ export type ArtworkStore = {
    * The batch for this form key, created unless it exists; `isNew` says which. A new one takes the
    * artworks named, with their order, author and source, in the same transaction.
    */
+  /** Throws `HolderRemovedError` when the batch's article was removed after its link was read. */
   startBatch(batch: NewBatch): Promise<{ batch: BatchRow; isNew: boolean }>
   /** The page's uploads not yet in a batch and not removed, in upload order. */
   unsentByForm(formKey: string): Promise<ArtworkRow[]>
@@ -207,6 +231,7 @@ export type ArtworkStore = {
    * Takes the batches a run of the reply check asks about, under the run's key: committed, not
    * yet approved, in an issue that is not closed, _Chyba_ and discarded ones included (`01b`),
    * and not claimed by another run in the last `CLAIM_MINUTES`. The least recently checked first.
+   * A batch of a removed article is never asked about: its reply stays in `publikace@` (`12z`).
    */
   claimForReplyCheck(runKey: string, at: Temporal.Instant): Promise<ClaimedBatch[]>
   /** What one report does to a batch the run claimed; `unknown` for one it did not. */
@@ -371,7 +396,8 @@ function queueCandidates(including: number | null) {
     LEFT JOIN articles ar ON ar.id = b.article_id
     LEFT JOIN artwork_groups g ON g.id = b.group_id
     JOIN issues i ON i.id = b.issue_id
-    WHERE b.created_at IS NOT NULL AND (b.id = ${including} OR (
+    WHERE b.created_at IS NOT NULL AND (ar.id IS NULL OR ar.removed_at IS NULL)
+      AND (b.id = ${including} OR (
       b.approved_at IS NULL AND i.closed_at IS NULL
       AND (b.reply_message_id IS NOT NULL OR b.archive_failed_at IS NOT NULL)))
     ORDER BY coalesce(b.reply_received_at, b.archive_failed_at), b.id`
@@ -520,15 +546,27 @@ export function createArtworkStore(database: Database): ArtworkStore {
 
     discardBatch(id, at) {
       return database.transaction(async (db) => {
-        await db.exec(
-          sql`UPDATE artwork_batches SET discarded_at = ${stamp(at)}
-              WHERE id = ${id} AND created_at IS NOT NULL AND discarded_at IS NULL`,
-        )
+        let batch = await batchById(db, id)
+        if (batch === null || batch.createdAt === null || batch.discardedAt !== null) return 'gone'
+        if (batch.approvedAt !== null) return 'approved'
+        if (batch.consentVerifiedAt !== null) return 'verified'
+        await db.exec(sql`UPDATE artwork_batches SET discarded_at = ${stamp(at)} WHERE id = ${id}`)
         await db.exec(
           sql`UPDATE artworks SET removed_at = ${stamp(at)}
               WHERE batch_id = ${id} AND removed_at IS NULL`,
         )
+        return 'discarded'
       })
+    },
+
+    async discardedOf(articleId) {
+      let result = await database.exec(
+        sql`SELECT * FROM artwork_batches
+            WHERE article_id = ${articleId} AND created_at IS NOT NULL
+              AND discarded_at IS NOT NULL`,
+      )
+      let batches = (result.rows ?? []).map((row) => toBatch(row, []))
+      return { count: batches.length, isReplyWaiting: batches.some(isQueued) }
     },
 
     async expiredUploads(before) {
@@ -651,6 +689,14 @@ export function createArtworkStore(database: Database): ArtworkStore {
       return database.transaction(async (db) => {
         let existing = await batchByFormKey(db, batch.formKey)
         if (existing !== null) return { batch: existing, isNew: false }
+        /* A removal of the article and this row are decided by the one write SQLite runs at a
+           time: once the article is removed, no batch starts in its folder (`12z`). */
+        if (batch.articleId !== null) {
+          let article = await db.exec(
+            sql`SELECT removed_at FROM articles WHERE id = ${batch.articleId}`,
+          )
+          if (article.rows?.[0]?.['removed_at'] != null) throw new HolderRemovedError()
+        }
 
         let tag = await freeTag(db, batch, batch.at)
         await db.exec(
@@ -700,7 +746,9 @@ export function createArtworkStore(database: Database): ArtworkStore {
       return database.transaction(async (db) => {
         let result = await db.exec(
           sql`SELECT b.id FROM artwork_batches b JOIN issues i ON i.id = b.issue_id
+              LEFT JOIN articles ar ON ar.id = b.article_id
               WHERE b.created_at IS NOT NULL AND b.approved_at IS NULL AND i.closed_at IS NULL
+                AND (ar.id IS NULL OR ar.removed_at IS NULL)
                 AND (b.claimed_at IS NULL OR b.claimed_at < ${lease})
               ORDER BY coalesce(b.checked_at, ''), b.id
               LIMIT ${CLAIM_LIMIT}`,

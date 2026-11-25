@@ -98,11 +98,11 @@ function previewOf(context: LinkContext): LinkPreview {
 async function goneResponse(context: LinkContext): Promise<Response> {
   let key = context.params.key
   let link = isLinkKey(key) ? await articlesOf(context).links.findByKey(key) : null
-  let issue =
-    link === null || link.kind !== 'artworks'
-      ? null
-      : await articlesOf(context).artworks.issues.findById(link.issueId)
-  let state = link === null || link.kind !== 'artworks' ? 'unknown' : linkState(link, issue)
+  let isArtworks = link !== null && link.kind === 'artworks'
+  let setup = articlesOf(context).artworks
+  let issue = link === null || !isArtworks ? null : await setup.issues.findById(link.issueId)
+  let holder = link === null || !isArtworks ? null : await holderOf(setup, link)
+  let state = link === null || !isArtworks ? 'unknown' : linkState(link, issue, holder)
   return context.render(
     <LinkGonePage
       imageUrl={previewOf(context).imageUrl}

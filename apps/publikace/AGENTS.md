@@ -41,7 +41,9 @@ _Přejmenovat vydání…_ and _Odebrat vydání…_ in an issue's „⋯“, wh
 `_meta.json` in it, or bin an empty issue's folder and free its name (#151); and
 _Přejmenovat článek…_ and _Upravit autory…_ in an article's „⋯“, which rename its Doc, folder and
 `_meta.json`, or correct its authors there and in the database, a welcome going to each new
-address before the final version and a corrected request after it (#152).
+address before the final version and a corrected request after it (#152); and
+_Odebrat článek…_ in an article's „⋯“, which bins its folder, and _Zahodit dávku_ also after its
+request went (#153).
 Nothing runs on Fly.io yet, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals, the print folder and the proofreaders' digest, which go
 through the app's API and whose runs

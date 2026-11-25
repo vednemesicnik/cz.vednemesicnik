@@ -4,6 +4,7 @@ import type {
   ArticleStore,
   ClauseCorrection,
   EditAuthorsOutcome,
+  RemoveArticleOutcome,
   RenameArticleOutcome,
 } from '../data/articles.server.ts'
 import type { IssueStore } from '../data/issues.server.ts'
@@ -23,10 +24,11 @@ import {
   undoAll,
 } from './issue-setup.server.ts'
 import { logDriveFailure } from './log.server.ts'
+import { binOwnFolder, type ForeignChild } from './own-folder-bin.server.ts'
 
 /**
  * Mending what was typed wrong when an article was created (#152): its name (`12x`) and its
- * authors (`12y`).
+ * authors (`12y`); and removing one created by mistake (#153, `12z`).
  *
  * All or nothing, as every fix (`11c`): Drive first, because a name on Drive is what a person may
  * still see, then the row, which commits only while nothing changed under it; otherwise every file
@@ -41,9 +43,11 @@ export type ArticleFixSetup = Pick<ArticleSetup, 'links' | 'mailer' | 'now' | 'o
     | 'correctAuthors'
     | 'findById'
     | 'markMissing'
+    | 'markRemoved'
     | 'markWelcome'
     | 'rename'
     | 'replaceAuthors'
+    | 'unmarkRemoved'
   >
   files(accessToken: string): IssueFiles
   folders(accessToken: string): DriveFolders
@@ -99,6 +103,7 @@ async function createdArticle(setup: ArticleFixSetup, id: number): Promise<Artic
   if (row === null || row.createdAt === null || row.docId === null || row.folderId === null) {
     return null
   }
+  if (row.removedAt !== null) return null
   return { ...row, createdAt: row.createdAt, docId: row.docId, folderId: row.folderId }
 }
 
@@ -364,4 +369,64 @@ async function commitOrUndo<T extends { kind: string }>(
     await undoAll(undo)
     return null
   }
+}
+
+export type RemoveArticleFixOutcome =
+  | RemoveArticleOutcome
+  | { folderId: string; kind: 'moved' }
+  | { files: ForeignChild[]; kind: 'foreign' }
+  | { kind: 'gone' }
+  | { kind: Unreached }
+
+/**
+ * _Odebrat článek_ (`12z`), in the shape of the issue's removal: the row is marked first, so the
+ * artworks link answers as gone at once and no batch can start in a folder about to go to the
+ * bin; then the article folder goes to the bin with everything in it, when it holds only what the
+ * app made and stands in `Články` of its issue. Anything else takes the mark back and leaves Drive
+ * as it was. A folder already in the bin stays there and the removal goes through. Nothing is
+ * sent to anybody.
+ */
+export async function removeArticle(
+  setup: ArticleFixSetup,
+  input: { id: number },
+): Promise<RemoveArticleFixOutcome> {
+  let found = await setup.articles.findById(input.id)
+  if (found === null || found.createdAt === null || found.removedAt !== null) {
+    return { kind: 'already-removed' }
+  }
+  return underIssue(setup, found.issueId, async (issue) => {
+    let article = await createdArticle(setup, input.id)
+    if (article === null) return { kind: 'already-removed' }
+    if (issue.closedAt !== null) return { issueName: issue.name, kind: 'closed' }
+    let articlesFolderId = issue.folderIds.articles
+    if (articlesFolderId === null) return { kind: 'unavailable' }
+
+    let token = await setup.token()
+    if (!token.ok) return { kind: token.reason }
+
+    let at = setup.now()
+    let marked = await setup.articles.markRemoved(article.id, at)
+    if (marked.kind !== 'removed') return marked
+
+    let ownIds = new Set(
+      [
+        article.folderId,
+        article.docId,
+        article.metaFileId,
+        article.artworksFolderId,
+        article.licencesFolderId,
+      ].filter((id): id is string => id !== null),
+    )
+    let binned = await binOwnFolder(setup.files(token.accessToken), {
+      expectedParentId: articlesFolderId,
+      folderId: article.folderId,
+      folderName: article.name,
+      ownIds,
+    })
+    if (binned.kind === 'binned' || binned.kind === 'already-binned') return { kind: 'removed' }
+    await setup.articles.unmarkRemoved(article.id, at)
+    if (binned.kind === 'moved') return { folderId: article.folderId, kind: 'moved' }
+    if (binned.kind === 'foreign') return { files: binned.files, kind: 'foreign' }
+    return { kind: 'unavailable' }
+  })
 }

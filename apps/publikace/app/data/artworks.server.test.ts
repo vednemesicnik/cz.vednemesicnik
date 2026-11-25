@@ -180,7 +180,23 @@ describe('the artwork store', () => {
       assert.equal(listed?.holder.name, 'Školní jídelna po roce')
       assert.equal(listed?.holder.kind, 'article')
 
-      await artworks.discardBatch(started.id, AT)
+      /* An approved batch keeps its licence, so the mark refuses it and writes nothing (`12o`). */
+      assert.equal(await artworks.discardBatch(started.id, AT), 'approved')
+      assert.equal((await artworks.listByIssue(issueId)).length, 1)
+
+      await app.database.exec(
+        sql`UPDATE artwork_batches SET approved_at = NULL, consent_file_id = NULL,
+              consent_verified_at = ${AT.toString()},
+              consent_verified_by_email = 'marie@vednemesicnik.test'
+            WHERE id = ${started.id}`,
+      )
+      assert.equal(await artworks.discardBatch(started.id, AT), 'verified')
+
+      await app.database.exec(
+        sql`UPDATE artwork_batches SET consent_verified_at = NULL, consent_verified_by_email = NULL
+            WHERE id = ${started.id}`,
+      )
+      assert.equal(await artworks.discardBatch(started.id, AT), 'discarded')
       assert.deepEqual(await artworks.listByIssue(issueId), [])
       assert.equal((await artworks.findBatch(started.id))?.artworks[0]?.removedAt?.equals(AT), true)
     } finally {

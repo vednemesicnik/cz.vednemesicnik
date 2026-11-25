@@ -71,12 +71,15 @@ export const routes = route({
     /* _Poslat žádost znovu_ in the article's open row (`12b`), with the marking's time as
        `?marked=`; back to the detail with the row still open. */
     resendClauses: post('/issues/:name/articles/:id/clauses/resend'),
-    /* _Přejmenovat článek…_ (`12x`) and _Upravit autory…_ (`12y`) from the row's „⋯“: each a
-       dialog at its own address over the detail, and `POST` to it saves. */
+    /* _Přejmenovat článek…_ (`12x`), _Upravit autory…_ (`12y`) and _Odebrat článek…_ (`12z`)
+       from the row's „⋯“: each a dialog at its own address over the detail, and `POST` to it
+       acts. */
     askRenameArticle: get('/issues/:name/articles/:id/rename'),
     renameArticle: post('/issues/:name/articles/:id/rename'),
     askEditAuthors: get('/issues/:name/articles/:id/authors'),
     editAuthors: post('/issues/:name/articles/:id/authors'),
+    askRemoveArticle: get('/issues/:name/articles/:id/remove'),
+    removeArticle: post('/issues/:name/articles/:id/remove'),
   },
 
   /* The pages behind a shared link, without sign-in or cookies (`02a`). `GET` draws the form,

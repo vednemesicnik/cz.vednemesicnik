@@ -37,6 +37,11 @@ describe('linkState', () => {
     assert.equal(linkState({ revokedAt: null }, { ...COMPLETE, removedAt: TODAY }), 'gone')
   })
 
+  it('is gone for the artworks of a removed article, and valid for one still there (02f)', () => {
+    assert.equal(linkState({ revokedAt: null }, COMPLETE, { removedAt: TODAY }), 'gone')
+    assert.equal(linkState({ revokedAt: null }, COMPLETE, { removedAt: null }), 'valid')
+  })
+
   it('is unknown without a link, or for an issue that never finished', () => {
     assert.equal(linkState(null, COMPLETE), 'unknown')
     assert.equal(linkState({ revokedAt: null }, { closedAt: null, completedAt: null }), 'unknown')
