@@ -56,12 +56,7 @@ export function FinalVersionDialog(handle: Handle<FinalVersionDialogProps>) {
           {error === null ? null : (
             <div role="alert">
               <Callout tone="error">
-                {/* The account's address does not break by itself and would widen the dialog
-                    past a phone's screen. */}
-                <p
-                  class="vdm-callout__title"
-                  style={{ margin: '0 0 4px', overflowWrap: 'anywhere' }}
-                >
+                <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
                   {error.title}
                 </p>
                 <p style={{ margin: 0 }}>{error.text}</p>

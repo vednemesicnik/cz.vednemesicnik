@@ -1611,12 +1611,7 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
           {discarding.refusal === undefined ? null : (
             <div role="alert">
               <Callout tone="error">
-                {/* The account's address does not break by itself, and on a phone it would widen
-                    the dialog past the screen. */}
-                <p
-                  class="vdm-callout__title"
-                  style={{ margin: '0 0 4px', overflowWrap: 'anywhere' }}
-                >
+                <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
                   {DISCARD_REFUSALS[discarding.refusal].title}
                 </p>
                 <p style={{ margin: 0 }}>{DISCARD_REFUSALS[discarding.refusal].text}</p>

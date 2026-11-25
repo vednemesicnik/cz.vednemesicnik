@@ -138,7 +138,15 @@
   color: var(--text-secondary);
   font-size: var(--font-size-md);
   line-height: var(--line-height-md);
+  overflow-wrap: anywhere;
 }
+/* A word with no space to break at (an e-mail address, a link, a key) breaks anywhere instead of
+   running out of the frame, in every part of Callout, Toast and Dialog: title, text, list, detail line.
+   Apps write their sentences whole, so the rule sits on the component's root, never on the value.
+   `anywhere`, not `break-word`: only it lets the word give up its width where the box is sized by its
+   content (an inline-flex toast, a flex item), so a 62-character address in a 358 px toast wraps
+   instead of widening it. No hyphen is added; text whose words fit does not change.
+   Rozhodnuto 24. 11. 2026 (pnmcwbca) */
 .vdm-callout--success { background: var(--callout-success-bg); border-color: var(--callout-success-border); }
 .vdm-callout--warning { background: var(--callout-warning-bg); border-color: var(--callout-warning-border); }
 .vdm-callout--error   { background: var(--callout-error-bg);   border-color: var(--callout-error-border); }
@@ -406,7 +414,8 @@
 .vdm-menu__sep { height: 1px; background: var(--border); margin: 4px 6px; }
 
 /* ---------- Dialog ---------- */
-.vdm-dialog { box-sizing: border-box; width: 100%; padding: 24px; display: flex; flex-direction: column; gap: 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); font-family: var(--font-family); color: var(--text-primary); }
+.vdm-dialog { box-sizing: border-box; width: 100%; padding: 24px; display: flex; flex-direction: column; gap: 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); font-family: var(--font-family); color: var(--text-primary); overflow-wrap: anywhere; }
+/* overflow-wrap: anywhere as in Callout (pnmcwbca). */
 .vdm-dialog__title { margin: 0; font-size: 18px; font-weight: var(--font-weight-semibold); line-height: 1.35; text-wrap: pretty; }
 .vdm-dialog__body { display: flex; flex-direction: column; gap: 12px; font-size: var(--font-size-sm); line-height: 1.5; color: var(--text-secondary); }
 .vdm-dialog__text { margin: 0; text-wrap: pretty; }
@@ -422,7 +431,8 @@
    high as in Callout; the action stays at the end, centred on the toast's
    height as a snackbar's short action does, and never wraps or shrinks: the
    message wraps beside it. Rozhodnuto 22. 11. 2026 (mndtjoni). */
-.vdm-toast { display: inline-flex; align-items: flex-start; gap: 12px; max-width: 440px; box-sizing: border-box; padding: 12px 16px; background: var(--surface-inverse); color: var(--text-inverse); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); font-family: var(--font-family); font-size: var(--font-size-sm); line-height: 1.4; }
+.vdm-toast { display: inline-flex; align-items: flex-start; gap: 12px; max-width: 440px; box-sizing: border-box; padding: 12px 16px; background: var(--surface-inverse); color: var(--text-inverse); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); font-family: var(--font-family); font-size: var(--font-size-sm); line-height: 1.4; overflow-wrap: anywhere; }
+/* overflow-wrap: anywhere as in Callout, on every width: a 62-character address is about 430 px at 14 px, wider than the 408 px of text in a 440 px toast (pnmcwbca). */
 .vdm-toast__icon { flex: none; width: 16px; height: 1lh; color: var(--toast-error); }
 .vdm-toast__action { position: relative; flex: none; align-self: center; margin-left: auto; padding: 0; border: 0; background: transparent; color: var(--toast-action); font: inherit; font-weight: var(--font-weight-semibold); white-space: nowrap; cursor: pointer; }
 /* Tap area 44 px high, centred on the action, out to the toast's end edge

@@ -269,9 +269,6 @@ export function IssueStepDialog(handle: Handle<{ step: IssueStepDialogView }>) {
   }
 }
 
-/* A name of up to 200 characters breaks anywhere rather than running out of the Callout. */
-const calloutLinkStyle = css({ fontWeight: 'inherit', overflowWrap: 'anywhere' })
-
 function Parts(handle: Handle<{ parts: readonly CalloutPart[] }>) {
   return () => (
     <>
@@ -279,13 +276,7 @@ function Parts(handle: Handle<{ parts: readonly CalloutPart[] }>) {
         typeof part === 'string' ? (
           part
         ) : (
-          <a
-            class="vdm-link"
-            href={part.href}
-            mix={calloutLinkStyle}
-            rel="noopener"
-            target="_blank"
-          >
+          <a class="vdm-link" href={part.href} rel="noopener" target="_blank">
             {part.text}
             <NewTabMark />
           </a>

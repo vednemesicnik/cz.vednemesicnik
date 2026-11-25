@@ -210,11 +210,7 @@ export const AuthorsForm = clientEntry(
             <input name={field.name} type="hidden" value={field.value} />
           ))}
           <div class="vdm-dialog__body">
-            {/* Inline, because a `css()` mix loses to the `vdm-*` class on the same element. A name
-                of up to 200 characters breaks anywhere rather than running out of the dialog. */}
-            <p class="vdm-dialog__text" style={{ overflowWrap: 'anywhere' }}>
-              {props.lead}
-            </p>
+            <p class="vdm-dialog__text">{props.lead}</p>
             {props.callout === null ? null : (
               <div class="vdm-callout vdm-callout--error vdm-callout--icon">
                 <ErrorIcon />

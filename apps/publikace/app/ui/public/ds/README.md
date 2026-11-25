@@ -4,7 +4,7 @@ These files are the design system of Vedneměsíčník, copied unchanged from th
 artifact — `project/styles.css`, `project/components.css`, `project/tokens/*.css`,
 `project/tokens/font-files/*.woff2` and `project/assets/og-share.jpg` of https://claude.ai/artifact/PqJtpBPrbbf3f9zEw3gMVD.
 
-**Copied from version `1795550077-7ad1`** on 24 November 2026.
+**Copied from version `1795557029-1b32`** on 24 November 2026.
 
 - **Do not edit them here.** A change goes into the design system first, and then the files are
   copied again, all of them, and the version above is updated. `docs/design-project.md` says
