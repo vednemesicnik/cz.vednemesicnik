@@ -19,7 +19,8 @@ import {
 
 const MARIE = 'marie@vednemesicnik.test'
 const RECEIVED = Temporal.Instant.from('2026-11-14T06:12:00Z')
-const ANSWER = 'Dobrý den,\n\nfotka vyjde uvnitř čísla na straně 12.\nNa obálku ji nedáváme.'
+const ANSWER =
+  'Dobrý den,\n\nfotka vyjde na straně 12, zhruba na třetinu strany.\nPřes celou stranu ji nedáváme.'
 
 /** What a run of the reply check leaves behind: a reported reply, and an archive if any. */
 async function replyTo(
@@ -101,7 +102,7 @@ async function setup() {
   let browser = app.browser()
   await browser.signInAs(MARIE, 'Marie Horáková')
   let issueId = await seedIssue(app, 'VDM_2026_5')
-  let article = await seedArticle(app, issueId, 'Ilustrace k tématu Volby')
+  let article = await seedArticle(app, issueId, 'Ilustrace k textům o volbách')
   let batch = await seedBatch(app, article, issueId)
   return { app, article, batch, browser, issueId, store: createArtworkStore(app.database) }
 }
@@ -175,7 +176,7 @@ describe('answering a reply from Ke kontrole', () => {
       assert.equal(mail?.name, 'Publikace Vedneměsíčník')
       assert.match(
         body,
-        /<p[^>]*>Dobrý den,<\/p><p[^>]*>fotka vyjde uvnitř čísla na straně 12\.<br>Na obálku ji nedáváme\.<\/p>/,
+        /<p[^>]*>Dobrý den,<\/p><p[^>]*>fotka vyjde na straně 12, zhruba na třetinu strany\.<br>Přes celou stranu ji nedáváme\.<\/p>/,
       )
       assert.match(body, /Marie Horáková<\/p><p[^>]*>Vedneměsíčník<\/p>/)
       assert.match(body, /Vaše zpráva přijatá 14\. 11\. 2026 v 7:12:/)
@@ -232,7 +233,7 @@ describe('answering a reply from Ke kontrole', () => {
       /* Anybody opening the form again finds the same locked text, never an empty field. */
       let reopened = await (await browser.get(`/review?reply=${batch.id}`)).text()
       assert.match(reopened, /Odeslat znovu/)
-      assert.match(reopened, /fotka vyjde uvnitř čísla na straně 12\./)
+      assert.match(reopened, /fotka vyjde na straně 12, zhruba na třetinu strany\./)
 
       let answerId = /name="answer" type="hidden" value="(\d+)"/.exec(html)?.[1] ?? ''
       app.failMail(false)
@@ -274,7 +275,7 @@ describe('answering a reply from Ke kontrole', () => {
       await replyTo(app, batch, 'A ještě jedna věc.')
       let html = await landing(browser, await answerBatch(app, browser, batch, ANSWER, stale ?? ''))
       assert.match(html, /Přečtěte si novou odpověď poskytovatele\./)
-      assert.match(html, /fotka vyjde uvnitř čísla na straně 12\./)
+      assert.match(html, /fotka vyjde na straně 12, zhruba na třetinu strany\./)
       assert.equal(answersMailed(app).length, 0)
     } finally {
       await app.close()
@@ -311,7 +312,7 @@ describe('answering a reply from Ke kontrole', () => {
       let html = await landing(browser, await answerBatch(app, browser, batch, ANSWER))
       assert.match(html, /Zkuste odpověď odeslat později\./)
       assert.match(html, />Odeslat odpověď</)
-      assert.match(html, /fotka vyjde uvnitř čísla na straně 12\./)
+      assert.match(html, /fotka vyjde na straně 12, zhruba na třetinu strany\./)
       assert.equal(answersMailed(app).length, 0)
       let kept = await app.database.exec(sql`SELECT count(*) AS count FROM consent_answers`)
       assert.equal(Number(kept.rows?.[0]?.['count']), 0)
@@ -448,7 +449,10 @@ function assertLockedOnCard(html: string, title: string, reason: string) {
     html,
     new RegExp(`<p class="vdm-callout__title">${escape(title)}</p><p[^>]*>${escape(reason)}</p>`),
   )
-  assert.match(html, /vdm-field__input--locked[^>]*>[^<]*fotka vyjde uvnitř čísla na straně 12\./)
+  assert.match(
+    html,
+    /vdm-field__input--locked[^>]*>[^<]*fotka vyjde na straně 12, zhruba na třetinu strany\./,
+  )
   assert.match(html, />Zavřít</)
   assert.doesNotMatch(html, />Odeslat odpověď</)
   assert.doesNotMatch(html, /Po dalším načtení stránky už tu text nebude\./)
@@ -458,7 +462,7 @@ function assertLockedOnCard(html: string, title: string, reason: string) {
 async function assertGoneOnReload(browser: ReturnType<TestApp['browser']>) {
   let html = await (await browser.get('/review')).text()
   assert.doesNotMatch(html, /vdm-queue-item--settled/)
-  assert.doesNotMatch(html, /fotka vyjde uvnitř čísla na straně 12\./)
+  assert.doesNotMatch(html, /fotka vyjde na straně 12, zhruba na třetinu strany\./)
   assert.doesNotMatch(html, /neodešla/)
 }
 
@@ -486,7 +490,7 @@ describe('an answer still on its way', () => {
       assert.match(html, /Odpověď kolegyně\./)
       assert.doesNotMatch(html, />Odeslat znovu</)
       assert.match(html, /Odpověď neodešla/)
-      assert.match(html, /fotka vyjde uvnitř čísla na straně 12\./)
+      assert.match(html, /fotka vyjde na straně 12, zhruba na třetinu strany\./)
 
       let answerId = started.kind === 'started' ? String(started.answer.id) : ''
       await browser.post(
@@ -554,7 +558,7 @@ describe('answering an author from Ke kontrole', () => {
         'Od autora mezitím přišla odpověď „Souhlasím“.',
         'Vaše odpověď neodešla.',
       )
-      assert.match(html, /Ilustrace k tématu Volby/)
+      assert.match(html, /Ilustrace k textům o volbách/)
       assert.match(html, /Souhlasí/)
       assert.equal(answersMailed(app).length, 0)
       await assertGoneOnReload(browser)
@@ -578,7 +582,7 @@ describe('answering an author from Ke kontrole', () => {
       let html = await (await browser.get('/review')).text()
       assert.match(html, /Odpověď neodešla/)
       assert.match(html, /Tereza Vlková · tereza\.vlkova@external\.test/)
-      assert.match(html, /fotka vyjde uvnitř čísla na straně 12\./)
+      assert.match(html, /fotka vyjde na straně 12, zhruba na třetinu strany\./)
       assert.equal(answersMailed(app).length, 0)
     } finally {
       await app.close()

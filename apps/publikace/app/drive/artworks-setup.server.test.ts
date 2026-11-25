@@ -169,7 +169,7 @@ describe('uploading an artwork', () => {
 
   it('keeps a file that is no image as a failed card, stored and counted', () =>
     withHarness(async (harness) => {
-      let outcome = await harness.upload(FORM, new Uint8Array([1, 2, 3, 4]), 'obalka.heic')
+      let outcome = await harness.upload(FORM, new Uint8Array([1, 2, 3, 4]), 'mapa-obce.heic')
       assert.equal(outcome.kind, 'unreadable')
       assert.equal(live(harness.drive).length, 1)
     }))

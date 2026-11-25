@@ -60,21 +60,21 @@ všemu e-mail říká **připomínky**.
 
 ## Termíny: co se nesmí přejmenovat
 
-| Termín                      | Význam                                                                                |
-| --------------------------- | ------------------------------------------------------------------------------------- |
-| **vydání**                  | Připravované číslo časopisu, `VDM_2026_5`. Ne „číslo“: to je na webu hotový výtisk.   |
-| **článek**                  | Text s autory a dokumentem Google.                                                    |
-| **skupina obrazových děl**  | Obrázky bez vlastního článku (obálka, ilustrace k více textům).                       |
-| **obrazové dílo**, **dílo** | Jeden nahraný obrázek. V nadpisech „obrazová díla“, v běžné větě „dílo“.              |
-| **poskytovatel**            | Koho formulář uvádí a kdo dává souhlas. **Autor díla** je jen jméno do podpisu.       |
-| **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.               |
-| **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                   |
-| **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly. Viz níže.                             |
-| **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                        |
-| **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                         |
-| **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                     |
-| **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.                |
-| **připojit**, **připojení** | Trvalé spojení aplikace s účtem `publikace.app@`. Ne „přihlásit“: to dělá šéfredakce. |
+| Termín                      | Význam                                                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------------------- |
+| **vydání**                  | Připravované číslo časopisu, `VDM_2026_5`. Ne „číslo“: to je na webu hotový výtisk.                 |
+| **článek**                  | Text s autory a dokumentem Google.                                                                  |
+| **skupina obrazových děl**  | Obrázky k více textům, které nepatří k jednomu článku. Obálku ani zadní stranu časopis neilustruje. |
+| **obrazové dílo**, **dílo** | Jeden nahraný obrázek. V nadpisech „obrazová díla“, v běžné větě „dílo“.                            |
+| **poskytovatel**            | Koho formulář uvádí a kdo dává souhlas. **Autor díla** je jen jméno do podpisu.                     |
+| **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.                             |
+| **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                                 |
+| **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly. Viz níže.                                           |
+| **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                                      |
+| **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                                       |
+| **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                                   |
+| **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.                              |
+| **připojit**, **připojení** | Trvalé spojení aplikace s účtem `publikace.app@`. Ne „přihlásit“: to dělá šéfredakce.               |
 
 **Podklady pro tisk** plní úloha na pozadí _Podklady pro tisk_, každých 6 hodin. Do složky kopíruje
 schválené texty, tedy poslední verzi, se kterou souhlasili všichni autoři, a díla se souhlasem.

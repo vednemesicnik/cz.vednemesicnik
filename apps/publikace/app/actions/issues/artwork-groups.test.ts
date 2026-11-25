@@ -93,7 +93,7 @@ async function sendBatch(context: Context, key: string): Promise<Response> {
   let visitor = context.app.browser()
   let uploaded = await visitor.sendBytes(`/l/${key}/artworks/files`, new Uint8Array(JPEG), {
     'Content-Type': 'image/jpeg',
-    'X-File-Name': encodeURIComponent('obalka.jpg'),
+    'X-File-Name': encodeURIComponent('mapa-obce.jpg'),
     'X-Form-Key': PAGE_KEY,
   })
   assert.equal(uploaded.status, 201)
@@ -125,7 +125,7 @@ describe('a new artwork group (12e)', () => {
       let detail = await (await context.editor.get(DETAIL)).text()
       assert.equal(
         groupsSection(detail),
-        'Skupiny obrazových děl 0 Nová skupina Pro obrázky bez vlastního článku: obálku, ilustrace k více textům, zadní stranu.',
+        'Skupiny obrazových děl 0 Nová skupina Skupinu založte, když dílo patří k více textům.',
       )
       let dialog = textOf(await (await context.editor.get(NEW)).text())
       assert.ok(dialog.includes('Nová skupina obrazových děl'))
@@ -151,19 +151,25 @@ describe('a new artwork group (12e)', () => {
       assert.ok(textOf(longHtml).includes('Zkraťte název na nejvýš 200 znaků.'))
       assert.ok(longHtml.includes(`value="${'x'.repeat(201)}"`))
 
-      let longNote = await createGroup(context, { name: 'Obálka', note: 'x'.repeat(501) })
+      let longNote = await createGroup(context, {
+        name: 'Mapa obce k rozhovoru i reportáži',
+        note: 'x'.repeat(501),
+      })
       assert.equal(longNote.status, 400)
       let longNoteHtml = await longNote.text()
       assert.ok(textOf(longNoteHtml).includes('Zkraťte poznámku na nejvýš 500 znaků.'))
-      assert.ok(longNoteHtml.includes('value="Obálka"'))
+      assert.ok(longNoteHtml.includes('value="Mapa obce k rozhovoru i reportáži"'))
 
-      assert.equal((await createGroup(context, { name: 'Obálka' })).status, 303)
+      assert.equal(
+        (await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })).status,
+        303,
+      )
       let calls = context.app.drive.calls.length
-      let duplicate = await createGroup(context, { name: '  obálka ' })
+      let duplicate = await createGroup(context, { name: '  mapa obce k rozhovoru i reportáži ' })
       assert.equal(duplicate.status, 400)
       assert.ok(
         textOf(await duplicate.text()).includes(
-          'Skupina Obálka už ve vydání je. Zvolte jiný název.',
+          'Skupina Mapa obce k rozhovoru i reportáži už ve vydání je. Zvolte jiný název.',
         ),
       )
       assert.equal(context.app.drive.calls.length, calls)
@@ -172,15 +178,18 @@ describe('a new artwork group (12e)', () => {
   it('makes the group’s folders and _meta.json, lists it first with its link, and mails nobody', () =>
     withIssue(async (context) => {
       let mailBefore = context.app.mail.length
-      assert.equal((await createGroup(context, { name: 'Obálka' })).status, 303)
-      let created = await createGroup(context, { name: 'Ilustrace k tématu Volby', note: NOTE })
+      assert.equal(
+        (await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })).status,
+        303,
+      )
+      let created = await createGroup(context, { name: 'Ilustrace k textům o volbách', note: NOTE })
       assert.equal(created.status, 303)
       assert.equal(created.headers.get('Location'), DETAIL)
 
       let folders = context.app.drive.folders()
       let groupsFolders = folders.filter((folder) => folder.name === 'Skupiny obrazových děl')
       assert.equal(groupsFolders.length, 1)
-      let volby = folders.find((folder) => folder.name === 'Ilustrace k tématu Volby')
+      let volby = folders.find((folder) => folder.name === 'Ilustrace k textům o volbách')
       assert.equal(volby?.parentId, groupsFolders[0]?.id)
       assert.deepEqual(
         folders
@@ -195,7 +204,7 @@ describe('a new artwork group (12e)', () => {
       assert.ok(meta !== undefined)
       let parsed = JSON.parse(meta.content ?? '{}') as Record<string, unknown>
       assert.equal(parsed['kind'], 'artwork-group')
-      assert.equal(parsed['articleName'], 'Ilustrace k tématu Volby')
+      assert.equal(parsed['articleName'], 'Ilustrace k textům o volbách')
       assert.equal(parsed['note'], NOTE)
       assert.equal(parsed['sheetId'], null)
       assert.equal(context.app.mail.length, mailBefore)
@@ -204,20 +213,20 @@ describe('a new artwork group (12e)', () => {
       let section = groupsSection(html) ?? ''
       assert.ok(
         section.startsWith(
-          'Skupiny obrazových děl 2 Nová skupina Ilustrace k tématu Volby · zatím bez děl',
+          'Skupiny obrazových děl 2 Nová skupina Ilustrace k textům o volbách · zatím bez děl',
         ),
       )
       assert.ok(section.includes(`Pro grafika: ${NOTE}`))
-      assert.ok(section.indexOf('Volby') < section.indexOf('Obálka'))
+      assert.ok(section.indexOf('volbách') < section.indexOf('Mapa obce k rozhovoru i reportáži'))
       assert.ok(textOf(html).includes('Skupina je vytvořená. Odkaz pošlete tomu, kdo díla dodá.'))
-      let key = await linkKeyOf(context, 'Ilustrace k tématu Volby')
+      let key = await linkKeyOf(context, 'Ilustrace k textům o volbách')
       assert.ok(html.includes(`/l/${key}/artworks`))
       /* The new group is highlighted, with focus on its Kopírovat, until the next load (`12e`). */
       let groupsHtml =
         /<section aria-labelledby="groups-title"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? ''
       let changed =
         /<div class="vdm-changed">(.*?)<\/div>\s*<\/div>\s*<\/div>/s.exec(groupsHtml)?.[1] ?? ''
-      assert.ok(changed.includes('Ilustrace k tématu Volby'))
+      assert.ok(changed.includes('Ilustrace k textům o volbách'))
       assert.match(changed, /autofocus/)
       let again = await (await context.editor.get(DETAIL)).text()
       assert.ok(!/<section aria-labelledby="groups-title".*vdm-changed/s.test(again))
@@ -226,7 +235,11 @@ describe('a new artwork group (12e)', () => {
   it('says to try again when Drive fails midway, binning what the attempt made and freeing the name', () =>
     withIssue(async (context) => {
       context.app.drive.failCreate('Licence')
-      let failed = await createGroup(context, { formKey: DIALOG_KEY, name: 'Obálka', note: NOTE })
+      let failed = await createGroup(context, {
+        formKey: DIALOG_KEY,
+        name: 'Mapa obce k rozhovoru i reportáži',
+        note: NOTE,
+      })
       assert.equal(failed.status, 409)
       let html = await failed.text()
       assert.ok(
@@ -235,7 +248,9 @@ describe('a new artwork group (12e)', () => {
       assert.ok(html.includes('Proč nechodíme volit'))
       let left = context.app.drive
         .folders()
-        .filter((folder) => ['Obálka', 'Obrazová díla'].includes(folder.name))
+        .filter((folder) =>
+          ['Mapa obce k rozhovoru i reportáži', 'Obrazová díla'].includes(folder.name),
+        )
       assert.ok(left.length > 0)
       assert.ok(left.every((folder) => folder.isTrashed))
       let groupsFolder = context.app.drive
@@ -250,7 +265,13 @@ describe('a new artwork group (12e)', () => {
       /* The refused dialog sends its own key again, and the same key goes through. */
       context.app.drive.heal()
       assert.equal(
-        (await createGroup(context, { formKey: DIALOG_KEY, name: 'Obálka', note: NOTE })).status,
+        (
+          await createGroup(context, {
+            formKey: DIALOG_KEY,
+            name: 'Mapa obce k rozhovoru i reportáži',
+            note: NOTE,
+          })
+        ).status,
         303,
       )
     }))
@@ -273,7 +294,7 @@ describe('a new artwork group (12e)', () => {
       assert.equal((await editor.get(NEW)).status, 404)
       let refused = await editor.post(
         NEW,
-        { formKey: crypto.randomUUID(), name: 'Obálka', note: '' },
+        { formKey: crypto.randomUUID(), name: 'Mapa obce k rozhovoru i reportáži', note: '' },
         DETAIL,
       )
       assert.equal(refused.status, 404)
@@ -284,8 +305,11 @@ describe('a new artwork group (12e)', () => {
 
   it('lists a closed issue’s groups without what writes, its folder still at hand (12h)', () =>
     withIssue(async (context) => {
-      assert.equal((await createGroup(context, { name: 'Obálka' })).status, 303)
-      let key = await linkKeyOf(context, 'Obálka')
+      assert.equal(
+        (await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })).status,
+        303,
+      )
+      let key = await linkKeyOf(context, 'Mapa obce k rozhovoru i reportáži')
       await createIssueStore(context.app.database).close(context.issueId, Temporal.Now.instant())
 
       assert.equal((await context.editor.get(NEW)).status, 404)
@@ -306,7 +330,9 @@ describe('a new artwork group (12e)', () => {
       assert.match(section, new RegExp(`<del[^>]*>[^<]*/l/${key}/artworks</del>`))
       assert.ok(!section.includes('Kopírovat'))
       /* The „⋯“ with _Otevřít složku skupiny_ stays; its items are drawn when it opens. */
-      assert.ok(section.includes('aria-label="Další akce skupiny Obálka"'))
+      assert.ok(
+        section.includes('aria-label="Další akce skupiny Mapa obce k rozhovoru i reportáži"'),
+      )
       assert.equal((await context.app.browser().get(`/l/${key}/artworks`)).status, 410)
     }))
 })
@@ -314,22 +340,28 @@ describe('a new artwork group (12e)', () => {
 describe('a group’s link and its batches', () => {
   it('names the group and its note on the page, and the group in the request and the 21c lead', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka', note: NOTE })
-      let key = await linkKeyOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži', note: NOTE })
+      let key = await linkKeyOf(context, 'Mapa obce k rozhovoru i reportáži')
 
       let page = textOf(await (await context.app.browser().get(`/l/${key}/artworks`)).text())
-      assert.ok(page.includes('Ke skupině Obálka'))
+      assert.ok(page.includes('Ke skupině Mapa obce k rozhovoru i reportáži'))
       assert.ok(page.includes(`Pro grafika: ${NOTE}`))
 
       let sent = await sendBatch(context, key)
       assert.equal(sent.status, 200)
-      assert.ok(textOf(await sent.text()).includes('Ve skupině „Obálka“ je nově nahrané 1 dílo.'))
+      assert.ok(
+        textOf(await sent.text()).includes(
+          'Ve skupině „Mapa obce k rozhovoru i reportáži“ je nově nahrané 1 dílo.',
+        ),
+      )
       let request = context.app.mail.find((message) => message.to === KLARA.email)
       assert.match(
         request?.subject ?? '',
-        /^Žádost o potvrzení souhlasu s užitím obrazových děl ze skupiny „Obálka“ – VDM_2026_5 \[\d{8}T\d{6}\]$/,
+        /^Žádost o potvrzení souhlasu s užitím obrazových děl ze skupiny „Mapa obce k rozhovoru i reportáži“ – VDM_2026_5 \[\d{8}T\d{6}\]$/,
       )
-      let groupFolder = context.app.drive.folders().find((folder) => folder.name === 'Obálka')
+      let groupFolder = context.app.drive
+        .folders()
+        .find((folder) => folder.name === 'Mapa obce k rozhovoru i reportáži')
       let artworksFolder = context.app.drive
         .folders()
         .find((folder) => folder.name === 'Obrazová díla' && folder.parentId === groupFolder?.id)
@@ -339,15 +371,21 @@ describe('a group’s link and its batches', () => {
       )
 
       let detail = await (await context.editor.get(DETAIL)).text()
-      assert.ok((groupsSection(detail) ?? '').includes('Obálka · 1 dílo'))
+      assert.ok(
+        (groupsSection(detail) ?? '').includes('Mapa obce k rozhovoru i reportáži · 1 dílo'),
+      )
       /* The line under the artwork's name is the group it belongs to (`12a`). */
-      assert.ok(textOf(detail).includes('obalka.jpg (otevře se v nové záložce) Obálka'))
+      assert.ok(
+        textOf(detail).includes(
+          'mapa-obce.jpg (otevře se v nové záložce) Mapa obce k rozhovoru i reportáži',
+        ),
+      )
     }))
 
   it('hands the reply check the group with its kind and its Licence, and a reply lands in Ke kontrole', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let key = await linkKeyOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let key = await linkKeyOf(context, 'Mapa obce k rozhovoru i reportáži')
       await sendBatch(context, key)
       let [group] = await createGroupStore(context.app.database).listByIssue(context.issueId)
 
@@ -359,7 +397,7 @@ describe('a group’s link and its batches', () => {
       }
       let [batch] = claimed.batches
       assert.equal(batch?.kind, 'artwork-group')
-      assert.equal(batch?.articleName, 'Obálka')
+      assert.equal(batch?.articleName, 'Mapa obce k rozhovoru i reportáži')
       assert.equal(batch?.licencesFolderId, group?.licencesFolderId)
 
       let reported = await callJob(context.app, '/api/v1/artwork-replies/report', {
@@ -380,15 +418,15 @@ describe('a group’s link and its batches', () => {
       })
       assert.equal(reported.status, 200)
       let queue = textOf(await (await context.editor.get('/review')).text())
-      assert.ok(queue.includes('Obálka'))
+      assert.ok(queue.includes('Mapa obce k rozhovoru i reportáži'))
       assert.ok(queue.includes('ok, souhlas'))
     }))
 
   it('gives the print job the group with its note once it has an artwork with consent, and counts its copies', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka', note: NOTE })
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži', note: NOTE })
       await createGroup(context, { name: 'Zadní strana' })
-      let key = await linkKeyOf(context, 'Obálka')
+      let key = await linkKeyOf(context, 'Mapa obce k rozhovoru i reportáži')
       await sendBatch(context, key)
       await context.app.database.exec(
         sql`UPDATE artwork_batches SET approved_at = '2026-11-24T10:00:00.000Z',
@@ -413,7 +451,7 @@ describe('a group’s link and its batches', () => {
       let [issue] = claimed.issues
       assert.equal(issue?.groups.length, 1, 'the empty group is left out')
       let [group] = issue?.groups ?? []
-      assert.equal(group?.name, 'Obálka')
+      assert.equal(group?.name, 'Mapa obce k rozhovoru i reportáži')
       assert.equal(group?.note, NOTE)
       assert.equal(group?.folderTag, `group_${group?.groupId}`)
       assert.equal(group?.artworks.length, 1)
@@ -432,7 +470,7 @@ describe('a group’s link and its batches', () => {
                       name: 'obr-01.jpg',
                     },
                   ],
-                  folderId: 'print-obalka',
+                  folderId: 'print-mapa-obce',
                   lastImageNumber: 1,
                 },
                 groupId: group?.groupId,
@@ -453,21 +491,21 @@ describe('a group’s link and its batches', () => {
 
   it('writes the group’s artworks into the Evidence with its name and folder', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let key = await linkKeyOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let key = await linkKeyOf(context, 'Mapa obce k rozhovoru i reportáži')
       await sendBatch(context, key)
       let [group] = await createGroupStore(context.app.database).listByIssue(context.issueId)
       let batches = await createArtworkStore(context.app.database).listByIssue(context.issueId)
       assert.deepEqual(
         batches.map((batch) => [batch.holder.kind, batch.holder.name, batch.holder.folderId]),
-        [['group', 'Obálka', group?.folderId ?? null]],
+        [['group', 'Mapa obce k rozhovoru i reportáži', group?.folderId ?? null]],
       )
 
       for (let pass = 0; pass < 3; pass += 1) await drainRecordQueue(context.app.record)
       let issue = await createIssueStore(context.app.database).findById(context.issueId)
       let [, , artworks] =
         context.app.drive.spreadsheet(issue?.evidenceSpreadsheetId ?? '')?.lists ?? []
-      let row = artworks?.cells.find((cells) => cells[1] === 'Obálka')
+      let row = artworks?.cells.find((cells) => cells[1] === 'Mapa obce k rozhovoru i reportáži')
       assert.ok(row !== undefined)
       assert.equal(row[2], group?.folderId)
     }))
@@ -476,7 +514,7 @@ describe('a group’s link and its batches', () => {
 describe('the group store', () => {
   it('lets one valid link per group, and a link names an article or a group, never both', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
       let [group] = await createGroupStore(context.app.database).listByIssue(context.issueId)
       let links = createLinkStore(context.app.database)
       let link = await links.findByKey(group?.link?.key ?? '')
@@ -516,8 +554,8 @@ async function groupsMarkup(context: Context): Promise<string> {
 describe('a group’s missing folder in the detail (12j, #145)', () => {
   it('shows the group’s own folder in its frame, without Otevřít složku skupiny, and counts it', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let group = await groupOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let group = await groupOf(context, 'Mapa obce k rozhovoru i reportáži')
       context.app.drive.trash(group.folderId)
       await context.app.browser().get(`/l/${group.link?.key}/artworks`)
 
@@ -527,7 +565,9 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
       assert.match(text, new RegExp(`${GROUP_STOPPED} Zjištěno \\d+\\. \\d+\\. ve? \\d+:\\d{2}\\.`))
       assert.ok(section.includes(`action="${DETAIL}/artwork-groups/${group.id}/folders/check"`))
       /* The „⋯“ held only _Otevřít složku skupiny_, and a missing folder has nothing to open. */
-      assert.ok(!section.includes('aria-label="Další akce skupiny Obálka"'))
+      assert.ok(
+        !section.includes('aria-label="Další akce skupiny Mapa obce k rozhovoru i reportáži"'),
+      )
 
       let overview = textOf(await (await context.editor.get('/')).text())
       assert.ok(overview.includes('0 článků · 0 děl · 1 čeká na vás'))
@@ -539,8 +579,8 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
 
   it('names Licence with its link and the consents, and keeps the group’s folder to open', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let group = await groupOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let group = await groupOf(context, 'Mapa obce k rozhovoru i reportáži')
       assert.equal((await sendBatch(context, group.link?.key ?? '')).status, 200)
       context.app.drive.trash(group.licencesFolderId)
       await context.app.browser().get(`/l/${group.link?.key}/artworks`)
@@ -556,13 +596,15 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
           `${GROUP_STOPPED} Souhlasy se dál zaznamenávají. Konverzace se do složky uloží při první kontrole odpovědí po jejím návratu.`,
         ),
       )
-      assert.ok(section.includes('aria-label="Další akce skupiny Obálka"'))
+      assert.ok(
+        section.includes('aria-label="Další akce skupiny Mapa obce k rozhovoru i reportáži"'),
+      )
     }))
 
   it('says what Zkontrolovat znovu found, and the Callout goes once the folder is back', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let group = await groupOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let group = await groupOf(context, 'Mapa obce k rozhovoru i reportáži')
       context.app.drive.trash(group.folderId)
       await context.app.browser().get(`/l/${group.link?.key}/artworks`)
       let check = () =>
@@ -593,8 +635,8 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
 
   it('drops the mark when the detail finds the folder back, and keeps it while Drive is down', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let group = await groupOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let group = await groupOf(context, 'Mapa obce k rozhovoru i reportáži')
       context.app.drive.trash(group.folderId)
       await context.app.browser().get(`/l/${group.link?.key}/artworks`)
       context.app.drive.restore(group.folderId)
@@ -615,8 +657,8 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
 
   it('hides under a binned issue folder, which is counted once', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let group = await groupOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let group = await groupOf(context, 'Mapa obce k rozhovoru i reportáži')
       let issue = await createIssueStore(context.app.database).findById(context.issueId)
       assert.ok(issue?.folderIds.issue != null)
       context.app.drive.trash(issue.folderIds.issue)
@@ -635,8 +677,8 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
 
   it('keeps the step on a closed issue, without Zkontrolovat znovu', () =>
     withIssue(async (context) => {
-      await createGroup(context, { name: 'Obálka' })
-      let group = await groupOf(context, 'Obálka')
+      await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })
+      let group = await groupOf(context, 'Mapa obce k rozhovoru i reportáži')
       context.app.drive.trash(group.folderId)
       await context.app.browser().get(`/l/${group.link?.key}/artworks`)
       await context.editor.post(`${DETAIL}/close`, { returnTo: 'detail' }, `${DETAIL}/close`)

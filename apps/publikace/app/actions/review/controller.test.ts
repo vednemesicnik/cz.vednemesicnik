@@ -100,7 +100,7 @@ async function setup() {
   let browser = app.browser()
   await browser.signInAs(MARIE, 'Marie Horáková')
   let issueId = await seedIssue(app, 'VDM_2026_5')
-  let article = await seedArticle(app, issueId, 'Ilustrace k tématu Volby')
+  let article = await seedArticle(app, issueId, 'Ilustrace k textům o volbách')
   let batch = await seedBatch(app, article, issueId)
   return { app, article, batch, browser, issueId, store: createArtworkStore(app.database) }
 }

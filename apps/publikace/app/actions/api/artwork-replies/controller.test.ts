@@ -71,7 +71,7 @@ function reply(text: string, messageId = 'm-1') {
 async function setup() {
   let app = await createTestApp()
   let issueId = await seedIssue(app, 'VDM_2026_5')
-  let article = await seedArticle(app, issueId, 'Ilustrace k tématu Volby')
+  let article = await seedArticle(app, issueId, 'Ilustrace k textům o volbách')
   let batch = await seedBatch(app, article, issueId)
   return { app, article, batch, issueId, store: createArtworkStore(app.database) }
 }
@@ -105,7 +105,7 @@ describe('the reply check’s API', () => {
       let [item] = first.batches
       assert.equal(item?.sender, 'klara.simkova@external.test')
       assert.equal(item?.subjectTag, batch.tag)
-      assert.deepEqual(item?.subjectContains, ['Ilustrace k tématu Volby'])
+      assert.deepEqual(item?.subjectContains, ['Ilustrace k textům o volbách'])
       assert.equal(item?.subjectPrefix, 'Žádost o potvrzení souhlasu s užitím obrazových děl')
       assert.equal(item?.licencesFolderId, article.licencesFolderId)
       assert.equal(item?.isVerified, false)

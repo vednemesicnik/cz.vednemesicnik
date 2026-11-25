@@ -155,7 +155,7 @@ describe('where Přejmenovat vydání… and Odebrat vydání… stand (12u)', (
 
   it('leave Odebrat out once the issue has an article or a group', () =>
     withIssue(async (context) => {
-      await addGroup(context, 'Obálka')
+      await addGroup(context, 'Mapa obce k rozhovoru i reportáži')
       let detail = await (await context.editor.get(DETAIL)).text()
       assert.ok(detail.includes('Přejmenovat vydání…'))
       assert.ok(!detail.includes('Odebrat vydání…'))
@@ -217,7 +217,7 @@ describe('renaming an issue (12v)', () => {
   it('renames the folder and every _meta.json, opens the new address and marks the Registr', () =>
     withIssue(async (context) => {
       let articleId = await addArticle(context, 'Školní jídelna po roce')
-      await addGroup(context, 'Obálka')
+      await addGroup(context, 'Mapa obce k rozhovoru i reportáži')
       await drainRecordQueue(context.app.record)
 
       let answered = await rename(context, RENAMED)
@@ -290,7 +290,7 @@ describe('renaming an issue (12v)', () => {
   it('puts back everything it changed when Drive fails at a _meta.json', () =>
     withIssue(async (context) => {
       await addArticle(context, 'Školní jídelna po roce')
-      await addGroup(context, 'Obálka')
+      await addGroup(context, 'Mapa obce k rozhovoru i reportáži')
       let [first, second] = await metaFilesOf(context)
       context.app.drive.failRewriteOf(second ?? '')
 
@@ -308,7 +308,7 @@ describe('renaming an issue (12v)', () => {
   it('names the article folders and group folders it did not find, and changes nothing', () =>
     withIssue(async (context) => {
       await addArticle(context, 'Školní jídelna po roce')
-      let groupId = await addGroup(context, 'Obálka')
+      let groupId = await addGroup(context, 'Mapa obce k rozhovoru i reportáži')
       let group = await createGroupStore(context.app.database).findById(groupId)
       context.app.drive.trash(group?.folderId ?? '')
 
@@ -316,7 +316,7 @@ describe('renaming an issue (12v)', () => {
       assert.equal(groupOnly.status, 409)
       assert.equal(
         calloutOf(await groupOnly.text()),
-        'Obnovte složku skupiny „Obálka“ z koše, nebo ji vraťte na sdílený disk Publikace. K přejmenování vydání jsou potřeba složky všech skupin obrazových děl. Nic se nezměnilo.',
+        'Obnovte složku skupiny „Mapa obce k rozhovoru i reportáži“ z koše, nebo ji vraťte na sdílený disk Publikace. K přejmenování vydání jsou potřeba složky všech skupin obrazových děl. Nic se nezměnilo.',
       )
 
       let [article] = await createArticleStore(context.app.database).listCreated(context.issueId)
@@ -324,7 +324,7 @@ describe('renaming an issue (12v)', () => {
       let both = await (await rename(context, RENAMED)).text()
       assert.equal(
         calloutOf(both),
-        'Obnovte složky článku „Školní jídelna po roce“ a skupiny „Obálka“ z koše, nebo je vraťte na sdílený disk Publikace. K přejmenování vydání jsou potřeba složky všech článků a skupin obrazových děl. Nic se nezměnilo.',
+        'Obnovte složky článku „Školní jídelna po roce“ a skupiny „Mapa obce k rozhovoru i reportáži“ z koše, nebo je vraťte na sdílený disk Publikace. K přejmenování vydání jsou potřeba složky všech článků a skupin obrazových děl. Nic se nezměnilo.',
       )
       assert.match(both, /name="name"[^>]*value="VDM_2026_6"/)
       assert.equal(await storedName(context), ISSUE)

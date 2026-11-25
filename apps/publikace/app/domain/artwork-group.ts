@@ -1,6 +1,6 @@
 /**
- * Artwork groups (#133, `12e`): artworks that belong to no single article, a cover, a back page or
- * the illustrations to several texts. Only the editors-in-chief create one, in the issue detail;
+ * Artwork groups (#133, `12e`): images that go with several texts and so belong to no single
+ * article; the magazine illustrates no cover and no back page. Only the editors-in-chief create one, in the issue detail;
  * the link that goes out uploads into that one group (`03` rows 6 and 7). A group is tied to no
  * article: which texts its artworks go with, the note for the designer says.
  *
@@ -89,15 +89,15 @@ export function groupMeta(group: {
 /* `12a`, `12c`, `12e`. */
 export const GROUPS_SECTION_TITLE = 'Skupiny obrazových děl'
 export const NEW_GROUP_LABEL = 'Nová skupina'
-export const GROUPS_EMPTY_TEXT = tied`Pro obrázky bez vlastního článku: obálku, ilustrace k více textům, zadní stranu.`
+export const GROUPS_EMPTY_TEXT = tied`Skupinu založte, když dílo patří k více textům.`
 export const OPEN_GROUP_FOLDER_LABEL = 'Otevřít složku skupiny'
 
 export const NEW_GROUP_DIALOG_TITLE = 'Nová skupina obrazových děl'
-export const NEW_GROUP_DIALOG_TEXT = tied`Pro obrázky bez vlastního článku: obálku, ilustrace k více textům, zadní stranu. Skupina dostane složku a odkaz na nahrání.`
+export const NEW_GROUP_DIALOG_TEXT = tied`Do skupiny patří jen díla, která jsou společná více textům. Skupina dostane složku a odkaz na nahrání.`
 /** The design system's mark of an optional field, after its label (`34on3abs`). */
 export const OPTIONAL_MARK = '(nepovinné)'
 export const GROUP_NAME_LABEL = 'Název skupiny'
-export const GROUP_NAME_PLACEHOLDER = tied`Obrazová díla ke společnému tématu`
+export const GROUP_NAME_PLACEHOLDER = tied`Mapa obce k rozhovoru i reportáži`
 export const GROUP_NOTE_LABEL = 'Poznámka pro grafika'
 export const GROUP_NOTE_PLACEHOLDER = tied`Např. k textům „Název prvního textu“ a „Název druhého textu“.`
 export const GROUP_NOTE_HINT = tied`Ke kterým textům díla patří. Grafik ji uvidí u každého díla skupiny.`

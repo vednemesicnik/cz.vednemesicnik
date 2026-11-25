@@ -17,9 +17,21 @@ function plain(text: string): string {
 
 describe('checkGroup', () => {
   it('trims both fields and keys the name regardless of case and accent encoding', () => {
-    let check = checkGroup({ name: '  Obálka ', note: ' K obálce. ' }, new Map())
-    assert.deepEqual(check, { name: 'Obálka', nameKey: 'obálka', note: 'K obálce.', ok: true })
-    assert.equal(groupNameKey('OBÁLKA'), groupNameKey('obálka'))
+    let check = checkGroup(
+      { name: '  Mapa obce k rozhovoru i reportáži ', note: ' K rozhovoru i reportáži. ' },
+      new Map(),
+    )
+    assert.deepEqual(check, {
+      name: 'Mapa obce k rozhovoru i reportáži',
+      nameKey: 'mapa obce k rozhovoru i reportáži',
+      note: 'K rozhovoru i reportáži.',
+      ok: true,
+    })
+    /* Decomposed on purpose: an accent typed as a combining mark keys the same as a composed one. */
+    assert.equal(
+      groupNameKey('MAPA OBCE K ROZHOVORU I REPORTA\u0301Z\u030CI'),
+      groupNameKey('mapa obce k rozhovoru i reportáži'),
+    )
   })
 
   it('names the field to mend, with 12e’s words, both at once', () => {
@@ -37,10 +49,13 @@ describe('checkGroup', () => {
   })
 
   it('refuses a name the issue holds, naming the group as it is there', () => {
-    let check = checkGroup({ name: 'obálka', note: '' }, new Map([['obálka', 'Obálka']]))
+    let check = checkGroup(
+      { name: 'mapa obce k rozhovoru i reportáži', note: '' },
+      new Map([['mapa obce k rozhovoru i reportáži', 'Mapa obce k rozhovoru i reportáži']]),
+    )
     assert.equal(
       check.ok ? null : plain(check.errors.name ?? ''),
-      'Skupina Obálka už ve vydání je. Zvolte jiný název.',
+      'Skupina Mapa obce k rozhovoru i reportáži už ve vydání je. Zvolte jiný název.',
     )
   })
 })
@@ -58,17 +73,26 @@ describe('a group’s words', () => {
   })
 
   it('names the group in the request, the 21c lead and the 12o question, as the copywriter put it', () => {
-    let group = { kind: 'group' as const, name: 'Obálka' }
+    let group = { kind: 'group' as const, name: 'Mapa obce k rozhovoru i reportáži' }
     assert.equal(
       consentSubject(group, 'VDM_2026_5', '20261118T134500'),
-      'Žádost o potvrzení souhlasu s užitím obrazových děl ze skupiny „Obálka“ – VDM_2026_5 [20261118T134500]',
+      'Žádost o potvrzení souhlasu s užitím obrazových děl ze skupiny „Mapa obce k rozhovoru i reportáži“ – VDM_2026_5 [20261118T134500]',
     )
-    assert.equal(plain(sentLead(1, group)), 'Ve skupině „Obálka“ je nově nahrané 1 dílo.')
-    assert.equal(plain(sentLead(3, group)), 'Ve skupině „Obálka“ jsou nově nahraná 3 díla.')
-    assert.equal(plain(sentLead(5, group)), 'Ve skupině „Obálka“ je nově nahraných 5 děl.')
+    assert.equal(
+      plain(sentLead(1, group)),
+      'Ve skupině „Mapa obce k rozhovoru i reportáži“ je nově nahrané 1 dílo.',
+    )
+    assert.equal(
+      plain(sentLead(3, group)),
+      'Ve skupině „Mapa obce k rozhovoru i reportáži“ jsou nově nahraná 3 díla.',
+    )
+    assert.equal(
+      plain(sentLead(5, group)),
+      'Ve skupině „Mapa obce k rozhovoru i reportáži“ je nově nahraných 5 děl.',
+    )
     assert.equal(
       plain(discardDialogText(group, 'klara.simkova@external.test', false).join(' ')),
-      'Díla z této dávky i PDF jejich licencí se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (klara.simkova@external.test) žádné upozornění neodejde. Skupina „Obálka“ zůstane i prázdná. Dokud odkaz platí, lze jím díla nahrát znovu.',
+      'Díla z této dávky i PDF jejich licencí se přesunou do koše sdíleného disku Publikace. Díla z vydání zmizí a další žádost o souhlas k nim už nepůjde poslat. Poskytovateli (klara.simkova@external.test) žádné upozornění neodejde. Skupina „Mapa obce k rozhovoru i reportáži“ zůstane i prázdná. Dokud odkaz platí, lze jím díla nahrát znovu.',
     )
   })
 })
@@ -80,17 +104,17 @@ describe('groupMeta', () => {
         groupFolderId: 'f-group',
         issue: 'VDM_2026_5',
         issueFolderId: 'f-issue',
-        name: 'Obálka',
-        note: 'K obálce.',
+        name: 'Mapa obce k rozhovoru i reportáži',
+        note: 'K rozhovoru i reportáži.',
       }),
     ) as Record<string, unknown>
     assert.deepEqual(meta, {
       articleFolderId: 'f-group',
-      articleName: 'Obálka',
+      articleName: 'Mapa obce k rozhovoru i reportáži',
       issue: 'VDM_2026_5',
       issueFolderId: 'f-issue',
       kind: 'artwork-group',
-      note: 'K obálce.',
+      note: 'K rozhovoru i reportáži.',
       sheetId: null,
     })
   })

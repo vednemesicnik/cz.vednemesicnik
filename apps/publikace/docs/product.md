@@ -168,8 +168,8 @@ to souhlas_, cannot be discarded.
 
 ### Artwork group
 
-Artworks that belong to no single article, a cover or the illustrations to several texts, go to
-an artwork group (`12e`). It has no state of its own: it exists once it is created, with its folder
+An image that goes with several texts belongs to no single article, so it goes to an artwork group
+(`12e`). The magazine illustrates no cover and no back page, so a group holds nothing else. It has no state of its own: it exists once it is created, with its folder
 and its link, and its batches go through the states above, as an article's do. Only the
 editors-in-chief create one, two groups of one issue never share a name (`03` rows 6 and 7), and
 no group is ever deleted. Its note for the designer reaches the print folder with its artworks.

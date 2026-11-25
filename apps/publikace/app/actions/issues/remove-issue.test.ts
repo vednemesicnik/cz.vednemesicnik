@@ -241,8 +241,8 @@ describe('removing an issue (12w)', () => {
         at: now(),
         formKey: crypto.randomUUID(),
         issueId: context.issueId,
-        name: 'Obálka',
-        nameKey: 'obálka',
+        name: 'Mapa obce k rozhovoru i reportáži',
+        nameKey: 'mapa obce k rozhovoru i reportáži',
         note: '',
         startedBy: { email: MARIE, name: 'Marie Horáková' },
       })

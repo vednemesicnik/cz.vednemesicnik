@@ -85,10 +85,10 @@ describe('the rename dialog (12v)', () => {
   })
 
   it('names a group by its kind, with the groups’ own reason', () => {
-    assert.deepEqual(shown(missingFoldersCallout([], [named('Ilustrace k tématu Volby')])), {
+    assert.deepEqual(shown(missingFoldersCallout([], [named('Ilustrace k textům o volbách')])), {
       text: 'K přejmenování vydání jsou potřeba složky všech skupin obrazových děl. Nic se nezměnilo.',
       title:
-        'Obnovte složku skupiny „Ilustrace k tématu Volby“ z koše, nebo ji vraťte na sdílený disk Publikace.',
+        'Obnovte složku skupiny „Ilustrace k textům o volbách“ z koše, nebo ji vraťte na sdílený disk Publikace.',
     })
     assert.equal(
       shown(missingFoldersCallout([], [named('A'), named('B')])).title,
@@ -97,15 +97,21 @@ describe('the rename dialog (12v)', () => {
   })
 
   it('names the first article and the first group of both kinds, and points at the detail for more', () => {
-    assert.deepEqual(shown(missingFoldersCallout([named('A')], [named('Obálka')])), {
-      text: 'K přejmenování vydání jsou potřeba složky všech článků a skupin obrazových děl. Nic se nezměnilo.',
-      title:
-        'Obnovte složky článku „A“ a skupiny „Obálka“ z koše, nebo je vraťte na sdílený disk Publikace.',
-    })
-    let more = missingFoldersCallout([named('A'), named('B')], [named('Obálka')])
+    assert.deepEqual(
+      shown(missingFoldersCallout([named('A')], [named('Mapa obce k rozhovoru i reportáži')])),
+      {
+        text: 'K přejmenování vydání jsou potřeba složky všech článků a skupin obrazových děl. Nic se nezměnilo.',
+        title:
+          'Obnovte složky článku „A“ a skupiny „Mapa obce k rozhovoru i reportáži“ z koše, nebo je vraťte na sdílený disk Publikace.',
+      },
+    )
+    let more = missingFoldersCallout(
+      [named('A'), named('B')],
+      [named('Mapa obce k rozhovoru i reportáži')],
+    )
     assert.equal(
       shown(more).title,
-      'Obnovte složky článku „A“ a skupiny „Obálka“ z koše, nebo je vraťte na sdílený disk Publikace.',
+      'Obnovte složky článku „A“ a skupiny „Mapa obce k rozhovoru i reportáži“ z koše, nebo je vraťte na sdílený disk Publikace.',
     )
     assert.equal(
       shown(more).text,
@@ -116,22 +122,30 @@ describe('the rename dialog (12v)', () => {
   it('names every binned file in a sentence up to three, and lists them from four', () => {
     let file = (name: string, kind: 'article' | 'group' = 'article') => ({ ...named(name), kind })
     assert.equal(
-      shown(binnedFilesCallout([file('Obálka', 'group')])).title,
-      'Otevřete soubor pro skupinu „Obálka“ a obnovte ho z koše.',
+      shown(binnedFilesCallout([file('Mapa obce k rozhovoru i reportáži', 'group')])).title,
+      'Otevřete soubor pro skupinu „Mapa obce k rozhovoru i reportáži“ a obnovte ho z koše.',
     )
-    let two = binnedFilesCallout([file('Školní jídelna po roce'), file('Obálka', 'group')])
+    let two = binnedFilesCallout([
+      file('Školní jídelna po roce'),
+      file('Mapa obce k rozhovoru i reportáži', 'group'),
+    ])
     assert.deepEqual(shown(two), {
       text: 'Nic se nezměnilo.',
       title:
-        'Otevřete soubor pro článek „Školní jídelna po roce“ a soubor pro skupinu „Obálka“ a obnovte je z koše.',
+        'Otevřete soubor pro článek „Školní jídelna po roce“ a soubor pro skupinu „Mapa obce k rozhovoru i reportáži“ a obnovte je z koše.',
     })
     assert.deepEqual(links(two.title), [
       'soubor pro článek „Školní jídelna po roce“',
-      'soubor pro skupinu „Obálka“',
+      'soubor pro skupinu „Mapa obce k rozhovoru i reportáži“',
     ])
     assert.ok(!plain(two.title).includes('_meta.json'))
 
-    let four = binnedFilesCallout([file('A'), file('B'), file('C'), file('Obálka', 'group')])
+    let four = binnedFilesCallout([
+      file('A'),
+      file('B'),
+      file('C'),
+      file('Mapa obce k rozhovoru i reportáži', 'group'),
+    ])
     assert.equal(shown(four).title, 'Obnovte soubory z koše.')
     assert.deepEqual(
       four.list?.map((item) => item.text),
@@ -139,7 +153,7 @@ describe('the rename dialog (12v)', () => {
         'Soubor pro článek „A“',
         'Soubor pro článek „B“',
         'Soubor pro článek „C“',
-        'Soubor pro skupinu „Obálka“',
+        'Soubor pro skupinu „Mapa obce k rozhovoru i reportáži“',
       ],
     )
   })
