@@ -336,10 +336,13 @@ The morning digest is one call, `/api/v1/proofreading-digest/run`, from
 The app builds the digest and sends it through the Mailer. The suite covers what is in it and
 what is recorded; what it cannot cover is how Gmail shows the e-mail and whether a retry keeps to
 one message. The job's token is checked as the reply check's is, so the same `testConfiguration`
-step applies.
+step applies, and the run goes behind the same tunnel. Its project has no Script Properties and
+gets no trigger until the app is on its public address (#79): each step runs
+`sendProofreadingDigest` by hand, and its log line is the answer's state (`sent`, `nothing`,
+`unconfirmed` or `no-address`).
 
 1. In Nastavení › Korektura, set the address to a test group whose mailbox you can read.
-2. Hand over two articles in an issue's detail, then run the job once by hand from its project, or
+2. Hand over two articles in an issue's detail, then run `sendProofreadingDigest`, or
    call the API with `curl` and the job's token. One e-mail _Ke korektuře – ‹dnešní datum›_ arrives with both
    under _Nově předané_, each button leading to `/proofreading?article=‹id›`, and the job's
    history says _Přehled odeslán. Nová předání: 2._
