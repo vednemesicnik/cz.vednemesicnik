@@ -342,12 +342,12 @@ Evidence, binned with its folder, is no longer written.
 
 **Apps Script jobs that talk to the app**, all as `publikace.app@` on their own triggers:
 
-| Job                                        | Interval         | API                                 | Exists                      |
-| ------------------------------------------ | ---------------- | ----------------------------------- | --------------------------- |
-| `SCRIPT__Publication__Artwork_Replies`     | 30 min           | `artwork-replies/claim`, `…/report` | yes                         |
-| `SCRIPT__Publication__Article_Approvals`   | 30 min           | `approvals/claim`, `…/report`       | locally, not deployed (#96) |
-| `SCRIPT__Publication__Print_Handoff`       | 6 h              | `print-handoff/claim`, `…/report`   | no (#119)                   |
-| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00 | `proofreading-digest/run`           | yes, no trigger until #79   |
+| Job                                        | Interval         | API                                 | Exists                    |
+| ------------------------------------------ | ---------------- | ----------------------------------- | ------------------------- |
+| `SCRIPT__Publication__Artwork_Replies`     | 30 min           | `artwork-replies/claim`, `…/report` | yes                       |
+| `SCRIPT__Publication__Article_Approvals`   | 30 min           | `approvals/claim`, `…/report`       | yes, no trigger until #79 |
+| `SCRIPT__Publication__Print_Handoff`       | 6 h              | `print-handoff/claim`, `…/report`   | no (#119)                 |
+| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00 | `proofreading-digest/run`           | yes, no trigger until #79 |
 
 Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A claim leaves out
 a removed article or group, its clauses and its batches, discarded ones included (`12z`, `12f`). A report must

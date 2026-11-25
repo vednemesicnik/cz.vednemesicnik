@@ -320,7 +320,7 @@ made before the app, from their Evidence; the two never see each other's clauses
    v Licencích_.
 5. On another article, stop the app as the run opens, with the shell loop of the reply check's
    step 5. Start it again, wait ten minutes and run the job: each author has one e-mail, not two,
-   because the Mailer's key is the clause's.
+   because the Mailer's key is the clause's `sendKey`.
 6. `/settings/jobs` lists _Žádosti a odpovědi u článků_ with its last run.
 7. On the article of step 4, now _Schváleno_, add a comment in its Doc and open the issue's page:
    it stays _Schváleno_. Type a word in the Doc, wait a minute for Drive to save the revision and
