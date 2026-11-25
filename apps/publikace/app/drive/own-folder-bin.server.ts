@@ -10,7 +10,13 @@ import type { IssueFiles } from './issue-files.server.ts'
  * bins a folder's contents with it, so the one call either happens or does not.
  */
 
-export type ForeignChild = { folderName: string; id: string; isFolder: boolean; name: string }
+export type ForeignChild = {
+  folderId: string
+  folderName: string
+  id: string
+  isFolder: boolean
+  name: string
+}
 
 export type BinOutcome =
   | { kind: 'already-binned' }
@@ -23,6 +29,11 @@ export type OwnFolder = {
   folderId: string
   /** What the folder's name is, for a Callout naming the files a person put into it. */
   folderName: string
+  /**
+   * The folder and the folders the app made in it, in the order a Callout names them (`12w`):
+   * Drive lists children in no order of its own.
+   */
+  folderOrder: readonly string[]
   /** Where the app made it. */
   expectedParentId: string
   /** The IDs the app stored, beside the tags it puts on every file of an attempt. */
@@ -55,6 +66,7 @@ async function foreignIn(
   for (let child of children) {
     if (!isOwn(child, ownIds)) {
       foreign.push({
+        folderId: folder.id,
         folderName: folder.name,
         id: child.id,
         isFolder: child.isFolder,
@@ -67,6 +79,15 @@ async function foreignIn(
     }
   }
   return foreign
+}
+
+/** A folder the order does not name, one the app made deeper, comes after those it names. */
+function inFolderOrder(files: readonly ForeignChild[], order: readonly string[]): ForeignChild[] {
+  let rank = (id: string) => {
+    let index = order.indexOf(id)
+    return index === -1 ? order.length : index
+  }
+  return files.toSorted((a, b) => rank(a.folderId) - rank(b.folderId))
 }
 
 export async function binOwnFolder(files: IssueFiles, folder: OwnFolder): Promise<BinOutcome> {
@@ -84,7 +105,8 @@ export async function binOwnFolder(files: IssueFiles, folder: OwnFolder): Promis
     folder.ownIds,
   )
   if (foreign === null) return { kind: 'unavailable' }
-  if (foreign.length > 0) return { files: foreign, kind: 'foreign' }
+  if (foreign.length > 0)
+    return { files: inFolderOrder(foreign, folder.folderOrder), kind: 'foreign' }
 
   return (await files.trash(folder.folderId)) ? { kind: 'binned' } : { kind: 'unavailable' }
 }

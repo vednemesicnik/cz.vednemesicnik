@@ -175,11 +175,7 @@ const GROUP_FOREIGN_WORDS: ForeignFilesWords = {
   step: tied`Přesuňte ze složky skupiny soubory, které do ní nedala aplikace.`,
 }
 
-/**
- * Files a person put into the group's folders, named as the issue's and the article's removal name
- * them. `12f` draws every file and a list from four, as the design system's Callout does; the three
- * removals share one form until all of them move to it together.
- */
+/** Files a person put into the group's folders (`12f`), named as `12w` names them. */
 export function groupForeignFilesCallout(files: readonly ForeignFile[]): FixCallout {
   return foreignFilesCallout(files, GROUP_FOREIGN_WORDS)
 }

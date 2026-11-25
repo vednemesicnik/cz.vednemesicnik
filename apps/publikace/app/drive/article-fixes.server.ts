@@ -422,6 +422,9 @@ export async function removeArticle(
       expectedParentId: articlesFolderId,
       folderId: article.folderId,
       folderName: article.name,
+      folderOrder: [article.folderId, article.artworksFolderId, article.licencesFolderId].filter(
+        (id): id is string => id !== null,
+      ),
       ownIds,
     })
     if (binned.kind === 'binned' || binned.kind === 'already-binned') return { kind: 'removed' }

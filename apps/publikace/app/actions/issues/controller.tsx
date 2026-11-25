@@ -188,6 +188,7 @@ import {
   canRemove,
   canRename,
   type FixCallout,
+  type ForeignFile,
   type IssueContents,
   foreignFilesCallout,
   missingFoldersCallout,
@@ -234,6 +235,7 @@ import {
 import { checkIssueFolders, recordedIssueMissing } from '../../drive/issue-folders.server.ts'
 import { discardBatch, holderOf, resendBatch } from '../../drive/artworks-setup.server.ts'
 import { checkAllDocRevisions, type DocChecks } from '../../drive/doc-revisions.server.ts'
+import type { ForeignChild } from '../../drive/own-folder-bin.server.ts'
 import {
   cancelFinalVersion,
   replaceFinalVersion,
@@ -433,6 +435,17 @@ function takeSettled(session: Session | undefined): SettledArticle | null {
 
 function articlesOf(context: PageContext): ArticlesContext {
   return context.get(Articles) as ArticlesContext
+}
+
+/** A person's files as the removals' Callout names them: each one and its folder a link (`12w`). */
+function foreignFilesOf(files: readonly ForeignChild[]): ForeignFile[] {
+  return files.map((file) => ({
+    folderHref: folderUrl(file.folderId),
+    folderId: file.folderId,
+    folderName: file.folderName,
+    href: file.isFolder ? folderUrl(file.id) : driveFileUrl(file.id),
+    name: file.name,
+  }))
 }
 
 /** The subfolders' addresses on Drive, for the names in a missing folder's step (`12j`). */
@@ -1904,15 +1917,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           case 'moved':
             return dialog(movedFolderCallout(folderUrl(outcome.folderId)))
           case 'foreign':
-            return dialog(
-              foreignFilesCallout(
-                outcome.files.map((file) => ({
-                  folderName: file.folderName,
-                  href: file.isFolder ? folderUrl(file.id) : driveFileUrl(file.id),
-                  name: file.name,
-                })),
-              ),
-            )
+            return dialog(foreignFilesCallout(foreignFilesOf(outcome.files)))
           case 'not-connected':
           case 'disconnected':
             return dialog(REMOVE_DISCONNECTED)
@@ -2323,15 +2328,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           case 'moved':
             return dialog(movedGroupFolderCallout(folderUrl(outcome.folderId), issue.name))
           case 'foreign':
-            return dialog(
-              groupForeignFilesCallout(
-                outcome.files.map((file) => ({
-                  folderName: file.folderName,
-                  href: file.isFolder ? folderUrl(file.id) : driveFileUrl(file.id),
-                  name: file.name,
-                })),
-              ),
-            )
+            return dialog(groupForeignFilesCallout(foreignFilesOf(outcome.files)))
           case 'not-connected':
           case 'disconnected':
             return dialog(REMOVE_GROUP_DISCONNECTED)
@@ -2398,15 +2395,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           case 'moved':
             return dialog(movedArticleFolderCallout(folderUrl(outcome.folderId), issue.name))
           case 'foreign':
-            return dialog(
-              articleForeignFilesCallout(
-                outcome.files.map((file) => ({
-                  folderName: file.folderName,
-                  href: file.isFolder ? folderUrl(file.id) : driveFileUrl(file.id),
-                  name: file.name,
-                })),
-              ),
-            )
+            return dialog(articleForeignFilesCallout(foreignFilesOf(outcome.files)))
           case 'not-connected':
           case 'disconnected':
             return dialog(REMOVE_ARTICLE_DISCONNECTED)

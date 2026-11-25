@@ -281,13 +281,18 @@ export function IssueStepDialog(handle: Handle<{ step: IssueStepDialogView }>) {
   }
 }
 
-/** The step as the heading, a list of links when there are many, and what came of it. */
+/**
+ * The step as the heading, a list of links when there are many, and what came of it. A list over
+ * several places takes its spacing from the design system's `.vdm-callout__group`, so it sets no
+ * margin of its own between the title and the last paragraph (`12w`).
+ */
 export function FixCalloutView(handle: Handle<{ callout: FixCallout }>) {
   return () => {
-    let { list, text, title } = handle.props.callout
+    let { groups, list, text, title } = handle.props.callout
+    let isGrouped = groups !== undefined
     return (
       <Callout tone="error">
-        <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+        <p class="vdm-callout__title" style={{ margin: isGrouped ? 0 : '0 0 4px' }}>
           <CalloutParts parts={title} />
         </p>
         {list === undefined ? null : (
@@ -299,7 +304,21 @@ export function FixCalloutView(handle: Handle<{ callout: FixCallout }>) {
             ))}
           </ul>
         )}
-        <p style={{ margin: 0 }}>
+        {groups?.map((group) => (
+          <>
+            <p class="vdm-callout__group">
+              <CalloutParts parts={group.lead} />
+            </p>
+            <ul class="vdm-callout__list">
+              {group.list.map((item) => (
+                <li>
+                  <CalloutParts parts={[item]} />
+                </li>
+              ))}
+            </ul>
+          </>
+        ))}
+        <p style={{ margin: isGrouped ? '6px 0 0' : 0 }}>
           <CalloutParts parts={text} />
         </p>
       </Callout>

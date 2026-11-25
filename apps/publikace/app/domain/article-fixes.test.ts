@@ -150,18 +150,20 @@ describe('Odebrat článek (12z)', () => {
     assert.equal(plain(toast.detail ?? ''), 'od 24. 11. · Jakub Novák')
   })
 
-  it('names at most three files of a person, and the folder to put the article back in', () => {
+  it('names every file of a person, and the folder to put the article back in', () => {
     let files = ['a.docx', 'b.jpg', 'c.jpg', 'd.jpg'].map((name) => ({
+      folderHref: 'https://drive.google.com/drive/folders/artworks-1',
+      folderId: 'artworks-1',
       folderName: 'Obrazová díla',
       href: `https://drive.google.com/file/d/${name}/view`,
       name,
     }))
     let callout = articleForeignFilesCallout(files)
-    let text = callout.text.map((part) => (typeof part === 'string' ? part : part.text)).join('')
-    assert.equal(
-      plain(text),
-      'Ve složce „Obrazová díla“: a.docx, b.jpg, c.jpg a 1 dalších. Článek zůstal, jak byl.',
+    assert.deepEqual(
+      callout.groups?.map((group) => group.list.map((item) => item.text)),
+      [['a.docx', 'b.jpg', 'c.jpg', 'd.jpg']],
     )
+    assert.equal(plain(String(callout.text[0])), 'Článek zůstal, jak byl.')
     assert.equal(
       plain(String(callout.title[0])),
       'Přesuňte ze složky článku soubory, které do ní nedala aplikace.',

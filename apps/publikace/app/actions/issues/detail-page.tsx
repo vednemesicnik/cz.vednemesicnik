@@ -679,7 +679,7 @@ const checkedCalloutStyle = css({ position: 'relative' })
 const bandStyle = css({ padding: '0 20px 16px' })
 
 /* A folder's name and its icon never part at a line break. */
-const folderLinkStyle = css({ fontWeight: 'inherit', whiteSpace: 'nowrap' })
+const folderLinkStyle = css({ whiteSpace: 'nowrap' })
 
 /* What waits on the editors, in the ink of _Čeká na vás_ (`12a`, `11a`). */
 const waitingLineStyle = css({ color: 'var(--state-attention-text)', fontWeight: 600 })

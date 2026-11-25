@@ -564,6 +564,12 @@ export async function removeIssue(
       expectedParentId: setup.issuesFolderId,
       folderId,
       folderName: issue.name,
+      folderOrder: [
+        folderId,
+        issue.folderIds.articles,
+        issue.groupsFolderId,
+        issue.folderIds.print,
+      ].filter((id): id is string => id !== null),
       ownIds,
     })
     if (binned.kind === 'binned' || binned.kind === 'already-binned') {

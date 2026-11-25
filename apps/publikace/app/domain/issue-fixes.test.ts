@@ -187,21 +187,58 @@ describe('the remove dialog (12w)', () => {
     )
   })
 
-  it('names the files a person put in, a sentence a folder, three at most', () => {
-    let file = (name: string, folderName = 'Články') => ({ ...named(name), folderName })
+  let file = (name: string, folderName = 'Články') => ({
+    ...named(name),
+    folderHref: `https://drive.test/folders/${folderName}`,
+    folderId: folderName,
+    folderName,
+  })
+
+  it('names up to three files a person put in, a sentence a folder, each folder a link', () => {
+    let one = foreignFilesCallout([file('poznamky-k-vydani.docx')])
     assert.equal(
-      plain(foreignFilesCallout([file('poznamky-k-vydani.docx')]).text),
+      plain(one.text),
       'Ve složce „Články“: poznamky-k-vydani.docx. Vydání zůstalo, jak bylo.',
     )
+    assert.deepEqual(links(one.text), ['Články', 'poznamky-k-vydani.docx'])
+    assert.equal(one.groups, undefined)
+    let three = foreignFilesCallout([
+      file('b.pdf', 'VDM_2003_1'),
+      file('obalka-10.pdf'),
+      file('obalka-2.pdf'),
+    ])
     assert.equal(
-      plain(foreignFilesCallout([file('a.docx'), file('b.pdf', 'VDM_2026_6')]).text),
-      'Ve složce „Články“: a.docx. Ve složce „VDM_2026_6“: b.pdf. Vydání zůstalo, jak bylo.',
+      plain(three.text),
+      'Ve složce „VDM_2003_1“: b.pdf. Ve složce „Články“: obalka-2.pdf a obalka-10.pdf. Vydání zůstalo, jak bylo.',
     )
-    let five = foreignFilesCallout(['a', 'b', 'c', 'd', 'e'].map((name) => file(`${name}.docx`)))
+  })
+
+  it('lists every file from four, a line for each folder in the order given, names in Czech order', () => {
+    let four = foreignFilesCallout(['d', 'c', 'b', 'a'].map((name) => file(`${name}.docx`)))
     assert.equal(
-      plain(five.text),
-      'Ve složce „Články“: a.docx, b.docx, c.docx a 2 dalších. Vydání zůstalo, jak bylo.',
+      plain(four.title),
+      'Přesuňte ze složky vydání soubory, které do ní nedala aplikace.',
     )
-    assert.deepEqual(links(five.text), ['a.docx', 'b.docx', 'c.docx'])
+    assert.deepEqual(
+      four.groups?.map((group) => [plain(group.lead), group.list.map((item) => item.text)]),
+      [['Ve složce „Články“:', ['a.docx', 'b.docx', 'c.docx', 'd.docx']]],
+    )
+    assert.equal(plain(four.text), 'Vydání zůstalo, jak bylo.')
+    let mixed = foreignFilesCallout([
+      file('rozpocet.xlsx', 'VDM_2003_1'),
+      file('dotaznik.pdf'),
+      file('logo.png', '_Podklady_pro_tisk'),
+      file('čtenáři.docx'),
+      file('cena.docx'),
+      file('fotky', '_Podklady_pro_tisk'),
+    ])
+    assert.deepEqual(
+      mixed.groups?.map((group) => [links(group.lead), group.list.map((item) => item.text)]),
+      [
+        [['VDM_2003_1'], ['rozpocet.xlsx']],
+        [['Články'], ['cena.docx', 'čtenáři.docx', 'dotaznik.pdf']],
+        [['_Podklady_pro_tisk'], ['fotky', 'logo.png']],
+      ],
+    )
   })
 })

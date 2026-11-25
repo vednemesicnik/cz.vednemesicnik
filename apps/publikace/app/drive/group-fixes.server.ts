@@ -268,6 +268,9 @@ export async function removeGroup(
       expectedParentId: groupsFolderId,
       folderId: group.folderId,
       folderName: group.name,
+      folderOrder: [group.folderId, group.artworksFolderId, group.licencesFolderId].filter(
+        (id): id is string => id !== null,
+      ),
       ownIds,
     })
     if (binned.kind === 'binned' || binned.kind === 'already-binned') return { kind: 'removed' }

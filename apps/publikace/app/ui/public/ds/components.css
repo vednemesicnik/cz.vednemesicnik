@@ -815,6 +815,9 @@ a.vdm-pagination__item:hover { background: var(--bg-tertiary); }
 .vdm-link { font-weight: var(--font-weight-medium); color: var(--link-strong); text-decoration: underline; text-underline-offset: 2px; }
 .vdm-link:hover { text-decoration-thickness: 2px; }
 .vdm-link:focus-visible { outline: none; box-shadow: var(--focus-shadow); border-radius: var(--radius-sm); }
+/* A link inside heavier text keeps that text's weight, so a sentence does not thin out halfway: a Callout title (600), strong text, a heading.
+   In running text at 400 it stays 500. Rozhodnuto 25. 11. 2026 (24972ef5), z Publikace. */
+:where(.vdm-callout__title, strong, b, h1, h2, h3, h4) .vdm-link { font-weight: inherit; }
 
 /* ---------- List header (cioukqn6) ---------- */
 .vdm-list-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; }
@@ -1009,6 +1012,13 @@ a.vdm-pagination__item:hover { background: var(--bg-tertiary); }
 .vdm-callout__list { margin: 6px 0 0; padding-left: 18px; }
 .vdm-callout__list li + li { margin-top: 2px; }
 .vdm-callout__list a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+/* A list of things in several places (folders): a lead line names each place once, in the words a
+   sentence of up to three would use, and its things follow in their own list. Lead 6 px under the
+   title like a list, its list 2 px under it so the lead keeps the items' step, 10 px between places.
+   Rozhodnuto 25. 11. 2026 (tw25hpbd, z Publikace) */
+.vdm-callout__group { margin: 6px 0 0; }
+.vdm-callout__group + .vdm-callout__list { margin-top: 2px; }
+.vdm-callout__list + .vdm-callout__group { margin-top: 10px; }
 .vdm-callout__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
 .vdm-callout__close { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; margin: -6px -8px -6px auto; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); cursor: pointer; }
 .vdm-callout__close:hover { background: var(--bg-hover); color: var(--text-primary); }

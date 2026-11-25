@@ -34,12 +34,19 @@ export function canRemove(contents: IssueContents): boolean {
 /** A piece of a Callout's sentence: plain text, or a link to Drive in a new tab. */
 export type CalloutPart = string | { href: string; text: string }
 
+/** A link on its own line of a Callout's list. */
+export type CalloutLink = { href: string; text: string }
+
+/** One place of a list over several places: the line that names it, and its links under it. */
+export type CalloutGroup = { lead: CalloutPart[]; list: CalloutLink[] }
+
 /**
- * A Callout of either dialog: the step as its heading, an optional list of links under it, and
- * what came of it.
+ * A Callout of either dialog: the step as its heading, an optional list of links under it, either
+ * flat or split by place, and what came of it.
  */
 export type FixCallout = {
-  list?: { href: string; text: string }[]
+  groups?: CalloutGroup[]
+  list?: CalloutLink[]
   text: CalloutPart[]
   title: CalloutPart[]
 }
@@ -265,8 +272,8 @@ export function movedFolderCallout(folderHref: string): FixCallout {
   }
 }
 
-/** A file the app did not make, and the folder it is in. */
-export type ForeignFile = NamedTarget & { folderName: string }
+/** A file the app did not make, and the folder it is in, which the Callout links to. */
+export type ForeignFile = NamedTarget & { folderHref: string; folderId: string; folderName: string }
 
 /** The words around the files: the step, and what stayed, the issue's unless an article's. */
 export type ForeignFilesWords = { kept: string; step: string }
@@ -276,29 +283,56 @@ const ISSUE_FOREIGN_WORDS: ForeignFilesWords = {
   step: tied`Přesuňte ze složky vydání soubory, které do ní nedala aplikace.`,
 }
 
+/* Czech order, with the numbers in a name by value, so that `navrh-2` stands before `navrh-10`. */
+const BY_NAME = new Intl.Collator('cs', { numeric: true })
+
 /**
- * Files a person put into the issue's folders (`12w`) or an article's (`12z`): a sentence for each
- * folder, at most three files named across all of them, then _a ‹n› dalších_.
+ * The files by folder, the folders in the order they came and each one's files by name. The order
+ * of the folders is the caller's: Drive answers in no order, and a file that stays in its place
+ * between two attempts is easier to find than one that moved (`tw25hpbd`).
+ */
+function byFolder(files: readonly ForeignFile[]): ForeignFile[][] {
+  let folders = new Map<string, ForeignFile[]>()
+  for (let file of files) folders.set(file.folderId, [...(folders.get(file.folderId) ?? []), file])
+  return [...folders.values()].map((inFolder) =>
+    inFolder.toSorted((a, b) => BY_NAME.compare(a.name, b.name)),
+  )
+}
+
+function folderLead(file: ForeignFile): CalloutPart[] {
+  return ['Ve složce „', { href: file.folderHref, text: file.folderName }, '“:']
+}
+
+/**
+ * Files a person put into the folders of an issue (`12w`), an article (`12z`) or a group (`12f`),
+ * every one of them, because the removal goes through only once each is moved. Up to three
+ * across all folders, a sentence for each folder; from four, a line for each folder and its files
+ * under it, the design system's rule for things to mend outside the page (`2qzhntrn`,
+ * `tw25hpbd`).
  */
 export function foreignFilesCallout(
   files: readonly ForeignFile[],
   words: ForeignFilesWords = ISSUE_FOREIGN_WORDS,
 ): FixCallout {
-  let shown = files.slice(0, 3)
-  let folders = [...new Set(shown.map((file) => file.folderName))]
+  let folders = byFolder(files)
+  if (files.length >= 4) {
+    return {
+      groups: folders.map((inFolder) => ({
+        lead: folderLead(inFolder[0]),
+        list: inFolder.map((file) => ({ href: file.href, text: file.name })),
+      })),
+      text: [words.kept],
+      title: [words.step],
+    }
+  }
   let text: CalloutPart[] = []
-  folders.forEach((folderName, folderIndex) => {
-    let inFolder = shown.filter((file) => file.folderName === folderName)
-    let isLast = folderIndex === folders.length - 1
-    text.push(`${folderIndex > 0 ? ' ' : ''}Ve složce „${folderName}“: `)
+  folders.forEach((inFolder, folderIndex) => {
+    if (folderIndex > 0) text.push(' ')
+    text.push(...folderLead(inFolder[0]), ' ')
     inFolder.forEach((file, index) => {
-      if (index > 0) {
-        let isLastNamed = index === inFolder.length - 1 && !(isLast && files.length > 3)
-        text.push(isLastNamed ? tied` a ` : ', ')
-      }
+      if (index > 0) text.push(index === inFolder.length - 1 ? tied` a ` : ', ')
       text.push({ href: file.href, text: file.name })
     })
-    if (isLast && files.length > 3) text.push(tied` a ${files.length - 3} dalších`)
     text.push('.')
   })
   text.push(` ${words.kept}`)

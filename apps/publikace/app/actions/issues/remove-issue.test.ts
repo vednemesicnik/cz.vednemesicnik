@@ -174,6 +174,25 @@ describe('removing an issue (12w)', () => {
       assert.ok(!isTrashed(context, issue?.folderIds.issue))
     }))
 
+  it('lists every file from four, by folder in the order the app names its folders', () =>
+    withIssue(async (context) => {
+      let issue = await issueOf(context)
+      context.app.drive.seedDoc('doc-print', 'logo.png', issue?.folderIds.print ?? '')
+      context.app.drive.seedDoc('doc-b', 'obalka-2.pdf', issue?.folderIds.articles ?? '')
+      context.app.drive.seedDoc('doc-a', 'obalka-10.pdf', issue?.folderIds.articles ?? '')
+      context.app.drive.seedDoc('doc-root', 'rozpocet.xlsx', issue?.folderIds.issue ?? '')
+
+      let answered = await remove(context)
+      assert.equal(answered.status, 409)
+      let html = await answered.text()
+      assert.equal(html.match(/class="vdm-callout__group"/g)?.length, 3)
+      assert.equal(
+        calloutOf(html)?.replace(/\s+/g, ' '),
+        `Přesuňte ze složky vydání soubory, které do ní nedala aplikace. Ve složce „${ISSUE}“: rozpocet.xlsx Ve složce „Články“: obalka-2.pdf obalka-10.pdf Ve složce „_Podklady_pro_tisk“: logo.png Vydání zůstalo, jak bylo.`,
+      )
+      assert.equal((await issueOf(context))?.removedAt, null)
+    }))
+
   it('refuses a folder moved from where the app made it', () =>
     withIssue(async (context) => {
       let issue = await issueOf(context)
