@@ -3,7 +3,7 @@ import { describe, it } from 'remix/test'
 
 import type { DocCheckTarget } from '../data/articles.server.ts'
 import type { FilePlace } from './artwork-files.server.ts'
-import { checkDocRevisions } from './doc-revisions.server.ts'
+import { checkAllDocRevisions, checkDocRevisions } from './doc-revisions.server.ts'
 
 const BASELINE = Temporal.Instant.from('2026-11-21T09:07:00Z')
 const TARGET: DocCheckTarget = {
@@ -12,6 +12,7 @@ const TARGET: DocCheckTarget = {
   checkedAt: BASELINE,
   docId: 'd-7',
   markedAt: Temporal.Instant.from('2026-11-21T09:12:00Z'),
+  revisedAt: null,
 }
 
 function at(iso: string): Temporal.Instant {
@@ -82,5 +83,37 @@ describe('checkDocRevisions', () => {
     let gone = deps({ kind: 'gone' }, [])
     assert.equal(await checkDocRevisions(gone.deps, TARGET), 'unavailable')
     assert.equal(gone.listed(), 0)
+  })
+})
+
+describe('checkAllDocRevisions', () => {
+  let modifiedAt = at('2026-11-23T07:30:00Z')
+  let probe = () =>
+    deps({ kind: 'here', modifiedAt, parents: [] }, [
+      at('2026-11-22T07:12:00Z'),
+      at('2026-11-23T07:12:00Z'),
+    ])
+
+  it('tells an article that turns Upraveno po schválení now', async () => {
+    assert.deepEqual(await checkAllDocRevisions(probe().deps, [TARGET]), {
+      moved: [],
+      revised: [7],
+    })
+  })
+
+  it('tells one already revised whose newest revision moved later, and not one that stayed', async () => {
+    let earlier = { ...TARGET, articleId: 8, revisedAt: at('2026-11-22T07:12:00Z') }
+    let same = { ...TARGET, articleId: 9, revisedAt: at('2026-11-23T07:12:00Z') }
+    assert.deepEqual(await checkAllDocRevisions(probe().deps, [earlier, same]), {
+      moved: [8],
+      revised: [],
+    })
+  })
+
+  it('tells nothing when Drive does not answer or the Doc has no revision after its PDF', async () => {
+    let failing = deps({ kind: 'here', modifiedAt, parents: [] }, null)
+    assert.deepEqual(await checkAllDocRevisions(failing.deps, [TARGET]), { moved: [], revised: [] })
+    let quiet = deps({ kind: 'here', modifiedAt, parents: [] }, [at('2026-11-21T08:00:00Z')])
+    assert.deepEqual(await checkAllDocRevisions(quiet.deps, [TARGET]), { moved: [], revised: [] })
   })
 })

@@ -61,6 +61,74 @@ function revisionCalls(app: TestApp): number {
   return app.drive.calls.filter((call) => call.endsWith('/revisions')).length
 }
 
+const CHECK = `${DETAIL}/doc-revisions/check`
+
+/** The island of the detail's own revision check, mounted on the page (`12q`). */
+const CHECK_ISLAND = '/ui/public/doc-revision-check/component.tsx'
+
+/** The sentence a screen reader hears on the load that shows a find (`12q`). */
+function announcement(html: string): string {
+  return textOf(/<p role="status" class="vdm-sr-only">(.*?)<\/p>/s.exec(html)?.[1] ?? '').trim()
+}
+
+/** The IDs of the rows tinted as just found (`12q`). */
+function tintedRows(html: string): string[] {
+  return [...html.matchAll(/<div id="article-(\d+)" role="row"[^>]*class="[^"]*vdm-changed/g)].map(
+    (match) => match[1] ?? '',
+  )
+}
+
+/** The articles' rows in the order the detail stands them. */
+function rowOrder(html: string): string[] {
+  return [...html.matchAll(/id="article-(\d+)" role="row"/g)].map((match) => match[1] ?? '')
+}
+
+/**
+ * The detail as its page leaves it: opened, then its own check once it stands, then the reload
+ * the island starts when the answer lists a changed row (`12q`). The check's answer comes back
+ * with the page.
+ */
+async function opened(
+  editor: TestBrowser,
+  path = DETAIL,
+): Promise<{ changed: number[]; first: string; html: string }> {
+  let first = await (await editor.get(path)).text()
+  let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(first)?.[1] ?? ''
+  let response = await editor.post(CHECK, { _csrf: csrf }, path)
+  assert.equal(response.status, 200)
+  let { changed } = (await response.json()) as { changed: number[] }
+  let html = changed.length === 0 ? first : await (await editor.get(path)).text()
+  return { changed, first, html }
+}
+
+/** Every author of the article agreed through a run, archived in `Licence`: _Schváleno_. */
+async function approve(app: TestApp, articleId: number): Promise<void> {
+  let articles = createArticleStore(app.database)
+  await articles.takeProofreading(articleId, LENKA, MARKED_AT.subtract({ hours: 1 }), 'writing')
+  let marked = await articles.markFinalVersion({
+    at: MARKED_AT,
+    by: LENKA,
+    id: articleId,
+    pdf: {
+      attemptKey: `a-${articleId}`,
+      docModifiedAt: EXPORTED_AT,
+      fileId: `pdf-${articleId}`,
+      hash: `h-${articleId}`,
+    },
+    takenAt: MARKED_AT.subtract({ hours: 1 }),
+  })
+  assert.equal(marked.kind, 'done')
+  let at = stamp(MARKED_AT.add({ hours: 2 }))
+  await app.database.exec(
+    sql`UPDATE article_clauses
+        SET state = 'sent', claim_key = 'run-' || article_id, first_claimed_at = ${at},
+            sent_at = ${at}, reply_message_id = 'm-' || id, reply_received_at = ${at},
+            reply_text = 'Souhlasím', is_exact_consent = 1, approved_at = ${at},
+            consent_file_id = 'c-' || id
+        WHERE article_id = ${articleId}`,
+  )
+}
+
 /**
  * An article of two authors whose final version Lenka marked from the Doc as it was at
  * `EXPORTED_AT`, and whose both conversations are in `Licence`: _Schváleno_.
@@ -81,24 +149,7 @@ async function approved(): Promise<{
     sql`INSERT INTO article_authors (article_id, position, name, email)
         VALUES (${articleId}, 2, 'Ondřej Beneš', 'ondrej.benes@external.test')`,
   )
-  let articles = createArticleStore(app.database)
-  await articles.takeProofreading(articleId, LENKA, MARKED_AT.subtract({ hours: 1 }), 'writing')
-  let marked = await articles.markFinalVersion({
-    at: MARKED_AT,
-    by: LENKA,
-    id: articleId,
-    pdf: { attemptKey: 'a-1', docModifiedAt: EXPORTED_AT, fileId: 'pdf-old', hash: 'h-old' },
-    takenAt: MARKED_AT.subtract({ hours: 1 }),
-  })
-  assert.equal(marked.kind, 'done')
-  let at = stamp(MARKED_AT.add({ hours: 2 }))
-  await app.database.exec(
-    sql`UPDATE article_clauses
-        SET state = 'sent', claim_key = 'run-1', first_claimed_at = ${at}, sent_at = ${at},
-            reply_message_id = 'm-' || id, reply_received_at = ${at}, reply_text = 'Souhlasím',
-            is_exact_consent = 1, approved_at = ${at}, consent_file_id = 'c-' || id
-        WHERE article_id = ${articleId}`,
-  )
+  await approve(app, articleId)
   let editor = app.browser()
   await editor.signInAs(MARIE.email, MARIE.name)
   return { app, articleId, docId, editor, issueId }
@@ -122,18 +173,20 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
   it('stays Schváleno while the Doc has no revision after its PDF, a comment included', async () => {
     let { app, docId, editor } = await approved()
     try {
-      let detail = textOf(await (await editor.get(DETAIL)).text())
-      assert.ok(detail.includes('Schváleno konverzace v Licencích'))
+      let detail = await opened(editor)
+      assert.ok(textOf(detail.html).includes('Schváleno konverzace v Licencích'))
+      assert.deepEqual(detail.changed, [])
       assert.equal(revisionCalls(app), 0, 'a Doc that did not move is not listed')
 
       /* A revision made before the export is in the PDF. */
       app.drive.reviseDoc(docId, EXPORTED_AT.subtract({ minutes: 1 }))
       app.drive.touch(docId, EDITED_AT)
-      detail = textOf(await (await editor.get(DETAIL)).text())
-      assert.ok(detail.includes('Schváleno konverzace v Licencích'))
+      detail = await opened(editor)
+      assert.ok(textOf(detail.html).includes('Schváleno konverzace v Licencích'))
+      assert.deepEqual(detail.changed, [], 'nothing to reload')
       assert.equal(revisionCalls(app), 1)
 
-      await editor.get(DETAIL)
+      await opened(editor)
       assert.equal(revisionCalls(app), 1, 'the same modifiedTime is not listed twice')
     } finally {
       await app.close()
@@ -144,13 +197,24 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
     let { app, articleId, docId, editor } = await approved()
     try {
       app.drive.reviseDoc(docId, EDITED_AT)
-      let html = await (await editor.get(DETAIL)).text()
+      let { changed, first, html } = await opened(editor)
+      assert.ok(textOf(first).includes('Schváleno'), 'the page stands before Drive is asked')
+      assert.ok(first.includes(CHECK_ISLAND))
+      assert.equal(announcement(first), '')
+      assert.deepEqual(changed, [articleId])
       assert.ok(textOf(html).includes('Upraveno po schválení poslední úprava 22. 11.'))
+      assert.deepEqual(tintedRows(html), [String(articleId)])
+      assert.equal(announcement(html), 'Nově má 1 článek stav „Upraveno po schválení“.')
+      assert.ok(!html.includes(CHECK_ISLAND), 'the reload the check started asks nothing')
+      assert.equal(statusText(html), '', 'no toast')
       assert.ok(html.includes('aria-label="Označit novou verzi článku Kavárna v knihovně"'))
       assert.ok(textOf(html).includes('Označit novou verzi…'))
       assert.ok(!html.includes('"label":"Označit novou finální verzi…"'), 'not in „⋯“ too')
 
-      let open = textOf(await (await editor.get(`${DETAIL}?article=${articleId}`)).text())
+      let openHtml = await (await editor.get(`${DETAIL}?article=${articleId}`)).text()
+      assert.deepEqual(tintedRows(openHtml), [], 'tinted until the next load')
+      assert.equal(announcement(openHtml), '')
+      let open = textOf(openHtml)
       assert.ok(
         open.includes(
           'Text dokumentu byl po uložení PDF upraven Poslední úprava textu 22. 11. v 8:12. Autoři souhlasili s verzí z 21. 11. v 10:12. Až bude text hotový, označte novou finální verzi.',
@@ -174,11 +238,17 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
     try {
       app.drive.reviseDoc(docId, EDITED_AT)
       app.drive.failStep('revisions')
-      assert.ok(textOf(await (await editor.get(DETAIL)).text()).includes('Schváleno'))
+      let failed = await opened(editor)
+      assert.deepEqual(failed.changed, [])
+      assert.ok(textOf(failed.html).includes('Schváleno'))
+      assert.equal(announcement(failed.html), '')
       app.drive.heal()
-      assert.ok(textOf(await (await editor.get(DETAIL)).text()).includes('Upraveno po schválení'))
+      assert.ok(textOf((await opened(editor)).html).includes('Upraveno po schválení'))
       app.drive.goDown()
-      assert.ok(textOf(await (await editor.get(DETAIL)).text()).includes('Upraveno po schválení'))
+      let down = await opened(editor)
+      assert.deepEqual(down.changed, [])
+      assert.ok(textOf(down.html).includes('Upraveno po schválení'))
+      assert.deepEqual(tintedRows(down.html), [])
     } finally {
       await app.close()
     }
@@ -188,7 +258,7 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
     let { app, articleId, docId, editor } = await approved()
     try {
       app.drive.reviseDoc(docId, EDITED_AT)
-      let href = buttonHref(await (await editor.get(DETAIL)).text())
+      let href = buttonHref((await opened(editor)).html)
       assert.ok(href !== null, 'the row offers the step')
       let dialogHtml = await (await editor.get(href)).text()
       let dialog = textOf(dialogHtml)
@@ -276,9 +346,9 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       )
       /* Between the export and the marking: counted only from a baseline read before it. */
       app.drive.reviseDoc(docId, EXPORTED_AT.add({ minutes: 1 }))
-      assert.ok(textOf(await (await editor.get(DETAIL)).text()).includes('Schváleno'))
+      assert.ok(textOf((await opened(editor)).html).includes('Schváleno'))
       app.drive.reviseDoc(docId, EDITED_AT)
-      assert.ok(textOf(await (await editor.get(DETAIL)).text()).includes('Upraveno po schválení'))
+      assert.ok(textOf((await opened(editor)).html).includes('Upraveno po schválení'))
     } finally {
       await app.close()
     }
@@ -291,7 +361,9 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       await app.database.exec(
         sql`UPDATE issues SET closed_at = ${stamp(EDITED_AT)} WHERE id = ${issueId}`,
       )
-      await editor.get(DETAIL)
+      let { changed, first } = await opened(editor)
+      assert.deepEqual(changed, [])
+      assert.ok(!first.includes(CHECK_ISLAND), 'a closed issue mounts no check')
       assert.equal(revisionCalls(app), 0)
     } finally {
       await app.close()
@@ -307,7 +379,7 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
         /VDM_2026_7 .* Aktivní 1 schválený 0 — /,
       )
 
-      await editor.get(DETAIL)
+      await opened(editor)
       let calls = revisionCalls(app)
       assert.match(
         textOf(await (await editor.get('/')).text()),
@@ -319,6 +391,75 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
         sql`UPDATE issues SET closed_at = ${stamp(EDITED_AT)} WHERE id = ${issueId}`,
       )
       assert.match(textOf(await (await editor.get('/')).text()), /VDM_2026_7 .* Uzavřené 1 0 — /)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('makes no Drive call before the page, and mounts no check under a dialog', async () => {
+    let { app, docId, editor } = await approved()
+    try {
+      app.drive.reviseDoc(docId, EDITED_AT)
+      let html = await (await editor.get(DETAIL)).text()
+      assert.ok(textOf(html).includes('Schváleno'))
+      assert.equal(revisionCalls(app), 0)
+      assert.equal(app.drive.calls.length, 0, 'the detail asks Drive nothing before it stands')
+
+      let dialog = await (await editor.get(`/issues/${ISSUE}/rename`)).text()
+      assert.ok(dialog.includes('role="status"'))
+      assert.ok(!dialog.includes(CHECK_ISLAND), 'no check under a dialog at its own address')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps a row just found revised where Schváleno stood for that one load, then sorts it with what waits', async () => {
+    let { app, articleId, docId, editor, issueId } = await approved()
+    try {
+      let newer = await seedArticle(app, issueId, 'Kino v tělocvičně')
+      await approve(app, newer.articleId)
+      let before = await opened(editor)
+      assert.deepEqual(rowOrder(before.html), [String(newer.articleId), String(articleId)])
+
+      app.drive.reviseDoc(docId, EDITED_AT)
+      let { html } = await opened(editor)
+      assert.deepEqual(rowOrder(html), [String(newer.articleId), String(articleId)])
+      assert.deepEqual(tintedRows(html), [String(articleId)])
+
+      let next = await (await editor.get(DETAIL)).text()
+      assert.deepEqual(rowOrder(next), [String(articleId), String(newer.articleId)])
+      assert.deepEqual(tintedRows(next), [])
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('counts every row it found in the sentence, by the Czech forms', async () => {
+    let { app, articleId, docId, editor, issueId } = await approved()
+    try {
+      let second = await seedArticle(app, issueId, 'Kino v tělocvičně')
+      await approve(app, second.articleId)
+      app.drive.reviseDoc(docId, EDITED_AT)
+      app.drive.reviseDoc(second.docId, EDITED_AT)
+      let { changed, html } = await opened(editor)
+      assert.deepEqual([...changed].sort(), [articleId, second.articleId].sort())
+      assert.equal(announcement(html), 'Nově mají 2 články stav „Upraveno po schválení“.')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('moves only the day of a row already Upraveno po schválení, untinted and unannounced', async () => {
+    let { app, articleId, docId, editor } = await approved()
+    try {
+      app.drive.reviseDoc(docId, EDITED_AT)
+      await opened(editor)
+      app.drive.reviseDoc(docId, EDITED_AT.add({ hours: 24 }))
+      let { changed, html } = await opened(editor)
+      assert.deepEqual(changed, [articleId])
+      assert.ok(textOf(html).includes('Upraveno po schválení poslední úprava 23. 11.'))
+      assert.deepEqual(tintedRows(html), [])
+      assert.equal(announcement(html), '')
     } finally {
       await app.close()
     }

@@ -157,6 +157,18 @@ export function revisedCalloutText(
   return tied`Poslední úprava textu ${formatMoment(revisedAt, today)}. Autoři souhlasili s verzí z ${formatMoment(markedAt, today)}. Až bude text hotový, označte novou finální verzi.`
 }
 
+/**
+ * What a screen reader hears when the detail's own check finds approved texts edited after their
+ * PDF, in place of the tint the eye sees (`12q`). A count, since a name runs to 200 characters,
+ * and the tag's exact words, which the reader then looks for. Worded by the copywriter
+ * (`7s7yseap`).
+ */
+export function revisedAnnouncement(count: number): string {
+  if (count === 1) return tied`Nově má 1 článek stav „Upraveno po schválení“.`
+  if (count >= 2 && count <= 4) return tied`Nově mají ${count} články stav „Upraveno po schválení“.`
+  return tied`Nově má ${count} článků stav „Upraveno po schválení“.`
+}
+
 /** Beside _Souhlasí_ in place of the reply's time: which version the consent belongs to. */
 export function agreedWithLine(markedAt: Temporal.Instant, today: Temporal.Instant): string {
   return tied`s verzí z ${formatMoment(markedAt, today)}`

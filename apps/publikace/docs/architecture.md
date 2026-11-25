@@ -294,6 +294,8 @@ sequenceDiagram
   Note over J,A: later runs read the replies through Reply_Check and archive „Souhlasím“
   A->>A: all authors archived: Schváleno
   E->>A: opens the issue detail
+  A-->>E: the detail at once, from the database
+  E->>A: once it stands: POST …/doc-revisions/check
   A->>D: a revision of the Doc after the PDF?
   A->>A: yes: Upraveno po schválení, Označit novou verzi (12q)
 ```

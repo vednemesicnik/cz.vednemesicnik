@@ -233,7 +233,7 @@ import {
 } from '../../drive/article-folders.server.ts'
 import { checkIssueFolders, recordedIssueMissing } from '../../drive/issue-folders.server.ts'
 import { discardBatch, holderOf, resendBatch } from '../../drive/artworks-setup.server.ts'
-import { checkAllDocRevisions } from '../../drive/doc-revisions.server.ts'
+import { checkAllDocRevisions, type DocChecks } from '../../drive/doc-revisions.server.ts'
 import {
   cancelFinalVersion,
   replaceFinalVersion,
@@ -261,6 +261,7 @@ import {
   REVISED_CALLOUT_TITLE,
   REVISED_DIALOG_CANCEL,
   REVISED_DIALOG_MAIL,
+  revisedAnnouncement,
   revisedCalloutText,
   revisedDialogConsents,
   revisedRestoredToast,
@@ -299,6 +300,7 @@ import {
   type ClausesView,
   DetailPage,
   type DiscardView,
+  type DocCheckView,
   type GroupsView,
   type IssueMissingView,
   type LinkBlockView,
@@ -389,6 +391,30 @@ type SettledArticle = { at: string | null; id: number; state: ArticleState }
 
 function flashSettled(context: PageContext, settled: SettledArticle): void {
   ;(context.get(Session) as Session | undefined)?.flash(SETTLED_SESSION_KEY, settled)
+}
+
+/*
+ * What the detail's own revision check just found, for the reload it starts (`12q`): the issue,
+ * so it shows on that detail only, and the articles that turned _Upraveno po schválení_, which
+ * that one load keeps in place, tinted, with the sentence for a screen reader. Taken once; its
+ * presence also tells the reload not to ask Drive again.
+ */
+const DOC_CHECKED_SESSION_KEY = 'docRevisionsChecked'
+
+type DocChecked = { name: string; revised: readonly number[] }
+
+function flashDocChecked(session: Session | undefined, checked: DocChecked): void {
+  session?.flash(DOC_CHECKED_SESSION_KEY, checked)
+}
+
+function takeDocChecked(session: Session | undefined, name: string): DocChecked | null {
+  let value = session?.get(DOC_CHECKED_SESSION_KEY)
+  if (value === undefined) return null
+  session?.unset(DOC_CHECKED_SESSION_KEY)
+  if (typeof value !== 'object' || value === null) return null
+  let { name: checkedName, revised } = value as Record<string, unknown>
+  if (checkedName !== name || !Array.isArray(revised)) return null
+  return { name, revised: revised.filter((id): id is number => Number.isSafeInteger(id)) }
 }
 
 function takeSettled(session: Session | undefined): SettledArticle | null {
@@ -527,17 +553,18 @@ function issueMissingView(issue: Issue): IssueMissingView | null {
 
 /**
  * The Docs of the issue's approved articles, asked whether they were edited after their PDF
- * (#101, `01a`): what Drive said is recorded and the rows read it. Only an open issue, and without
- * an account the records stand as they are.
+ * (#101, `01a`), once the detail stands (`12q`): what Drive said is recorded and the rows read it.
+ * Only an open issue, and without an account or an answer the records stand as they are.
  */
-async function recheckDocRevisions(context: PageContext, issue: Issue): Promise<void> {
-  if (issue.closedAt !== null) return
+async function recheckDocRevisions(context: PageContext, issue: Issue): Promise<DocChecks> {
+  let nothing: DocChecks = { moved: [], revised: [] }
+  if (issue.closedAt !== null) return nothing
   let { articles, artworks } = articlesOf(context)
   let targets = await articles.listDocCheckTargets(issue.id)
-  if (targets.length === 0) return
+  if (targets.length === 0) return nothing
   let token = await artworks.token()
-  if (!token.ok) return
-  await checkAllDocRevisions({ articles, files: artworks.files(token.accessToken) }, targets)
+  if (!token.ok) return nothing
+  return checkAllDocRevisions({ articles, files: artworks.files(token.accessToken) }, targets)
 }
 
 /** The block for the link and the rows of _Články_, from what the database has (`12a`). */
@@ -639,6 +666,7 @@ async function linkAndArticles(
   issue: Issue,
   isChanged: boolean,
   settled: SettledArticle | null,
+  justRevised: ReadonlySet<number>,
 ): Promise<{ articles: ArticleRowView[]; link: LinkBlockView | undefined }> {
   let { articles, artworks, links, origin } = articlesOf(context)
   let isOpen = issue.closedAt === null
@@ -657,9 +685,12 @@ async function linkAndArticles(
     let artworksLink = artworksLinks.get(article.id)
     let state = articleState(article)
     let ids = { id: String(article.id), name: issue.name }
-    /* A settled row stands where its previous state put it until the next load (`12l`). */
+    /* A settled row stands where its previous state put it until the next load (`12l`), and
+       so does a row the detail's own check just found revised, tinted (`12q`). */
     let isSettled = settled?.id === article.id
-    let sortState = isSettled && settled !== null ? settled.state : state
+    let isJustRevised = justRevised.has(article.id) && state === 'revised'
+    let sortState =
+      isSettled && settled !== null ? settled.state : isJustRevised ? 'approved' : state
     let sortAt =
       isSettled && settled !== null
         ? parseStamp(settled.at)
@@ -717,6 +748,7 @@ async function linkAndArticles(
           : null,
       },
       handOverAction: isOpen && state === 'writing' ? routes.issues.handOver.href(ids) : null,
+      isChanged: isJustRevised,
       sortAt,
       sortState,
       artworks: { count: totalOf(articleCounts), line: articleArtworksLine(articleCounts) },
@@ -742,8 +774,7 @@ async function linkAndArticles(
     Number(
       (row.artworks.line?.isWaiting ?? false) ||
         row.missing !== null ||
-        row.state.tone === 'problem' ||
-        row.state.tone === 'waiting',
+        (!row.isChanged && (row.state.tone === 'problem' || row.state.tone === 'waiting')),
     )
   rows.sort(
     (a, b) =>
@@ -924,6 +955,8 @@ async function renderDetail(
     groupFixing?: GroupFixView
     isFolderGone?: boolean
     isRenewing?: boolean
+    /** The detail itself, which asks Drive about approved texts once it stands (`12q`). */
+    isShown?: boolean
     newGroup?: NewGroupDialogView
     replacing?: FinalVersionDialogProps
     status?: number
@@ -932,11 +965,13 @@ async function renderDetail(
 ): Promise<Response> {
   let session = context.get(Session) as Session | undefined
   let fixed = takeIssueFixed(context)
+  let checked = takeDocChecked(session, issue.name)
   let { articles, link } = await linkAndArticles(
     context,
     issue,
     takeLinkChanged(session, issue.name),
     takeSettled(session),
+    new Set(checked?.revised ?? []),
   )
   return context.render(
     <DetailPage
@@ -944,6 +979,7 @@ async function renderDetail(
       missingAddress={await missingAddressOf(context, articles)}
       artworks={await artworksOf(context, issue, filterOf(context))}
       discarding={options.discarding}
+      docCheck={await docCheckOf(context, issue, articles, checked, options.isShown ?? false)}
       fixing={options.fixing}
       driveAccount={await driveView(context)}
       groupFixing={options.groupFixing}
@@ -967,6 +1003,36 @@ async function renderDetail(
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
+}
+
+/**
+ * The detail's own revision check (`12q`) on an open issue: the sentence for a screen reader on
+ * the load that shows what it found, and the check itself only on the detail as opened. A
+ * dialog's page and the check's own reload ask nothing, nor an issue with no approved text. Its
+ * key is new on every render, so a later load of the detail asks again.
+ */
+async function docCheckOf(
+  context: PageContext,
+  issue: Issue,
+  rows: readonly ArticleRowView[],
+  checked: DocChecked | null,
+  isShown: boolean,
+): Promise<DocCheckView | null> {
+  if (issue.closedAt !== null) return null
+  let revised = rows.filter((row) => row.isChanged).length
+  let canCheck =
+    isShown &&
+    checked === null &&
+    (await articlesOf(context).articles.listDocCheckTargets(issue.id)).length > 0
+  return {
+    announcement: revised === 0 ? null : revisedAnnouncement(revised),
+    check: canCheck
+      ? {
+          href: routes.issues.checkDocRevisions.href({ name: issue.name }),
+          key: crypto.randomUUID(),
+        }
+      : null,
+  }
 }
 
 /**
@@ -1470,12 +1536,31 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
 
-        /* The one Drive call left before the page (#101). The folders on record as missing
-           are asked after it stands, by `checkMarkedFolders` (`12j`). */
-        await recheckDocRevisions(context, issue)
+        /* No Drive call before the page: the folders on record as missing and the approved
+           texts are asked once it stands, by `checkMarkedFolders` (`12j`) and
+           `checkDocRevisions` (`12q`). Only this page asks, never one with a dialog over it. */
         return renderDetail(context, issue, {
           isFolderGone: takeFolderGone(context.get(Session), issue.name),
+          isShown: true,
         })
+      },
+
+      /* `12q`: what the detail asks once it stands. What changed is recorded and flashed for
+         the reload the page's island starts, and the answer lists the articles whose rows
+         change, so the island knows what to wait for. No toast and no redirect, as
+         `checkMarkedFolders`. */
+      async checkDocRevisions(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let found = await recheckDocRevisions(context, issue)
+        let changed = [...found.revised, ...found.moved]
+        if (changed.length > 0) {
+          flashDocChecked(context.get(Session) as Session | undefined, {
+            name: issue.name,
+            revised: found.revised,
+          })
+        }
+        return Response.json({ changed })
       },
 
       /* `12j`: what the detail's Callouts ask once the page stands. The records change and the

@@ -63,6 +63,9 @@ export const routes = route({
     /* `12j`: the detail's own check of every folder on record as missing, which its Callouts
        start once the page stands, so that Drive never holds the page back. */
     checkMarkedFolders: post('/issues/:name/folders/check-marked'),
+    /* `12q`: the detail's own question to Drive whether an approved text was edited after its
+       PDF, which its page asks once it stands, for the same reason. */
+    checkDocRevisions: post('/issues/:name/doc-revisions/check'),
     /* `12k`: _Předat ke korektuře_ and _Zrušit předání_ act at once, with no dialog, and the
        toast's _Vrátit_ sends the other one (`12l`). With `?undo=` each takes back only the step
        it was offered for. */

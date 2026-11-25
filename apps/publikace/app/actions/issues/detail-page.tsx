@@ -118,6 +118,7 @@ import {
   handOverButtonLabel,
   HANDING_OVER_LABEL,
 } from '../../domain/handover.ts'
+import { DocRevisionCheck } from '../../ui/public/doc-revision-check/component.tsx'
 import { FolderCheck } from '../../ui/public/folder-check/component.tsx'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 import { CANCEL_FINAL_LABEL, OPEN_PDF_LABEL } from '../../domain/proofreading-queue.ts'
@@ -271,7 +272,15 @@ export type ArticleRowView = {
    * every author agreed, of an issue still open (`12r`). Where _Zrušit finální verzi_ stood.
    */
   replaceFinalAction: string | null
-  /** Where the row stands among the others: a settled row by the state it had (`12l`). */
+  /**
+   * Just found _Upraveno po schválení_ by the detail's own check: tinted, and standing where
+   * _Schváleno_ stood, until the next load (`12q`).
+   */
+  isChanged: boolean
+  /**
+   * Where the row stands among the others: a settled row by the state it had (`12l`), a row
+   * just found revised as the approved one it was (`12q`).
+   */
   sortAt: Temporal.Instant | null
   sortState: ArticleState
   /** The article's one tag and the fact under it (`01a`). */
@@ -396,11 +405,23 @@ export type NewGroupDialogView = {
   values: { name: string; note: string }
 }
 
+/**
+ * The detail's own question to Drive about its approved texts (`12q`): what a screen reader hears
+ * on the load that shows a find, and the check, on the detail as opened only. `key` is new on
+ * every render, so the island asks again on a later load rather than staying as it was.
+ */
+export type DocCheckView = {
+  announcement: string | null
+  check: { href: string; key: string } | null
+}
+
 export type DetailPageProps = {
   articles: readonly ArticleRowView[]
   missingAddress?: MissingAddressView
   artworks: ArtworksView
   discarding?: DiscardView
+  /** On an open issue only; `null` on a closed one. */
+  docCheck?: DocCheckView | null
   driveAccount: { expectedEmail: string; status: DriveStatus }
   /** The issue's artwork groups (`12a`); none on an unfinished issue. */
   groups?: GroupsView
@@ -945,6 +966,7 @@ function ArticleRow(
         <TableRow
           columns={ARTICLE_COLUMNS}
           id={`article-${article.id}`}
+          isChanged={article.isChanged}
           isLast={isLast || article.missing !== null || article.clauses !== null}
           isSelected={article.isOpen}
         >
@@ -963,7 +985,7 @@ function ArticleRow(
               <a href={article.stateHref} mix={stateLinkStyle}>
                 <StatusTag
                   detail={article.state.detail}
-                  isOnTint={article.isOpen}
+                  isOnTint={article.isOpen || article.isChanged}
                   tone={article.state.tone}
                 >
                   {article.state.label}
@@ -1172,12 +1194,13 @@ function Articles(
   handle: Handle<{
     articles: readonly ArticleRowView[]
     csrfToken: string
+    docCheck: DocCheckView | null
     isHeadingFocused: boolean
     missingAddress?: MissingAddressView
   }>,
 ) {
   return () => {
-    let { articles, csrfToken, isHeadingFocused, missingAddress } = handle.props
+    let { articles, csrfToken, docCheck, isHeadingFocused, missingAddress } = handle.props
     return (
       <Section count={articles.length} isFocused={isHeadingFocused} title="Články">
         {missingAddress === undefined ? null : (
@@ -1220,6 +1243,20 @@ function Articles(
               />
             ))}
           </div>
+        )}
+        {/* Stands empty from the first render, so a sentence the check's reload adds is
+            announced; outside the island, whose key changes with every load (`12q`). */}
+        {docCheck === null ? null : (
+          <p class="vdm-sr-only" role="status">
+            {docCheck.announcement ?? ''}
+          </p>
+        )}
+        {docCheck === null || docCheck.check === null ? null : (
+          <DocRevisionCheck
+            csrfToken={csrfToken}
+            href={docCheck.check.href}
+            key={docCheck.check.key}
+          />
         )}
       </Section>
     )
@@ -1693,6 +1730,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       articles,
       artworks,
       discarding,
+      docCheck = null,
       driveAccount,
       groups,
       isFolderGone = false,
@@ -1815,6 +1853,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
                 <Articles
                   articles={articles}
                   csrfToken={getCsrfToken(getContext())}
+                  docCheck={docCheck}
                   isHeadingFocused={isArticlesFocused}
                   missingAddress={missingAddress}
                 />

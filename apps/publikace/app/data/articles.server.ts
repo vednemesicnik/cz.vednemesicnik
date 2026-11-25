@@ -249,8 +249,8 @@ export type FinalVersionPdf = {
 
 /**
  * A standing marking of an open issue every author agreed to, whose Doc the issue detail asks
- * Drive about (#101): its Doc, the baseline a revision counts from, and the `modifiedTime` the
- * last check examined.
+ * Drive about (#101): its Doc, the baseline a revision counts from, the `modifiedTime` the last
+ * check examined, and the revision found so far, so a check can tell a new find from one it knew.
  */
 export type DocCheckTarget = {
   articleId: number
@@ -258,6 +258,7 @@ export type DocCheckTarget = {
   checkedAt: Temporal.Instant
   docId: string
   markedAt: Temporal.Instant
+  revisedAt: Temporal.Instant | null
 }
 
 /** An article on the page Korektura (`15a`): only what a proofreader needs for the work. */
@@ -1536,7 +1537,8 @@ export function createArticleStore(database: Database): ArticleStore {
 
     async listDocCheckTargets(issueId) {
       let result = await database.exec(
-        sql`SELECT f.article_id, f.marked_at, f.doc_modified_at, f.doc_checked_at, a.doc_id
+        sql`SELECT f.article_id, f.marked_at, f.doc_modified_at, f.doc_checked_at,
+                   f.doc_revised_at, a.doc_id
             FROM final_versions f
             JOIN articles a ON a.id = f.article_id
             JOIN issues i ON i.id = a.issue_id
@@ -1555,6 +1557,7 @@ export function createArticleStore(database: Database): ArticleStore {
           checkedAt: parseStamp(row['doc_checked_at']) ?? baseline,
           docId: String(row['doc_id']),
           markedAt,
+          revisedAt: parseStamp(row['doc_revised_at']),
         }
       })
     },
