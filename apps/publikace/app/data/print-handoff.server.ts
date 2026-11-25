@@ -264,7 +264,7 @@ async function recordGroup(
 ): Promise<void> {
   let found = await db.exec(
     sql`SELECT 1 FROM artwork_groups WHERE id = ${group.groupId} AND issue_id = ${issueId}
-          AND created_at IS NOT NULL`,
+          AND created_at IS NOT NULL AND removed_at IS NULL`,
   )
   if ((found.rows ?? []).length === 0) return
   let { copy } = group
@@ -410,6 +410,7 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
         let groups = await db.exec(
           sql`SELECT id, issue_id, name, note, folder_id FROM artwork_groups
               WHERE issue_id IN (SELECT value FROM json_each(${ids})) AND created_at IS NOT NULL
+                AND removed_at IS NULL
               ORDER BY created_at, id`,
         )
         let groupCopies = await groupCopiesOf(db, ids)

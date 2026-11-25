@@ -87,6 +87,9 @@ import {
   RENAME_ARTICLE_LABEL,
 } from '../../domain/article-fixes.ts'
 import { ArticleFixDialog, type ArticleFixView } from './article-fix-dialogs.tsx'
+import { GroupFields } from './group-fields.tsx'
+import { GroupFixDialog, type GroupFixView } from './group-fix-dialogs.tsx'
+import { EDIT_GROUP_LABEL, REMOVE_GROUP_LABEL } from '../../domain/group-fixes.ts'
 import { CopyButton } from '../../ui/public/copy-button/component.tsx'
 import { ShareButton } from '../../ui/public/share-button/component.tsx'
 import { StateFilter } from '../../ui/state-filter/component.tsx'
@@ -131,11 +134,6 @@ import {
   CREATE_GROUP_PENDING_LABEL,
   CREATE_GROUP_UNAVAILABLE_TEXT,
   CREATE_GROUP_UNAVAILABLE_TITLE,
-  GROUP_NAME_LABEL,
-  GROUP_NAME_PLACEHOLDER,
-  GROUP_NOTE_HINT,
-  GROUP_NOTE_LABEL,
-  GROUP_NOTE_PLACEHOLDER,
   groupMenuLabel,
   GROUPS_EMPTY_TEXT,
   GROUPS_SECTION_TITLE,
@@ -143,7 +141,6 @@ import {
   NEW_GROUP_DIALOG_TITLE,
   NEW_GROUP_LABEL,
   OPEN_GROUP_FOLDER_LABEL,
-  OPTIONAL_MARK,
 } from '../../domain/artwork-group.ts'
 import { disconnectedBanner } from '../../domain/drive-account.ts'
 import { REQUIRED_LEGEND } from '../../domain/public/article-form.ts'
@@ -359,10 +356,16 @@ export type PrintSectionView = { folderHref: string; jobHref: string; line: Prin
 /** One artwork group's row in _Skupiny obrazových děl_ (`12a`, `12e`). */
 export type GroupRowView = {
   count: string
+  /** _Upravit název a poznámku…_ and _Odebrat skupinu…_ where each can pass (`12u`). */
+  fixes: { editHref: string | null; removeHref: string | null }
   folderHref: string | null
   id: number
-  /** Just created: highlighted with focus on _Kopírovat_ until the next load (`12e`). */
+  /**
+   * Just created or just edited: highlighted until the next load (`12e`, `12f`). A new group has
+   * focus on its _Kopírovat_; an edited one leaves it on the section's heading.
+   */
   isChanged: boolean
+  isCopyFocused: boolean
   /** The issue is closed: the link stands struck through, with nothing to copy (`12h`). */
   isClosed: boolean
   /** The `12j` Callout in the group's frame, or `null` while its folders are there. */
@@ -375,6 +378,8 @@ export type GroupRowView = {
 }
 
 export type GroupsView = {
+  /** After an edit or a removal, focus starts on the section's heading (`12f`). */
+  isHeadingFocused: boolean
   /** _Nová skupina_, on an active issue only. */
   newHref: string | null
   rows: readonly GroupRowView[]
@@ -417,6 +422,8 @@ export type DetailPageProps = {
   print?: PrintSectionView
   /** _Přejmenovat článek_ or _Upravit autory_ over the detail (`12x`, `12y`). */
   fixing?: ArticleFixView
+  /** _Upravit skupinu_ or _Odebrat skupinu_ over the detail (`12f`). */
+  groupFixing?: GroupFixView
   /** The dialog of a new final version over the detail (`12r`). */
   replacing?: FinalVersionDialogProps
   /** _Uzavřít vydání_ or _Znovu otevřít_ over the detail (`12g`, `12h`). */
@@ -1404,6 +1411,16 @@ function GroupRow(handle: Handle<{ group: GroupRowView }>) {
     let { group } = handle.props
     let items: ActionMenuItem[] =
       group.folderHref === null ? [] : [{ href: group.folderHref, label: OPEN_GROUP_FOLDER_LABEL }]
+    /* The fixes last, after a line of their own, where `12u` puts them in every menu. */
+    let { editHref, removeHref } = group.fixes
+    let fixes: ActionMenuItem[] = [
+      ...(editHref === null ? [] : [{ href: editHref, isSameTab: true, label: EDIT_GROUP_LABEL }]),
+      ...(removeHref === null
+        ? []
+        : [{ href: removeHref, isSameTab: true, label: REMOVE_GROUP_LABEL }]),
+    ]
+    if (fixes.length > 0)
+      items.push(...(items.length > 0 ? [{ isSeparator: true as const }] : []), ...fixes)
     return (
       <div class={group.isChanged ? 'vdm-changed' : undefined}>
         <div mix={linkRowStyle}>
@@ -1419,10 +1436,11 @@ function GroupRow(handle: Handle<{ group: GroupRowView }>) {
                 <del mix={closedLinkStyle}>{group.shown}</del>
               </span>
             ) : (
-              <CopyButton isFocused={group.isChanged} shown={group.shown} value={group.url} />
+              <CopyButton isFocused={group.isCopyFocused} shown={group.shown} value={group.url} />
             )}
           </div>
-          {/* Opening the folder writes nothing, so it stays on a closed issue too (`12h`). */}
+          {/* Opening the folder writes nothing, so it stays on a closed issue too (`12h`); the
+              fixes do not (`12u`). */}
           {items.length === 0 ? null : (
             <ActionMenu items={items} label={groupMenuLabel(group.name)} />
           )}
@@ -1451,7 +1469,11 @@ function Groups(handle: Handle<{ groups: GroupsView }>) {
     return (
       <section aria-labelledby="groups-title" mix={sectionStyle}>
         <div mix={sectionBarStyle}>
-          <h2 id="groups-title">
+          <h2
+            autofocus={groups.isHeadingFocused ? true : undefined}
+            id="groups-title"
+            tabIndex={groups.isHeadingFocused ? -1 : undefined}
+          >
             {GROUPS_SECTION_TITLE}
             <span mix={countStyle}>{groups.rows.length}</span>
           </h2>
@@ -1493,8 +1515,6 @@ function NewGroupDialog(
   return () => {
     let { dialog, driveAccount } = handle.props
     let { errors, refusal, values } = dialog
-    let nameError = errors.name === null ? undefined : 'group-name-error'
-    let noteMessage = errors.note === null ? 'group-note-hint' : 'group-note-error'
     return (
       <Dialog maxWidth="500px">
         <DialogTitle>{NEW_GROUP_DIALOG_TITLE}</DialogTitle>
@@ -1524,65 +1544,7 @@ function NewGroupDialog(
             <p class="vdm-form__legend" style={{ margin: 0 }}>
               {REQUIRED_LEGEND}
             </p>
-            <div class="vdm-field">
-              <label class="vdm-field__label" for="group-name">
-                {GROUP_NAME_LABEL}{' '}
-                <span aria-hidden="true" class="vdm-field__required">
-                  *
-                </span>
-              </label>
-              <input
-                aria-describedby={nameError}
-                aria-invalid={nameError === undefined ? undefined : 'true'}
-                autocomplete="off"
-                autofocus={errors.name !== null || errors.note === null}
-                class={
-                  nameError === undefined
-                    ? 'vdm-field__input'
-                    : 'vdm-field__input vdm-field__input--error'
-                }
-                id="group-name"
-                name="name"
-                placeholder={GROUP_NAME_PLACEHOLDER}
-                required
-                type="text"
-                defaultValue={values.name}
-              />
-              {errors.name === null ? null : (
-                <span class="vdm-field__hint vdm-field__hint--error" id="group-name-error">
-                  {errors.name}
-                </span>
-              )}
-            </div>
-            <div class="vdm-field">
-              <label class="vdm-field__label" for="group-note">
-                {GROUP_NOTE_LABEL} <span class="vdm-field__optional">{OPTIONAL_MARK}</span>
-              </label>
-              <textarea
-                aria-describedby={noteMessage}
-                aria-invalid={errors.note === null ? undefined : 'true'}
-                autofocus={errors.name === null && errors.note !== null ? true : undefined}
-                class={
-                  errors.note === null
-                    ? 'vdm-field__input vdm-field__textarea'
-                    : 'vdm-field__input vdm-field__textarea vdm-field__input--error'
-                }
-                id="group-note"
-                name="note"
-                defaultValue={values.note}
-                placeholder={GROUP_NOTE_PLACEHOLDER}
-                rows={3}
-              />
-              {errors.note === null ? (
-                <span class="vdm-field__hint" id="group-note-hint">
-                  {GROUP_NOTE_HINT}
-                </span>
-              ) : (
-                <span class="vdm-field__hint vdm-field__hint--error" id="group-note-error">
-                  {errors.note}
-                </span>
-              )}
-            </div>
+            <GroupFields errors={errors} values={values} />
           </div>
           <div class="vdm-dialog__actions">
             <PendingActions
@@ -1747,6 +1709,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       person,
       print,
       fixing,
+      groupFixing,
       replacing,
       step,
       toasts,
@@ -1769,6 +1732,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
             newGroup !== undefined ||
             replacing !== undefined ||
             fixing !== undefined ||
+            groupFixing !== undefined ||
             step !== undefined
           }
           person={person}
@@ -1870,6 +1834,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
         {discarding === undefined ? null : <DiscardDialog discarding={discarding} />}
         {replacing === undefined ? null : <FinalVersionDialog {...replacing} />}
         {fixing === undefined ? null : <ArticleFixDialog view={fixing} />}
+        {groupFixing === undefined ? null : <GroupFixDialog view={groupFixing} />}
         {step === undefined ? null : <IssueStepDialog step={step} />}
       </Document>
     )

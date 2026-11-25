@@ -88,7 +88,7 @@ export type ArtworksHolder = HolderName & {
   kind: HolderKind
   licencesFolderId: string | null
   note: string
-  /** When the article was removed (`12z`); a group is never removed yet, so `null`. */
+  /** When the article (`12z`) or the group (`12f`) was removed. */
   removedAt: Temporal.Instant | null
 }
 
@@ -113,7 +113,7 @@ export async function holderOf(
 ): Promise<ArtworksHolder | null> {
   if (ref.groupId !== null) {
     let group = await setup.groups.findById(ref.groupId)
-    return group === null ? null : { ...group, kind: 'group', removedAt: null }
+    return group === null ? null : { ...group, kind: 'group' }
   }
   if (ref.articleId === null) return null
   let article = await setup.articles.findById(ref.articleId)
@@ -795,6 +795,11 @@ export async function resendBatch(setup: ArtworksSetup, batchId: number): Promis
 export type DiscardOutcome =
   | { batch: BatchRow; kind: 'discarded' }
   | { kind: 'already-sent' | 'approved' | 'closed' | 'gone' | 'verified' }
+  /**
+   * The batch is still there but no longer one to discard: discarded in another tab, or turned
+   * into an error of its archive while the dialog was open. The table says which.
+   */
+  | { kind: 'not-discardable' }
   | { kind: 'disconnected' | 'not-connected' }
   | { kind: 'folder-gone'; missing: ArticleFolderKind[] }
   /** `isPartlyBinned`: Drive refused to take back a file this attempt had put in the bin. */
@@ -823,8 +828,8 @@ export async function discardBatch(
   if (batch === null) return { kind: 'gone' }
   return lock(`artworks:${batch.formKey}`, async () => {
     let current = await setup.artworks.findBatch(batchId)
-    if (current === null || current.createdAt === null || current.discardedAt !== null)
-      return { kind: 'gone' }
+    if (current === null || current.createdAt === null) return { kind: 'gone' }
+    if (current.discardedAt !== null) return { kind: 'not-discardable' }
     let issue = await setup.issues.findById(current.issueId)
     let holder = await holderOf(setup, current)
     if (issue === null || holder?.folderId == null) return { kind: 'gone' }
@@ -832,7 +837,7 @@ export async function discardBatch(
     if (current.approvedAt !== null) return { kind: 'approved' }
     if (current.consentVerifiedAt !== null) return { kind: 'verified' }
     if (!wasSent && isRequestSent(current)) return { kind: 'already-sent' }
-    if (!canDiscardBatch(current)) return { kind: 'gone' }
+    if (!canDiscardBatch(current)) return { kind: 'not-discardable' }
 
     let token = await setup.token()
     if (!token.ok) {
@@ -880,6 +885,6 @@ export async function discardBatch(
     if (await restore()) {
       logDriveFailure('a discarded batch was not restored', 'Drive refused to take a file back')
     }
-    return { kind: marked }
+    return { kind: marked === 'gone' ? 'not-discardable' : marked }
   })
 }

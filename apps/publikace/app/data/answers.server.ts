@@ -144,7 +144,8 @@ async function batchCard(db: Database, id: number): Promise<Card | null> {
         LEFT JOIN artwork_groups g ON g.id = b.group_id
         JOIN issues i ON i.id = b.issue_id
         WHERE b.id = ${id} AND b.created_at IS NOT NULL
-          AND (ar.id IS NULL OR ar.removed_at IS NULL)`,
+          AND (ar.id IS NULL OR ar.removed_at IS NULL)
+          AND (g.id IS NULL OR g.removed_at IS NULL)`,
   )
   let row = result.rows?.[0]
   if (row === undefined) return null

@@ -120,10 +120,11 @@ erDiagram
   }
   ARTWORK_GROUP {
     int id PK
-    text name "unique in the issue regardless of case"
+    text name "unique in the issue regardless of case among groups not removed"
     text note "for the designer"
     text folder_id "and meta, artworks, licences"
     instant created_at "null until committed"
+    instant removed_at "12f"
   }
   ARTICLE {
     int id PK
@@ -203,6 +204,9 @@ erDiagram
 An artworks link, a batch and an artwork belong to exactly one article or one artwork group, which
 a `CHECK` on each table holds (#133). Code that does not care which reads both as a _holder_:
 the folder with `Obrazová díla` and `Licence` in it, and the name the e-mails and the record show.
+A group's `_meta.json` carries its name and note as they were at the last rename of the group or
+of its issue: a note corrected alone touches no file on Drive (`12f`), and for an issue made in
+the app the note is read from the database, by the print folder's claim, never from that file.
 
 ## Flows
 
@@ -316,15 +320,15 @@ Evidence, binned with its folder, is no longer written.
 
 ## Lifecycles
 
-| Thing          | Derived from                                                                                                             | In `app/domain/`   |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| Issue          | `completed_at` (Nedokončené without it), `closed_at`, `removed_at`                                                       | `issue.ts`         |
-| Article        | handover and take columns; with a final version standing, the counts of its clauses; `doc_revised_at`; `removed_at`      | `article.ts`       |
-| Clause         | stored `pending/sent/failed`, then the reply, `consent_verified_at`, `approved_at`, archive failure                      | `approvals.ts`     |
-| Artwork batch  | `mail_sent_at` or `mail_failed_at`, the reply, `consent_verified_at`, `approved_at`, `discarded_at`                      | `artwork.ts`       |
-| Artwork upload | no `batch_id` while unsent; `removed_at`; binned 24 h after upload if still unsent                                       | `artwork.ts`       |
-| Artwork group  | `created_at`; no state of its own, never deleted                                                                         | `artwork-group.ts` |
-| Link           | valid; gone once revoked, or its issue closed or removed, or its article removed; a key never issued draws the same page | `link.ts`          |
+| Thing          | Derived from                                                                                                                      | In `app/domain/`   |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Issue          | `completed_at` (Nedokončené without it), `closed_at`, `removed_at`                                                                | `issue.ts`         |
+| Article        | handover and take columns; with a final version standing, the counts of its clauses; `doc_revised_at`; `removed_at`               | `article.ts`       |
+| Clause         | stored `pending/sent/failed`, then the reply, `consent_verified_at`, `approved_at`, archive failure                               | `approvals.ts`     |
+| Artwork batch  | `mail_sent_at` or `mail_failed_at`, the reply, `consent_verified_at`, `approved_at`, `discarded_at`                               | `artwork.ts`       |
+| Artwork upload | no `batch_id` while unsent; `removed_at`; binned 24 h after upload if still unsent                                                | `artwork.ts`       |
+| Artwork group  | `created_at`; `removed_at`; no state of its own                                                                                   | `artwork-group.ts` |
+| Link           | valid; gone once revoked, or its issue closed or removed, or its article or group removed; a key never issued draws the same page | `link.ts`          |
 
 ## Background work
 
@@ -346,7 +350,7 @@ Evidence, binned with its folder, is no longer written.
 | `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00 | `proofreading-digest/run`           | no (#86)                    |
 
 Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A claim leaves out
-a removed article, its clauses and its batches, discarded ones included (`12z`). A report must
+a removed article or group, its clauses and its batches, discarded ones included (`12z`, `12f`). A report must
 carry the run's key. Every e-mail carries a Mailer idempotency key, so a run that dies between
 sending and reporting does not send twice. `/settings/jobs` shows each job's last run (`14d`).
 Once two runs in a row fail or overdue, a banner appears over every editor's screen; for the

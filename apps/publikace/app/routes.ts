@@ -39,6 +39,12 @@ export const routes = route({
        _Nové vydání_ over the overview, and `POST` to it creates the group (#133). */
     newGroup: get('/issues/:name/artwork-groups/new'),
     createGroup: post('/issues/:name/artwork-groups/new'),
+    /* _Upravit název a poznámku…_ and _Odebrat skupinu…_ (`12f`) from the group's „⋯“: each a
+       dialog at its own address over the detail, and `POST` to it acts (#154). */
+    askEditGroup: get('/issues/:name/artwork-groups/:id/edit'),
+    editGroup: post('/issues/:name/artwork-groups/:id/edit'),
+    askRemoveGroup: get('/issues/:name/artwork-groups/:id/remove'),
+    removeGroup: post('/issues/:name/artwork-groups/:id/remove'),
     /* _Vydat nový odkaz_ asks at an address of its own, as a removal does (`02d`). */
     askRenewLink: get('/issues/:name/link/renew'),
     renewLink: post('/issues/:name/link/renew'),

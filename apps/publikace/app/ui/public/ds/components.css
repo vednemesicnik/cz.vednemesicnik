@@ -62,12 +62,18 @@
 .vdm-badge {
   display: inline-flex;
   align-items: center;
+  box-sizing: border-box;
+  max-width: 100%;
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  line-height: 1;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
+  /* One line is 1em + 12px tall and fully round, as before. A long label (a name a person typed)
+     wraps onto lines 1.3 apart inside a box with that same corner, never an oval whose lines
+     touch, and is never cut short; a word longer than the line breaks (iuepzv2t). */
+  line-height: 1.3;
+  padding: calc(6px - 0.15em) 14px;
+  border-radius: calc(0.5em + 6px);
+  overflow-wrap: break-word;
 }
 .vdm-badge--emerald { background: var(--badge-emerald-bg); color: var(--badge-emerald-text); }
 .vdm-badge--violet  { background: var(--badge-violet-bg);  color: var(--badge-violet-text); }

@@ -564,10 +564,13 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
       assert.ok(text.includes(GROUP_STEP))
       assert.match(text, new RegExp(`${GROUP_STOPPED} Zjištěno \\d+\\. \\d+\\. ve? \\d+:\\d{2}\\.`))
       assert.ok(section.includes(`action="${DETAIL}/artwork-groups/${group.id}/folders/check"`))
-      /* The „⋯“ held only _Otevřít složku skupiny_, and a missing folder has nothing to open. */
+      /* A missing folder has nothing to open, and the fixes stay in the „⋯“ (`12f`, iuepzv2t). */
+      assert.ok(!text.includes('Otevřít složku skupiny'))
       assert.ok(
-        !section.includes('aria-label="Další akce skupiny Mapa obce k rozhovoru i reportáži"'),
+        section.includes('aria-label="Další akce skupiny Mapa obce k rozhovoru i reportáži"'),
       )
+      let detail = await (await context.editor.get(DETAIL)).text()
+      assert.ok(detail.includes(`${DETAIL}/artwork-groups/${group.id}/edit`))
 
       let overview = textOf(await (await context.editor.get('/')).text())
       assert.ok(overview.includes('0 článků · 0 děl · 1 čeká na vás'))

@@ -39,8 +39,8 @@ export type LinkUsage = { count: number; lastAt: Temporal.Instant | null }
 
 /**
  * Whether a link answers. `gone` is a replaced link, one of a closed or removed issue, or a link of
- * artworks whose article was removed (410, `02f`); `unknown` a key nobody issued (404). Both draw
- * the same page, so nobody learns that a key exists (`02e`).
+ * artworks whose article or group was removed (410, `02f`); `unknown` a key nobody issued (404).
+ * Both draw the same page, so nobody learns that a key exists (`02e`).
  */
 export type LinkState = 'gone' | 'unknown' | 'valid'
 

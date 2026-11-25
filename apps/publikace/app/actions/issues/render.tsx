@@ -55,7 +55,7 @@ const ISSUE_FIXED_SESSION_KEY = 'issueFixed'
 
 export type IssueFixed =
   | { focus: 'heading' }
-  | { focus: 'articles' | 'title' | 'row'; issueId: number }
+  | { focus: 'articles' | 'groups' | 'title' | 'row'; issueId: number }
 
 export function flashIssueFixed(context: PageContext, fixed: IssueFixed): void {
   ;(context.get(Session) as Session | undefined)?.flash(ISSUE_FIXED_SESSION_KEY, fixed)

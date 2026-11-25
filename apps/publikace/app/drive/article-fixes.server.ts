@@ -77,10 +77,11 @@ const RETRY = Symbol('retry')
 
 /**
  * Runs under the issue's current name, read again inside: a rename of the issue that finished
- * meanwhile changed the name, and the step tries once more under the new one.
+ * meanwhile changed the name, and the step tries once more under the new one. A fix of a group
+ * runs under it too (#154), since a rename of the issue writes the group's `_meta.json` as well.
  */
-async function underIssue<T>(
-  setup: ArticleFixSetup,
+export async function underIssue<T>(
+  setup: { issues: Pick<IssueStore, 'findById'> },
   issueId: number,
   run: (issue: Issue) => Promise<T>,
 ): Promise<T | { kind: 'gone' } | { kind: 'unavailable' }> {

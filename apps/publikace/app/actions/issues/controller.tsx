@@ -57,6 +57,31 @@ import {
   type AuthorCardView,
 } from '../../ui/public/author-cards/component.tsx'
 import type { ArticleFixView } from './article-fix-dialogs.tsx'
+import type { GroupRow } from '../../data/artwork-groups.server.ts'
+import {
+  canEditGroup,
+  canRemoveGroup,
+  editGroupClosedToast,
+  GROUP_CHANGED_MEANWHILE_TOAST,
+  GROUP_NOTE_SAVED_TOAST,
+  GROUP_REMOVED_MEANWHILE_TOAST,
+  GROUP_REMOVED_TOAST,
+  GROUP_RENAMED_TOAST,
+  groupForeignFilesCallout,
+  movedGroupFolderCallout,
+  REMOVE_GROUP_ARTWORKS_TOAST,
+  REMOVE_GROUP_DISCONNECTED,
+  REMOVE_GROUP_UNAVAILABLE,
+  removeGroupClosedToast,
+  removeGroupDialogText,
+  removeGroupTitle,
+  RENAME_GROUP_DISCONNECTED,
+  RENAME_GROUP_FOLDER_MISSING,
+  RENAME_GROUP_UNAVAILABLE,
+  renameGroupMetaBinned,
+} from '../../domain/group-fixes.ts'
+import { editGroup, type GroupFixSetup, removeGroup } from '../../drive/group-fixes.server.ts'
+import type { GroupFixView } from './group-fix-dialogs.tsx'
 import { createController } from 'remix/router'
 import { Session } from 'remix/session'
 
@@ -845,19 +870,31 @@ function overviewFilterOf(context: PageContext): IssueFilter {
 async function groupsOf(
   context: PageContext,
   issue: Issue,
-  changedId: number | null,
+  changed: { id: number | null; isHeadingFocused: boolean },
 ): Promise<GroupsView | undefined> {
   let state = issueState(issue)
   if (state === 'unfinished') return undefined
   let { artworks, origin } = articlesOf(context)
   let groups = await artworks.groups.listByIssue(issue.id)
   let batches = await artworks.artworks.listByIssue(issue.id)
+  let filter = filterOf(context)
+  let isOpen = issue.closedAt === null
   return {
+    isHeadingFocused: changed.isHeadingFocused,
     newHref: state === 'active' ? routes.issues.newGroup.href({ name: issue.name }) : null,
     rows: groups.map((group) => {
       let url = group.link === null ? null : absoluteUrl(origin, artworksLinkPath(group.link.key))
+      let ids = { id: String(group.id), name: issue.name }
       return {
         count: groupCountText(group.artworks),
+        fixes: {
+          editHref: canEditGroup(isOpen)
+            ? withFilter(routes.issues.askEditGroup.href(ids), filter)
+            : null,
+          removeHref: canRemoveGroup(group.artworks, isOpen)
+            ? withFilter(routes.issues.askRemoveGroup.href(ids), filter)
+            : null,
+        },
         /* A missing folder has nothing to open (`12j`); a missing `Obrazová díla` or `Licence`
            leaves the group's own folder where it is. */
         folderHref:
@@ -865,8 +902,9 @@ async function groupsOf(
             ? null
             : folderUrl(group.folderId),
         id: group.id,
-        isChanged: group.id === changedId,
+        isChanged: group.id === changed.id,
         isClosed: state === 'closed',
+        isCopyFocused: group.id === changed.id && !changed.isHeadingFocused,
         missing: missingView(issue, { ...group, kind: 'group' }, batches),
         name: group.name,
         noteLine: group.note === '' ? null : groupNoteLine(group.note),
@@ -883,6 +921,7 @@ async function renderDetail(
   options: {
     discarding?: DiscardView
     fixing?: ArticleFixView
+    groupFixing?: GroupFixView
     isFolderGone?: boolean
     isRenewing?: boolean
     newGroup?: NewGroupDialogView
@@ -907,7 +946,11 @@ async function renderDetail(
       discarding={options.discarding}
       fixing={options.fixing}
       driveAccount={await driveView(context)}
-      groups={await groupsOf(context, issue, takeGroupChanged(session))}
+      groupFixing={options.groupFixing}
+      groups={await groupsOf(context, issue, {
+        id: takeGroupChanged(session),
+        isHeadingFocused: fixed?.focus === 'groups' && fixed.issueId === issue.id,
+      })}
       isFolderGone={options.isFolderGone}
       isRenewing={options.isRenewing}
       isTitleFocused={fixed?.focus === 'title' && fixed.issueId === issue.id}
@@ -976,6 +1019,85 @@ function withFilter(href: string, filter: ArtworkFilter): string {
   return filter === 'all' ? href : `${href}?artworks=${filter}`
 }
 
+/** A committed group of this issue that is not removed, by the ID in the address. */
+async function groupOf(context: PageContext, issue: Issue, id: string): Promise<GroupRow | null> {
+  let groupId = Number(id)
+  if (!Number.isSafeInteger(groupId)) return null
+  let group = await articlesOf(context).artworks.groups.findById(groupId)
+  if (group === null || group.issueId !== issue.id || group.createdAt === null) return null
+  return group.removedAt === null ? group : null
+}
+
+/** Whether the group in the address was this issue's and is removed now (`12f`). */
+async function isRemovedGroup(context: PageContext, issue: Issue, id: string): Promise<boolean> {
+  let group = await articlesOf(context).artworks.groups.findById(Number(id))
+  return group?.issueId === issue.id && group.removedAt !== null
+}
+
+/** What the fixes of a group need: the group store, the article store for its folder marks, Drive. */
+function groupFixSetupOf(context: PageContext): GroupFixSetup {
+  let { articles, artworks, setup } = articlesOf(context)
+  return {
+    articles,
+    files: issuesOf(context).setup.files,
+    folders: setup.folders,
+    groups: artworks.groups,
+    issues: setup.issues,
+    now: setup.now,
+    token: setup.token,
+  }
+}
+
+/** The dialog of `12f` over the detail, with the fields as typed and what it showed. */
+function editGroupViewOf(
+  issue: Issue,
+  group: GroupRow,
+  filter: ArtworkFilter,
+  extra: {
+    callout?: FixCallout
+    errors?: { name: string | null; note: string | null }
+    shown?: { name: string; note: string }
+    values?: { name: string; note: string }
+  },
+): GroupFixView {
+  let ids = { id: String(group.id), name: issue.name }
+  let shown = extra.shown ?? { name: group.name, note: group.note }
+  return {
+    action: withFilter(routes.issues.editGroup.href(ids), filter),
+    cancelHref: detailHref(issue, filter),
+    currentName: group.name,
+    errors: extra.errors ?? { name: null, note: null },
+    kind: 'edit',
+    shownName: shown.name,
+    shownNote: shown.note,
+    values: extra.values ?? { name: group.name, note: group.note },
+    ...(extra.callout === undefined ? {} : { callout: extra.callout }),
+  }
+}
+
+/** The removal dialog of `12f` over the detail, with what it says about the discarded batches. */
+async function removeGroupViewOf(
+  context: PageContext,
+  issue: Issue,
+  group: GroupRow,
+  callout?: FixCallout,
+): Promise<GroupFixView> {
+  let filter = filterOf(context)
+  let ids = { id: String(group.id), name: issue.name }
+  let discarded = await articlesOf(context).artworks.artworks.discardedOf({
+    articleId: null,
+    groupId: group.id,
+  })
+  return {
+    action: withFilter(routes.issues.removeGroup.href(ids), filter),
+    cancelHref: detailHref(issue, filter),
+    kind: 'remove',
+    paragraphs: removeGroupDialogText(discarded),
+    title: removeGroupTitle(group.name),
+    ...(callout === undefined ? {} : { callout }),
+  }
+}
+
 /** What the fixes of an article need: the article's setup and the issue's files on Drive. */
 function articleFixSetupOf(context: PageContext): ArticleFixSetup {
   return { ...articlesOf(context).setup, files: issuesOf(context).setup.files }
@@ -1009,7 +1131,7 @@ async function removeViewOf(
 ): Promise<ArticleFixView> {
   let filter = filterOf(context)
   let ids = { id: String(article.id), name: issue.name }
-  let discarded = await articlesOf(context).artworks.artworks.discardedOf(article.id)
+  let discarded = await articlesOf(context).artworks.artworks.discardedOf({ articleId: article.id })
   let state: 'handedOver' | 'writing' =
     articleState(article) === 'handedOver' ? 'handedOver' : 'writing'
   return {
@@ -1954,6 +2076,153 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         }
       },
 
+      /* `12f`: the dialog with the name and the note in the fields, in an open issue. */
+      async askEditGroup(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let group = issue === null ? null : await groupOf(context, issue, context.params.id)
+        if (issue === null || group === null) return notFound()
+        let filter = filterOf(context)
+        if (!canEditGroup(issue.closedAt === null)) return redirect(detailHref(issue, filter), 303)
+        return renderDetail(context, issue, {
+          groupFixing: editGroupViewOf(issue, group, filter, {}),
+        })
+      },
+
+      /*
+       * `12f`: a note alone in the row; a rename on Drive and in the row together, or neither. A
+       * refusal the editor can mend stays in the dialog with the fields as typed; what changed
+       * meanwhile reloads the detail with the reason, before any message of a field.
+       */
+      async editGroup(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let filter = filterOf(context)
+        let back = () => redirect(detailHref(issue, filter), 303)
+        let group = await groupOf(context, issue, context.params.id)
+        if (group === null) {
+          if (!(await isRemovedGroup(context, issue, context.params.id))) return notFound()
+          flashToast(context, GROUP_REMOVED_MEANWHILE_TOAST)
+          return back()
+        }
+        let values = { name: formText(context, 'name'), note: formText(context, 'note') }
+        let shown = { name: formText(context, 'shownName'), note: formText(context, 'shownNote') }
+        let dialog = (extra: Parameters<typeof editGroupViewOf>[3], status: number) =>
+          renderDetail(context, issue, {
+            groupFixing: editGroupViewOf(issue, group, filter, { ...extra, shown, values }),
+            status,
+          })
+
+        let outcome = await editGroup(groupFixSetupOf(context), {
+          id: group.id,
+          ...values,
+          shownName: shown.name,
+          shownNote: shown.note,
+        })
+        switch (outcome.kind) {
+          case 'saved':
+            flashToast(context, outcome.isRenamed ? GROUP_RENAMED_TOAST : GROUP_NOTE_SAVED_TOAST)
+            flashGroupChanged(context.get(Session), group.id)
+            flashIssueFixed(context, { focus: 'groups', issueId: issue.id })
+            return back()
+          case 'unchanged':
+            return back()
+          case 'invalid':
+            return dialog({ errors: outcome.errors }, REFUSED)
+          case 'changed-meanwhile':
+            flashToast(context, GROUP_CHANGED_MEANWHILE_TOAST)
+            return back()
+          case 'closed':
+            flashToast(context, editGroupClosedToast(outcome.issueName))
+            return back()
+          case 'gone':
+            if (!(await isRemovedGroup(context, issue, context.params.id))) return notFound()
+            flashToast(context, GROUP_REMOVED_MEANWHILE_TOAST)
+            return back()
+          case 'folder-missing':
+            return dialog({ callout: RENAME_GROUP_FOLDER_MISSING }, IN_THE_WAY)
+          case 'meta-binned':
+            return dialog(
+              { callout: renameGroupMetaBinned(driveFileUrl(outcome.fileId)) },
+              IN_THE_WAY,
+            )
+          case 'not-connected':
+          case 'disconnected':
+            return dialog({ callout: RENAME_GROUP_DISCONNECTED }, IN_THE_WAY)
+          case 'unavailable':
+            return dialog({ callout: RENAME_GROUP_UNAVAILABLE }, IN_THE_WAY)
+        }
+      },
+
+      /* `12f`: the dialog, while the group can be removed. */
+      async askRemoveGroup(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let group = issue === null ? null : await groupOf(context, issue, context.params.id)
+        if (issue === null || group === null) return notFound()
+        let listed = (await articlesOf(context).artworks.groups.listByIssue(issue.id)).find(
+          (each) => each.id === group.id,
+        )
+        if (!canRemoveGroup(listed?.artworks ?? 0, issue.closedAt === null)) {
+          return redirect(detailHref(issue, filterOf(context)), 303)
+        }
+        return renderDetail(context, issue, {
+          groupFixing: await removeGroupViewOf(context, issue, group),
+        })
+      },
+
+      /*
+       * `12f`: the row and the folder together, or neither. A refusal on Drive the editor can
+       * mend stays in the dialog; what changed meanwhile reloads the detail with the reason.
+       */
+      async removeGroup(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        let group = await groupOf(context, issue, context.params.id)
+        if (group === null) {
+          /* Removed in another tab: the row's absence says it, so no toast, as for an article. */
+          return (await isRemovedGroup(context, issue, context.params.id)) ? back() : notFound()
+        }
+        let dialog = async (callout: FixCallout) =>
+          renderDetail(context, issue, {
+            groupFixing: await removeGroupViewOf(context, issue, group, callout),
+            status: IN_THE_WAY,
+          })
+
+        let outcome = await removeGroup(groupFixSetupOf(context), { id: group.id })
+        switch (outcome.kind) {
+          case 'removed':
+            flashToast(context, GROUP_REMOVED_TOAST)
+            flashIssueFixed(context, { focus: 'groups', issueId: issue.id })
+            return back()
+          case 'already-removed':
+          case 'gone':
+            return back()
+          case 'has-artworks':
+            flashToast(context, REMOVE_GROUP_ARTWORKS_TOAST)
+            return back()
+          case 'closed':
+            flashToast(context, removeGroupClosedToast(outcome.issueName))
+            return back()
+          case 'moved':
+            return dialog(movedGroupFolderCallout(folderUrl(outcome.folderId), issue.name))
+          case 'foreign':
+            return dialog(
+              groupForeignFilesCallout(
+                outcome.files.map((file) => ({
+                  folderName: file.folderName,
+                  href: file.isFolder ? folderUrl(file.id) : driveFileUrl(file.id),
+                  name: file.name,
+                })),
+              ),
+            )
+          case 'not-connected':
+          case 'disconnected':
+            return dialog(REMOVE_GROUP_DISCONNECTED)
+          case 'unavailable':
+            return dialog(REMOVE_GROUP_UNAVAILABLE)
+        }
+      },
+
       /* `12z`: the dialog, while the article can be removed. */
       async askRemoveArticle(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
@@ -2396,10 +2665,13 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
               status: IN_THE_WAY,
             })
           /* The provider's page sent the request while a dialog that did not say so was open:
-             nothing to discard, the table now says _U poskytovatele_. */
+             nothing to discard, the table now says _U poskytovatele_. Discarded in another tab,
+             turned into an error of its archive, or the issue closed meanwhile: the table, or the
+             closed issue's Callout, says what holds now (#154). */
           case 'already-sent':
-            return back()
+          case 'not-discardable':
           case 'closed':
+            return back()
           case 'gone':
             return notFound()
         }

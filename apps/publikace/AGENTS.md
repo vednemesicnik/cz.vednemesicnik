@@ -43,7 +43,9 @@ _Přejmenovat článek…_ and _Upravit autory…_ in an article's „⋯“, wh
 `_meta.json`, or correct its authors there and in the database, a welcome going to each new
 address before the final version and a corrected request after it (#152); and
 _Odebrat článek…_ in an article's „⋯“, which bins its folder, and _Zahodit dávku_ also after its
-request went (#153).
+request went (#153); and _Upravit název a poznámku…_ and _Odebrat skupinu…_ in a group's „⋯“,
+which rename its folder and `_meta.json` or save a note alone, or bin a group without artworks
+(#154).
 Nothing runs on Fly.io yet, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals, the print folder and the proofreaders' digest, which go
 through the app's API and whose runs

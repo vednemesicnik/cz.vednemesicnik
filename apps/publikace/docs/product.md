@@ -171,8 +171,10 @@ to souhlas_, cannot be discarded.
 An image that goes with several texts belongs to no single article, so it goes to an artwork group
 (`12e`). The magazine illustrates no cover and no back page, so a group holds nothing else. It has no state of its own: it exists once it is created, with its folder
 and its link, and its batches go through the states above, as an article's do. Only the
-editors-in-chief create one, two groups of one issue never share a name (`03` rows 6 and 7), and
-no group is ever deleted. Its note for the designer reaches the print folder with its artworks.
+editors-in-chief create one, and two groups of one issue never share a name (`03` rows 6 and 7).
+Its name and note can be corrected (`12f`), and a group with no batch that is not discarded can be
+removed (`12f`): binned, its row kept, its link gone, and its name free again. Its note for the
+designer reaches the print folder with its artworks.
 
 ### Issue
 

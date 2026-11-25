@@ -31,6 +31,8 @@ export type GroupRow = {
   name: string
   /** The note for the designer, empty when none was given. */
   note: string
+  /** When an editor-in-chief removed the group (`12f`). */
+  removedAt: Temporal.Instant | null
   startedAt: Temporal.Instant
 }
 
@@ -52,6 +54,37 @@ export type NewGroupAttempt = {
   startedBy: { email: string; name: string }
 }
 
+/**
+ * What _Upravit skupinu_ came to (`12f`). Every refusal wrote nothing: the group gone or removed,
+ * its issue closed, a name or note another editor saved meanwhile (`changed-meanwhile`), a name the
+ * issue took meanwhile (`name-taken`).
+ */
+export type EditGroupOutcome =
+  | { kind: 'saved' }
+  | { kind: 'changed-meanwhile' }
+  | { kind: 'name-taken' }
+  | { issueName: string; kind: 'closed' }
+  | { kind: 'gone' }
+
+export type GroupEdit = {
+  id: number
+  /** A new `_meta.json`, when the old one was deleted for good and the rename made it again. */
+  metaFileId?: string
+  name: string
+  nameKey: string
+  note: string
+  /** What the dialog showed, which must still be the row's. */
+  shownName: string
+  shownNote: string
+}
+
+/** What _Odebrat skupinu_ came to in the database (`12f`), before Drive is asked anything. */
+export type RemoveGroupOutcome =
+  | { kind: 'removed' }
+  | { kind: 'already-removed' }
+  | { kind: 'has-artworks' }
+  | { issueName: string; kind: 'closed' }
+
 export type GroupStore = {
   /** Every attempt left uncommitted, for the cleanup at startup. */
   abandonedAttempts(): Promise<GroupRow[]>
@@ -60,11 +93,19 @@ export type GroupStore = {
   commit(id: number, at: Temporal.Instant): Promise<GroupRow>
   /** Removes an attempt whose files are in the bin, which frees its name. */
   discard(id: number): Promise<void>
+  /** The name and the note as `12f` saves them, while nothing changed under the dialog. */
+  edit(input: GroupEdit): Promise<EditGroupOutcome>
   findByFormKey(formKey: string): Promise<GroupRow | null>
   findById(id: number): Promise<GroupRow | null>
   /** The issue's committed groups, the newest first (`12e`: the new one heads the list). */
   listByIssue(issueId: number): Promise<ListedGroup[]>
   markForCleanup(id: number, at: Temporal.Instant): Promise<void>
+  /**
+   * The group marked removed, with its unsent uploads, while it can be removed (`12f`): in an open
+   * issue, with no batch that is not discarded. Drive is binned after, so a refusal there is the
+   * caller's to undo with `unmarkRemoved`.
+   */
+  markRemoved(id: number, at: Temporal.Instant): Promise<RemoveGroupOutcome>
   markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
   /** By issue, the committed groups, for whether an issue can be removed (`12u`). */
   countsByIssue(): Promise<Map<number, number>>
@@ -87,6 +128,8 @@ export type GroupStore = {
   startAttempt(
     attempt: NewGroupAttempt,
   ): Promise<{ attempt: GroupRow; isNew: boolean } | 'issue-removed' | 'name-taken'>
+  /** Takes back the mark `markRemoved` set at `at`, and only that one. */
+  unmarkRemoved(id: number, at: Temporal.Instant): Promise<void>
 }
 
 type Row = Record<string, unknown>
@@ -115,6 +158,7 @@ export function toGroup(row: Row): GroupRow {
     },
     name: String(row['name']),
     note: text(row['note']) ?? '',
+    removedAt: parseStamp(row['removed_at']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
   }
 }
@@ -185,6 +229,42 @@ export function createGroupStore(database: Database): GroupStore {
       await database.exec(sql`DELETE FROM artwork_groups WHERE id = ${id} AND created_at IS NULL`)
     },
 
+    edit(input) {
+      return database.transaction(async (db) => {
+        let row = await byId(db, input.id)
+        if (row === null || row.createdAt === null || row.removedAt !== null) {
+          return { kind: 'gone' }
+        }
+        let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
+        let issueRow = issue.rows?.[0]
+        if (issueRow === undefined) return { kind: 'gone' }
+        if (issueRow['closed_at'] != null) {
+          return { issueName: String(issueRow['name']), kind: 'closed' }
+        }
+        if (row.name !== input.shownName || row.note !== input.shownNote) {
+          return { kind: 'changed-meanwhile' }
+        }
+        let taken = await db.exec(
+          sql`SELECT id FROM artwork_groups
+              WHERE issue_id = ${row.issueId} AND name_key = ${input.nameKey}
+                AND removed_at IS NULL AND id <> ${input.id}`,
+        )
+        /* A failed attempt waiting for its cleanup holds its name in the index too. */
+        if ((taken.rows ?? []).length > 0) return { kind: 'name-taken' }
+        await db.exec(
+          sql`UPDATE artwork_groups SET name = ${input.name}, name_key = ${input.nameKey},
+                note = ${input.note}
+              WHERE id = ${input.id}`,
+        )
+        if (input.metaFileId !== undefined) {
+          await db.exec(
+            sql`UPDATE artwork_groups SET meta_file_id = ${input.metaFileId} WHERE id = ${input.id}`,
+          )
+        }
+        return { kind: 'saved' }
+      })
+    },
+
     findByFormKey(formKey) {
       return byFormKey(database, formKey)
     },
@@ -196,7 +276,7 @@ export function createGroupStore(database: Database): GroupStore {
     async countsByIssue() {
       let result = await database.exec(
         sql`SELECT issue_id, count(*) AS count FROM artwork_groups
-            WHERE created_at IS NOT NULL GROUP BY issue_id`,
+            WHERE created_at IS NOT NULL AND removed_at IS NULL GROUP BY issue_id`,
       )
       let counts = new Map<number, number>()
       for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
@@ -209,7 +289,7 @@ export function createGroupStore(database: Database): GroupStore {
          beside it. */
       let result = await database.exec(
         sql`SELECT issue_id, count(*) AS count FROM artwork_groups
-            WHERE created_at IS NOT NULL
+            WHERE created_at IS NOT NULL AND removed_at IS NULL
               AND issue_id NOT IN (SELECT id FROM issues WHERE folder_missing_at IS NOT NULL)
               AND (folder_missing_at IS NOT NULL
                 OR artworks_folder_missing_at IS NOT NULL
@@ -228,7 +308,7 @@ export function createGroupStore(database: Database): GroupStore {
                WHERE b.group_id = g.id AND b.created_at IS NOT NULL AND b.discarded_at IS NULL)
                 AS artwork_count
             FROM artwork_groups g
-            WHERE g.issue_id = ${issueId} AND g.created_at IS NOT NULL
+            WHERE g.issue_id = ${issueId} AND g.created_at IS NOT NULL AND g.removed_at IS NULL
             ORDER BY g.created_at DESC, g.id DESC`,
       )
       let links = await database.exec(
@@ -253,6 +333,35 @@ export function createGroupStore(database: Database): GroupStore {
         sql`UPDATE artwork_groups SET cleanup_at = ${stamp(at)}
             WHERE id = ${id} AND created_at IS NULL`,
       )
+    },
+
+    markRemoved(id, at) {
+      return database.transaction(async (db) => {
+        let row = await byId(db, id)
+        if (row === null || row.createdAt === null || row.removedAt !== null) {
+          return { kind: 'already-removed' }
+        }
+        let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
+        let issueRow = issue.rows?.[0]
+        if (issueRow === undefined) return { kind: 'already-removed' }
+        if (issueRow['closed_at'] != null) {
+          return { issueName: String(issueRow['name']), kind: 'closed' }
+        }
+        /* A batch the provider's page started and has not committed yet counts: its licences are
+           on their way into the folder that would go to the bin. One left to the cleanup does not. */
+        let batches = await db.exec(
+          sql`SELECT count(*) AS count FROM artwork_batches
+              WHERE group_id = ${id} AND discarded_at IS NULL
+                AND (created_at IS NOT NULL OR cleanup_at IS NULL)`,
+        )
+        if (Number(batches.rows?.[0]?.['count'] ?? 0) > 0) return { kind: 'has-artworks' }
+        await db.exec(sql`UPDATE artwork_groups SET removed_at = ${stamp(at)} WHERE id = ${id}`)
+        await db.exec(
+          sql`UPDATE artworks SET removed_at = ${stamp(at)}
+              WHERE group_id = ${id} AND batch_id IS NULL AND removed_at IS NULL`,
+        )
+        return { kind: 'removed' }
+      })
     },
 
     async markMissing(id, kinds, at) {
@@ -282,7 +391,7 @@ export function createGroupStore(database: Database): GroupStore {
     async namesOf(issueId) {
       let result = await database.exec(
         sql`SELECT name, name_key FROM artwork_groups
-            WHERE issue_id = ${issueId} AND cleanup_at IS NULL`,
+            WHERE issue_id = ${issueId} AND cleanup_at IS NULL AND removed_at IS NULL`,
       )
       let names = new Map<string, string>()
       for (let row of result.rows ?? []) names.set(String(row['name_key']), String(row['name']))
@@ -330,7 +439,8 @@ export function createGroupStore(database: Database): GroupStore {
         if (issue.rows?.[0]?.['removed_at'] != null) return 'issue-removed' as const
         let taken = await db.exec(
           sql`SELECT id FROM artwork_groups
-              WHERE issue_id = ${attempt.issueId} AND name_key = ${attempt.nameKey}`,
+              WHERE issue_id = ${attempt.issueId} AND name_key = ${attempt.nameKey}
+                AND removed_at IS NULL`,
         )
         if ((taken.rows ?? []).length > 0) return 'name-taken' as const
         await db.exec(
@@ -343,6 +453,19 @@ export function createGroupStore(database: Database): GroupStore {
         let inserted = await byFormKey(db, attempt.formKey)
         if (inserted === null) throw new Error('The attempt was not written.')
         return { attempt: inserted, isNew: true }
+      })
+    },
+
+    unmarkRemoved(id, at) {
+      return database.transaction(async (db) => {
+        await db.exec(
+          sql`UPDATE artworks SET removed_at = NULL
+              WHERE group_id = ${id} AND batch_id IS NULL AND removed_at = ${stamp(at)}`,
+        )
+        await db.exec(
+          sql`UPDATE artwork_groups SET removed_at = NULL
+              WHERE id = ${id} AND removed_at = ${stamp(at)}`,
+        )
       })
     },
   }

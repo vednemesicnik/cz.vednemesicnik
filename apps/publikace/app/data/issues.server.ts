@@ -254,7 +254,8 @@ export function createIssueStore(database: Database): IssueStore {
                                 WHERE issue_id = ${id} AND cleanup_at IS NULL
                                   AND removed_at IS NULL)
                 AND NOT EXISTS (SELECT 1 FROM artwork_groups
-                                WHERE issue_id = ${id} AND cleanup_at IS NULL)`,
+                                WHERE issue_id = ${id} AND cleanup_at IS NULL
+                                  AND removed_at IS NULL)`,
         )
         if ((result.affectedRows ?? 0) === 1) return 'removed'
         let issue = await db.exec(sql`SELECT removed_at FROM issues WHERE id = ${id}`)
@@ -294,7 +295,7 @@ export function createIssueStore(database: Database): IssueStore {
         let articles = await db.exec(sql`SELECT id, created_at FROM articles
             WHERE issue_id = ${id} AND cleanup_at IS NULL AND removed_at IS NULL`)
         let groups = await db.exec(sql`SELECT id, created_at FROM artwork_groups
-            WHERE issue_id = ${id} AND cleanup_at IS NULL`)
+            WHERE issue_id = ${id} AND cleanup_at IS NULL AND removed_at IS NULL`)
         if (!isExactly(articles.rows ?? [], expected.articles)) return 'changed'
         if (!isExactly(groups.rows ?? [], expected.groups)) return 'changed'
 
