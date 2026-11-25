@@ -540,7 +540,21 @@ button.vdm-sidebar__row { appearance: none; border: 0; background: transparent; 
 /* One scroll (5r4m681k): the table never scrolls vertically; the head sticks to the window from 1024px, below that the wrapper scrolls sideways only. */
 .vdm-table { display: flex; flex-direction: column; min-width: 0; }
 @media (width >= 1024px) { .vdm-table { overflow: visible; } .vdm-table > .vdm-row--head { position: sticky; top: 0; z-index: 1; padding-top: 10px; background: var(--bg-primary); } }
-@media (width < 1024px) { .vdm-table { overflow-x: auto; overflow-y: hidden; } }
+/* A band under a row (its open detail, a notice about it) is one cell across the table, with the row's hairline under it. */
+.vdm-table__band { padding: 0 20px 16px; border-bottom: 1px solid var(--border); }
+.vdm-table__band--selected { padding-top: 16px; padding-bottom: 20px; background: var(--bg-secondary); }
+.vdm-table__band--last { border-bottom: 0; }
+/* Scrolled sideways, it stays one table (hl2qgic4): the first track is the visible width, the second takes what the rows'
+   column minimums need beyond it, and every row and band spans both, so a hairline or a tint reaches the last column at
+   any scroll. A band's content keeps the first track and scrolls with the table, so its text never needs a sideways
+   scroll to be read. Its right inset is a margin on the content, not padding, because a subgrid's padding would widen
+   the second track and make a table that fits scroll by 20px. */
+@media (width < 1024px) {
+  .vdm-table { display: grid; grid-template-columns: 100% auto; overflow-x: auto; overflow-y: hidden; }
+  .vdm-table > * { grid-column: 1 / -1; }
+  .vdm-table__band { display: grid; grid-template-columns: subgrid; padding-right: 0; }
+  .vdm-table__band > * { grid-column: 1; min-width: 0; margin-right: 20px; }
+}
 .vdm-row--selected { background: var(--bg-secondary); border-radius: var(--radius-md); }
 .vdm-row--muted { color: var(--text-tertiary); }
 .vdm-row--last { border-bottom: 0; }

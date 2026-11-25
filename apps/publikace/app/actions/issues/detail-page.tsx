@@ -551,12 +551,6 @@ const stateLinkStyle = css({
   '&:focus-visible': { boxShadow: 'var(--focus-shadow)', outline: 'none' },
 })
 
-/* The open row's band, as `12b` draws it: on the tint of the row, under it in the same table. */
-const clauseBandStyle = css({
-  background: 'var(--bg-secondary)',
-  borderBottom: '1px solid var(--border)',
-  padding: '16px 20px 20px',
-})
 const clauseBodyStyle = css({ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 })
 /* One author's cells take their places in the grid of all of them. */
 const clauseAuthorStyle = css({ display: 'contents' })
@@ -678,7 +672,6 @@ const checkedCalloutStyle = css({ position: 'relative' })
 
 /* The Callout of a missing folder belongs to the row above it, inside the same table (`12j`). */
 const bandStyle = css({ padding: '0 20px 16px' })
-const bandRuleStyle = css({ borderBottom: '1px solid var(--border)' })
 
 /* A folder's name and its icon never part at a line break. */
 const folderLinkStyle = css({ fontWeight: 'inherit', whiteSpace: 'nowrap' })
@@ -837,11 +830,16 @@ function MissingFoldersCallout(handle: Handle<{ missing: MissingFoldersView }>) 
   }
 }
 
+/**
+ * A band under a row, as the open row's is: the design system's `.vdm-table__band`, so that on a
+ * table scrolled sideways its rule reaches the last column while the Callout stays in the visible
+ * width (hl2qgic4). It works only as a direct child of `.vdm-table`.
+ */
 function MissingFoldersBand(handle: Handle<{ isLast: boolean; missing: MissingFoldersView }>) {
   return () => {
     let { isLast, missing } = handle.props
     return (
-      <div mix={isLast ? bandStyle : [bandStyle, bandRuleStyle]} role="row">
+      <div class={isLast ? 'vdm-table__band vdm-table__band--last' : 'vdm-table__band'} role="row">
         <div role="cell">
           <MissingFoldersCallout missing={missing} />
         </div>
@@ -1029,7 +1027,7 @@ function ClauseBand(handle: Handle<{ clauses: ClausesView }>) {
   return () => {
     let { clauses } = handle.props
     return (
-      <div mix={clauseBandStyle} role="row">
+      <div class="vdm-table__band vdm-table__band--selected" role="row">
         <div mix={clauseBodyStyle} role="cell">
           {clauses.revised === null ? null : (
             <Callout tone="error">
