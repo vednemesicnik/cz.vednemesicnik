@@ -362,6 +362,8 @@ export type GroupRowView = {
   count: string
   /** _Upravit název a poznámku…_ and _Odebrat skupinu…_ where each can pass (`12u`). */
   fixes: { editHref: string | null; removeHref: string | null }
+  /** _Vydat nový odkaz…_ in an open issue whose group has its link (`02g`). */
+  renewHref: string | null
   folderHref: string | null
   id: number
   /**
@@ -413,8 +415,8 @@ export type DetailPageProps = {
   isFolderGone?: boolean
   /** _Nová skupina obrazových děl_ over the detail (`12e`). */
   newGroup?: NewGroupDialogView
-  /** The question _Vydat nový odkaz_ over the detail (`02d`). */
-  isRenewing?: boolean
+  /** The question _Vydat nový odkaz_ over the detail (`02d`), with the key of the link it shows. */
+  renewing?: { shownKey: string }
   /** Focus on the title, after the issue was renamed and arrived at its new address (`12v`). */
   isTitleFocused?: boolean
   /** Focus on the heading _Články_, after a fix of an article (`12x`, `12y`). */
@@ -1428,18 +1430,26 @@ const groupNoteStyle = css({ overflowWrap: 'anywhere' })
 function GroupRow(handle: Handle<{ group: GroupRowView }>) {
   return () => {
     let { group } = handle.props
-    let items: ActionMenuItem[] =
-      group.folderHref === null ? [] : [{ href: group.folderHref, label: OPEN_GROUP_FOLDER_LABEL }]
-    /* The fixes last, after a line of their own, where `12u` puts them in every menu. */
+    /* The folder, the new link and the fixes, each behind a line of its own (`12u`, `02g`). */
     let { editHref, removeHref } = group.fixes
-    let fixes: ActionMenuItem[] = [
-      ...(editHref === null ? [] : [{ href: editHref, isSameTab: true, label: EDIT_GROUP_LABEL }]),
-      ...(removeHref === null
+    let blocks: ActionMenuItem[][] = [
+      group.folderHref === null ? [] : [{ href: group.folderHref, label: OPEN_GROUP_FOLDER_LABEL }],
+      group.renewHref === null
         ? []
-        : [{ href: removeHref, isSameTab: true, label: REMOVE_GROUP_LABEL }]),
+        : [{ href: group.renewHref, isSameTab: true, label: RENEW_LINK_LABEL }],
+      [
+        ...(editHref === null
+          ? []
+          : [{ href: editHref, isSameTab: true, label: EDIT_GROUP_LABEL }]),
+        ...(removeHref === null
+          ? []
+          : [{ href: removeHref, isSameTab: true, label: REMOVE_GROUP_LABEL }]),
+      ],
     ]
-    if (fixes.length > 0)
-      items.push(...(items.length > 0 ? [{ isSeparator: true as const }] : []), ...fixes)
+    let items: ActionMenuItem[] = []
+    for (let block of blocks.filter((each) => each.length > 0)) {
+      items.push(...(items.length > 0 ? [{ isSeparator: true as const }] : []), ...block)
+    }
     return (
       <div class={group.isChanged ? 'vdm-changed' : undefined}>
         <div mix={linkRowStyle}>
@@ -1608,9 +1618,9 @@ function issueMenuItems(issue: Issue, contents: IssueContents): ActionMenuItem[]
 }
 
 /** `02d`: renewing takes the link from everybody who has it, so it is asked first. */
-function RenewDialog(handle: Handle<{ issue: Issue }>) {
+function RenewDialog(handle: Handle<{ issue: Issue; shownKey: string }>) {
   return () => {
-    let { issue } = handle.props
+    let { issue, shownKey } = handle.props
     return (
       <Dialog maxWidth="360px">
         <DialogTitle>{RENEW_DIALOG_TITLE}</DialogTitle>
@@ -1624,6 +1634,8 @@ function RenewDialog(handle: Handle<{ issue: Issue }>) {
           method="post"
         >
           <CsrfField />
+          {/* The link the dialog showed, so a renewal another editor made meanwhile is not undone. */}
+          <input name="shownKey" type="hidden" value={shownKey} />
           {/* Focus starts on the way back, so Enter on arrival never takes the link away. */}
           <a
             autofocus
@@ -1659,7 +1671,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
       driveAccount,
       groups,
       isFolderGone = false,
-      isRenewing = false,
+      renewing,
       isTitleFocused = false,
       isArticlesFocused = false,
       issue,
@@ -1688,7 +1700,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
           active="issues"
           driveAccount={driveAccount}
           isInert={
-            isRenewing ||
+            renewing !== undefined ||
             discarding !== undefined ||
             newGroup !== undefined ||
             replacing !== undefined ||
@@ -1789,7 +1801,7 @@ export function DetailPage(handle: Handle<DetailPageProps>) {
             )}
           </div>
         </Layout>
-        {isRenewing ? <RenewDialog issue={issue} /> : null}
+        {renewing === undefined ? null : <RenewDialog issue={issue} shownKey={renewing.shownKey} />}
         {newGroup === undefined ? null : (
           <NewGroupDialog dialog={newGroup} driveAccount={driveAccount} />
         )}

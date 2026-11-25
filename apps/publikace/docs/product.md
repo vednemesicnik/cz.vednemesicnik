@@ -173,8 +173,10 @@ An image that goes with several texts belongs to no single article, so it goes t
 and its link, and its batches go through the states above, as an article's do. Only the
 editors-in-chief create one, and two groups of one issue never share a name (`03` rows 6 and 7).
 Its name and note can be corrected (`12f`), and a group with no batch that is not discarded can be
-removed (`12f`): binned, its row kept, its link gone, and its name free again. Its note for the
-designer reaches the print folder with its artworks.
+removed (`12f`): binned, its row kept, its link gone, and its name free again. In an open issue its
+link can be replaced by a new one (`02g`): the old one stops at once, and the batches already sent
+keep their requests and their replies. Its note for the designer reaches the print folder with its
+artworks.
 
 ### Issue
 

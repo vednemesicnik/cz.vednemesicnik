@@ -74,7 +74,9 @@ describe('the link store', () => {
       await articles.setDriveId(attempt.id, 'meta', 'm-a')
       await articles.commit(attempt.id, AT)
 
-      let renewed = await links.renew(id, AT.add({ hours: 2 }))
+      let renewal = await links.renew(id, old.key, AT.add({ hours: 2 }))
+      if (renewal.kind !== 'renewed') return assert.fail(renewal.kind)
+      let renewed = renewal.link
 
       assert.notEqual(renewed.key, old.key)
       assert.ok((await links.findByKey(old.key))?.revokedAt !== null)

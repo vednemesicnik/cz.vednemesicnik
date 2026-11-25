@@ -212,6 +212,12 @@ import {
   absoluteUrl,
   articleLinkPath,
   artworksLinkPath,
+  GROUP_LINK_GROUP_REMOVED_TOAST,
+  GROUP_LINK_RENEWED_TOAST,
+  groupLinkChangedMeanwhileToast,
+  LINK_CHANGED_MEANWHILE_TOAST,
+  renewGroupLinkClosedToast,
+  renewGroupLinkTitle,
   RENEWED_TOAST,
   shareText,
   shownUrl,
@@ -935,6 +941,10 @@ async function groupsOf(
       let ids = { id: String(group.id), name: issue.name }
       return {
         count: groupCountText(group.artworks),
+        renewHref:
+          isOpen && group.link !== null
+            ? withFilter(routes.issues.askRenewGroupLink.href(ids), filter)
+            : null,
         fixes: {
           editHref: canEditGroup(isOpen)
             ? withFilter(routes.issues.askEditGroup.href(ids), filter)
@@ -971,7 +981,8 @@ async function renderDetail(
     fixing?: ArticleFixView
     groupFixing?: GroupFixView
     isFolderGone?: boolean
-    isRenewing?: boolean
+    /** `02d` over the detail, with the key of the link it shows. */
+    renewing?: { shownKey: string }
     /** The detail itself, which asks Drive about approved texts once it stands (`12q`). */
     isShown?: boolean
     newGroup?: NewGroupDialogView
@@ -1005,7 +1016,7 @@ async function renderDetail(
         isHeadingFocused: fixed?.focus === 'groups' && fixed.issueId === issue.id,
       })}
       isFolderGone={options.isFolderGone}
-      isRenewing={options.isRenewing}
+      renewing={options.renewing}
       isTitleFocused={fixed?.focus === 'title' && fixed.issueId === issue.id}
       isArticlesFocused={fixed?.focus === 'articles' && fixed.issueId === issue.id}
       issue={issue}
@@ -1178,6 +1189,24 @@ async function removeGroupViewOf(
     paragraphs: removeGroupDialogText(discarded),
     title: removeGroupTitle(group.name),
     ...(callout === undefined ? {} : { callout }),
+  }
+}
+
+/** `02g` over the detail, with the key of the link it shows, which the answer checks. */
+function renewGroupLinkViewOf(
+  context: PageContext,
+  issue: Issue,
+  group: GroupRow,
+  shownKey: string,
+): GroupFixView {
+  let filter = filterOf(context)
+  let ids = { id: String(group.id), name: issue.name }
+  return {
+    action: withFilter(routes.issues.renewGroupLink.href(ids), filter),
+    cancelHref: detailHref(issue, filter),
+    kind: 'renew',
+    shownKey,
+    title: renewGroupLinkTitle(group.name),
   }
 }
 
@@ -1988,7 +2017,9 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null || issue.completedAt === null || issue.closedAt !== null)
           return notFound()
-        return renderDetail(context, issue, { isRenewing: true })
+        let link = await articlesOf(context).links.articleLinkOf(issue.id)
+        if (link === null) return notFound()
+        return renderDetail(context, issue, { renewing: { shownKey: link.key } })
       },
 
       /* `02d`: the old key answers `02e` from this moment, and the new one starts from nothing. */
@@ -2337,6 +2368,60 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         }
       },
 
+      /* `02g`: the dialog, in an open issue whose group has its link. */
+      async askRenewGroupLink(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        let group = issue === null ? null : await groupOf(context, issue, context.params.id)
+        if (issue === null || group === null) return notFound()
+        let listed = (await articlesOf(context).artworks.groups.listByIssue(issue.id)).find(
+          (each) => each.id === group.id,
+        )
+        if (issue.closedAt !== null || listed?.link == null) {
+          return redirect(detailHref(issue, filterOf(context)), 303)
+        }
+        return renderDetail(context, issue, {
+          groupFixing: renewGroupLinkViewOf(context, issue, group, listed.link.key),
+        })
+      },
+
+      /*
+       * `02g`: the old key answers `02f` from this moment and the new one stands in the row, tinted,
+       * with focus on its _Kopírovat_. A key other than the one the dialog showed writes nothing and
+       * points at the link that is valid now in the same way.
+       */
+      async renewGroupLink(context) {
+        let issue = await issuesOf(context).store.findByName(context.params.name)
+        if (issue === null) return notFound()
+        let back = () => redirect(detailHref(issue, filterOf(context)), 303)
+        let group = await groupOf(context, issue, context.params.id)
+        if (group === null) {
+          if (!(await isRemovedGroup(context, issue, context.params.id))) return notFound()
+          flashToast(context, GROUP_LINK_GROUP_REMOVED_TOAST)
+          return back()
+        }
+        let outcome = await articlesOf(context).links.renewGroupLink({
+          at: now(),
+          groupId: group.id,
+          shownKey: formText(context, 'shownKey'),
+        })
+        switch (outcome.kind) {
+          case 'renewed':
+            flashToast(context, GROUP_LINK_RENEWED_TOAST)
+            flashGroupChanged(context.get(Session), group.id)
+            return back()
+          case 'changed-meanwhile':
+            flashToast(context, groupLinkChangedMeanwhileToast(group.name))
+            flashGroupChanged(context.get(Session), group.id)
+            return back()
+          case 'closed':
+            flashToast(context, renewGroupLinkClosedToast(outcome.issueName))
+            return back()
+          case 'gone':
+            flashToast(context, GROUP_LINK_GROUP_REMOVED_TOAST)
+            return back()
+        }
+      },
+
       /* `12z`: the dialog, while the article can be removed. */
       async askRemoveArticle(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
@@ -2563,8 +2648,15 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null || issue.completedAt === null || issue.closedAt !== null)
           return notFound()
-        await articlesOf(context).links.renew(issue.id, now())
-        flashToast(context, RENEWED_TOAST)
+        let outcome = await articlesOf(context).links.renew(
+          issue.id,
+          formText(context, 'shownKey'),
+          now(),
+        )
+        flashToast(
+          context,
+          outcome.kind === 'renewed' ? RENEWED_TOAST : LINK_CHANGED_MEANWHILE_TOAST,
+        )
         flashLinkChanged(context.get(Session), issue.name)
         return redirect(routes.issues.show.href({ name: issue.name }), 303)
       },

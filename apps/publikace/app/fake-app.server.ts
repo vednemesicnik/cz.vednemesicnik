@@ -826,9 +826,11 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()
       }
-      case '/link/renew':
-        await links.renew(issueId, now())
+      case '/link/renew': {
+        let shown = await links.articleLinkOf(issueId)
+        if (shown !== null) await links.renew(issueId, shown.key, now())
         return backToControls()
+      }
       case '/sign-in':
       case '/sign-in/proofreader': {
         /* The session `signInAs()` saves, handed to the browser instead of the harness's jar. */

@@ -357,7 +357,10 @@ describe('Nová skupina and the newsroom link from the overview’s row (11a)', 
       assert.ok(start >= 0)
       assert.ok(start < overview.indexOf('"label":"Otevřít složku na Disku"'))
 
-      let renewed = await links.renew(context.issueId, Temporal.Now.instant())
+      let renewal = await links.renew(context.issueId, first.key, Temporal.Now.instant())
+      assert.equal(renewal.kind, 'renewed')
+      if (renewal.kind !== 'renewed') return
+      let renewed = renewal.link
       let again = await (await context.editor.get('/?state=open')).text()
       assert.ok(again.includes(copyOf(renewed.key)))
       assert.ok(!again.includes(`/l/${first.key}/article`))

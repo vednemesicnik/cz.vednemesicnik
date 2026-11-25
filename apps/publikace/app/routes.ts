@@ -45,6 +45,9 @@ export const routes = route({
     editGroup: post('/issues/:name/artwork-groups/:id/edit'),
     askRemoveGroup: get('/issues/:name/artwork-groups/:id/remove'),
     removeGroup: post('/issues/:name/artwork-groups/:id/remove'),
+    /* _Vydat nový odkaz…_ from the group's „⋯“ (`02g`), asking first as the newsroom's does. */
+    askRenewGroupLink: get('/issues/:name/artwork-groups/:id/link/renew'),
+    renewGroupLink: post('/issues/:name/artwork-groups/:id/link/renew'),
     /* _Vydat nový odkaz_ asks at an address of its own, as a removal does (`02d`). */
     askRenewLink: get('/issues/:name/link/renew'),
     renewLink: post('/issues/:name/link/renew'),

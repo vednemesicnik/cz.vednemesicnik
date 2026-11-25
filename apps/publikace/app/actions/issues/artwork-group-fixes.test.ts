@@ -18,7 +18,8 @@ import {
 
 /**
  * Correcting and removing an artwork group (#154, `12f`): the dialogs over the detail, the group
- * folder and `_meta.json` on Drive, the row, the link, the claims, and every race `12f` draws.
+ * folder and `_meta.json` on Drive, the row, the link, the claims, and every race `12f` draws. And
+ * a new link for the group (#169, `02g`), which sits in the same „⋯“.
  */
 
 const MARIE = 'marie@vednemesicnik.test'
@@ -95,7 +96,7 @@ async function groupOf(context: Context) {
 
 async function linkKeyOf(context: Context): Promise<string> {
   let links = await context.app.database.exec(
-    sql`SELECT key FROM links WHERE group_id = ${context.groupId}`,
+    sql`SELECT key FROM links WHERE group_id = ${context.groupId} AND revoked_at IS NULL`,
   )
   return String(links.rows?.[0]?.['key'])
 }
@@ -106,6 +107,14 @@ function editPath(context: Context): string {
 
 function removePath(context: Context): string {
   return `${DETAIL}/artwork-groups/${context.groupId}/remove`
+}
+
+function renewPath(context: Context): string {
+  return `${DETAIL}/artwork-groups/${context.groupId}/link/renew`
+}
+
+function renew(context: Context, shownKey: string, from = renewPath(context)): Promise<Response> {
+  return context.editor.post(renewPath(context), { shownKey }, from)
 }
 
 /**
@@ -195,13 +204,18 @@ function claimReplies(context: Context): Promise<Response> {
 }
 
 describe('the group’s „⋯“ (12u, iuepzv2t)', () => {
-  it('holds the folder, then the fixes behind their own line, the removal last', () =>
+  it('holds the folder, the new link and the fixes, each behind its own line, the removal last', () =>
     withGroup(async (context) => {
       let detail = await (await context.editor.get(DETAIL)).text()
       let folder = detail.indexOf('Otevřít složku skupiny')
+      let renewItem = detail.indexOf(renewPath(context))
       let editItem = detail.indexOf('Upravit název a poznámku…')
       let removeItem = detail.indexOf('Odebrat skupinu…')
-      assert.ok(folder !== -1 && folder < editItem && editItem < removeItem)
+      assert.ok(
+        folder !== -1 && folder < renewItem && renewItem < editItem && editItem < removeItem,
+      )
+      let menu = detail.slice(folder, removeItem)
+      assert.equal(menu.match(/"isSeparator":true/g)?.length, 2)
       assert.ok(detail.includes(editPath(context)) && detail.includes(removePath(context)))
     }))
 
@@ -576,5 +590,102 @@ describe('discarding a batch whose archive failed meanwhile (12o, #154)', () => 
       assert.equal(answered.headers.get('Location'), DETAIL)
       let batch = await createArtworkStore(context.app.database).findBatch(batchId)
       assert.equal(batch?.discardedAt, null)
+    }))
+})
+
+describe('a new link for a group (02g, #169)', () => {
+  it('asks with the group’s name in the title and both paragraphs, Zrušit first', () =>
+    withGroup(async (context) => {
+      let html = await (await context.editor.get(renewPath(context))).text()
+      assert.equal(
+        dialogOf(html),
+        `Vydat nový odkaz ke skupině „${NAME}“? ` +
+          'Dosavadní odkaz hned přestane platit. Kdo má nahrávání rozpracované, bude muset díla ' +
+          'nahrát znovu přes nový odkaz. Odeslaná díla zůstanou ve skupině. Na dřívější žádosti ' +
+          'o souhlas lze dál odpovědět. Nikomu se nic nepošle. Zrušit Vydat nový odkaz',
+      )
+      assert.ok(html.includes(`name="shownKey" type="hidden" value="${await linkKeyOf(context)}"`))
+      assert.ok(html.includes('autofocus'))
+    }))
+
+  it('replaces the link at once, tints the row with focus on Kopírovat, and sends nothing', () =>
+    withGroup(async (context) => {
+      let old = await linkKeyOf(context)
+      let mail = context.app.mail.length
+      let drive = JSON.stringify([...context.app.drive.files(), ...context.app.drive.folders()])
+      let answered = await renew(context, old)
+      assert.equal(answered.status, 303)
+      assert.equal(answered.headers.get('Location'), DETAIL)
+
+      let renewed = await linkKeyOf(context)
+      assert.notEqual(renewed, old)
+      let detail = await (await context.editor.get(DETAIL)).text()
+      assert.equal(statusText(detail), 'Pošlete nový odkaz tomu, kdo díla dodá. Starý už neplatí.')
+      assert.ok(detail.includes(`/l/${renewed}/artworks`) && !detail.includes(`/l/${old}/artworks`))
+      let groups =
+        /<section aria-labelledby="groups-title"[^>]*>(.*?)<\/section>/s.exec(detail)?.[1] ?? ''
+      let changed = groups.slice(groups.indexOf('class="vdm-changed"'))
+      assert.ok(groups.includes('class="vdm-changed"') && changed.includes(renewed))
+      assert.match(changed, /autofocus/)
+      assert.equal(context.app.mail.length, mail)
+      assert.equal(
+        JSON.stringify([...context.app.drive.files(), ...context.app.drive.folders()]),
+        drive,
+      )
+
+      let visitor = context.app.browser()
+      assert.equal((await visitor.get(`/l/${old}/artworks`)).status, 410)
+      assert.equal((await visitor.get(`/l/${renewed}/artworks`)).status, 200)
+      let next = await (await context.editor.get(DETAIL)).text()
+      assert.ok(!next.includes('vdm-changed'))
+    }))
+
+  it('keeps a sent batch and its request, whose reply is still claimed', () =>
+    withGroup(async (context) => {
+      await sendBatch(context)
+      assert.equal((await renew(context, await linkKeyOf(context))).status, 303)
+      let claimed = (await (await claimReplies(context)).json()) as { batches: unknown[] }
+      assert.equal(claimed.batches.length, 1)
+      let detail = await (await context.editor.get(DETAIL)).text()
+      assert.ok(textOf(detail).includes(`${NAME} · 1 dílo`))
+    }))
+
+  it('writes nothing when the link changed, the group was removed, or the issue closed meanwhile', () =>
+    withGroup(async (context) => {
+      let old = await linkKeyOf(context)
+      assert.equal((await renew(context, old)).status, 303)
+      await context.editor.get(DETAIL)
+      let renewed = await linkKeyOf(context)
+      assert.equal((await renew(context, old, DETAIL)).status, 303)
+      let detail = await (await context.editor.get(DETAIL)).text()
+      assert.equal(
+        statusText(detail),
+        `Odkaz ke skupině „${NAME}“ se mezitím změnil. Aktuální odkaz můžete zkopírovat.`,
+      )
+      assert.ok(detail.includes('vdm-changed'))
+      assert.equal(await linkKeyOf(context), renewed)
+
+      await createIssueStore(context.app.database).close(context.issueId, now())
+      assert.equal((await renew(context, renewed, DETAIL)).status, 303)
+      detail = await (await context.editor.get(DETAIL)).text()
+      assert.equal(statusText(detail), 'Vydání VDM_2003_1 je uzavřené. Nový odkaz už nejde vydat.')
+      assert.equal(await linkKeyOf(context), renewed)
+
+      await createIssueStore(context.app.database).reopen(context.issueId)
+      assert.equal((await remove(context)).status, 303)
+      await context.editor.get(DETAIL)
+      assert.equal((await renew(context, renewed, DETAIL)).status, 303)
+      detail = await (await context.editor.get(DETAIL)).text()
+      assert.equal(statusText(detail), 'Skupina už je odebraná.')
+    }))
+
+  it('drops the item and the dialog once the issue is closed', () =>
+    withGroup(async (context) => {
+      await createIssueStore(context.app.database).close(context.issueId, now())
+      let detail = await (await context.editor.get(DETAIL)).text()
+      assert.ok(!detail.includes(renewPath(context)))
+      let asked = await context.editor.get(renewPath(context))
+      assert.equal(asked.status, 303)
+      assert.equal(asked.headers.get('Location'), DETAIL)
     }))
 })

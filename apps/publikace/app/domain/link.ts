@@ -127,6 +127,28 @@ export const RENEW_DIALOG_TEXT = tied`Dosavadní odkaz hned přestane platit i l
 export const RENEW_DIALOG_NOTE = tied`Rozepsané články zůstanou v dokumentech Google.`
 export const RENEW_CONFIRM_LABEL = 'Vydat nový odkaz'
 export const RENEWED_TOAST = 'Pošlete redakci nový odkaz. Starý už neplatí.'
+/** The dialog showed a link another editor-in-chief replaced meanwhile: nothing was written. */
+export const LINK_CHANGED_MEANWHILE_TOAST = tied`Odkaz pro redakci se mezitím změnil. Aktuální odkaz můžete zkopírovat.`
+
+/* `02g`, as the copywriter settled it (sgpfuacp): the same step for an artwork group's link. The
+   title names the group, because an issue holds several and only one of them is meant. */
+export function renewGroupLinkTitle(name: string): string {
+  return tied`Vydat nový odkaz ke skupině „${name}“?`
+}
+export const RENEW_GROUP_LINK_TEXT: readonly [string, string] = [
+  tied`Dosavadní odkaz hned přestane platit. Kdo má nahrávání rozpracované, bude muset díla nahrát znovu přes nový odkaz.`,
+  tied`Odeslaná díla zůstanou ve skupině. Na dřívější žádosti o souhlas lze dál odpovědět. Nikomu se nic nepošle.`,
+]
+export const GROUP_LINK_RENEWED_TOAST = tied`Pošlete nový odkaz tomu, kdo díla dodá. Starý už neplatí.`
+
+/* The races of `02g`: the step wrote nothing and says what holds now. */
+export function groupLinkChangedMeanwhileToast(name: string): string {
+  return tied`Odkaz ke skupině „${name}“ se mezitím změnil. Aktuální odkaz můžete zkopírovat.`
+}
+export const GROUP_LINK_GROUP_REMOVED_TOAST = tied`Skupina už je odebraná.`
+export function renewGroupLinkClosedToast(issueName: string): string {
+  return tied`Vydání ${issueName} je uzavřené. Nový odkaz už nejde vydat.`
+}
 
 /* `02e`: one page for a replaced link, a closed issue and a key nobody issued. */
 export const LINK_GONE_TITLE = tied`Z tohoto odkazu nejde založit článek`

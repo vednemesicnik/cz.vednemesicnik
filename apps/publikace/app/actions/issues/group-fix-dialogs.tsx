@@ -20,6 +20,7 @@ import {
 } from '../../domain/group-fixes.ts'
 import { type IssueFilter, notConnectedDialogMessage } from '../../domain/issue.ts'
 import type { FixCallout } from '../../domain/issue-fixes.ts'
+import { RENEW_CONFIRM_LABEL, RENEW_GROUP_LINK_TEXT } from '../../domain/link.ts'
 import { REQUIRED_LEGEND } from '../../domain/public/article-form.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
@@ -72,9 +73,18 @@ export type NewGroupDialogView = {
   values: { name: string; note: string }
 }
 
+/** _Vydat nový odkaz ke skupině_ (`02g`) over the detail, with the key of the link it shows. */
+export type RenewGroupLinkView = {
+  action: string
+  cancelHref: string
+  shownKey: string
+  title: string
+}
+
 export type GroupFixView =
   | ({ kind: 'edit' } & EditGroupView)
   | ({ kind: 'remove' } & RemoveGroupView)
+  | ({ kind: 'renew' } & RenewGroupLinkView)
 
 /* The form holds the body and the actions, so the fields go with the buttons while the dialog's
    own gaps still fall between them. */
@@ -83,11 +93,14 @@ const dialogFormStyle = css({ display: 'contents' })
 export function GroupFixDialog(handle: Handle<{ view: GroupFixView }>) {
   return () => {
     let { view } = handle.props
-    return view.kind === 'edit' ? (
-      <EditGroupDialog view={view} />
-    ) : (
-      <RemoveGroupDialog view={view} />
-    )
+    switch (view.kind) {
+      case 'edit':
+        return <EditGroupDialog view={view} />
+      case 'remove':
+        return <RemoveGroupDialog view={view} />
+      case 'renew':
+        return <RenewGroupLinkDialog view={view} />
+    }
   }
 }
 
@@ -155,6 +168,38 @@ function RemoveGroupDialog(handle: Handle<{ view: RemoveGroupView }>) {
           </a>
           <button class="vdm-btn vdm-btn--danger vdm-btn--sm" type="submit">
             {REMOVE_GROUP_CONFIRM_LABEL}
+          </button>
+        </form>
+      </Dialog>
+    )
+  }
+}
+
+/**
+ * `02g`: the newsroom's `02d` for one group, its name in the title. Nothing on Drive or in the mail
+ * takes part, so it has no Callout.
+ */
+function RenewGroupLinkDialog(handle: Handle<{ view: RenewGroupLinkView }>) {
+  return () => {
+    let { action, cancelHref, shownKey, title } = handle.props.view
+    let [first, second] = RENEW_GROUP_LINK_TEXT
+    return (
+      <Dialog maxWidth="360px">
+        <DialogTitle>{title}</DialogTitle>
+        <div class="vdm-dialog__body">
+          <p class="vdm-dialog__text">{first}</p>
+          <p class="vdm-dialog__text">{second}</p>
+        </div>
+        <form action={action} class="vdm-dialog__actions" method="post">
+          <CsrfField />
+          {/* The link the dialog showed, so a renewal another editor made meanwhile is not undone. */}
+          <input name="shownKey" type="hidden" value={shownKey} />
+          {/* Focus starts on the way back, so Enter on arrival never takes the link away. */}
+          <a autofocus class="vdm-btn vdm-btn--ghost vdm-btn--sm" href={cancelHref}>
+            Zrušit
+          </a>
+          <button class="vdm-btn vdm-btn--danger vdm-btn--sm" type="submit">
+            {RENEW_CONFIRM_LABEL}
           </button>
         </form>
       </Dialog>

@@ -156,8 +156,10 @@ that needs a session belongs behind a guard instead.
 ## Accepted risks
 
 - **A forwarded link works for whoever holds it.** That is the price of no sign-in from a
-  messenger's browser (`02a`). It is limited to one action in one place, and it can be renewed
-  (article links) or ends with the issue.
+  messenger's browser (`02a`). It is limited to one action in one place. The newsroom's link and
+  an artwork group's link can be renewed by an editor-in-chief (`02d`, `02g`); an article's
+  artworks link ends with the issue. A renewed link starts its limits from nothing, since they
+  count per link.
 - **A Doc's link is the right to edit it.** An author outside the domain needs no account. A
   person who should no longer edit is removed by moving the file, not by the app.
 - **The record may lag.** A sheet that does not answer is a log line `[drive] … was not written`,

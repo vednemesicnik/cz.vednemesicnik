@@ -142,7 +142,7 @@ describe('one page for every link that does not work (02e)', () => {
     withLink(async ({ editor, key, visitor }) => {
       let renewed = await editor.post(
         '/issues/VDM_2026_5/link/renew',
-        {},
+        { shownKey: key },
         '/issues/VDM_2026_5/link/renew',
       )
       assert.equal(renewed.status, 303)
@@ -296,7 +296,11 @@ describe('creating an article from the link (20b–20d)', () => {
 
   it('answers 410 with the fields kept when the link was replaced since the page opened', () =>
     withLink(async ({ editor, key, visitor }) => {
-      await editor.post('/issues/VDM_2026_5/link/renew', {}, '/issues/VDM_2026_5/link/renew')
+      await editor.post(
+        '/issues/VDM_2026_5/link/renew',
+        { shownKey: key },
+        '/issues/VDM_2026_5/link/renew',
+      )
       let response = await visitor.send(
         `/l/${key}/article`,
         articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA]),
@@ -313,7 +317,11 @@ describe('creating an article from the link (20b–20d)', () => {
     withLink(async ({ app, editor, key, visitor }) => {
       let body = articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA])
       await visitor.send(`/l/${key}/article`, body)
-      await editor.post('/issues/VDM_2026_5/link/renew', {}, '/issues/VDM_2026_5/link/renew')
+      await editor.post(
+        '/issues/VDM_2026_5/link/renew',
+        { shownKey: key },
+        '/issues/VDM_2026_5/link/renew',
+      )
 
       let again = await visitor.send(`/l/${key}/article`, body)
       assert.equal(again.status, 200)
@@ -355,13 +363,44 @@ describe('the link and the articles in the detail (12a, 12c, 02d)', () => {
 
       let renewed = await editor.post(
         '/issues/VDM_2026_5/link/renew',
-        {},
+        { shownKey: key },
         '/issues/VDM_2026_5/link/renew',
       )
       assert.equal(renewed.status, 303)
       let detail = await (await editor.get('/issues/VDM_2026_5')).text()
       assert.ok(!detail.includes(`/l/${key}/article`))
       assert.ok(textOf(detail).includes('Pošlete redakci nový odkaz. Starý už neplatí.'))
+    }))
+
+  it('writes nothing for a dialog whose link another editor renewed meanwhile', () =>
+    withLink(async ({ app, editor, key }) => {
+      let validKey = async () => {
+        let result = await app.database.exec({
+          text: "SELECT key FROM links WHERE kind = 'article' AND revoked_at IS NULL",
+          values: [],
+        } as never)
+        return String(result.rows?.[0]?.['key'])
+      }
+      let renew = () =>
+        editor.post(
+          '/issues/VDM_2026_5/link/renew',
+          { shownKey: key },
+          '/issues/VDM_2026_5/link/renew',
+        )
+      assert.equal((await renew()).status, 303)
+      await editor.get('/issues/VDM_2026_5')
+      let renewed = await validKey()
+      assert.notEqual(renewed, key)
+
+      assert.equal((await renew()).status, 303)
+      let detail = await (await editor.get('/issues/VDM_2026_5')).text()
+      assert.ok(
+        textOf(detail).includes(
+          'Odkaz pro redakci se mezitím změnil. Aktuální odkaz můžete zkopírovat.',
+        ),
+      )
+      assert.ok(detail.includes('vdm-changed'))
+      assert.equal(await validKey(), renewed)
     }))
 
   it('refuses a renewal sent without the form’s token, keeping the link', () =>
@@ -398,7 +437,11 @@ describe('where focus goes after a send (20c, 20d)', () => {
 
   it('marks the refusal when the link was replaced and the button is gone', () =>
     withLink(async ({ editor, key, visitor }) => {
-      await editor.post('/issues/VDM_2026_5/link/renew', {}, '/issues/VDM_2026_5/link/renew')
+      await editor.post(
+        '/issues/VDM_2026_5/link/renew',
+        { shownKey: key },
+        '/issues/VDM_2026_5/link/renew',
+      )
       let html = await (
         await visitor.send(
           `/l/${key}/article`,

@@ -308,7 +308,9 @@ describe('creating an article (20c, 20d)', () => {
       assert.equal((await createArticle(setup, article(linkKey))).kind, 'created')
       let link = await setup.links.findByKey(linkKey)
       if (link === null) return
-      let renewed = await setup.links.renew(link.issueId, now())
+      let renewal = await setup.links.renew(link.issueId, link.key, now())
+      if (renewal.kind !== 'renewed') return assert.fail(renewal.kind)
+      let renewed = renewal.link
 
       assert.equal((await replayedArticle(setup, 'form-1', linkKey))?.kind, 'created')
       assert.equal(await replayedArticle(setup, 'form-1', renewed.key), null)
@@ -328,7 +330,7 @@ describe('creating an article (20c, 20d)', () => {
     withHarness(async ({ linkKey, setup }) => {
       let link = await setup.links.findByKey(linkKey)
       if (link === null) return
-      await setup.links.renew(link.issueId, now())
+      await setup.links.renew(link.issueId, link.key, now())
 
       assert.equal((await createArticle(setup, article(linkKey))).kind, 'link-gone')
     }))
