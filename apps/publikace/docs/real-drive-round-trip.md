@@ -329,6 +329,30 @@ made before the app, from their Evidence; the two never see each other's clauses
    upraven_. Mark the new version and run the job: each author gets the e-mail that opens with
    _Váš předchozí souhlas se vztahuje k dřívější verzi._
 
+## The print folder
+
+`SCRIPT__Publication__Print_Handoff`, a standalone project under `publikace.app@` (#119), fills
+`_Podklady_pro_tisk` of every open issue made in the app. Each run makes one
+`/api/v1/print-handoff/claim` and one `/api/v1/print-handoff/report`. The suite covers what the app
+hands out and records; what it cannot cover is how Drive copies on the shared drive, how the .docx
+export converts, and what the designer sees in _Podklady_. The token is checked as the reply
+check's is, so the same `testConfiguration` step applies, and the run goes behind the same tunnel:
+each step runs `fillPrintFolders` by hand.
+
+1. With an approved article and an article whose artworks have consent, run the job. The print
+   folder gets a folder per article, named after it: the text as a Google Doc with the approved
+   version's content, the artworks as `obr-01`, `obr-02`… The sheet _Podklady_ lists one row per
+   artwork, _Aktualizováno_ in Prague's time, and the issue detail (`12t`) says how many texts and
+   artworks the folder holds and when the last full run was.
+2. An article whose version was replaced before every author agreed, or whose Doc was edited after
+   it, gets no new text: its row says _Text upraven po schválení – čeká na nové schválení._, and a
+   text already there stays.
+3. Run it again at once: nothing new in the folder, no second copy of anything.
+4. _Přejmenovat článek…_ and run it: the article's folder and its text follow the new name.
+5. Correct a group's note (_Upravit název a poznámku…_) and run it: _Podklady_ shows the new note
+   beside each artwork of the group.
+6. `/settings/jobs` lists _Podklady pro tisk_ with its last run.
+
 ## The proofreaders' digest
 
 The morning digest is one call, `/api/v1/proofreading-digest/run`, from
