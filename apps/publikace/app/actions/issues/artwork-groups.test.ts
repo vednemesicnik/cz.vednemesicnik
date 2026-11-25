@@ -14,6 +14,7 @@ import {
   createTestApp,
   JOB_TOKEN,
   seedAdmin,
+  seedIssue,
   TEST_ENVIRONMENT,
   type TestApp,
   type TestBrowser,
@@ -26,7 +27,7 @@ import {
  */
 
 const MARIE = 'marie@vednemesicnik.test'
-const ISSUE = 'VDM_2026_5'
+const ISSUE = 'VDM_2003_1'
 const DETAIL = `/issues/${ISSUE}`
 const NEW = `${DETAIL}/artwork-groups/new`
 const KLARA = { email: 'klara.simkova@external.test', name: 'Klára Šimková' }
@@ -34,6 +35,10 @@ const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4])
 const DIALOG_KEY = '44444444-4444-4444-8444-444444444444'
 const PAGE_KEY = '55555555-5555-4555-8555-555555555555'
 const NOTE = 'K textům „Proč nechodíme volit“ a „První volby“.'
+/* The dialog asked from a row of the overview under its filter _Neuzavřené_ (`11a`). */
+const NEW_FROM_OVERVIEW = `${NEW}?from=overview&state=open`
+/* The overview's column headers, which no other page has. */
+const OVERVIEW_HEAD = 'Vydání Stav Články Obrazová díla Čeká na vás'
 
 function textOf(html: string): string {
   return html
@@ -337,6 +342,91 @@ describe('a new artwork group (12e)', () => {
     }))
 })
 
+describe('Nová skupina and the newsroom link from the overview’s row (11a)', () => {
+  it('lead an active row’s „⋯“ before its folder, and copy the link that is valid now', () =>
+    withIssue(async (context) => {
+      let links = createLinkStore(context.app.database)
+      let copyOf = (key: string) =>
+        `{"copyText":"${new URL(`/l/${key}/article`, appOrigin(TEST_ENVIRONMENT)).href}","label":"Kopírovat odkaz na nový článek"}`
+      let group = `{"href":"${NEW_FROM_OVERVIEW}","isSameTab":true,"label":"Nová skupina obrazových děl"}`
+      let first = await links.articleLinkOf(context.issueId)
+      assert.ok(first !== null)
+
+      let overview = await (await context.editor.get('/?state=open')).text()
+      let start = overview.indexOf(`[${copyOf(first.key)},${group},`)
+      assert.ok(start >= 0)
+      assert.ok(start < overview.indexOf('"label":"Otevřít složku na Disku"'))
+
+      let renewed = await links.renew(context.issueId, Temporal.Now.instant())
+      let again = await (await context.editor.get('/?state=open')).text()
+      assert.ok(again.includes(copyOf(renewed.key)))
+      assert.ok(!again.includes(`/l/${first.key}/article`))
+    }))
+
+  it('offer neither in a closed row or an unfinished one', () =>
+    withIssue(async (context) => {
+      let closedId = await seedIssue(context.app, 'VDM_2003_2')
+      await createIssueStore(context.app.database).close(closedId, Temporal.Now.instant())
+      await seedIssue(context.app, 'VDM_2003_3', { isComplete: false })
+      let overview = await (await context.editor.get('/')).text()
+      assert.ok(overview.includes('Další akce VDM_2003_2'))
+      assert.ok(overview.includes('Další akce VDM_2003_3'))
+      /* The active issue's row alone. */
+      assert.equal(overview.split('Kopírovat odkaz na nový článek').length, 2)
+      assert.equal(overview.split('Nová skupina obrazových děl').length, 2)
+    }))
+
+  it('opens the dialog of 12e over the overview, which Zrušit goes back to', () =>
+    withIssue(async (context) => {
+      let response = await context.editor.get(NEW_FROM_OVERVIEW)
+      assert.equal(response.status, 200)
+      let html = await response.text()
+      assert.ok(textOf(html).includes(OVERVIEW_HEAD))
+      assert.equal(groupsSection(html), null)
+      assert.ok(textOf(html).includes('Nová skupina obrazových děl'))
+      assert.ok(html.includes('"href":"/?state=open","label":"Zrušit"'))
+      assert.match(html, /name="returnTo" type="hidden" value="overview"/)
+      assert.match(html, /name="state" type="hidden" value="open"/)
+
+      /* From the detail, the same dialog goes back to the detail. */
+      let detail = await (await context.editor.get(NEW)).text()
+      assert.ok(detail.includes(`"href":"${DETAIL}","label":"Zrušit"`))
+      assert.match(detail, /name="returnTo" type="hidden" value="detail"/)
+    }))
+
+  it('answers a refusal over the overview, and a created group on the detail (12e)', () =>
+    withIssue(async (context) => {
+      let refused = await context.editor.post(
+        NEW,
+        { formKey: DIALOG_KEY, name: '', note: NOTE, returnTo: 'overview', state: 'open' },
+        NEW_FROM_OVERVIEW,
+      )
+      assert.equal(refused.status, 400)
+      let html = await refused.text()
+      assert.ok(textOf(html).includes(OVERVIEW_HEAD))
+      assert.ok(textOf(html).includes('Vyplňte název skupiny.'))
+      assert.ok(textOf(html).includes(NOTE))
+      assert.ok(html.includes('"href":"/?state=open","label":"Zrušit"'))
+
+      let created = await context.editor.post(
+        NEW,
+        {
+          formKey: DIALOG_KEY,
+          name: 'Mapa obce k rozhovoru i reportáži',
+          note: '',
+          returnTo: 'overview',
+          state: 'open',
+        },
+        NEW_FROM_OVERVIEW,
+      )
+      assert.equal(created.status, 303)
+      assert.equal(created.headers.get('Location'), DETAIL)
+      let detail = await (await context.editor.get(DETAIL)).text()
+      assert.ok(textOf(detail).includes('Skupina je vytvořená. Odkaz pošlete tomu, kdo díla dodá.'))
+      assert.match(detail, /<section aria-labelledby="groups-title".*vdm-changed/s)
+    }))
+})
+
 describe('a group’s link and its batches', () => {
   it('names the group and its note on the page, and the group in the request and the 21c lead', () =>
     withIssue(async (context) => {
@@ -357,7 +447,7 @@ describe('a group’s link and its batches', () => {
       let request = context.app.mail.find((message) => message.to === KLARA.email)
       assert.match(
         request?.subject ?? '',
-        /^Žádost o potvrzení souhlasu s užitím obrazových děl ze skupiny „Mapa obce k rozhovoru i reportáži“ – VDM_2026_5 \[\d{8}T\d{6}\]$/,
+        /^Žádost o potvrzení souhlasu s užitím obrazových děl ze skupiny „Mapa obce k rozhovoru i reportáži“ – VDM_2003_1 \[\d{8}T\d{6}\]$/,
       )
       let groupFolder = context.app.drive
         .folders()
@@ -672,7 +762,7 @@ describe('a group’s missing folder in the detail (12j, #145)', () => {
 
       await context.editor.post(`${DETAIL}/folders/check-marked`, {}, DETAIL)
       let text = textOf(await (await context.editor.get(DETAIL)).text())
-      assert.ok(text.includes('Obnovte složku vydání VDM_2026_5'))
+      assert.ok(text.includes('Obnovte složku vydání VDM_2003_1'))
       assert.ok(!text.includes(GROUP_STEP))
       let overview = textOf(await (await context.editor.get('/')).text())
       assert.ok(overview.includes('0 článků · 0 děl · 1 čeká na vás'))

@@ -12,10 +12,10 @@ import { Issues, type IssuesContext } from '../../middleware/issues.server.ts'
 import { Toasts } from '../../middleware/toasts.server.ts'
 import type { AppContext } from '../../router.ts'
 import type { ApprovedCount, IssueFilter } from '../../domain/issue.ts'
+import { absoluteUrl, articleLinkPath } from '../../domain/link.ts'
 import { shownIssueMark } from '../../domain/issue-folders.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
-import type { IssueStepDialogView } from './issue-parts.tsx'
-import { type NewIssueDialog, OverviewPage } from './overview-page.tsx'
+import { type OverviewDialog, OverviewPage } from './overview-page.tsx'
 
 /**
  * What the helpers below read. Every action's context has it; it is written loosely because the
@@ -73,7 +73,7 @@ export async function renderOverview(
   context: PageContext,
   editor: Person,
   filter: IssueFilter,
-  dialog?: NewIssueDialog | IssueStepDialogView,
+  dialog?: OverviewDialog,
   init?: ResponseInit,
 ): Promise<Response> {
   let articles = context.get(Articles) as ArticlesContext
@@ -85,6 +85,7 @@ export async function renderOverview(
     articleWaiting,
     groupsMissing,
     groupCounts,
+    articleLinks,
   ] = await Promise.all([
     issuesOf(context).store.list(),
     driveView(context),
@@ -93,6 +94,7 @@ export async function renderOverview(
     articles.articles.waitingCountsByIssue(),
     articles.artworks.groups.missingCountsByIssue(),
     articles.artworks.groups.countsByIssue(),
+    articles.links.articleLinksByIssue(),
   ])
   let fixed = takeIssueFixed(context)
   /* _Čeká na vás_ adds up the amber and pink tags of the issue's articles and artworks, one for
@@ -112,9 +114,16 @@ export async function renderOverview(
     waitingCounts.set(issueId, (waitingCounts.get(issueId) ?? 0) + waiting)
   }
 
+  /* What _Kopírovat odkaz na nový článek_ in a row's „⋯“ copies (`11a`). */
+  let articleLinkUrls = new Map<number, string>()
+  for (let [issueId, link] of articleLinks) {
+    articleLinkUrls.set(issueId, absoluteUrl(articles.origin, articleLinkPath(link.key)))
+  }
+
   return context.render(
     <OverviewPage
       articleCounts={articleCounts}
+      articleLinkUrls={articleLinkUrls}
       artworkCounts={artworkCounts}
       changedIssueId={fixed?.focus === 'row' ? fixed.issueId : undefined}
       dialog={dialog}

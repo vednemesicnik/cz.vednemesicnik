@@ -93,6 +93,8 @@ export const GROUPS_EMPTY_TEXT = tied`Skupinu založte, když dílo patří k v�
 export const OPEN_GROUP_FOLDER_LABEL = 'Otevřít složku skupiny'
 
 export const NEW_GROUP_DIALOG_TITLE = 'Nová skupina obrazových děl'
+/** The same dialog from the overview row's „⋯“ (`11a`), named in full where no section says what. */
+export const NEW_GROUP_MENU_LABEL = 'Nová skupina obrazových děl'
 export const NEW_GROUP_DIALOG_TEXT = tied`Do skupiny patří jen díla, která jsou společná více textům. Skupina dostane složku a odkaz na nahrání.`
 /** The design system's mark of an optional field, after its label (`34on3abs`). */
 export const OPTIONAL_MARK = '(nepovinné)'

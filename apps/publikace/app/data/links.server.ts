@@ -23,6 +23,8 @@ export type LinkStore = {
   findByKey(key: string): Promise<Link | null>
   /** The issue's valid link for new articles, if any. */
   articleLinkOf(issueId: number): Promise<Link | null>
+  /** Every issue's valid link for new articles, by the issue's ID, for the overview (`11a`). */
+  articleLinksByIssue(): Promise<Map<number, Link>>
   /** Each created article's link for its artworks, by the article's ID. */
   artworksLinksOf(issueId: number): Promise<Map<number, Link>>
   /** Revokes the valid link and issues a new one, in one transaction (`02d`). */
@@ -115,6 +117,18 @@ export function createLinkStore(database: Database): LinkStore {
   return {
     articleLinkOf(issueId) {
       return validArticleLink(database, issueId)
+    },
+
+    async articleLinksByIssue() {
+      let result = await database.exec(
+        sql`SELECT * FROM links WHERE kind = 'article' AND revoked_at IS NULL`,
+      )
+      let links = new Map<number, Link>()
+      for (let row of result.rows ?? []) {
+        let link = toLink(row)
+        links.set(link.issueId, link)
+      }
+      return links
     },
 
     async artworksLinksOf(issueId) {

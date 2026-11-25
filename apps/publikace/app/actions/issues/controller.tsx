@@ -81,7 +81,7 @@ import {
   renameGroupMetaBinned,
 } from '../../domain/group-fixes.ts'
 import { editGroup, type GroupFixSetup, removeGroup } from '../../drive/group-fixes.server.ts'
-import type { GroupFixView } from './group-fix-dialogs.tsx'
+import type { GroupFixView, NewGroupDialogView } from './group-fix-dialogs.tsx'
 import { createController } from 'remix/router'
 import { Session } from 'remix/session'
 
@@ -305,12 +305,16 @@ import {
   type IssueMissingView,
   type LinkBlockView,
   type MissingAddressView,
-  type NewGroupDialogView,
   type MissingFoldersView,
   type PrintSectionView,
   type ReplacedVersionView,
 } from './detail-page.tsx'
-import { type IssueStepDialogView, type ReturnTo, stepBackHref } from './issue-parts.tsx'
+import {
+  type IssueStepDialogView,
+  newGroupHref,
+  type ReturnTo,
+  stepBackHref,
+} from './issue-parts.tsx'
 import type { NewIssueDialog } from './overview-page.tsx'
 import {
   driveView,
@@ -912,7 +916,7 @@ async function groupsOf(
   let isOpen = issue.closedAt === null
   return {
     isHeadingFocused: changed.isHeadingFocused,
-    newHref: state === 'active' ? routes.issues.newGroup.href({ name: issue.name }) : null,
+    newHref: state === 'active' ? newGroupHref(issue, 'detail') : null,
     rows: groups.map((group) => {
       let url = group.link === null ? null : absoluteUrl(origin, artworksLinkPath(group.link.key))
       let ids = { id: String(group.id), name: issue.name }
@@ -1455,16 +1459,39 @@ async function contentsOf(context: PageContext, issue: Issue): Promise<IssueCont
   return { articles: created.length, groups: groups.length }
 }
 
-/** The dialog _Nová skupina obrazových děl_ over the detail, with what it was sent (`12e`). */
+/**
+ * The dialog _Nová skupina obrazových děl_ with what it was sent (`12e`), over the page it was
+ * asked from: the detail, or the overview and its filter from a row's „⋯“ (`11a`).
+ */
 function newGroupDialog(
   issue: Issue,
-  state: Omit<NewGroupDialogView, 'action' | 'cancelHref'>,
+  from: { filter: IssueFilter; returnTo: ReturnTo },
+  state: Omit<NewGroupDialogView, 'action' | 'cancelHref' | 'from'>,
 ): NewGroupDialogView {
   return {
     ...state,
     action: routes.issues.createGroup.href({ name: issue.name }),
-    cancelHref: routes.issues.show.href({ name: issue.name }),
+    cancelHref: stepBackHref(issue, from.returnTo, from.filter),
+    from,
   }
+}
+
+/** The dialog over the page it was asked from; a refused answer with its status. */
+function renderNewGroup(
+  context: PageContext & { auth: { identity: Person } },
+  issue: Issue,
+  group: NewGroupDialogView,
+  status?: number,
+): Promise<Response> {
+  return group.from.returnTo === 'overview'
+    ? renderOverview(
+        context,
+        context.auth.identity,
+        group.from.filter,
+        { group, kind: 'new-group' },
+        status === undefined ? undefined : { status },
+      )
+    : renderDetail(context, issue, { newGroup: group, status })
 }
 
 function notFound(): Response {
@@ -1897,14 +1924,16 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
       async newGroup(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null || issueState(issue) !== 'active') return notFound()
-        return renderDetail(context, issue, {
-          newGroup: newGroupDialog(issue, {
+        return renderNewGroup(
+          context,
+          issue,
+          newGroupDialog(issue, askedFrom(context), {
             errors: { name: null, note: null },
             formKey: crypto.randomUUID(),
             refusal: null,
             values: { name: '', note: '' },
           }),
-        })
+        )
       },
 
       async createGroup(context) {
@@ -1914,15 +1943,18 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let values = { name: formText(context, 'name'), note: formText(context, 'note') }
         let typedKey = formText(context, 'formKey')
         let formKey = /^[0-9a-f-]{36}$/.test(typedKey) ? typedKey : crypto.randomUUID()
+        let from = answeredFrom(context)
         let again = (
           errors: NewGroupDialogView['errors'],
           refusal: NewGroupDialogView['refusal'],
           status: number,
         ) =>
-          renderDetail(context, issue, {
-            newGroup: newGroupDialog(issue, { errors, formKey, refusal, values }),
+          renderNewGroup(
+            context,
+            issue,
+            newGroupDialog(issue, from, { errors, formKey, refusal, values }),
             status,
-          })
+          )
 
         let { artworks, setup } = articlesOf(context)
         let outcome = await createGroup(groupSetupOf(setup, artworks), {

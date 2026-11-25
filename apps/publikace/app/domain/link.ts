@@ -92,6 +92,9 @@ export const OPEN_FORM_LABEL = 'Otevřít formulář'
 export const RENEW_LINK_LABEL = 'Vydat nový odkaz…'
 export const SHARE_LABEL = 'Sdílet'
 
+/** The same link from the overview row's „⋯“ (`11a`). */
+export const COPY_ARTICLE_LINK_LABEL = 'Kopírovat odkaz na nový článek'
+
 /**
  * `Použit 5×, naposledy 10. 11.` or `Zatím nepoužit`. The year is left out within the current
  * year, as `docs/copy-context.md` allows. A renewed link starts from nothing (`02d`).

@@ -3,6 +3,7 @@ import { css } from 'remix/component'
 
 import { approvedArticlesLine } from '../../domain/article.ts'
 import { approvedArtworksLine } from '../../domain/artwork.ts'
+import { NEW_GROUP_MENU_LABEL } from '../../domain/artwork-group.ts'
 import { disconnectedBanner } from '../../domain/drive-account.ts'
 import {
   CREATE_UNAVAILABLE_TEXT,
@@ -31,6 +32,7 @@ import {
   unfinishedTitle,
   missingFolders,
 } from '../../domain/issue.ts'
+import { COPY_ARTICLE_LINK_LABEL } from '../../domain/link.ts'
 import { routes } from '../../routes.ts'
 import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
@@ -53,12 +55,14 @@ import { TableRowTitle } from '../../ui/table-row-title/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { Document } from '../document.tsx'
 import type { IssueContents } from '../../domain/issue-fixes.ts'
+import { NewGroupDialog, type NewGroupDialogView } from './group-fix-dialogs.tsx'
 import {
   FinishIssueForm,
   fixItems,
   IssueStateTag,
   IssueStepDialog,
   type IssueStepDialogView,
+  newGroupHref,
   stepDialogHref,
   withSeparators,
 } from './issue-parts.tsx'
@@ -73,13 +77,23 @@ export type NewIssueDialog =
   | { fieldError?: string; isDriveUnavailable?: boolean; kind: 'form'; name: string }
   | { issue: Issue; kind: 'unfinished' }
 
+/**
+ * What stands over the overview: _Nové vydání_ (`11d`), a step or a fix asked from a row (`12g`,
+ * `12h`, `12u`), or _Nová skupina obrazových děl_ from a row's „⋯“ (`11a`, `12e`).
+ */
+export type OverviewDialog =
+  | NewIssueDialog
+  | IssueStepDialogView
+  | { group: NewGroupDialogView; kind: 'new-group' }
+
 export type OverviewPageProps = {
   /** Created articles by issue ID, and how many are approved; an issue missing here has none. */
   articleCounts: ReadonlyMap<number, ApprovedCount>
+  /** The valid link for new articles by issue ID, as a row's „⋯“ copies it (`11a`). */
+  articleLinkUrls: ReadonlyMap<number, string>
   /** The sent artworks by issue ID, and how many are approved. */
   artworkCounts: ReadonlyMap<number, ApprovedCount>
-  /** _Nové vydání_ (`11d`), or closing and reopening asked from a row (`12g`, `12h`). */
-  dialog?: NewIssueDialog | IssueStepDialogView
+  dialog?: OverviewDialog
   driveAccount: { expectedEmail: string; status: DriveStatus }
   filter: IssueFilter
   /** Created artwork groups by issue ID; an issue missing here has none. */
@@ -97,8 +111,13 @@ export type OverviewPageProps = {
   waitingCounts: ReadonlyMap<number, number>
 }
 
-/* The drawing's tracks (`11a`): the title takes what is left, the actions hold `⋯`. */
-const COLUMNS = 'minmax(180px, 3fr) 120px minmax(110px, 1fr) minmax(130px, 1fr) 110px 44px'
+/*
+ * The drawing's tracks (`11a`): the title takes what is left, the actions hold `⋯`. Their minimums,
+ * five gaps of 12 px and the row's 2 × 8 px come to 694 px. That fits 719 px, a 1024 px window
+ * without the panel, the content's padding and a classic 17 px scrollbar, which the design
+ * system's media query counts: from there the table no longer scrolls (24972ef5).
+ */
+const COLUMNS = 'minmax(160px, 3fr) 112px minmax(110px, 1fr) minmax(112px, 1fr) 80px 44px'
 
 const PHONE = '@media (max-width: 767.98px)'
 
@@ -164,7 +183,7 @@ const spanCountsStyle = css({ gridColumn: 'span 3', justifySelf: 'start' })
 const dialogFormStyle = css({ display: 'contents' })
 
 /* A guard, because a discriminant of two literals on one member does not narrow the other out. */
-function isStepDialog(dialog: NewIssueDialog | IssueStepDialogView): dialog is IssueStepDialogView {
+function isStepDialog(dialog: OverviewDialog): dialog is IssueStepDialogView {
   return (
     dialog.kind === 'close' ||
     dialog.kind === 'reopen' ||
@@ -182,17 +201,38 @@ function issueHref(issue: Issue): string {
 }
 
 /**
- * The row's „⋯“ (`11a`): the folder, then after a line closing an active issue or reopening a
- * closed one, then the fixes (`12u`), each a dialog over the overview.
+ * The row's „⋯“ (`11a`): an active issue's shortcuts from the detail, the newsroom's link and a new
+ * group, then the folder; after a line closing an active issue or reopening a closed one; then the
+ * fixes (`12u`). Every dialog among them stands over the overview.
  */
-function rowItems(issue: Issue, filter: IssueFilter, contents: IssueContents): ActionMenuItem[] {
+function rowItems(
+  issue: Issue,
+  filter: IssueFilter,
+  contents: IssueContents,
+  articleLinkUrl: string | null,
+): ActionMenuItem[] {
   let folderId = issue.folderIds.issue
-  let opens: ActionMenuItem[] =
+  let folder: ActionMenuItem[] =
     folderId === null ? [] : [{ href: folderUrl(folderId), label: OPEN_FOLDER_LABEL }]
   let fixes = fixItems(issue, contents, 'overview', filter)
   let state = issueState(issue)
-  if (state === 'unfinished') return withSeparators([opens, fixes])
+  if (state === 'unfinished') return withSeparators([folder, fixes])
   let isClosed = state === 'closed'
+  /* The link and the group belong to an issue that takes articles and artworks: an unfinished
+     one has no link yet, and a closed one takes nothing (`12h`). */
+  let opens: ActionMenuItem[] = isClosed
+    ? folder
+    : [
+        ...(articleLinkUrl === null
+          ? []
+          : [{ copyText: articleLinkUrl, label: COPY_ARTICLE_LINK_LABEL }]),
+        {
+          href: newGroupHref(issue, 'overview', filter),
+          isSameTab: true,
+          label: NEW_GROUP_MENU_LABEL,
+        },
+        ...folder,
+      ]
   let step: ActionMenuItem = {
     href: stepDialogHref(isClosed ? 'reopen' : 'close', issue, 'overview', filter),
     isSameTab: true,
@@ -207,6 +247,7 @@ const waitingCountStyle = css({ color: 'var(--state-attention-text)', fontWeight
 /** One row of `11a`; the unfinished one carries _Dokončit vydání_ where the counts would be. */
 function IssueRow(
   handle: Handle<{
+    articleLinkUrl: string | null
     articles: ApprovedCount
     artworks: ApprovedCount
     filter: IssueFilter
@@ -218,7 +259,8 @@ function IssueRow(
   }>,
 ) {
   return () => {
-    let { articles, artworks, filter, groups, isChanged, isLast, issue, waiting } = handle.props
+    let { articleLinkUrl, articles, artworks, filter, groups, isChanged, isLast, issue, waiting } =
+      handle.props
     let state = issueState(issue)
 
     return (
@@ -263,7 +305,7 @@ function IssueRow(
         )}
         <span role="cell">
           <ActionMenu
-            items={rowItems(issue, filter, { articles: articles.total, groups })}
+            items={rowItems(issue, filter, { articles: articles.total, groups }, articleLinkUrl)}
             label={`Další akce ${issue.name}`}
           />
         </span>
@@ -337,6 +379,7 @@ function PhoneRow(
 function IssueList(
   handle: Handle<{
     articleCounts: ReadonlyMap<number, ApprovedCount>
+    articleLinkUrls: ReadonlyMap<number, string>
     artworkCounts: ReadonlyMap<number, ApprovedCount>
     changedIssueId: number | undefined
     filter: IssueFilter
@@ -348,6 +391,7 @@ function IssueList(
   return () => {
     let {
       articleCounts,
+      articleLinkUrls,
       artworkCounts,
       changedIssueId,
       filter,
@@ -399,6 +443,7 @@ function IssueList(
                 </TableRow>
                 {shown.map((issue, index) => (
                   <IssueRow
+                    articleLinkUrl={articleLinkUrls.get(issue.id) ?? null}
                     articles={articleCounts.get(issue.id) ?? NO_COUNT}
                     artworks={artworkCounts.get(issue.id) ?? NO_COUNT}
                     filter={filter}
@@ -553,6 +598,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
   return () => {
     let {
       articleCounts,
+      articleLinkUrls,
       artworkCounts,
       dialog,
       driveAccount,
@@ -598,6 +644,7 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
             <IssueList
               artworkCounts={artworkCounts}
               articleCounts={articleCounts}
+              articleLinkUrls={articleLinkUrls}
               changedIssueId={changedIssueId}
               filter={filter}
               groupCounts={groupCounts}
@@ -608,6 +655,8 @@ export function OverviewPage(handle: Handle<OverviewPageProps>) {
         </Layout>
         {dialog === undefined ? null : isStepDialog(dialog) ? (
           <IssueStepDialog step={dialog} />
+        ) : dialog.kind === 'new-group' ? (
+          <NewGroupDialog dialog={dialog.group} driveAccount={driveAccount} />
         ) : (
           <NewIssueDialogView
             dialog={dialog}

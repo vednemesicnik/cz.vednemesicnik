@@ -49,7 +49,6 @@ import {
   issueState,
   LINK_PLACEHOLDER_TEXT,
   missingFolders,
-  notConnectedDialogMessage,
   OPEN_EVIDENCE_LABEL,
   OPEN_FOLDER_LABEL,
   OPEN_PRINT_FOLDER_LABEL,
@@ -87,8 +86,12 @@ import {
   RENAME_ARTICLE_LABEL,
 } from '../../domain/article-fixes.ts'
 import { ArticleFixDialog, type ArticleFixView } from './article-fix-dialogs.tsx'
-import { GroupFields } from './group-fields.tsx'
-import { GroupFixDialog, type GroupFixView } from './group-fix-dialogs.tsx'
+import {
+  GroupFixDialog,
+  type GroupFixView,
+  NewGroupDialog,
+  type NewGroupDialogView,
+} from './group-fix-dialogs.tsx'
 import { EDIT_GROUP_LABEL, REMOVE_GROUP_LABEL } from '../../domain/group-fixes.ts'
 import { CopyButton } from '../../ui/public/copy-button/component.tsx'
 import { ShareButton } from '../../ui/public/share-button/component.tsx'
@@ -131,20 +134,12 @@ import { SHOW_REPLY_LABEL } from '../../domain/approvals.ts'
 import { DETAILS_LABEL } from '../../domain/jobs.ts'
 import { spreadsheetUrl } from '../../domain/record.ts'
 import {
-  CREATE_GROUP_LABEL,
-  CREATE_GROUP_PENDING_LABEL,
-  CREATE_GROUP_UNAVAILABLE_TEXT,
-  CREATE_GROUP_UNAVAILABLE_TITLE,
   groupMenuLabel,
   GROUPS_EMPTY_TEXT,
   GROUPS_SECTION_TITLE,
-  NEW_GROUP_DIALOG_TEXT,
-  NEW_GROUP_DIALOG_TITLE,
   NEW_GROUP_LABEL,
   OPEN_GROUP_FOLDER_LABEL,
 } from '../../domain/artwork-group.ts'
-import { disconnectedBanner } from '../../domain/drive-account.ts'
-import { REQUIRED_LEGEND } from '../../domain/public/article-form.ts'
 
 /** The block _Odkaz pro redakci_ of an active issue (`12a`, `12c`, `02b`). */
 export type LinkBlockView = {
@@ -392,17 +387,6 @@ export type GroupsView = {
   /** _Nová skupina_, on an active issue only. */
   newHref: string | null
   rows: readonly GroupRowView[]
-}
-
-/** The dialog _Nová skupina obrazových děl_ over the detail (`12e`). */
-export type NewGroupDialogView = {
-  action: string
-  cancelHref: string
-  errors: { name: string | null; note: string | null }
-  formKey: string
-  /** Drive did not answer, or the account is not connected: the fields stay as they were. */
-  refusal: 'disconnected' | 'not-connected' | 'unavailable' | null
-  values: { name: string; note: string }
 }
 
 /**
@@ -1532,65 +1516,6 @@ function Groups(handle: Handle<{ groups: GroupsView }>) {
           </div>
         )}
       </section>
-    )
-  }
-}
-
-/* The form is the dialog's body and its actions both, as on _Nové vydání_. */
-const dialogFormStyle = css({ display: 'contents' })
-
-/**
- * `12e`, at `/issues/{name}/artwork-groups/new` over the detail. A refused name or note comes
- * back with the fields as they were typed; so does a Drive that did not answer, with the step in
- * a Callout above them, as on _Nové vydání_ (`11c`).
- */
-function NewGroupDialog(
-  handle: Handle<{ dialog: NewGroupDialogView; driveAccount: DetailPageProps['driveAccount'] }>,
-) {
-  return () => {
-    let { dialog, driveAccount } = handle.props
-    let { errors, refusal, values } = dialog
-    return (
-      <Dialog maxWidth="500px">
-        <DialogTitle>{NEW_GROUP_DIALOG_TITLE}</DialogTitle>
-        <form action={dialog.action} method="post" mix={dialogFormStyle} noValidate>
-          <CsrfField />
-          <input name="formKey" type="hidden" value={dialog.formKey} />
-          <div class="vdm-dialog__body">
-            {refusal === 'not-connected' ? (
-              <Callout tone="warning">
-                <p style={{ margin: 0 }}>{notConnectedDialogMessage(driveAccount.expectedEmail)}</p>
-              </Callout>
-            ) : refusal === 'disconnected' ? (
-              <Callout tone="error">
-                <p style={{ margin: 0 }}>{disconnectedBanner(driveAccount.expectedEmail)}</p>
-              </Callout>
-            ) : refusal === 'unavailable' ? (
-              <Callout tone="error">
-                <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
-                  {CREATE_GROUP_UNAVAILABLE_TITLE}
-                </p>
-                <p style={{ margin: 0 }}>{CREATE_GROUP_UNAVAILABLE_TEXT}</p>
-              </Callout>
-            ) : null}
-            <p class="vdm-dialog__text" style={{ margin: 0 }}>
-              {NEW_GROUP_DIALOG_TEXT}
-            </p>
-            <p class="vdm-form__legend" style={{ margin: 0 }}>
-              {REQUIRED_LEGEND}
-            </p>
-            <GroupFields errors={errors} values={values} />
-          </div>
-          <div class="vdm-dialog__actions">
-            <PendingActions
-              cancel={{ href: dialog.cancelHref, label: 'Zrušit' }}
-              emphasis="primary"
-              label={CREATE_GROUP_LABEL}
-              pendingLabel={CREATE_GROUP_PENDING_LABEL}
-            />
-          </div>
-        </form>
-      </Dialog>
     )
   }
 }

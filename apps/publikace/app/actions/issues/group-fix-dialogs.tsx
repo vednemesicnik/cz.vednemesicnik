@@ -2,6 +2,15 @@ import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
 
 import {
+  CREATE_GROUP_LABEL,
+  CREATE_GROUP_PENDING_LABEL,
+  CREATE_GROUP_UNAVAILABLE_TEXT,
+  CREATE_GROUP_UNAVAILABLE_TITLE,
+  NEW_GROUP_DIALOG_TEXT,
+  NEW_GROUP_DIALOG_TITLE,
+} from '../../domain/artwork-group.ts'
+import { disconnectedBanner } from '../../domain/drive-account.ts'
+import {
   EDIT_GROUP_TEXT,
   EDIT_GROUP_TITLE,
   REMOVE_GROUP_CONFIRM_LABEL,
@@ -9,13 +18,17 @@ import {
   SAVE_GROUP_LABEL,
   SAVE_GROUP_PENDING_LABEL,
 } from '../../domain/group-fixes.ts'
+import { type IssueFilter, notConnectedDialogMessage } from '../../domain/issue.ts'
 import type { FixCallout } from '../../domain/issue-fixes.ts'
 import { REQUIRED_LEGEND } from '../../domain/public/article-form.ts'
+import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
 import { Dialog } from '../../ui/dialog/component.tsx'
 import { DialogTitle } from '../../ui/dialog-title/component.tsx'
+import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 import { GroupFields } from './group-fields.tsx'
-import { FixCalloutView } from './issue-parts.tsx'
+import { FixCalloutView, type ReturnTo } from './issue-parts.tsx'
+import type { DriveStatus } from './overview-page.tsx'
 import { GroupEditActions } from './public/group-edit-actions.tsx'
 
 /**
@@ -41,6 +54,22 @@ export type RemoveGroupView = {
   cancelHref: string
   paragraphs: readonly string[]
   title: string
+}
+
+/**
+ * The dialog _Nová skupina obrazových děl_ (`12e`), over the detail or, from a row's „⋯“, over the
+ * overview and its filter (`11a`).
+ */
+export type NewGroupDialogView = {
+  action: string
+  cancelHref: string
+  errors: { name: string | null; note: string | null }
+  formKey: string
+  /** The page under the dialog, which a refused answer is drawn over again. */
+  from: { filter: IssueFilter; returnTo: ReturnTo }
+  /** Drive did not answer, or the account is not connected: the fields stay as they were. */
+  refusal: 'disconnected' | 'not-connected' | 'unavailable' | null
+  values: { name: string; note: string }
 }
 
 export type GroupFixView =
@@ -127,6 +156,70 @@ function RemoveGroupDialog(handle: Handle<{ view: RemoveGroupView }>) {
           <button class="vdm-btn vdm-btn--danger vdm-btn--sm" type="submit">
             {REMOVE_GROUP_CONFIRM_LABEL}
           </button>
+        </form>
+      </Dialog>
+    )
+  }
+}
+
+/**
+ * `12e`, at `/issues/{name}/artwork-groups/new`. A refused name or note comes back with the fields
+ * as they were typed; so does a Drive that did not answer, with the step in a Callout above them,
+ * as on _Nové vydání_ (`11c`). Asked from the overview, the form says so, as a step dialog's does,
+ * and a refusal is drawn over the overview again.
+ */
+export function NewGroupDialog(
+  handle: Handle<{
+    dialog: NewGroupDialogView
+    driveAccount: { expectedEmail: string; status: DriveStatus }
+  }>,
+) {
+  return () => {
+    let { dialog, driveAccount } = handle.props
+    let { errors, from, refusal, values } = dialog
+    return (
+      <Dialog maxWidth="500px">
+        <DialogTitle>{NEW_GROUP_DIALOG_TITLE}</DialogTitle>
+        <form action={dialog.action} method="post" mix={dialogFormStyle} noValidate>
+          <CsrfField />
+          <input name="formKey" type="hidden" value={dialog.formKey} />
+          <input name="returnTo" type="hidden" value={from.returnTo} />
+          {from.returnTo === 'overview' && from.filter !== 'all' ? (
+            <input name="state" type="hidden" value={from.filter} />
+          ) : null}
+          <div class="vdm-dialog__body">
+            {refusal === 'not-connected' ? (
+              <Callout tone="warning">
+                <p style={{ margin: 0 }}>{notConnectedDialogMessage(driveAccount.expectedEmail)}</p>
+              </Callout>
+            ) : refusal === 'disconnected' ? (
+              <Callout tone="error">
+                <p style={{ margin: 0 }}>{disconnectedBanner(driveAccount.expectedEmail)}</p>
+              </Callout>
+            ) : refusal === 'unavailable' ? (
+              <Callout tone="error">
+                <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
+                  {CREATE_GROUP_UNAVAILABLE_TITLE}
+                </p>
+                <p style={{ margin: 0 }}>{CREATE_GROUP_UNAVAILABLE_TEXT}</p>
+              </Callout>
+            ) : null}
+            <p class="vdm-dialog__text" style={{ margin: 0 }}>
+              {NEW_GROUP_DIALOG_TEXT}
+            </p>
+            <p class="vdm-form__legend" style={{ margin: 0 }}>
+              {REQUIRED_LEGEND}
+            </p>
+            <GroupFields errors={errors} values={values} />
+          </div>
+          <div class="vdm-dialog__actions">
+            <PendingActions
+              cancel={{ href: dialog.cancelHref, label: 'Zrušit' }}
+              emphasis="primary"
+              label={CREATE_GROUP_LABEL}
+              pendingLabel={CREATE_GROUP_PENDING_LABEL}
+            />
+          </div>
         </form>
       </Dialog>
     )

@@ -346,7 +346,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
       <table>
         ${artworksRows}
       </table>
-      <p>Groups, made with <em>Nová skupina</em> in the issue's detail:</p>
+      <p>Groups, made with <em>Nová skupina</em> in the issue's detail or its row's „⋯“:</p>
       <table>
         ${
           groupRows.length === 0

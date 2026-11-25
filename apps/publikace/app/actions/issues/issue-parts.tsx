@@ -157,7 +157,20 @@ export function stepDialogHref(
     rename: routes.issues.askRename,
     reopen: routes.issues.askReopen,
   }[kind]
-  let href = route.href({ name: issue.name })
+  return askedHref(route.href({ name: issue.name }), returnTo, filter)
+}
+
+/** _Nová skupina obrazových děl_ (`12e`), over the detail or over a row of the overview (`11a`). */
+export function newGroupHref(
+  issue: Issue,
+  returnTo: ReturnTo,
+  filter: IssueFilter = 'all',
+): string {
+  return askedHref(routes.issues.newGroup.href({ name: issue.name }), returnTo, filter)
+}
+
+/* A dialog's address as it is asked from the overview: `?from=overview`, with its filter. */
+function askedHref(href: string, returnTo: ReturnTo, filter: IssueFilter): string {
   if (returnTo === 'detail') return href
   let query = new URLSearchParams({ from: 'overview' })
   if (filter !== 'all') query.set('state', filter)
