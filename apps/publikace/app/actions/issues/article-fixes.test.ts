@@ -6,6 +6,7 @@ import { createArticleStore } from '../../data/articles.server.ts'
 import { createArtworkStore } from '../../data/artworks.server.ts'
 import { createIssueStore } from '../../data/issues.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
+import { driveFileUrl } from '../../domain/artwork.ts'
 import { articleLinkPath } from '../../domain/link.ts'
 import { NBSP } from '../../domain/public/typography.ts'
 import { now, stamp } from '../../domain/time.ts'
@@ -295,6 +296,37 @@ describe('renaming an article (12x)', () => {
       assert.equal((await articleOf(context)).name, NAME)
     }))
 
+  it('links the one _meta.json in the bin, and changes nothing', () =>
+    withArticle(async (context) => {
+      let before = await articleOf(context)
+      context.app.drive.trash(before.metaFileId ?? '')
+      let answered = await rename(context, 'Jiný název')
+      assert.equal(answered.status, 409)
+      let html = await answered.text()
+      assert.equal(
+        calloutOf(html),
+        'Otevřete soubor pro tento článek a obnovte ho z koše. Nic se nezměnilo.',
+      )
+      assert.ok(html.includes(`href="${driveFileUrl(before.metaFileId ?? '')}"`))
+      assert.equal(fileOf(context, before.docId)?.name, NAME)
+      assert.equal(fileOf(context, before.folderId)?.name, NAME)
+      assert.equal((await articleOf(context)).name, NAME)
+    }))
+
+  it('asks for the Doc first when the Doc and _meta.json are both in the bin', () =>
+    withArticle(async (context) => {
+      let before = await articleOf(context)
+      context.app.drive.trash(before.metaFileId ?? '')
+      context.app.drive.trash(before.docId ?? '')
+      let answered = await rename(context, 'Jiný název')
+      assert.equal(answered.status, 409)
+      assert.equal(
+        calloutOf(await answered.text()),
+        'Obnovte dokument z koše, nebo ho vraťte na sdílený disk Publikace. Nic se nezměnilo.',
+      )
+      assert.equal((await articleOf(context)).name, NAME)
+    }))
+
   it('writes nothing over a rename by somebody else or a final version marked meanwhile', () =>
     withArticle(async (context) => {
       let meanwhile = await rename(context, 'Jiný název', 'Starý název')
@@ -452,6 +484,24 @@ describe('correcting the authors before the final version (12y)', () => {
         'Zkuste autory uložit za chvíli znovu. Nic se nezměnilo a nic neodešlo. Disk teď neodpovídá.',
       )
       context.app.drive.heal()
+      assert.equal(context.app.mail.length, mailBefore)
+      assert.equal((await articleOf(context)).authors.length, 1)
+    }))
+
+  it('links the one _meta.json in the bin, keeps the cards and sends nothing', () =>
+    withArticle(async (context) => {
+      let before = await articleOf(context)
+      let mailBefore = context.app.mail.length
+      context.app.drive.trash(before.metaFileId ?? '')
+      let answered = await saveAuthors(context, [TEREZA, LUCIE])
+      assert.equal(answered.status, 409)
+      let html = await answered.text()
+      assert.equal(
+        calloutOf(html),
+        'Otevřete soubor pro tento článek a obnovte ho z koše. Nic se nezměnilo a nic neodešlo.',
+      )
+      assert.ok(html.includes(`href="${driveFileUrl(before.metaFileId ?? '')}"`))
+      assert.ok(html.includes(`value="${LUCIE.email}"`))
       assert.equal(context.app.mail.length, mailBefore)
       assert.equal((await articleOf(context)).authors.length, 1)
     }))

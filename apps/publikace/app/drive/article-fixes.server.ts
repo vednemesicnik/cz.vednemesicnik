@@ -52,7 +52,10 @@ export type ArticleFixSetup = Pick<ArticleSetup, 'links' | 'mailer' | 'now' | 'o
 }
 
 /** What stood in the way on Drive: nothing was written. */
-type DriveRefusal = { kind: 'doc-missing' | 'folder-missing' | 'meta-binned' } | { kind: Unreached }
+type DriveRefusal =
+  | { kind: 'doc-missing' | 'folder-missing' }
+  | { fileId: string; kind: 'meta-binned' }
+  | { kind: Unreached }
 
 export type RenameArticleFixOutcome = RenameArticleOutcome | { kind: 'unchanged' } | DriveRefusal
 
@@ -116,15 +119,19 @@ type MetaWrite = { metaFileId?: string; undo: Undo[] }
 /**
  * The article folder checked, then `_meta.json` written over with `content`: in place when it is
  * on the drive, anew with the article's own key when it was deleted for good, and refused when it
- * is in the bin, where a person can restore it (`12y`). `before` writes the other files first, so
- * that their undo comes after this one's.
+ * is in the bin, where a person can restore it (`12y`). `step.check` asks about the other files
+ * before `_meta.json`, since a missing Doc is the step `12x` shows first; `step.before` writes them
+ * first, so that their undo comes after this one's.
  */
 async function writeMeta(
   setup: ArticleFixSetup,
   accessToken: string,
   article: Article,
   content: { current: string; next: string },
-  before: (files: IssueFiles, undo: Undo[]) => Promise<DriveRefusal | null>,
+  step: {
+    before(files: IssueFiles, undo: Undo[]): Promise<DriveRefusal | null>
+    check(files: IssueFiles): Promise<DriveRefusal | null>
+  },
 ): Promise<MetaWrite | DriveRefusal> {
   let files = setup.files(accessToken)
   let check = await checkArticleFolders(
@@ -134,12 +141,14 @@ async function writeMeta(
   )
   if (check === 'unavailable') return { kind: 'unavailable' }
   if (check.missing.length > 0) return { kind: 'folder-missing' }
+  let checked = await step.check(files)
+  if (checked !== null) return checked
   let meta = await stateOf(files, article.metaFileId)
   if (meta === 'unavailable') return { kind: 'unavailable' }
-  if (meta === 'binned') return { kind: 'meta-binned' }
+  if (meta === 'binned') return { fileId: article.metaFileId ?? '', kind: 'meta-binned' }
 
   let undo: Undo[] = []
-  let refusal = await before(files, undo)
+  let refusal = await step.before(files, undo)
   if (refusal !== null) {
     await undoAll(undo)
     return refusal
@@ -199,15 +208,19 @@ export async function renameArticle(
         current: metaOf(article, issue, article.name, article.authors),
         next: metaOf(article, issue, input.name, article.authors),
       },
-      async (files, undo) => {
-        let doc = await stateOf(files, docId)
-        if (doc === 'unavailable') return { kind: 'unavailable' }
-        if (doc !== 'here') return { kind: 'doc-missing' }
-        if (!(await files.rename(docId, input.name))) return { kind: 'unavailable' }
-        undo.push(() => files.rename(docId, article.name))
-        if (!(await files.rename(folderId, input.name))) return { kind: 'unavailable' }
-        undo.push(() => files.rename(folderId, article.name))
-        return null
+      {
+        async before(files, undo) {
+          if (!(await files.rename(docId, input.name))) return { kind: 'unavailable' }
+          undo.push(() => files.rename(docId, article.name))
+          if (!(await files.rename(folderId, input.name))) return { kind: 'unavailable' }
+          undo.push(() => files.rename(folderId, article.name))
+          return null
+        },
+        async check(files) {
+          let doc = await stateOf(files, docId)
+          if (doc === 'unavailable') return { kind: 'unavailable' }
+          return doc === 'here' ? null : { kind: 'doc-missing' }
+        },
       },
     )
     if (isRefusal(written)) return written
@@ -250,7 +263,7 @@ export async function editAuthors(
         token.accessToken,
         article,
         { current, next: content },
-        async () => null,
+        { before: async () => null, check: async () => null },
       )
       if (isRefusal(written)) return written
     }

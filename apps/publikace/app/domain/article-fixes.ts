@@ -8,7 +8,7 @@
 
 import { type ClauseState, AGREED_CLAUSE_LABEL } from './approvals.ts'
 import type { FinalVersion } from './article.ts'
-import type { FixCallout } from './issue-fixes.ts'
+import type { CalloutPart, FixCallout } from './issue-fixes.ts'
 import { type ArticleStep, whoOf } from './article.ts'
 import { formatMoment } from './time.ts'
 import { tied } from './public/typography.ts'
@@ -49,7 +49,6 @@ const NOTHING_CHANGED = 'Nic se nezměnilo.'
 const NOTHING_CHANGED_OR_SENT = tied`Nic se nezměnilo a nic neodešlo.`
 const DISCONNECTED_STEP = tied`Nejdřív v Nastavení připojte účet publikace.app@vednemesicnik.cz.`
 const FOLDER_MISSING_STEP = tied`Obnovte složku článku z koše, nebo ji vraťte na sdílený disk Publikace.`
-const META_BINNED_STEP = tied`Obnovte soubor _meta.json článku z koše.`
 
 /* ---------- Přejmenovat článek (`12x`) ---------- */
 
@@ -101,10 +100,17 @@ export const RENAME_ARTICLE_DOC_MISSING: FixCallout = {
   title: [tied`Obnovte dokument z koše, nebo ho vraťte na sdílený disk Publikace.`],
 }
 
-/* `12y` gives the step for `_meta.json` in the bin; the rename needs the same file. */
-export const RENAME_ARTICLE_META_BINNED: FixCallout = {
-  text: [NOTHING_CHANGED],
-  title: [META_BINNED_STEP],
+/**
+ * `_meta.json` in the bin while the folder and the Doc are there (`12x`, `12y`): every such file
+ * is named alike, so the step links the one by its ID and the screen never names the file
+ * (3g1bxiwh).
+ */
+function metaBinnedStep(href: string): CalloutPart[] {
+  return ['Otevřete ', { href, text: 'soubor pro tento článek' }, tied` a obnovte ho z koše.`]
+}
+
+export function renameArticleMetaBinned(href: string): FixCallout {
+  return { text: [NOTHING_CHANGED], title: metaBinnedStep(href) }
 }
 
 /* ---------- Upravit autory (`12y`) ---------- */
@@ -192,9 +198,8 @@ export const AUTHORS_FOLDER_MISSING: FixCallout = {
   title: [FOLDER_MISSING_STEP],
 }
 
-export const AUTHORS_META_BINNED: FixCallout = {
-  text: [NOTHING_CHANGED_OR_SENT],
-  title: [META_BINNED_STEP],
+export function authorsMetaBinned(href: string): FixCallout {
+  return { text: [NOTHING_CHANGED_OR_SENT], title: metaBinnedStep(href) }
 }
 
 /**

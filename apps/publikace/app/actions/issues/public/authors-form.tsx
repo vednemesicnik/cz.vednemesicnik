@@ -8,6 +8,7 @@ import {
   REQUIRED_LEGEND,
   summaryTitle,
 } from '../../../domain/public/article-form.ts'
+import { type CalloutPart, CalloutParts } from '../../../ui/public/callout-parts/component.tsx'
 import {
   AUTHOR_EMAIL_FIELD,
   AUTHOR_NAME_FIELD,
@@ -18,7 +19,7 @@ import {
 export type AuthorsFormProps = {
   action: string
   /** A refusal of Drive or of the account, in the dialog over the cards (`12y`). */
-  callout: { text: string; title: string } | null
+  callout: { text: readonly CalloutPart[]; title: readonly CalloutPart[] } | null
   cancelHref: string
   cards: readonly AuthorCardView[]
   confirmLabel: string
@@ -216,9 +217,11 @@ export const AuthorsForm = clientEntry(
                 <ErrorIcon />
                 <div class="vdm-callout__body">
                   <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
-                    {props.callout.title}
+                    <CalloutParts parts={props.callout.title} />
                   </p>
-                  <p style={{ margin: 0 }}>{props.callout.text}</p>
+                  <p style={{ margin: 0 }}>
+                    <CalloutParts parts={props.callout.text} />
+                  </p>
                 </div>
               </div>
             )}

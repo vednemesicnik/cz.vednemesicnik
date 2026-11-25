@@ -1,7 +1,7 @@
 import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
 
-import { tied } from '../../domain/public/typography.ts'
+import { tied } from '../../../domain/public/typography.ts'
 
 const iconStyle = css({ marginLeft: '2px', verticalAlign: '-0.125em' })
 

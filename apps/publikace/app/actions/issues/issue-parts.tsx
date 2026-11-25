@@ -20,7 +20,6 @@ import {
 } from '../../domain/issue.ts'
 import type { ActionMenuItem } from '../../ui/public/action-menu/component.tsx'
 import {
-  type CalloutPart,
   canRemove,
   canRename,
   type FixCallout,
@@ -40,7 +39,7 @@ import { Callout } from '../../ui/callout/component.tsx'
 import { CsrfField } from '../../ui/csrf-field/component.tsx'
 import { Dialog } from '../../ui/dialog/component.tsx'
 import { DialogTitle } from '../../ui/dialog-title/component.tsx'
-import { NewTabMark } from '../../ui/new-tab-mark/component.tsx'
+import { CalloutParts } from '../../ui/public/callout-parts/component.tsx'
 import { PendingActions } from '../../ui/public/pending-actions/component.tsx'
 import { SelectedField } from '../../ui/public/selected-field/component.tsx'
 import { StatusTag, type StatusTone } from '../../ui/status-tag/component.tsx'
@@ -269,23 +268,6 @@ export function IssueStepDialog(handle: Handle<{ step: IssueStepDialogView }>) {
   }
 }
 
-function Parts(handle: Handle<{ parts: readonly CalloutPart[] }>) {
-  return () => (
-    <>
-      {handle.props.parts.map((part) =>
-        typeof part === 'string' ? (
-          part
-        ) : (
-          <a class="vdm-link" href={part.href} rel="noopener" target="_blank">
-            {part.text}
-            <NewTabMark />
-          </a>
-        ),
-      )}
-    </>
-  )
-}
-
 /** The step as the heading, a list of links when there are many, and what came of it. */
 export function FixCalloutView(handle: Handle<{ callout: FixCallout }>) {
   return () => {
@@ -293,19 +275,19 @@ export function FixCalloutView(handle: Handle<{ callout: FixCallout }>) {
     return (
       <Callout tone="error">
         <p class="vdm-callout__title" style={{ margin: '0 0 4px' }}>
-          <Parts parts={title} />
+          <CalloutParts parts={title} />
         </p>
         {list === undefined ? null : (
           <ul class="vdm-callout__list" style={{ margin: '0 0 4px' }}>
             {list.map((item) => (
               <li>
-                <Parts parts={[item]} />
+                <CalloutParts parts={[item]} />
               </li>
             ))}
           </ul>
         )}
         <p style={{ margin: 0 }}>
-          <Parts parts={text} />
+          <CalloutParts parts={text} />
         </p>
       </Callout>
     )

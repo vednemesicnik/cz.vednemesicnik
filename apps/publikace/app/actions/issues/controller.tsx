@@ -6,7 +6,7 @@ import {
   ARTICLE_RENAMED_TOAST,
   AUTHORS_DISCONNECTED,
   AUTHORS_FOLDER_MISSING,
-  AUTHORS_META_BINNED,
+  authorsMetaBinned,
   AUTHORS_SAVED_TOAST,
   AUTHORS_UNAVAILABLE,
   authorsSavedToast,
@@ -23,7 +23,7 @@ import {
   RENAME_ARTICLE_DISCONNECTED,
   RENAME_ARTICLE_DOC_MISSING,
   RENAME_ARTICLE_FOLDER_MISSING,
-  RENAME_ARTICLE_META_BINNED,
+  renameArticleMetaBinned,
   RENAME_ARTICLE_UNAVAILABLE,
   renameTooLateToast,
   SAVE_AUTHORS_LABEL,
@@ -1034,14 +1034,9 @@ function authorsViewOf(
   let ids = { id: String(article.id), name: issue.name }
   let finalVersion = article.finalVersion
   let hasFinal = finalVersion !== null
-  let partsText = (parts: FixCallout['text']) =>
-    parts.map((part) => (typeof part === 'string' ? part : part.text)).join(' ')
   return {
     action: withFilter(routes.issues.editAuthors.href(ids), filter),
-    callout:
-      extra.callout === undefined
-        ? null
-        : { text: partsText(extra.callout.text), title: partsText(extra.callout.title) },
+    callout: extra.callout ?? null,
     cancelHref: detailHref(issue, filter),
     cards,
     confirmLabel: SAVE_AUTHORS_LABEL,
@@ -1056,12 +1051,12 @@ function authorsViewOf(
 }
 
 /** The Callout in the dialog for a refusal on Drive or of the account; `null` for any other. */
-function authorsCalloutOf(kind: EditAuthorsFixOutcome['kind']): FixCallout | null {
-  switch (kind) {
+function authorsCalloutOf(outcome: EditAuthorsFixOutcome): FixCallout | null {
+  switch (outcome.kind) {
     case 'folder-missing':
       return AUTHORS_FOLDER_MISSING
     case 'meta-binned':
-      return AUTHORS_META_BINNED
+      return authorsMetaBinned(driveFileUrl(outcome.fileId))
     case 'not-connected':
     case 'disconnected':
       return AUTHORS_DISCONNECTED
@@ -1900,7 +1895,10 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           case 'doc-missing':
             return dialog({ callout: RENAME_ARTICLE_DOC_MISSING }, IN_THE_WAY)
           case 'meta-binned':
-            return dialog({ callout: RENAME_ARTICLE_META_BINNED }, IN_THE_WAY)
+            return dialog(
+              { callout: renameArticleMetaBinned(driveFileUrl(outcome.fileId)) },
+              IN_THE_WAY,
+            )
           case 'not-connected':
           case 'disconnected':
             return dialog({ callout: RENAME_ARTICLE_DISCONNECTED }, IN_THE_WAY)
@@ -2010,7 +2008,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           })
         }
 
-        let callout = authorsCalloutOf(outcome.kind)
+        let callout = authorsCalloutOf(outcome)
         if (callout !== null) {
           let cards = markedAt === null ? editableCards(typed) : typedFinalCards()
           return dialog(cards, { callout }, IN_THE_WAY)
