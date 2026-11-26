@@ -6,6 +6,23 @@ Agent guidance for working with code in this repository.
 
 This is a student magazine publishing platform built with React Router v8, Prisma ORM, and SQLite. The application serves as a content management system for publishing articles, podcast episodes, and archived magazine issues (PDFs). It features role-based access control for both users and authors with a complex permission system tied to content lifecycle states.
 
+## Repository Layout
+
+A pnpm workspace (`pnpm-workspace.yaml`, `packages: ['apps/*']`), one lockfile:
+
+- **The root is the host**: `server.ts` + `server/`, the Node server that serves every
+  application on the Fly machine by `Host`, with `instrument.server.ts` (Sentry), Docker, Fly,
+  CI, the backup scripts, the agent setup and the repository docs in `docs/` (deploy, backups,
+  branching, work log).
+- **The web lives in `apps/web`** (package `web`): the React Router app, its Prisma schema and
+  migrations, public files, configs and its own docs in `apps/web/docs/`.
+
+Run commands from the root: its scripts forward to the web (`pnpm app:dev` runs
+`pnpm --filter web app:dev`), and the web's scripts run with `apps/web` as the working
+directory. Web paths in the skills and rules (`app/…`, `prisma/…`, `.storybook/…`) are relative
+to `apps/web`. In the image the repository sits under `/srv` (`/srv/server.ts`,
+`/srv/apps/web`).
+
 ## Code Editing Workflow
 
 Change existing files with the Edit tool, so every change reaches the user as a reviewable diff in the IDE; use Write only for new files.
@@ -310,7 +327,7 @@ calling `cleanup` in `afterEach`.
 
 ## Documentation
 
-Comprehensive project documentation is in the `docs/` directory:
+The deployment and the repository are documented in `docs/`, the web in `apps/web/docs/`:
 
 - `apps/web/docs/_about-the-project.md` - Project overview and architecture
 - `apps/web/docs/_user-roles-and-permissions.md` - User role details

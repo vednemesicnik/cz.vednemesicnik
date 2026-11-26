@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 /**
  * Prints one screen out of a design document, by its anchor — `22a`, not
@@ -180,7 +181,10 @@ const main = async (): Promise<void> => {
     return
   }
   const identifiers = rest.filter((argument) => !argument.startsWith('--'))
-  const screens = screensIn(await readFile(file, 'utf8'))
+  // Run through the root's forwarding script, the working directory is apps/web; a
+  // relative path means the folder the command was typed in, which pnpm keeps in INIT_CWD.
+  const filePath = resolve(process.env.INIT_CWD ?? process.cwd(), file)
+  const screens = screensIn(await readFile(filePath, 'utf8'))
 
   if (identifiers.length === 0) {
     for (const screen of screens) {

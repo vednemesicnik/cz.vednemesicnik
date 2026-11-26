@@ -25,7 +25,7 @@ gh pr create --base main --head dev --template release.md \
 
 - **What ships** — one bullet per shipped PR/change with `#refs`; group related PRs.
 - **Deploy expectation** — does the release include a Prisma migration
-  (`prisma/migrations/**`)? No migration → the `Pre-migration database backup` step is
+  (`apps/web/prisma/migrations/**`)? No migration → the `Pre-migration database backup` step is
   **skipped**. Has migration → the backup step **runs**; call it out.
 
 ## Merge method — critical

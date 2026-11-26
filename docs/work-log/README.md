@@ -116,3 +116,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0082](0082-a-web-list-page-past-the-last-redirects-to-the-last-page.md) | A web list page past the last redirects to the last page | 2026-11-12 |  |
 | [0084](0084-a-remix-3-server-in-front-of-the-web-routes-each-host-to-its-application.md) | A Remix 3 server in front of the web routes each host to its application | 2026-11-22 | [0085](0085-requests-carry-the-protocol-of-base-url-and-the-action-origin-allowlist-is-gone.md) |
 | [0085](0085-requests-carry-the-protocol-of-base-url-and-the-action-origin-allowlist-is-gone.md) | Requests carry the protocol of BASE_URL, and the action origin allowlist is gone | 2026-11-22 |  |
+| [0086](0086-the-web-lives-in-apps-web-and-the-repository-root-is-the-host.md) | The web lives in apps/web, and the repository root is the host | 2026-11-26 |  |

@@ -3,7 +3,7 @@
 # Backs up the production SQLite database to the Tigris bucket under db/.
 # Runs the whole payload on the app machine (fast egress) over `fly ssh console`:
 # sqlite3 .backup -> gzip -> integrity check -> upload -> verify -> prune. The S3
-# parts use the in-image `object-store` CLI (scripts/object-store-cli.ts over
+# parts use the in-image `object-store` CLI (apps/web/scripts/object-store-cli.ts over
 # @aws-sdk, baked in as /usr/local/bin/object-store) — the image ships no `aws`
 # binary. The machine already has $DATABASE_URL, $BUCKET_NAME and the Tigris
 # credentials in its environment.
