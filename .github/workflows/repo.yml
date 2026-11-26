@@ -1,0 +1,145 @@
+name: Repository
+
+# The checks that belong to no single application: the lockfile and the files outside
+# apps/, the host server in front of every application, and the one image that carries
+# them all. Application checks live in a workflow per application (web.yml), with the
+# application's name on each job.
+#
+# On a pull request the host jobs run only when the host or a file it depends on
+# changed, gated by a job-level `if:` rather than `on.paths` (a skipped job counts as
+# passed for a required check; a workflow that never starts leaves it "expected").
+# Called from deploy.yml, they always run.
+
+on:
+  pull_request:
+    branches: [main, dev]
+  workflow_call:
+
+permissions:
+  contents: read
+
+# As in web.yml: never cancel a run called from deploy.yml, and keep this group apart
+# from web.yml's (github.workflow is the caller's name in a called workflow).
+concurrency:
+  group: repo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  repo-changes:
+    runs-on: ubuntu-latest
+    # dorny/paths-filter reads the PR's changed files via the API on pull_request
+    # events; the top-level contents:read alone is not enough.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      host: ${{ steps.filter.outputs.host }}
+    steps:
+      - uses: dorny/paths-filter@v4
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            host:
+              - 'server.ts'
+              - 'server/**'
+              - 'instrument.server.ts'
+              - 'instrument.server.test.ts'
+              - 'tsconfig.json'
+              - 'vitest.config.ts'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              # The shared-versions test reads it, and the instrument imports the scrubber.
+              - 'apps/web/package.json'
+              - 'apps/web/app/utils/sentry/scrub-sentry-event.ts'
+              - '.github/workflows/repo.yml'
+
+  # The lockfile, and Biome over every file outside apps/ (each application lints its
+  # own). Cheap, so it runs on every PR.
+  repo-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # reads version from packageManager field
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm dedupe --check
+      - run: >
+          git ls-files -z | grep -zv '^apps/' |
+          xargs -0 pnpm exec biome check --no-errors-on-unmatched --files-ignore-unknown=true
+
+  host-typecheck:
+    needs: repo-changes
+    if: github.event_name != 'pull_request' || needs.repo-changes.outputs.host == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc
+
+  host-test:
+    needs: repo-changes
+    if: github.event_name != 'pull_request' || needs.repo-changes.outputs.host == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vitest run
+
+  # The one image every application ships in, so no application prefix.
+  image:
+    runs-on: ubuntu-latest
+    # dorny/paths-filter reads the PR's changed files via the API on
+    # pull_request events; the top-level contents:read alone is not enough.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: changes
+        with:
+          filters: |
+            docker:
+              - 'docker/**'
+              - 'scripts/docker-entry-point*'
+              - 'scripts/database-cli.sh'
+              - 'server.ts'
+              - 'server/**'
+              - 'instrument.server.ts'
+              - '.dockerignore'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'apps/web/package.json'
+              - 'apps/web/prisma.config.ts'
+              - 'apps/web/prisma/**'
+              - 'apps/web/scripts/object-store*'
+              - 'apps/web/constants/env.ts'
+              - 'apps/web/app/utils/sentry/scrub-sentry-event.ts'
+              - 'apps/web/documents/**'
+              - '.github/workflows/repo.yml'
+      - uses: docker/setup-buildx-action@v4
+        if: steps.changes.outputs.docker == 'true'
+      - uses: docker/build-push-action@v7
+        if: steps.changes.outputs.docker == 'true'
+        with:
+          context: .
+          file: docker/fly/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

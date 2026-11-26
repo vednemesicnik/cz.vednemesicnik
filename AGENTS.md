@@ -54,6 +54,18 @@ The formatter is Biome: format with `pnpm exec biome check --write <files>`. Pre
 installed only as a transitive dependency; running it rewrites files into a style the
 repository doesn't use.
 
+### CI
+
+The `branch-protection` ruleset requires checks by job name, so every job is named for
+what it checks. `.github/workflows/web.yml` checks the web: `web-lint`, `web-typecheck`,
+`web-test`, `web-build`, `web-storybook`. `.github/workflows/repo.yml` checks what belongs
+to no application: `repo-lint` (the lockfile, Biome outside `apps/`), `host-typecheck`,
+`host-test` and `image` (the one Docker image). On a pull request each job runs only when
+its files change: a `dorny/paths-filter` job and a job-level `if:`, never `on.paths`, since a
+skipped job passes a required check and a workflow that never starts leaves it "expected".
+`deploy.yml` calls both workflows, with every job running. A new application gets its own
+workflow, with jobs named `<app>-…`.
+
 ### Git Hooks
 
 Install Git hooks for code quality automation:
