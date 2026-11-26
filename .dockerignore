@@ -8,6 +8,7 @@ npm-debug.log
 **/build
 **/.react-router
 **/storybook-static
+apps/web/generated
 
 # Ignore environment variables
 **/.env

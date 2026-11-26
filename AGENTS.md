@@ -114,7 +114,8 @@ pnpm prisma:studio                 # Open Prisma Studio
 ### Testing and Utilities
 
 ```bash
-pnpm test                          # Run all Vitest tests
+pnpm test                          # Run all Vitest tests (the web's, then the host's)
+pnpm --filter web test <path>      # Run one web test file (a path relative to apps/web)
 pnpm sql:generate                  # Generate SQL scripts
 pnpm generate:static-images        # Generate static images using Sharp
 pnpm docker:compose:up             # Start Docker containers

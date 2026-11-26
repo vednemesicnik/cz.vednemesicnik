@@ -92,6 +92,7 @@ jobs:
             docker:
               - 'docker/**'
               - 'scripts/docker-entry-point*'
+              - 'scripts/database-cli.sh'
               - 'server.ts'
               - 'server/**'
               - 'instrument.server.ts'
@@ -103,6 +104,9 @@ jobs:
               - 'apps/web/prisma.config.ts'
               - 'apps/web/prisma/**'
               - 'apps/web/scripts/object-store*'
+              - 'apps/web/constants/env.ts'
+              - 'apps/web/app/utils/sentry/scrub-sentry-event.ts'
+              - 'apps/web/documents/**'
       - uses: docker/setup-buildx-action@v4
         if: steps.changes.outputs.docker == 'true'
       - uses: docker/build-push-action@v7

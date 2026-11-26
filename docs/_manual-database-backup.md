@@ -119,7 +119,7 @@ gzip -t backup-*.db.gz && echo "OK"
 
 The command above is now automated by `scripts/backup-database.sh`, which runs the
 same steps on the machine (the same `object-store` upload — see
-[`scripts/object-store-cli.ts`](../apps/web/scripts/object-store-cli.ts)) and adds a
+[`apps/web/scripts/object-store-cli.ts`](../apps/web/scripts/object-store-cli.ts)) and adds a
 `gzip -t` integrity check, an upload verification, and retention pruning. Two
 workflows call it:
 

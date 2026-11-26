@@ -11,6 +11,10 @@ from the root.
 
 ## Development
 
+The web's `.env` and local `data/` live in `apps/web`, where its dev server and Prisma run.
+A checkout from before the move keeps them at the root: `mv .env data apps/web/`.
+
+
 Run the Vite dev server:
 
 ```shellscript

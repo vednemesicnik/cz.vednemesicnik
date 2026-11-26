@@ -98,8 +98,10 @@ const formatSchemas = (targets: string[]): void => {
   }
 
   try {
+    // Biome is the repository root's tool; pnpm puts the root's binaries on the PATH of
+    // every workspace script.
     execFileSync(
-      path.join(process.cwd(), 'node_modules', '.bin', 'biome'),
+      'biome',
       ['check', '--write', '--files-ignore-unknown=true', ...targets],
       { stdio: ['ignore', 'ignore', 'pipe'] },
     )

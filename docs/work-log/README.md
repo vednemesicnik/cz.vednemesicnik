@@ -11,8 +11,8 @@ Nothing is ideal, and the app keeps changing, so any entry may be revisited. Rea
 about an area before changing it, so that a change of direction is deliberate. Then change
 direction when it is better, and log it.
 
-UX, layout and visuals are worked out in the design project (`docs/_design-project.md`), and
-user-facing Czech by the copywriter (`docs/_copy-context.md`). An entry cites those answers;
+UX, layout and visuals are worked out in the design project (`apps/web/docs/_design-project.md`), and
+user-facing Czech by the copywriter (`apps/web/docs/_copy-context.md`). An entry cites those answers;
 it does not restate them.
 
 Agents write entries with the `/log-work` skill.
