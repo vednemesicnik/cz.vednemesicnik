@@ -68,6 +68,14 @@ the house style and the data rules. [docs/branching-model.md](docs/branching-mod
 branches, merge methods and releases: work goes to `dev` by squash, `dev` goes to `main` by a
 merge commit, and one release covers the whole repository.
 
+## History
+
+Publikace was built in its own repository,
+[vednemesicnik/cz.vednemesicnik.publikace](https://github.com/vednemesicnik/cz.vednemesicnik.publikace),
+until 26 Nov 2026. Its commits moved here with their history; its closed issues and its PRs stay
+there, read-only once archived, and `cz.vednemesicnik.publikace#N` in a file or a commit message
+points there. The issues still open then were transferred here with new numbers.
+
 ## License
 
 MIT, see [LICENSE](LICENSE).

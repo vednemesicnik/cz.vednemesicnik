@@ -3,7 +3,13 @@
 The magazine's publishing app on `publikace.vednemesicnik.cz`: `apps/publikace` in the
 `cz.vednemesicnik` workspace. The repository's own guide — the layout, the host, CI, branching,
 releases, the workflow skills and the shared rules — is the root [AGENTS.md](../../AGENTS.md);
-this file is what holds for Publikace alone, and paths below are relative to `apps/publikace`. [README.md](README.md) explains
+this file is what holds for Publikace alone, and paths below are relative to `apps/publikace`.
+
+**Its history before the move** stays in
+[vednemesicnik/cz.vednemesicnik.publikace](https://github.com/vednemesicnik/cz.vednemesicnik.publikace),
+read-only once archived: the closed issues and every PR. `cz.vednemesicnik.publikace#N` in a file
+or a commit message points there. The issues still open on 26 Nov 2026 were transferred here with
+new numbers (#79 is #1082); the commits came along with their history. [README.md](README.md) explains
 what it does; this file is about working in it without breaking something expensive. The plan of
 how it works, with diagrams, is [docs/product.md](docs/product.md),
 [docs/architecture.md](docs/architecture.md) and [docs/security.md](docs/security.md); what still

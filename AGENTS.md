@@ -21,7 +21,7 @@ A pnpm workspace (`pnpm-workspace.yaml`, `packages: ['apps/*']`), one lockfile:
   migrations, public files, configs and its own docs in `apps/web/docs/`.
 - **Publikace lives in `apps/publikace`** (package `publikace`): a Remix 3 app with its own
   tools (oxlint, oxfmt, `remix test`, `remix doctor`). It is not served yet
-  (cz.vednemesicnik.publikace#79).
+  (#1082).
 
 Run commands from the root: its scripts forward to the web (`pnpm app:dev` runs
 `pnpm --filter web app:dev`) and to Publikace (`pnpm publikace:test` runs
