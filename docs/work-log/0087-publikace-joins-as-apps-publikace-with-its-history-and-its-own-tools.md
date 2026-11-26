@@ -41,7 +41,7 @@ stays for a later per-app version.
 ## What follows
 
 - The image still carries only the host and the web. Serving Publikace
-  (vednemesicnik/cz.vednemesicnik.publikace#79) adds its manifest to the install stages and its
+  (#1082) adds its manifest to the install stages and its
   folder to the final stage. Its database also needs a backup and a migrations line in the
   deploy filter.
 - Publikace's skills, rules, agents and `skills-lock.json` still sit in `apps/publikace`; merging

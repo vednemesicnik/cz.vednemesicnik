@@ -53,7 +53,7 @@ flowchart LR
 - **`createPublikace(environment)`** in `app/publikace.server.ts` is the whole app as
   `{ fetch, close }`. It owns no process. A misconfiguration rejects before anything is opened.
   `server.ts` is the host for working on this repository alone (port 44100).
-- **Production** (cz.vednemesicnik.publikace#79, not running yet): one more host behind the front server of the Fly app
+- **Production** (#1082, not running yet): one more host behind the front server of the Fly app
   `cz-vednemesicnik`, after this repository moves into that one as a package. Publikace keeps its
   own SQLite file on the machine's volume. A secret whose value differs from the web's carries a
   prefix, because one Fly app has one namespace of secrets.
@@ -345,13 +345,13 @@ Evidence, binned with its folder, is no longer written.
 
 **Apps Script jobs that talk to the app**, all as `publikace.app@` on their own triggers:
 
-| Job                                        | Interval            | API                                  | Exists                                              |
-| ------------------------------------------ | ------------------- | ------------------------------------ | --------------------------------------------------- |
-| `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes                                                 |
-| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes, no trigger until cz.vednemesicnik.publikace#79 |
-| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes, no trigger until cz.vednemesicnik.publikace#79 |
-| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until cz.vednemesicnik.publikace#79 |
-| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes, no trigger until cz.vednemesicnik.publikace#79 |
+| Job                                        | Interval            | API                                  | Exists                      |
+| ------------------------------------------ | ------------------- | ------------------------------------ | --------------------------- |
+| `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes                         |
+| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes, no trigger until #1082 |
+| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes, no trigger until #1082 |
+| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until #1082 |
+| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes, no trigger until #1082 |
 
 Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A claim leaves out
 a removed article or group, its clauses and its batches, discarded ones included (`12z`, `12f`). A report must
