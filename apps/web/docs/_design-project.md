@@ -27,7 +27,10 @@ that asked writes the brief under `questions/` and checks the result; the screen
 tokens are the agent's. Log 0069 has the reasons.
 
 A chat kept its history and an agent starts empty, so what it should know stands in its file, in
-this document and in the design documents' dated notes.
+this document and in the design documents' dated notes. `ux-designer` is the repository's one
+designer, for both applications; the brief names this app project and this document. For the
+web it holds that **the gradient headline is the magazine's identity**: never offer a
+single-colour variant.
 
 The agent has changed the design system once, porting CopyButton (`4rk17v4o`, 10 Nov 2026), in the
 source and in the `_ds/` copy. In each `_ds_bundle.js` it replaced only that component's block and

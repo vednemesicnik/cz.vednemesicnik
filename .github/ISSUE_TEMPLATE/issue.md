@@ -11,7 +11,7 @@ title: ''
      A proposal goes through /review-idea before it gets here, and its answers become this body.
      Check first that no open issue would carry it, and that it is the size of one PR. For
      Publikace, until v1.0.0, label it `can wait` when the release does not need it —
-     apps/publikace/docs/workflow-skills.md § Filing an issue.
+     docs/_workflow-skills.md § Filing an issue, and its AGENTS.md § For the workflow skills.
      Headings are a skeleton, not a form — rename, merge or drop them when the issue reads
      better without. -->
 

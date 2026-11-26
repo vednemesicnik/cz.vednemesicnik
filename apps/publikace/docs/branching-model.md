@@ -1,6 +1,6 @@
 # Branching model
 
-Publikace lives in `cz.vednemesicnik` as `apps/publikace` (#1077) and follows the repository's
+Publikace lives in `cz.vednemesicnik` as `apps/publikace` (cz.vednemesicnik#1077) and follows the repository's
 branching model: [docs/\_branching-model.md](../../../docs/_branching-model.md). Work goes to
 `dev` by squash, `dev` goes to `main` by a merge commit in a release PR, and every push to `main`
 deploys. One release covers every application in the repository.

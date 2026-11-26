@@ -140,7 +140,7 @@ export function issuesFolderId(environment: Environment): string {
 
 /**
  * The Registr spreadsheet, in which the app writes its own list and never the scripts' Vydání
- * (#111). Optional everywhere until the cutover: without it the Registr is skipped with one line
+ * (cz.vednemesicnik.publikace#111). Optional everywhere until the cutover: without it the Registr is skipped with one line
  * in the log and each Evidence is still written.
  */
 export function registrySpreadsheetId(environment: Environment): string {

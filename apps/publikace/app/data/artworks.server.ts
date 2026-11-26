@@ -203,7 +203,7 @@ export type ArtworkStore = {
   markRemoved(id: number, at: Temporal.Instant): Promise<void>
   /**
    * The name of the article or group the request is about to go under, before every sending: the
-   * reply check looks for it in the subject after the holder is renamed (#152).
+   * reply check looks for it in the subject after the holder is renamed (cz.vednemesicnik.publikace#152).
    */
   recordRequestName(id: number, name: string): Promise<void>
   /** Batch attempts whose cleanup failed, safe to take while other requests run. */

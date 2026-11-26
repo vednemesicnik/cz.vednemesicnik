@@ -118,3 +118,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0085](0085-requests-carry-the-protocol-of-base-url-and-the-action-origin-allowlist-is-gone.md) | Requests carry the protocol of BASE_URL, and the action origin allowlist is gone | 2026-11-22 |  |
 | [0086](0086-the-web-lives-in-apps-web-and-the-repository-root-is-the-host.md) | The web lives in apps/web, and the repository root is the host | 2026-11-26 |  |
 | [0087](0087-publikace-joins-as-apps-publikace-with-its-history-and-its-own-tools.md) | Publikace joins as apps/publikace, with its history and its own tools | 2026-11-26 |  |
+| [0088](0088-one-agent-setup-serves-both-applications-and-reads-each-apps-guide.md) | One agent setup serves both applications and reads each app's guide | 2026-11-26 |  |

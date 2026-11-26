@@ -67,6 +67,7 @@
     "publikace:db:migrate": "pnpm --filter publikace db:migrate",
     "publikace:db:rollback": "pnpm --filter publikace db:rollback",
     "publikace:db:status": "pnpm --filter publikace db:status",
+    "publikace:design:screen": "pnpm --silent --filter publikace design:screen",
     "publikace:format": "pnpm --filter publikace format",
     "publikace:format:check": "pnpm --filter publikace format:check",
     "publikace:lint": "pnpm --filter publikace lint",

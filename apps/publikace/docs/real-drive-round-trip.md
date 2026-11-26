@@ -25,7 +25,7 @@ Nothing here is real data in the repository: the IDs, the URLs and the testers' 
 - [ ] the **Google Drive API**, the **Google Docs API** and the **Google Sheets API** are
       enabled. The Docs API writes the article's name into the copied Doc
       (`documents.batchUpdate`, `replaceAllText`); the Sheets API writes the Registr and each
-      Evidence (#111).
+      Evidence (cz.vednemesicnik.publikace#111).
 
 **A test Registr**, never the real one:
 
@@ -195,11 +195,11 @@ In order: each check uses what the one before it made.
     - Restore it, then _Zkontrolovat znovu_: _Složka je zpátky na sdíleném disku Publikace._, and
       the Callout is gone. Nothing was created on Drive in between.
     - Bin it again, open the link to mark it, restore it and open the issue's page: it stands at
-      once with the Callout and _Kontroluje se…_, then the Callout goes without a toast (#149).
+      once with the Callout and _Kontroluje se…_, then the Callout goes without a toast (cz.vednemesicnik.publikace#149).
 
 ## Proofreaders in the app
 
-A proofreader signs in with Google like an editor-in-chief and sees only `/proofreading` (#82).
+A proofreader signs in with Google like an editor-in-chief and sees only `/proofreading` (cz.vednemesicnik.publikace#82).
 Who is one is the address in Nastavení › Korektura, asked of the membership service as a group
 in Přístup is. The suite fakes the service, so what Google and the service answer is checked
 here:
@@ -219,7 +219,7 @@ here:
 ## The final version
 
 _Označit finální verzi…_ on the page Korektura exports the article's Doc to PDF and stores it in
-the article folder (#88). The suite exports a fake Doc on a fake Drive, so what the real Drive does
+the article folder (cz.vednemesicnik.publikace#88). The suite exports a fake Doc on a fake Drive, so what the real Drive does
 is checked here, on an article taken in the section above:
 
 - [ ] the dialog names the article and its authors' signatures; _Označit finální verzi_ ends with
@@ -237,7 +237,7 @@ is checked here, on an article taken in the section above:
 ## The reply check's API
 
 The reply check of artworks is `SCRIPT__Publication__Artwork_Replies`, a standalone Apps Script
-project under `publikace.app@` (#53). Each run claims batches (`/api/v1/artwork-replies/claim`),
+project under `publikace.app@` (cz.vednemesicnik.publikace#53). Each run claims batches (`/api/v1/artwork-replies/claim`),
 asks `SCRIPT__Mail__Reply_Check` about them, files a consent's conversation as a PDF in the
 article's `Licence`, and reports every batch (`/api/v1/artwork-replies/report`), all with the
 job's Google identity token. The suite covers what the app does with a report, but not how Google
@@ -297,7 +297,7 @@ run within that window skips it.
 
 ## The article approvals
 
-`SCRIPT__Publication__Article_Approvals`, a standalone project under `publikace.app@` (#89), sends
+`SCRIPT__Publication__Article_Approvals`, a standalone project under `publikace.app@` (cz.vednemesicnik.publikace#89), sends
 the final versions of issues made in the app and reads their authors' replies. Each run makes one
 `/api/v1/approvals/claim`, which hands it the clauses to send and the clauses to ask about, and one
 `/api/v1/approvals/report` with both. The token is checked as the reply check's is, so the same
@@ -331,7 +331,7 @@ made before the app, from their Evidence; the two never see each other's clauses
 
 ## The print folder
 
-`SCRIPT__Publication__Print_Handoff`, a standalone project under `publikace.app@` (#119), fills
+`SCRIPT__Publication__Print_Handoff`, a standalone project under `publikace.app@` (cz.vednemesicnik.publikace#119), fills
 `_Podklady_pro_tisk` of every open issue made in the app. Each run makes one
 `/api/v1/print-handoff/claim` and one `/api/v1/print-handoff/report`. The suite covers what the app
 hands out and records; what it cannot cover is how Drive copies on the shared drive, how the .docx
@@ -356,12 +356,12 @@ each step runs `fillPrintFolders` by hand.
 ## The proofreaders' digest
 
 The morning digest is one call, `/api/v1/proofreading-digest/run`, from
-`SCRIPT__Publication__Proofreading_Digest`, a standalone project under `publikace.app@` (#14).
+`SCRIPT__Publication__Proofreading_Digest`, a standalone project under `publikace.app@` (cz.vednemesicnik.publikace#14).
 The app builds the digest and sends it through the Mailer. The suite covers what is in it and
 what is recorded; what it cannot cover is how Gmail shows the e-mail and whether a retry keeps to
 one message. The job's token is checked as the reply check's is, so the same `testConfiguration`
 step applies, and the run goes behind the same tunnel. Its project has no Script Properties and
-gets no trigger until the app is on its public address (#79): each step runs
+gets no trigger until the app is on its public address (cz.vednemesicnik.publikace#79): each step runs
 `sendProofreadingDigest` by hand, and its log line is the answer's state (`sent`, `nothing`,
 `unconfirmed` or `no-address`).
 
@@ -380,7 +380,7 @@ gets no trigger until the app is on its public address (#79): each step runs
 
 ## The comment digest
 
-`SCRIPT__Publication__Article_Comments`, a standalone project under `publikace.app@` (#186),
+`SCRIPT__Publication__Article_Comments`, a standalone project under `publikace.app@` (cz.vednemesicnik.publikace#186),
 tells the authors of the issues made in the app of new comments, replies and suggestions in
 their Docs. Each run makes one `/api/v1/article-comments/claim`, reads every claimed Doc, mails
 each author one e-mail (`20e`) and makes one `/api/v1/article-comments/report`. The suite covers
@@ -388,7 +388,7 @@ what the app hands out and records; what it cannot cover is what Drive and Docs 
 on the shared drive, and whether the Mailer's key keeps a retry to one e-mail. The token is
 checked as the reply check's is, so the same `testConfiguration` step applies, and the run goes
 behind the same tunnel. Its project holds `MAIL_SEND_URL` and `MAIL_SEND_SECRET` and gets no
-trigger until #79: each step runs `sendCommentDigests` by hand. The old
+trigger until cz.vednemesicnik.publikace#79: each step runs `sendCommentDigests` by hand. The old
 `SCRIPT__Publication__Comment_Digest` under `publikace@` keeps the issues on the Registr's
 _Vydání_; the two never see each other's articles.
 
@@ -410,7 +410,7 @@ _Vydání_; the two never see each other's articles.
 
 ## Answering a reply from Ke kontrole
 
-The answer goes through the Mailer as a reply in the thread of the consent request (#31,
+The answer goes through the Mailer as a reply in the thread of the consent request (cz.vednemesicnik.publikace#31,
 `13d`–`13h`). The Mailer's own live test tried a reply in an article's thread and every refusal;
 the suite covers what the app stores and shows. What is left is what only real Gmail shows.
 
@@ -426,7 +426,7 @@ the suite covers what the app stores and shows. What is left is what only real G
 
 ## An artwork group
 
-A group is made in the issue detail (#133, `12e`) and uploads like an article. The suite runs it on
+A group is made in the issue detail (cz.vednemesicnik.publikace#133, `12e`) and uploads like an article. The suite runs it on
 the fake Drive; what is left is what only the real one shows.
 
 1. _Nová skupina_ with a name and a note: the issue folder gets `Skupiny obrazových děl`, and in
@@ -442,7 +442,7 @@ the fake Drive; what is left is what only the real one shows.
 
 ## The record
 
-The Registr and each Evidence follow the database through the record queue (#111), a pass every
+The Registr and each Evidence follow the database through the record queue (cz.vednemesicnik.publikace#111), a pass every
 30 s under `publikace.app@`. Nothing on a screen says how far it is; the log does.
 
 1. Once the first issue is complete, within a minute: an `Evidence` in its folder with the lists
@@ -464,7 +464,7 @@ The Registr and each Evidence follow the database through the record queue (#111
 
 ## Renaming and removing an issue
 
-_Přejmenovat vydání…_ (`12v`) and _Odebrat vydání…_ (`12w`), from the issue's „⋯“ (#151). The suite
+_Přejmenovat vydání…_ (`12v`) and _Odebrat vydání…_ (`12w`), from the issue's „⋯“ (cz.vednemesicnik.publikace#151). The suite
 runs both on the fake Drive; what is left is what only the real one shows.
 
 1. Rename an issue that has one article and one group: the issue folder on the shared drive has
@@ -481,7 +481,7 @@ runs both on the fake Drive; what is left is what only the real one shows.
 
 ## Correcting an article
 
-_Přejmenovat článek…_ (`12x`) and _Upravit autory…_ (`12y`), from the article row's „⋯“ (#152).
+_Přejmenovat článek…_ (`12x`) and _Upravit autory…_ (`12y`), from the article row's „⋯“ (cz.vednemesicnik.publikace#152).
 The suite runs both on the fake Drive; what is left is what only the real one shows.
 
 1. Rename an article with a batch whose request went out: the Doc and the article folder have the

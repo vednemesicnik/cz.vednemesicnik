@@ -1,5 +1,5 @@
 /**
- * The print folder of an issue made in the app (#110, `12t`): `_Podklady_pro_tisk`, which
+ * The print folder of an issue made in the app (cz.vednemesicnik.publikace#110, `12t`): `_Podklady_pro_tisk`, which
  * `SCRIPT__Publication__Print_Handoff` fills with copies of the approved texts and of the artworks
  * with consent. The job claims what belongs there through the app's API and reports what it
  * copied; the app keeps the copies and says in the issue detail how fresh the folder is and how
@@ -41,7 +41,7 @@ export function articleFolderTag(articleId: number): string {
   return `article_${articleId}`
 }
 
-/** The tag of an artwork group's folder inside the print folder (#133). */
+/** The tag of an artwork group's folder inside the print folder (cz.vednemesicnik.publikace#133). */
 export function groupFolderTag(groupId: number): string {
   return `group_${groupId}`
 }

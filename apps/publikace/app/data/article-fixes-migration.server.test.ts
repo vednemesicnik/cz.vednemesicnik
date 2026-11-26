@@ -12,7 +12,7 @@ import { MIGRATIONS_DIRECTORY, openDatabase } from './database.server.ts'
 
 const AT = '2026-11-20T09:00:00.000Z'
 
-describe('the migration for fixing an article (#152)', () => {
+describe('the migration for fixing an article (cz.vednemesicnik.publikace#152)', () => {
   it('marks the Evidence when an author of a created article is removed', async () => {
     let opened = openDatabase(':memory:')
     try {

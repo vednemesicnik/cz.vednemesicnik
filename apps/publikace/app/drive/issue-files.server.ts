@@ -11,7 +11,7 @@ import {
 import { logDriveFailure } from './log.server.ts'
 
 /**
- * The calls renaming and removing an issue need (#151, `12v`, `12w`), on the shared drive
+ * The calls renaming and removing an issue need (cz.vednemesicnik.publikace#151, `12v`, `12w`), on the shared drive
  * _Publikace_ as `publikace.app@`: a folder's new name, a `_meta.json` written over, the children
  * of a folder, where a file is, and the bin both ways. The bin and the upload are the article's
  * and the artworks' own calls.

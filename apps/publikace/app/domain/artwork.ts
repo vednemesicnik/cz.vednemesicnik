@@ -79,7 +79,7 @@ export function batchTag(instant: Temporal.Instant): string {
 export const CONSENT_SUBJECT_PREFIX = 'Žádost o potvrzení souhlasu s užitím obrazových děl'
 
 /**
- * What a batch, an upload and an artworks link belong to: an article or an artwork group (#133).
+ * What a batch, an upload and an artworks link belong to: an article or an artwork group (cz.vednemesicnik.publikace#133).
  * A group has no Doc and no authors, and its link is the one the editors-in-chief hand out.
  */
 export type HolderKind = 'article' | 'group'

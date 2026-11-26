@@ -20,7 +20,8 @@ hotfix ────────────────────────�
                  dev ◄──(back-merge)─┘
 ```
 
-- **Feature / fix:** branch off `dev`, PR back into `dev`. No deploy.
+- **Feature / fix:** branch off `dev`, PR back into `dev`. No deploy. A change too large
+  for one diff runs as a chain of [stacked PRs](#stacked-prs).
 - **Release:** PR `dev → main`. This is the only moment a deploy happens.
 - **Hotfix:** branch off `main`, PR directly into `main` (deploys), then back-merge
   into `dev`.
@@ -39,6 +40,41 @@ and permanently diverge the two branches.
 
 A squash lands the PR title as the commit subject, so every PR title is a Conventional
 Commit; `.github/workflows/pr-title.yml` checks it (and allows `release:` into `main`).
+
+## Stacked PRs
+
+One issue too large for a single reviewable diff becomes an ordered chain: each PR targets
+the branch below it, so every diff shows only its own work. The bottom PR targets `dev`.
+
+**A stacked PR has no CI.** Every workflow triggers on `pull_request` with
+`branches: [main, dev]`, and that filter is on the **base**: a PR aimed at a feature branch
+never fires it, and GitHub reports "no checks reported". Until a child is retargeted, run the
+gates of the app it touches locally on that branch and say so in the PR.
+
+**Deleting a branch that is the base of an open PR closes that PR**, and a closed PR whose
+base no longer exists cannot be reopened — the work comes back only as a new number. This
+repository has "Automatically delete head branches" on, so merging the parent deletes its
+branch whether or not `--delete-branch` is passed. Retarget every child **before** the
+parent lands:
+
+```bash
+git rev-parse origin/<parent-branch>          # note <parent-tip> while the branch exists
+gh pr edit <child> --base dev                 # retarget while the old base still exists
+gh pr merge <parent> --squash --delete-branch
+git fetch origin --prune
+git rebase --onto origin/dev <parent-tip> <child-branch>
+git push --force-with-lease origin <child-branch>
+```
+
+`--onto` is the load-bearing part. The parent's commits are one squashed commit on `dev`
+now, but the child still carries them as its own ancestors; a plain rebase replays them
+against a `dev` that already has their content. `<parent-tip>` is the parent branch's last
+commit — everything after it is the child's own work, and that is all that should move.
+
+The force-push is the one exception to append-only history on a PR branch, so it is asked
+for, not assumed. It is also what starts the child's CI: the base is `dev` now, and the push
+is the `synchronize` event the workflows listen for (a base change alone is an `edited`
+event, which only `pr-title.yml` hears).
 
 ## Automated back-merge
 

@@ -4,7 +4,7 @@ import type { IssueFiles } from './issue-files.server.ts'
 
 /**
  * Putting into the shared drive's bin a folder the app made, with everything in it, when the
- * editors-in-chief remove what should not exist (#151, `12w`; the articles' and groups' removals
+ * editors-in-chief remove what should not exist (cz.vednemesicnik.publikace#151, `12w`; the articles' and groups' removals
  * use it too). The app never touches what a person made or moved (`11c`): a folder holding a file
  * the app did not make, or one that is no longer where the app made it, stays where it is. Drive
  * bins a folder's contents with it, so the one call either happens or does not.

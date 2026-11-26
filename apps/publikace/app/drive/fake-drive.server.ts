@@ -123,7 +123,7 @@ export type FakeDrive = {
   restore(id: string): void
   /**
    * An edit of a Doc's text at `at`: a revision in its history and its `modifiedTime`, as a
-   * person typing in it makes (#101).
+   * person typing in it makes (cz.vednemesicnik.publikace#101).
    */
   reviseDoc(id: string, at: Temporal.Instant): void
   /** Moves only a file's `modifiedTime`, as a comment or a rename does: no revision. */

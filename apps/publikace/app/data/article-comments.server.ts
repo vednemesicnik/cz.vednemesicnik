@@ -10,7 +10,7 @@ import { parseStamp, stamp } from '../domain/time.ts'
 
 /**
  * The comment digest of the issues made in the app as `SCRIPT__Publication__Article_Comments`
- * runs it (#170): which articles it reads, how far each was told of, and which run holds an
+ * runs it (cz.vednemesicnik.publikace#170): which articles it reads, how far each was told of, and which run holds an
  * article now.
  */
 

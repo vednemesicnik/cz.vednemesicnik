@@ -20,7 +20,7 @@ import { createLock } from './one-at-a-time.server.ts'
 import type { RecordSheets, SheetsResult } from './sheets.server.ts'
 
 /**
- * The record queue (#111): after an action is committed, the Registr and the issue's Evidence
+ * The record queue (cz.vednemesicnik.publikace#111): after an action is committed, the Registr and the issue's Evidence
  * follow it, written by `publikace.app@` from the marks the database's triggers left. A sheet
  * that does not answer only delays the record, and no action waits for it or fails with it: the
  * record has no failure state on any screen (`00d`), so a write that keeps failing is a line in
@@ -91,7 +91,7 @@ async function writeEvidence(
   let articles = await queue.articles.listCreated(issueId)
   let clauses = await queue.articles.listClausesForRecord(issueId)
   /* A group's rows carry its name and its folder where an article's carry the article's, as the
-     scripts' rows for a group do (#133). */
+     scripts' rows for a group do (cz.vednemesicnik.publikace#133). */
   let batches = (await queue.artworks.listByIssue(issueId)).flatMap((batch) => {
     if (batch.holder.folderId === null) return []
     return [

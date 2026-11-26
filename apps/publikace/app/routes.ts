@@ -36,11 +36,11 @@ export const routes = route({
     askRemove: get('/issues/:name/remove'),
     remove: post('/issues/:name/remove'),
     /* _Nová skupina obrazových děl_ (`12e`): the dialog at its own address over the detail, as
-       _Nové vydání_ over the overview, and `POST` to it creates the group (#133). */
+       _Nové vydání_ over the overview, and `POST` to it creates the group (cz.vednemesicnik.publikace#133). */
     newGroup: get('/issues/:name/artwork-groups/new'),
     createGroup: post('/issues/:name/artwork-groups/new'),
     /* _Upravit název a poznámku…_ and _Odebrat skupinu…_ (`12f`) from the group's „⋯“: each a
-       dialog at its own address over the detail, and `POST` to it acts (#154). */
+       dialog at its own address over the detail, and `POST` to it acts (cz.vednemesicnik.publikace#154). */
     askEditGroup: get('/issues/:name/artwork-groups/:id/edit'),
     editGroup: post('/issues/:name/artwork-groups/:id/edit'),
     askRemoveGroup: get('/issues/:name/artwork-groups/:id/remove'),
@@ -116,31 +116,31 @@ export const routes = route({
      deployed script keeps calling what it was written against, so a path here and a field in what
      it sends or gets back are never renamed in place: a change is a new version. */
   api: {
-    /* The reply check of artworks, a job under `publikace.app@` with its own trigger (#31): it
+    /* The reply check of artworks, a job under `publikace.app@` with its own trigger (cz.vednemesicnik.publikace#31): it
        claims the batches to ask about, then reports what Reply_Check said and what it archived. */
     artworkReplies: {
       claim: post('/api/v1/artwork-replies/claim'),
       report: post('/api/v1/artwork-replies/report'),
     },
-    /* The proofreaders' morning digest, a job under `publikace.app@` with a daily trigger (#14):
+    /* The proofreaders' morning digest, a job under `publikace.app@` with a daily trigger (cz.vednemesicnik.publikace#14):
        one call, and the app builds, sends and records the digest. */
     proofreadingDigest: {
       run: post('/api/v1/proofreading-digest/run'),
     },
-    /* `SCRIPT__Publication__Article_Approvals` for the issues made in the app (#88, #89): it
+    /* `SCRIPT__Publication__Article_Approvals` for the issues made in the app (cz.vednemesicnik.publikace#88, cz.vednemesicnik.publikace#89): it
        claims the clauses of final versions to send and those whose reply to read, mails each
        author, archives a consent, and reports both halves of the run. */
     approvals: {
       claim: post('/api/v1/approvals/claim'),
       report: post('/api/v1/approvals/report'),
     },
-    /* `SCRIPT__Publication__Print_Handoff` for the issues made in the app (#110): it claims what
+    /* `SCRIPT__Publication__Print_Handoff` for the issues made in the app (cz.vednemesicnik.publikace#110): it claims what
        each print folder should hold beside what it holds, copies the difference, and reports. */
     printHandoff: {
       claim: post('/api/v1/print-handoff/claim'),
       report: post('/api/v1/print-handoff/report'),
     },
-    /* `SCRIPT__Publication__Article_Comments` for the issues made in the app (#170): it claims the
+    /* `SCRIPT__Publication__Article_Comments` for the issues made in the app (cz.vednemesicnik.publikace#170): it claims the
        articles with how far each was told of, mails the authors what is new, and reports. */
     articleComments: {
       claim: post('/api/v1/article-comments/claim'),

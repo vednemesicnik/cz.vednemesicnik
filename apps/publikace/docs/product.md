@@ -194,7 +194,7 @@ stateDiagram-v2
 
 When Drive fails at the issue folder itself, nothing is kept: the row goes in the same request and
 the name is free again (`03` row 29). Closing only changes the state. The links stop working, the
-jobs skip the issue, and nothing changes on Drive, sharing included (`12g`, #120).
+jobs skip the issue, and nothing changes on Drive, sharing included (`12g`, cz.vednemesicnik.publikace#120).
 
 An _Aktivní_ or _Nedokončené_ issue can be renamed (`12v`), and its old address answers 404. An
 issue with no article and no group can be removed in any state (`12w`), and its name is free

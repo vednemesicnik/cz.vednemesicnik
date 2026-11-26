@@ -18,7 +18,7 @@ import {
 } from './http.server.ts'
 
 /**
- * The calls the record queue makes (#111): the Evidence found or created in the issue folder, its
+ * The calls the record queue makes (cz.vednemesicnik.publikace#111): the Evidence found or created in the issue folder, its
  * lists laid out once, the app's list added to the Registr once, and every write a whole list.
  *
  * The app never reads a cell. It reads a spreadsheet's list titles, which is the only way to know

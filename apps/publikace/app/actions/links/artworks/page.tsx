@@ -37,7 +37,7 @@ import {
 
 /**
  * What the link uploads to, as the page names it: an article, or an artwork group with its note
- * for the designer, empty when it has none (#133).
+ * for the designer, empty when it has none (cz.vednemesicnik.publikace#133).
  */
 export type PageHolder = { kind: HolderKind; name: string; note: string }
 

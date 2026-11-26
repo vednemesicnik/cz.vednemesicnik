@@ -97,7 +97,7 @@ async function checkedDetailText(context: Context): Promise<string> {
   return detailText(context)
 }
 
-describe('a missing folder of the issue itself (12j, #134)', () => {
+describe('a missing folder of the issue itself (12j, cz.vednemesicnik.publikace#134)', () => {
   it('shows a Články the newsroom’s page found in the bin under the header, and counts it', () =>
     withIssue(async (context) => {
       context.app.drive.trash(context.folders.articles)

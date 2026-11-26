@@ -37,16 +37,19 @@ the review runs on the local diff. `/ship-issue` runs the same review as its Pha
 1. **Resolve the issue**: the argument, else the branch name (`feat/247-…` → `247`) and
    `gh issue view <number> --comments`, else ask. Do not guess.
 
-2. **Extract the design** where the issue touches a designed screen: read the screen by its
-   anchor as `apps/web/docs/_design-project.md` describes — read here, never in a subagent — and
-   save its text and notes to a scratchpad file. The screen decides, not the issue's summary
-   of it.
+2. **Find the app** the branch belongs to — `apps/web/**`, `apps/publikace/**`, or the
+   repository's own files — and read that app's `AGENTS.md` § For the workflow skills.
 
-3. **Hand the review to the `implementation-reviewer` agent** (`.claude/agents/`). It reads
+3. **Extract the design** where the issue touches a designed screen: save the document with
+   `Artifact` `read` and its `path`, then cut the screen out by its ID with the app's screen
+   cutter (§ For the workflow skills, **Design project**) — here, never in a subagent — and save
+   its text and notes to a scratchpad file. The screen decides, not the issue's summary of it.
+
+4. **Hand the review to the `implementation-reviewer` agent** (`.claude/agents/`). It reads
    every hunk in a fresh context — the session that wrote the code does not grade its own
    work — against the rules, `AGENTS.md`, the work log and the issue's acceptance
-   criteria. Give it the issue number, the base (`dev`, or the parent branch when stacked)
-   and the design file, if any. On a large diff, spawn one per area in parallel and say which
+   criteria. Give it the issue number, the base (`dev`, or the parent branch when stacked),
+   the app and the design file, if any. On a large diff, spawn one per area in parallel and say which
    paths each one owns.
 
    There is no PR yet, so not the `code-review:code-review` plugin skill — it reads an
@@ -54,9 +57,9 @@ the review runs on the local diff. `/ship-issue` runs the same review as its Pha
    `/code-review` reviews the working diff but is **user-triggered**; suggest it if the user
    wants that engine first.
 
-4. **One ranked report**, most-severe first: the agent's report, merged across agents when
+5. **One ranked report**, most-severe first: the agent's report, merged across agents when
    there were several. Check a finding against the code before you pass it on; drop what does
    not hold and say so.
 
-5. **Stop and wait for approval.** No edits in this turn. After the user picks, apply the fixes
-   and re-run `pnpm app:typecheck` and `pnpm test`.
+6. **Stop and wait for approval.** No edits in this turn. After the user picks, apply the fixes
+   and re-run the app's **Gates** (its `AGENTS.md` § For the workflow skills).

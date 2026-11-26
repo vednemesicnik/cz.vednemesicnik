@@ -158,7 +158,7 @@ export type FinalVersion = ArticleStep & {
   clauses: ClauseCounts
   /**
    * The newest revision of the Doc after its PDF was exported, as the issue detail last found it
-   * on Drive (#101); `null` while none was found.
+   * on Drive (cz.vednemesicnik.publikace#101); `null` while none was found.
    */
   docRevisedAt: Temporal.Instant | null
   isCancellable: boolean
@@ -380,7 +380,7 @@ export function authorsLine(authors: readonly Pick<Author, 'name'>[]): string {
 
 /**
  * `_meta.json` in the article folder, in the scripts' shape: the artwork upload reads these keys.
- * `sheetId` stays `null` although the issue has an Evidence (#111): the scripts' upload writes into
+ * `sheetId` stays `null` although the issue has an Evidence (cz.vednemesicnik.publikace#111): the scripts' upload writes into
  * whatever Evidence it finds there, and the app's is a record only the app writes.
  */
 export function articleMeta(article: {

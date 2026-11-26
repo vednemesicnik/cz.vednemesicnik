@@ -1,6 +1,6 @@
 /**
  * A new final version marked in the issue detail after the job has taken the clauses of the
- * standing one, and before every author agreed to it (#90, `12r`, `12s`). Worded as the copywriter
+ * standing one, and before every author agreed to it (cz.vednemesicnik.publikace#90, `12r`, `12s`). Worded as the copywriter
  * settled it (`injg8rmg`).
  *
  * Until a run takes a clause, _Zrušit finální verzi_ and marking again is the way, so the two
@@ -132,7 +132,7 @@ export function replacedClauseTag(
 }
 
 /*
- * _Upraveno po schválení_ (#101, `12b`, `12q`): every author agreed and the Doc was edited after
+ * _Upraveno po schválení_ (cz.vednemesicnik.publikace#101, `12b`, `12q`): every author agreed and the Doc was edited after
  * its PDF. The same step as `12r`, from a button in the row, worded as the copywriter settled it
  * (`znor6hp8`, the button's name for a screen reader `dd5fjcle`). Nothing is said of the
  * podklady pro tisk: they keep the last approved version, and their own section says so (`12t`).

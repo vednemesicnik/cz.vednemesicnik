@@ -13,7 +13,6 @@
     "db:migrate": "remix db migrate",
     "db:rollback": "remix db rollback",
     "design:screen": "node scripts/design-screen.ts",
-    "dev:setup-claude": "node scripts/setup-claude.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint . --max-warnings=0",
     "lint:fix": "oxlint . --fix --max-warnings=0",

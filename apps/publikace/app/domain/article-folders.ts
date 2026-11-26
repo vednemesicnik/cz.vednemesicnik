@@ -126,7 +126,7 @@ export const CHECK_UNAVAILABLE_TOAST = 'Zkuste kontrolu za chvíli znovu.'
 
 /**
  * What _Zkontrolovat znovu_ says, from the folders checked and the ones still missing: an
- * article's or a group's, or the issue's own (#134).
+ * article's or a group's, or the issue's own (cz.vednemesicnik.publikace#134).
  */
 export function checkedToast(
   checked: readonly string[],

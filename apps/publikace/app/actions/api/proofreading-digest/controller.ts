@@ -19,7 +19,7 @@ import { routes } from '../../../routes.ts'
 import { bodyOf, intervalOf, json, refusal } from '../job-request.ts'
 
 /**
- * The API the proofreaders' digest calls (#14): `SCRIPT__Publication__Proofreading_Digest`, a
+ * The API the proofreaders' digest calls (cz.vednemesicnik.publikace#14): `SCRIPT__Publication__Proofreading_Digest`, a
  * standalone Apps Script project running as `publikace.app@` on a trigger once a day between 7
  * and 8. The job only calls; the app composes the digest and sends it through the Mailer it
  * already signs for, so the job holds no secret and reads no article.

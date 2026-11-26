@@ -13,11 +13,14 @@ can answer. That is a decision for design. This session writes the brief and che
 and the `ux-designer` agent decides and draws in between. Nobody pastes anything anywhere.
 
 $ARGUMENTS names the subject. `check` (or `--check`) means read an answer back: skip to step 6, and
-`check k7m2x9qa` names which one. `tidy` means no question at all — skip to step 7; `tidy #409`
+`check k7m2x9qa` names which one. `tidy` means no question at all — skip to step 7; `tidy #<n>`
 narrows it to the pairs the index ties to that issue.
 
-**How to read the project cheaply, which project holds what, and what `questions/_index.json`
-holds is in [apps/web/docs/_design-project.md](../../../apps/web/docs/_design-project.md).** Read it first.
+**First decide which app asks**, by the screens or files the question concerns, and read that
+app's `AGENTS.md` § For the workflow skills → **Design project**: its design-project document,
+its canvas and its screen cutter command (each app has its own parser; below it is
+`<screen cutter>`). The document has the links, what each artifact holds, how to read a screen
+cheaply, how to write, and what `questions/_index.json` holds. Read it first.
 
 ## A question is named by its code
 
@@ -27,11 +30,17 @@ when an answer needs a follow-up from a later session. The code is what the agen
 and what `check` is handed. The topic and the date live in the first lines of the question and in
 its index entry.
 
+Pairs asked before the codes keep their `<YYYY-MM-DD>-<slug>` names and the Czech `-odpoved.md`:
+documents and closed issues cite them by that path, and a rename would turn every such citation
+into one that points at nothing.
+
 ## 1. Read what is reachable before writing a word
 
-List the files of the app project, then read the documents the question touches — in this
-session — and `pnpm design:screen "<saved file>" 88a` for one screen of them.
-For a component or a token, read the design system: `components/`, `tokens/`, `guidelines/`.
+List the files of the app's canvas, then read the documents the question touches — in this
+session — and `<screen cutter> "<saved file>" <anchor>` for one screen of them. For a component
+or a token, read the design system as well: `README.md`, `components/`, `tokens/`, `guidelines/`.
+What the system already defines is half the answer, and quoting it keeps the question from being
+re-litigated later.
 
 Two rules about what comes back:
 
@@ -65,10 +74,13 @@ because the designer needs the same evidence you found.
 happen costs a redraw, and the design then shows a case that does not exist.
 
 **Product, architecture and security are never asked.** Decide them first, per the
-`decide-and-inform` rule, and tell the user what you decided: a state that does not exist, an
-action that is removed, a permission, a data-model assumption, what is stored or sent. Then write
-it into the brief as a given fact, without widening it into implications the decision does not
-carry. Not even as a variant.
+[decide-and-inform](../../rules/decide-and-inform/RULE.md) rule, and tell the user what you
+decided: a state that does not exist, an action that is removed, a permission, a data-model
+assumption, what is stored or sent. What only the user knows — how the association works, what it
+has decided — is asked of the user, not of design. Then write it into the brief as a given fact.
+Where the user decided it, restate the decision **in their words**, without widening it into
+implications the decision does not carry: a brief that puts your inference in their mouth comes
+back answered against something they never said. Not even as a variant.
 
 **UX decisions are design's, not the user's.** Layout, which action is primary, dialog or toast,
 where a sentence sits, how a state is shown — give the facts and leave the call to the designer. Do
@@ -111,33 +123,47 @@ Položeno <datum>, k #<issue>.
 
 ## Co už design říká
 
-- `88 Seznam faktur` / `88c` — <co tam je, co tam není>
+- `<dokument>` / `<kotva>` — <co tam je, co tam není>
+- design system, `components/<…>` — <co tam je, co tam není>
 
 ## Co to změní v kódu
 
-- `app/routes/invoices/_index/_loader.ts:18` — <co se podle odpovědi přepíše>
+- `apps/<app>/<soubor>:<řádek>` — <co se podle odpovědi přepíše>
 ```
 
 The last section is the point of the exercise: a question nobody can act on does not belong in
 the design project. **The designer starts each run with no memory and works from this file** — when
 an issue or an earlier decision matters, carry what it decides into the brief, not just its number.
+The facts in it are fictional like everything else in the design: `vednemesicnik.test` for the
+newsroom, `external.test` for everybody outside it, no real person, address, Drive ID or link.
 
 ## 4. Upload it
 
-Into the app project, in one publish as `apps/web/docs/_design-project.md` § Writing gives it.
+Into **the canvas of the app that asks**, in one publish as its design-project document § Writing
+gives it — also when the answer will change the shared design system, whose own `questions/` is
+not this loop's.
 
 **Add the pair to `questions/_index.json` in the same publish**: read it fresh, add
-`"<code>": { "topic": "<téma>", "asked": "<date>", "for": [<issues>], "answered": null }`.
+`"<code>": { "topic": "<téma>", "asked": "<date>", "for": [<issues>], "answered": null }`. `for` is
+what lets `/next-issue` offer the pair for retirement when the last of those issues closes.
 
 **Only ever write under `questions/`** (and `uploads/` for reference material the user asked to
-hand over). The screens, the design system and its components are the designer's to change —
-putting our proposal in them is answering our own question in the system's voice.
+hand over). The screens, the design system and its components and tokens are the designer's to
+change — putting our proposal in them is answering our own question in the system's voice.
 
 ## 5. Hand it to the designer
 
-Spawn the `ux-designer` agent (`.claude/agents/`) in the background. The prompt gives the path of
-the brief, and little else: everything it needs is in the brief, and what the prompt adds becomes
-one more thing to anchor on.
+Spawn the `ux-designer` agent (`.claude/agents/`) in the background. The prompt carries five
+lines and little else — everything else is in the brief, and what the prompt adds becomes one more
+thing to anchor on:
+
+```text
+App:            <app>
+Canvas:         <the canvas's artifact URL>
+Design project: <the app's design-project document, path from the repository root>
+Screen cutter:  pnpm -s <the app's screen cutter script>
+Brief:          project/questions/<code>-question.md   (or -reply.md)
+```
 
 **Choose the effort yourself and pass it,** per spawn, by what the answer has to do. The user gave
 that call to this session, so nobody is asked, and you say which one you picked in one line:
@@ -152,27 +178,36 @@ it finishes, go to step 6 without being asked.
 ## 6. `check` — read the answer back
 
 No `<code>-answer.md` means the agent never finished: nobody else is working on it, so spawn it
-again through step 5.
+again through step 5. With no code given, the pair is whichever index entry has `answered: null`
+and an answer file beside it.
 
-List the files, then read the answer and every document it says it wrote to. Read the files, not
-the agent's report. Report:
+List the files, then read the answer and every document it says it wrote to — in the design
+system too. Read the files, not the agent's report. Report:
 
 - what was asked and what came back, question by question, including anything left unanswered;
-- what actually changed in the design files, quoted (`pnpm design:screen`);
+- what actually changed in the design files, quoted (`<screen cutter>`);
 - **every claim about today's app checked against the code** — the designer's are unverified until
   then;
-- which code the answer moves, with paths;
+- which code the answer moves, with paths — the list from step 3, now with a verdict;
 - whether anyone has seen it rendered. The browser pane can't open the artifact, so say when only
   the markup was checked.
 
-Nothing waits on the user here, so no select is owed unless the answer needs a decision from them.
-Anything the agent flagged as a product call is yours to decide first, per the `decide-and-inform`
-rule.
+Nothing waits on the user here, so no question is owed unless the answer needs a decision from
+them. Anything the agent flagged as a product call is yours to decide first, per the
+decide-and-inform rule.
 
-Then complete the pair's index entry: `answered`, `names` (every `#n` it mentions), and
-`wroteTo` with a **witness** per screen — a short literal that stands there because of this
-decision, checked with `pnpm design:screen` against a copy read just now. A witness the script
-cannot find is a finding: report it instead of indexing it.
+Then complete the pair's index entry: `answered`, `names` (every `#n` it mentions,
+`grep -o '#[0-9]\+'`), and `wroteTo` with a **witness** per screen — a short literal that stands
+there because of this decision, checked with `<screen cutter>` against a copy read just now (over
+the saved file with `grep -F` where the cutter cannot cut it). A witness the cutter cannot find is
+a finding: report it instead of indexing it.
+
+**A split document is a rename, and two copies of the old name live on this side.** When the file
+listing no longer holds a document that the index or the code names, find the file that now holds
+the screen — in the canvas's map of files where the design-project document names one — then
+rewrite `doc` in every `wroteTo` entry that points at the old name, checking each witness again in
+the document that now holds its screen. Code that cites anchors in a test gets the rename in a PR
+of its own. Nothing fails on the design side when a document splits.
 
 When the answer needs corrections or a new decision, send them in this session to the same agent,
 which has the context, and read the result back through this step: its answer has to end up
@@ -196,9 +231,10 @@ a drawing adds or changes goes to the copywriter (`/ask-copy`) before it is impl
 - **A screen still waiting on a correction or a `reply`** — not yet; its words may change again.
 
 Give the copywriter the facts from this side — what the app will do, who sees the string, when —
-and say which points of `apps/web/docs/_copy-context.md` the drawing no longer matches, since a redesign
-draws the future app. The wording copy settles goes back to the designer as a new question through
-steps 3–5, so the drawing carries it; implementation takes the words from the drawing.
+and say which points of the app's copy context document (§ For the workflow skills → **Copy
+context**) the drawing no longer matches, since a redesign draws the future app. The wording copy
+settles goes back to the designer as a new question through steps 3–5, so the drawing carries it;
+implementation takes the words from the drawing.
 
 The report of `check` ends with the strings now due for copy, or with why there are none.
 
@@ -207,19 +243,44 @@ Implementing the answer is its own piece of work, on a branch with a PR.
 ## 7. `tidy` — retire what is settled
 
 `questions/` is a working folder, not a record. The record is the design documents and the code.
-Start from `questions/_index.json`. A pair is retirable only when all three hold:
+Start from the canvas's `questions/_index.json`: a pair without an entry predates the index, so
+read that one answer, write its entry as step 6 would, and carry on with the entry. `tidy #<n>`
+keeps only the entries whose `for` or `names` holds `<n>`. A pair is retirable only when all three
+hold:
 
-- its answer is back;
-- **nothing live depends on it** — no open issue names the file, and none of the issues in its
-  `names` is still open (`gh issue list --state open`);
-- **every citation of it has somewhere else to point** — `grep -rno 'questions/[0-9a-z-]*\.md' app
-  docs AGENTS.md .agents`, and a grep of every `.dc.html` (read just now, all in one call with
-  `paths`) for the code. Rewrite a hit to the document that now carries the decision before the
-  file goes.
+- its answer is back — `-answer.md`, or `-odpoved.md` for a pair older than the codes;
+- **nothing live depends on it**, in both directions:
 
-**Check the witness before deleting**: `pnpm design:screen "<saved file>" <screen> | grep -F
-'<witness>'`. A witness that is gone is not a reason to delete — the decision may have been lost,
-and deleting the answer is how it stops existing. Say which.
+  ```sh
+  # bash, not zsh: zsh does not split an unquoted variable, and every lookup then comes back as
+  # a convincing empty.
+  bash -c '
+  open=" $(gh issue list --state open --limit 100 --json number -q ".[].number" | tr "\n" " ") "
+  for n in $open; do                         # inwards: who names the file
+    gh issue view $n --json body,comments -q "[.body, (.comments[].body)] | .[]" \
+      | grep -o "questions/[0-9a-z-]*\.md" | sed "s/^/#$n /"
+  done | sort -u
+  jq -r "to_entries[] | .key + \" \" + (.value.names // [] | map(tostring) | join(\" \"))" \
+    <index> | while read pair names; do      # outwards: which open issues the answer names
+    for r in $names; do [[ "$open" == *" $r "* ]] && echo "$pair names open #$r"; done
+  done'
+  ```
+
+  `<index>` is the saved `questions/_index.json`. A pair named by either list stays, however old
+  it looks. An issue born of an answer rarely cites it back; the answer almost always names the
+  issues it decides.
+
+- **every citation of it has somewhere else to point** —
+  `grep -rno 'questions/[0-9a-z-]*\.md' apps/<app> docs AGENTS.md .agents --exclude-dir=node_modules`,
+  and a grep of every `.dc.html` (read just now, all in one call with `paths`) for the code or the
+  slug. Rewrite a hit to the document that now carries the decision before the file goes. A pair
+  no issue ever cited needs this proved by hand: name the code that implements it. No path, no
+  retirement.
+
+**Check the witness before deleting**: `<screen cutter> "<saved file>" <screen> | grep -F
+'<witness>'`. A witness that is gone is not a reason to delete — the decision may have been
+superseded, which a later entry will show, or simply lost, and deleting the answer is how it stops
+existing. Say which.
 
 Then delete the pair and its index entry in one publish. A copied decision record that might have
 drifted is worse than none, so nothing gets moved elsewhere first.

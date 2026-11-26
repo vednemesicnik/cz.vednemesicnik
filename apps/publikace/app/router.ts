@@ -234,7 +234,7 @@ export function createArtworksSetup(
 }
 
 /**
- * The record queue on the app's database (#111), under the same Drive account as every other
+ * The record queue on the app's database (cz.vednemesicnik.publikace#111), under the same Drive account as every other
  * action. `createPublikace` starts it and `close()` stops it.
  */
 export function createRecordQueue(

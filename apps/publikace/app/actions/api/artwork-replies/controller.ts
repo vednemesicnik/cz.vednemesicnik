@@ -15,7 +15,7 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
 import { readConsentReport } from '../consent-report.ts'
 
 /**
- * The API the reply check of artworks calls (#31): `SCRIPT__Publication__Artwork_Replies`, a
+ * The API the reply check of artworks calls (cz.vednemesicnik.publikace#31): `SCRIPT__Publication__Artwork_Replies`, a
  * standalone Apps Script project running as `publikace.app@` on its own trigger. A run makes two
  * calls:
  *
@@ -53,7 +53,7 @@ function readResult(value: unknown): { batchId: number; report: BatchReport } | 
 /**
  * One batch as the job gets it: what Reply_Check is asked, and what the archived PDF says.
  * `articleName` is the name of what the batch was sent to, a group's too; `kind` says which, so the
- * PDF can call it a group (#133). It is a field added beside the old ones, never in place of one.
+ * PDF can call it a group (cz.vednemesicnik.publikace#133). It is a field added beside the old ones, never in place of one.
  */
 function claimedItem(batch: ClaimedBatch) {
   return {
@@ -69,7 +69,7 @@ function claimedItem(batch: ClaimedBatch) {
     providerEmail: batch.providerEmail,
     providerName: batch.providerName,
     sender: batch.providerEmail,
-    /* The name the request went under, which a rename since does not change (#152). */
+    /* The name the request went under, which a rename since does not change (cz.vednemesicnik.publikace#152). */
     subjectContains: [batch.requestName],
     subjectPrefix: CONSENT_SUBJECT_PREFIX,
     subjectTag: batch.tag,

@@ -19,7 +19,7 @@ import { readConsentReport } from '../consent-report.ts'
 
 /**
  * The API that `SCRIPT__Publication__Article_Approvals` sends the final versions of issues made in
- * the app through and reads their authors' replies through (#88, #89): a standalone Apps Script
+ * the app through and reads their authors' replies through (cz.vednemesicnik.publikace#88, cz.vednemesicnik.publikace#89): a standalone Apps Script
  * project running as `publikace.app@` on its own trigger. One run, _Žádosti a odpovědi u článků_
  * (`14d`), makes two calls:
  *
@@ -72,9 +72,9 @@ function readResult(value: unknown): { clauseKey: string; outcome: ClauseOutcome
  * key; `sendKey` is the Mailer's key for this sending, the clause's key until _Poslat žádost
  * znovu_ asked for another (`12b`), because the Mailer answers a key it sent as sent, unsent.
  * `replacesEarlier` picks the e-mail's opening that says it replaces an earlier request (`20f`,
- * #90): a field added beside the others, so a job that does not read it sends the plain one.
+ * cz.vednemesicnik.publikace#90): a field added beside the others, so a job that does not read it sends the plain one.
  * `replacesAgreed` narrows it to an author who had agreed to the earlier version, whose opening
- * says that consent belongs to it (`20f`, #101); added the same way.
+ * says that consent belongs to it (`20f`, cz.vednemesicnik.publikace#101); added the same way.
  */
 function claimedItem(clause: ClaimedClause) {
   return {

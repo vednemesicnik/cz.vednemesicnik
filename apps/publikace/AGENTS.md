@@ -1,6 +1,9 @@
-# cz.vednemesicnik.publikace Agent Guide
+# AGENTS.md — Publikace
 
-The magazine's publishing app on `publikace.vednemesicnik.cz`. [README.md](README.md) explains
+The magazine's publishing app on `publikace.vednemesicnik.cz`: `apps/publikace` in the
+`cz.vednemesicnik` workspace. The repository's own guide — the layout, the host, CI, branching,
+releases, the workflow skills and the shared rules — is the root [AGENTS.md](../../AGENTS.md);
+this file is what holds for Publikace alone, and paths below are relative to `apps/publikace`. [README.md](README.md) explains
 what it does; this file is about working in it without breaking something expensive. The plan of
 how it works, with diagrams, is [docs/product.md](docs/product.md),
 [docs/architecture.md](docs/architecture.md) and [docs/security.md](docs/security.md); what still
@@ -19,37 +22,37 @@ morning, and the page `/proofreading`, where they sign in to take a text, give i
 its final version: a PDF in the article folder and one clause per author, which
 `SCRIPT__Publication__Article_Approvals` claims through `/api/v1/approvals`, mails to the
 author and reads the reply to, so that one not exactly „Souhlasím“ reaches _Ke kontrole_ beside
-the artworks' (#89); the article's row in the issue detail opens to each author's clause, and
-_Poslat žádost znovu_ hands one back to the job under a new Mailer key (#92); once the job took the
+the artworks' (cz.vednemesicnik.publikace#89); the article's row in the issue detail opens to each author's clause, and
+_Poslat žádost znovu_ hands one back to the job under a new Mailer key (cz.vednemesicnik.publikace#92); once the job took the
 clauses and before every author agreed, _Označit novou finální verzi…_ in the row's „⋯“ puts a new
-PDF and new requests in place of the old ones, which stop counting (#90); and once every author
+PDF and new requests in place of the old ones, which stop counting (cz.vednemesicnik.publikace#90); and once every author
 agreed, a revision of the Doc after its PDF, which the issue detail asks Drive about once it stands,
-makes the article _Upraveno po schválení_ with _Označit novou verzi…_ in its row (#101); and an
+makes the article _Upraveno po schválení_ with _Označit novou verzi…_ in its row (cz.vednemesicnik.publikace#101); and an
 issue closed from either „⋯“, which takes its links from the newsroom and its articles from the
-jobs, and reopened with the same links (#106); and the record, an issue's row in the Registr and
+jobs, and reopened with the same links (cz.vednemesicnik.publikace#106); and the record, an issue's row in the Registr and
 its Evidence in the scripts' columns, rewritten by a queue in the app's process every 30 s after
-the database changes and in full once a day, with _Otevřít Evidenci_ in the issue's „⋯“ (#111); and the print folder, which
+the database changes and in full once a day, with _Otevřít Evidenci_ in the issue's „⋯“ (cz.vednemesicnik.publikace#111); and the print folder, which
 `SCRIPT__Publication__Print_Handoff` fills with the approved texts and the artworks with consent
 through `/api/v1/print-handoff`, and which the issue detail's _Podklady pro tisk_ says the fill of
-(#110); and a reply in _Ke kontrole_ answered from its card, which the Mailer sends inside the
+(cz.vednemesicnik.publikace#110); and a reply in _Ke kontrole_ answered from its card, which the Mailer sends inside the
 thread of the request and which puts the provider or the author on the move until they write
-again (#31); and Nastavení › _Soubory na Disku_, which links the issues folder, the Registr and
-the article template from the deployment's IDs and says when no Registr is written (#116); and an
+again (cz.vednemesicnik.publikace#31); and Nastavení › _Soubory na Disku_, which links the issues folder, the Registr and
+the article template from the deployment's IDs and says when no Registr is written (cz.vednemesicnik.publikace#116); and an
 issue's artwork groups, which the editors-in-chief create in its detail and whose link uploads
-like an article's, its batches going to _Ke kontrole_, the record and the print folder (#133); and
+like an article's, its batches going to _Ke kontrole_, the record and the print folder (cz.vednemesicnik.publikace#133); and
 _Přejmenovat vydání…_ and _Odebrat vydání…_ in an issue's „⋯“, which rename its folder and every
-`_meta.json` in it, or bin an empty issue's folder and free its name (#151); and
+`_meta.json` in it, or bin an empty issue's folder and free its name (cz.vednemesicnik.publikace#151); and
 _Přejmenovat článek…_ and _Upravit autory…_ in an article's „⋯“, which rename its Doc, folder and
 `_meta.json`, or correct its authors there and in the database, a welcome going to each new
-address before the final version and a corrected request after it (#152); and
+address before the final version and a corrected request after it (cz.vednemesicnik.publikace#152); and
 _Odebrat článek…_ in an article's „⋯“, which bins its folder, and _Zahodit dávku_ also after its
-request went (#153); and _Upravit název a poznámku…_ and _Odebrat skupinu…_ in a group's „⋯“,
+request went (cz.vednemesicnik.publikace#153); and _Upravit název a poznámku…_ and _Odebrat skupinu…_ in a group's „⋯“,
 which rename its folder and `_meta.json` or save a note alone, or bin a group without artworks
-(#154); and the comment digest's API, through which `SCRIPT__Publication__Article_Comments` claims
+(cz.vednemesicnik.publikace#154); and the comment digest's API, through which `SCRIPT__Publication__Article_Comments` claims
 the articles of the open issues with their authors and how far each was told of, and reports the
-e-mails the Mailer confirmed, which _Připomínky ke článkům_ in `/settings/jobs` shows (#170), and
+e-mails the Mailer confirmed, which _Připomínky ke článkům_ in `/settings/jobs` shows (cz.vednemesicnik.publikace#170), and
 the job itself, which reads each Doc's new comments, replies and suggestions and mails each author
-one digest (#186).
+one digest (cz.vednemesicnik.publikace#186).
 Nothing runs on Fly.io yet, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals, the print folder, the comment digest and the proofreaders' digest, which go
 through the app's API and whose runs
@@ -63,9 +66,11 @@ issue templates, CI and the hooks.
 
 ## Commands
 
+Run them here in `apps/publikace`, or from the repository root as `pnpm publikace:<name>`
+(`pnpm publikace:test`). `pnpm install` and `pnpm claude:skills:link` (the skill links, the Remix
+skill) run once at the root.
+
 ```sh
-pnpm install
-pnpm dev:setup-claude # the .claude/skills symlinks, the Remix skill, and a CLAUDE.md importing this file
 pnpm app:dev          # http://localhost:44100, restarts on change
 pnpm app:start        # the same server with NODE_ENV=production
 pnpm app:fake         # the app on a fake Drive, Mailer and database, http://127.0.0.1:44110/_fake
@@ -104,7 +109,7 @@ repository's. See [docs/branching-model.md](docs/branching-model.md).
 
 - **Remix 3 on Fly.io, the stack of Fakturace.** Node 26, `node:sqlite`, one machine with a
   volume, the same patterns for the repository, migrations and backups. Refer to
-  `./.agents/skills/remix/SKILL.md` (the `remix` skill) once `pnpm dev:setup-claude` has copied
+  `./.agents/skills/remix/SKILL.md` (the `remix` skill) once the root's `pnpm claude:skills:link` has copied
   it.
 - **The app's SQLite database is the source of truth** for issues, articles, editorial clauses,
   artworks and their groups, consent states, shared links and job runs. The editors-in-chief only
@@ -187,49 +192,70 @@ repository's. See [docs/branching-model.md](docs/branching-model.md).
   can make a folder limited and cut the inherited grant, and `publikace.app@` stays a Content
   manager.
 
-## Workflow skills
+## For the workflow skills
 
-Skills live in `.agents/skills/` and are invoked as `/name`, or simply asked for by what they do.
-Claude Code reads them through symlinks in `.claude/skills/` that `pnpm dev:setup-claude` writes,
-along with a `CLAUDE.md` whose whole content is `@AGENTS.md` — this file is the one that is
-tracked. Subagents are the exception: they are read from `.claude/agents/` and nowhere else, so
-that directory is tracked. `ux-designer` answers a design question from a brief and draws it in
-the design canvas, for `/ask-design`.
+What the repository's workflow skills (`/plan-issue`, `/implement-issue`, `/ship-issue`,
+`/next-issue`, `/discover-idea`, `/review-idea`, `/ask-design`, `/ask-copy`) read for Publikace.
+Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-skills.md).
 
-**Before an issue exists**, the subject is an idea:
-
-- **`/discover-idea`** — sweep one area for what is missing: drawn and not built, built and not
-  drawn, answered by design and never built, written in the plan and not kept, or two places
-  disagreeing.
-- **`/review-idea`** — weigh a proposal against product, evidence, design and security. Four
-  verdicts: write the issue, ask design first, change the plan, or drop it.
-
-Both read the written design — [docs/product.md](docs/product.md),
-[docs/architecture.md](docs/architecture.md), [docs/security.md](docs/security.md) — and every
-stage after them keeps it true: the documents change in the PR that changes what they describe,
-or on their own when the plan changes without code
-([docs/workflow-skills.md](docs/workflow-skills.md) § The written design).
-
-**Once there is an issue**, each one takes its number:
-
-`/plan-issue` → `/implement-issue` → `/ship-issue` → `/next-issue`
-
-**`/ask-design`** and **`/ask-copy`** stand outside both lines: one briefs the `ux-designer`
-agent, which answers and draws in the design canvas; the other takes user-facing Czech through a
-copywriter with [docs/copy-context.md](docs/copy-context.md) as the whole of the context. Where
-each one stops and why: [docs/workflow-skills.md](docs/workflow-skills.md).
+- **Gates** — `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test` and
+  `pnpm app:doctor` here, or `pnpm publikace:<name>` from the root. CI runs them as
+  `publikace-*`, and the pre-push hook runs all five when the push touches Publikace.
+- **Seeing a change** — `pnpm app:fake` (`http://127.0.0.1:44110/_fake`): the app on a fake
+  Drive, Mailer and database, no Google, and the page that switches its states. `pnpm app:dev`
+  (`http://localhost:44100`) needs the Google sign-in, which an agent cannot drive: say so and
+  hand that check to the user.
+- **Written design** — [docs/product.md](docs/product.md),
+  [docs/architecture.md](docs/architecture.md) and [docs/security.md](docs/security.md), and
+  the dated readings of them, [docs/review-2026-11-24.md](docs/review-2026-11-24.md), whose
+  findings carry an ID and a _Resolution_. The documents change in the PR that changes what they
+  describe.
+- **Design project** — [docs/design-project.md](docs/design-project.md): the canvas
+  (_Publikace._) and the shared design system artifacts, the page map, the source of truth of
+  the states (`01 Stavy a souhlasy`) and the `questions/` index. Screen cutter:
+  `pnpm -s design:screen "<saved file>" <id>` here, or `pnpm publikace:design:screen` from the
+  root, where a relative path is read from the folder it was typed in; it parses Publikace's canvas, not the web's.
+- **Copy context** — [docs/copy-context.md](docs/copy-context.md). Every Czech string on a
+  screen is written through `` tied`…` `` (§ House style); the screens are under
+  `app/actions/` and `app/ui/`.
+- **Commit scopes** — `publikace` or `publikace/<area>`, the areas as used so far: `issues`,
+  `articles`, `artworks`, `links`, `review`, `settings`, `ui`, `data`, `jobs`, `mail`,
+  `proofreading`, `copy` — `feat(publikace/issues): …`. The repository's own work keeps its
+  scopes (`agents`, `skills`, `docs`).
+- **Rules** — Publikace's rules (§ Agent Rules below) and the repository's shared rules; the
+  `remix` skill and `modern-web-guidance`.
+- **Issue weighing** — until `v1.0.0`, the release that first runs on Fly.io and lets the
+  newsroom switch the scripts off, every issue is weighed against it. The release needs an
+  issue when without it the app cannot do its job for the newsroom, loses or corrupts data,
+  sends a wrong e-mail, leaves a door [docs/security.md](docs/security.md) does not guard, or
+  keeps the cutover from happening. Everything else — polish, a departure from the drawing that
+  misleads nobody, a convenience, a second way to do something that already works — is labelled
+  **`can wait`**: would the newsroom switch the scripts off without it? If yes, it can wait. The
+  label goes on in the same command as the type (`gh issue create --type Feature --label "can
+  wait"`). `/next-issue` picks a `can wait` issue only once no issue the release needs can be
+  worked on, then the oldest first. From `v1.0.0` on the label is no longer given, and the
+  issues still carrying it are weighed again as ordinary work.
+- **Traps** — § Things that will bite you below; above all: an applied migration is never
+  edited (the journal keeps its checksum and refuses a changed history), and `oxfmt` formats
+  Markdown while the pre-commit hook globs only code, so run `pnpm format` after a docs change or
+  the push fails on `format:check`.
 
 ## Agent Rules
 
-Mandatory conventions that apply to all tasks. Read the relevant rule file before acting. They
-were carried over from billing before this repository had code; their examples cite billing's
-files until this one has its own.
+Mandatory conventions for Publikace's code. Read the relevant rule file before acting. They bind
+`apps/publikace` only; the repository's shared rules (package versions, guidance examples,
+self-review before a PR, decide and inform) are in the root [AGENTS.md](../../AGENTS.md) § Agent
+Rules and bind Publikace as well, and the web's rules never apply here.
 
 - **Comments** — whenever a comment is written or edited: `.agents/rules/comments/RULE.md`.
 - **Component Files** — creating a component in `app/ui/`: `.agents/rules/component-files/RULE.md`.
 - **Component API** — designing a component's props and parts: `.agents/rules/component-api/RULE.md`.
 - **Test Mocks** — a spy on a shared method: `.agents/rules/test-mocks/RULE.md`.
 - **Layout Mechanism** — choosing `display` or an element over another: `.agents/rules/layout/RULE.md`.
+- **No Layout Shift** — rendering a piece conditionally, aligning a row whose items change height,
+  or adding media: `.agents/rules/no-layout-shift/RULE.md`.
+- **CSS Before JS** — an island or mixin that changes how something looks or moves with state, or
+  reviewing such a diff: `.agents/rules/css-before-js/RULE.md`.
 
 ## House style
 
@@ -248,13 +274,13 @@ files until this one has its own.
   That form belongs to commits and PR titles, because the squash turns a PR title into a commit
   on `dev`.
 - Before an issue is filed, three questions decide it
-  ([docs/workflow-skills.md](docs/workflow-skills.md) § Filing an issue): an open issue that
+  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Filing an issue): an open issue that
   would carry it gets a comment instead, it is the size of one PR, and until `v1.0.0` one the
   release does not need is labelled `can wait`. The agent decides and files; it does not ask the
   user to pick follow-ups.
 - An issue is opened with its type in the same command, `gh issue create --type Bug` (or
   `Feature`, `Task`), whichever skill or session files it. The types are defined in
-  [docs/workflow-skills.md](docs/workflow-skills.md). One opened without it gets it at once with
+  [docs/\_workflow-skills.md](../../docs/_workflow-skills.md). One opened without it gets it at once with
   `gh issue edit <n> --type …`.
 - The design's words are Czech and its terms are fixed: _vydání_ (not _číslo_), _obrazové dílo_,
   _poskytovatel_, _souhlas_ — [docs/copy-context.md](docs/copy-context.md) lists them.

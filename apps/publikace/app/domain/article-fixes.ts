@@ -1,5 +1,5 @@
 /**
- * Mending what was typed wrong when an article was created (#152): _Přejmenovat článek…_ (`12x`)
+ * Mending what was typed wrong when an article was created (cz.vednemesicnik.publikace#152): _Přejmenovat článek…_ (`12x`)
  * and _Upravit autory…_ (`12y`), where each stands (`12u`) and every word of both dialogs. The
  * wording is the copywriter's (`ggqtf0xy`), drawn in `786r4cpa`.
  *

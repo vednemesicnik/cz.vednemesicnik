@@ -21,7 +21,7 @@ import {
 } from '../../test-app.server.ts'
 
 /**
- * Artwork groups end to end (#133): the dialog of `12e` over the detail, the group on Drive, its
+ * Artwork groups end to end (cz.vednemesicnik.publikace#133): the dialog of `12e` over the detail, the group on Drive, its
  * row in `12a`, its link's page (`21a`, `21c`), its consent request, and its batches where an
  * article's go: _Ke kontrole_, the reply check, the print folder and the Evidence.
  */
@@ -644,7 +644,7 @@ async function groupsMarkup(context: Context): Promise<string> {
   )
 }
 
-describe('a group’s missing folder in the detail (12j, #145)', () => {
+describe('a group’s missing folder in the detail (12j, cz.vednemesicnik.publikace#145)', () => {
   it('shows the group’s own folder in its frame, without Otevřít složku skupiny, and counts it', () =>
     withIssue(async (context) => {
       await createGroup(context, { name: 'Mapa obce k rozhovoru i reportáži' })

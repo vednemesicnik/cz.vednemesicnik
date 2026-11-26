@@ -7,7 +7,7 @@ import type { DriveFolders, FolderStanding } from './folders.server.ts'
 /**
  * Whether an article's folder and the two inside it are where the app left them, and the record
  * of it on the article (`12j`, `2kig3d8m`). An artwork group has the same three folders and the
- * same record, kept on the group (#133). Every place that runs into a folder asks here: the
+ * same record, kept on the group (cz.vednemesicnik.publikace#133). Every place that runs into a folder asks here: the
  * link's page and its upload and send, _Poslat žádost znovu_, _Zahodit dávku_, the issue detail
  * and _Zkontrolovat znovu_. A folder found missing is marked, one found again loses its mark, and
  * none is ever created again.

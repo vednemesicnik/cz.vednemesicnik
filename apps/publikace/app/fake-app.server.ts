@@ -690,7 +690,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         if (path === '/file/trash') app.drive.trash(fileId)
         else app.drive.restore(fileId)
         return backToControls()
-      /* An edit makes a revision, a comment only moves `modifiedTime` (#101). */
+      /* An edit makes a revision, a comment only moves `modifiedTime` (cz.vednemesicnik.publikace#101). */
       case '/doc/edit':
       case '/doc/comment':
         if (typeof fileId !== 'string') return new Response('No file', { status: 400 })

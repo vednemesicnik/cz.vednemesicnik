@@ -18,7 +18,7 @@ import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
 
 /**
- * Creating an artwork group from the issue detail (#133, `12e`).
+ * Creating an artwork group from the issue detail (cz.vednemesicnik.publikace#133, `12e`).
  *
  * All or nothing, as every action but the issue is (`11c`, `03` row 43): the attempt's row comes
  * first and each file's ID is stored the moment Drive returns it; when a step fails, the group's

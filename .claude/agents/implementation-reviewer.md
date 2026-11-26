@@ -1,6 +1,6 @@
 ---
 name: implementation-reviewer
-description: Review a feature branch's diff before its PR — every hunk against the repo rules, AGENTS.md, the work log and the GitHub issue's acceptance criteria — in a fresh context, so the session that wrote the code does not grade its own work. Read-only; returns one ranked report. Spawned by /review-implementation and /ship-issue Phase A with the issue number and the base branch.
+description: Review a feature branch's diff before its PR — every hunk against the rules and AGENTS.md of the app it touches, the work log and the GitHub issue's acceptance criteria — in a fresh context, so the session that wrote the code does not grade its own work. Read-only; returns one ranked report. Spawned by /review-implementation and /ship-issue Phase A with the issue number and the base branch.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Edit, Write, NotebookEdit, Agent
 model: opus
@@ -19,6 +19,8 @@ The prompt gives you:
 
 - **the issue number** — none means a branch without an issue; skip the conformance layer;
 - **the base** — `dev`, or the parent branch when the branch is stacked;
+- **the app** — `apps/web`, `apps/publikace`, or the repository's own files outside `apps/`
+  (the host, CI, Docker, the agent setup); a diff across several says which paths are whose;
 - **design notes**, optionally — a path to the text of the designed screens the issue touches.
   The main session extracts them; never read the design project yourself.
 
@@ -31,16 +33,31 @@ doing the same thing (add and edit, list and detail), the loader that feeds the 
 ## 2. Check it against
 
 - the checklist in `.agents/rules/self-review-before-pr/RULE.md`;
-- every rule in `.agents/rules/*/RULE.md` and the conventions in `AGENTS.md`;
-- `.agents/skills/general-guidance/` references for the file types in the diff — CSS
-  modules, stories;
-- `.agents/skills/component-authoring/` references when the diff adds markup or changes a
-  component — its API, semantic elements, layout shift, reuse;
+- the repository's shared rules in `.agents/rules/*/RULE.md` and the root `AGENTS.md`;
+- the app's own `AGENTS.md` and every rule its § For the workflow skills lists
+  (`apps/<app>/.agents/rules/*/RULE.md`): a rule binds only the app it sits in, so the web's
+  rules never apply to Publikace's code, nor Publikace's to the web's;
+- the app's own guidance skills for the file types in the diff — for the web,
+  `apps/web/.agents/skills/general-guidance/` (CSS modules, stories) and
+  `apps/web/.agents/skills/component-authoring/` (markup and components: API, semantic
+  elements, layout shift, reuse);
 - the entries in `docs/work-log/` for the areas the diff touches — context, not rules. A
   change may depart from one; when nothing says why (the issue, the PR or a new entry), report
   it as `low` and ask for the reason, so the change of direction gets logged;
-- **no real data** in fixtures, tests and docs — example addresses use `priklad.cz`, people
-  are invented;
+- **the app's written design** (its § For the workflow skills, **Written design**) still says
+  what the diff now does: a state, a rule, a limit, a table, a flow, an endpoint, a job, a trust
+  boundary or a field about a person that the diff adds or changes is in those documents, in
+  the present tense, and a review finding the issue resolves carries its number under
+  _Resolution_. A document the diff made untrue is a finding — `medium` when the issue settled
+  the question and the text only has to follow, `high` when the diff decided something the
+  issue did not;
+- **no applied migration edited** — a new migration is fine; a changed file under a migration
+  that already ran on `dev` (`git log dev -- <path>`) is `high`;
+- **no real data** in fixtures, tests and docs — e-mail addresses use `vednemesicnik.test`
+  (the newsroom) and `external.test` (everybody else), never `priklad.cz`, `jinde.cz` or
+  `example.com`; people, Drive IDs and links are invented;
+- the boxes of `.github/pull_request_template.md` for the app the diff touches — each is
+  something the gates cannot check, so report the ones the diff would leave untrue;
 - the design notes, when given: the screen decides, not the issue's summary of it.
 
 ## 3. Check it against the issue
