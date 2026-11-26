@@ -61,7 +61,8 @@ export default function createJobsController(
           let state = stateOfJob(job, run, today)
           return {
             name: job.name,
-            schedule: run === null ? null : scheduleText(run.intervalMinutes, job.window),
+            schedule:
+              run === null ? null : scheduleText(run.intervalMinutes, job.window, job.windows),
             showHref: isWorthShowing(state)
               ? routes.settings.jobs.show.href({ job: job.key })
               : null,
@@ -106,7 +107,7 @@ export default function createJobsController(
           latest !== null &&
           job.failedCalloutOf !== undefined
         ) {
-          let own = job.failedCalloutOf(latest)
+          let own = job.failedCalloutOf(latest, failedCalloutText(job, state) ?? '')
           if (own !== null) callout = { error: latest.error, ...own, tone: 'error' }
         } else {
           let failed = failedCalloutText(job, state)

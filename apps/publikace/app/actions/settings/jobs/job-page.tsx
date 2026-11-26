@@ -20,6 +20,8 @@ export type JobHistoryItem = { event: string; time: string }
 export type JobCallout = {
   action?: { href: string; label: string }
   error: string | null
+  /** Whom a failed run was about, a line a recipient over its things (`14e`, `ezhxaz35`). */
+  groups?: readonly { articles: readonly string[]; lead: string }[]
   text: string
   title: string | null
   tone: 'error' | 'warning'
@@ -97,6 +99,18 @@ export function JobPage(handle: Handle<JobPageProps>) {
                 <p style={{ margin: callout.action === undefined ? 0 : '0 0 8px' }}>
                   {callout.text}
                 </p>
+                {/* Under the text, which says what the next run does: with twenty addresses it
+                    would otherwise stand screens away from the title (`ezhxaz35`). */}
+                {callout.groups?.map((group) => (
+                  <>
+                    <p class="vdm-callout__group">{group.lead}</p>
+                    <ul class="vdm-callout__list">
+                      {group.articles.map((article) => (
+                        <li>{article}</li>
+                      ))}
+                    </ul>
+                  </>
+                ))}
                 {callout.action === undefined ? null : (
                   <div class="vdm-callout__actions">
                     <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={callout.action.href}>

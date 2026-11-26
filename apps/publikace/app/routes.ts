@@ -140,6 +140,12 @@ export const routes = route({
       claim: post('/api/v1/print-handoff/claim'),
       report: post('/api/v1/print-handoff/report'),
     },
+    /* `SCRIPT__Publication__Article_Comments` for the issues made in the app (#170): it claims the
+       articles with how far each was told of, mails the authors what is new, and reports. */
+    articleComments: {
+      claim: post('/api/v1/article-comments/claim'),
+      report: post('/api/v1/article-comments/report'),
+    },
   },
 
   /* _Korektura_ (`15a`–`15e`), the one page a proofreader has, and its steps, at once and with no

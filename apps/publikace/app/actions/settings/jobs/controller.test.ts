@@ -374,3 +374,66 @@ describe('Přehled pro korektory among the jobs (14d, 14e, 14i)', () => {
     }
   })
 })
+
+describe('Připomínky ke článkům among the jobs (14d, 14e)', () => {
+  const JOB = 'article-comments'
+
+  async function commentsRun(app: TestApp, summary: string, outcome: 'failed' | 'ok') {
+    let runs = createJobRunStore(app.database)
+    let runKey = crypto.randomUUID()
+    let at = Temporal.Now.instant().subtract({ minutes: 5 })
+    await runs.start({ at, intervalMinutes: 180, job: JOB, runKey })
+    await runs.finish(JOB, runKey, { at, error: null, outcome, summary })
+  }
+
+  it('lists the job with its windows and says what the last run sent', async () => {
+    let { app, browser } = await setup()
+    try {
+      await commentsRun(app, '{"hasFailed":false,"sent":3,"unconfirmed":[]}', 'ok')
+      let list = textOf(await (await browser.get('/settings/jobs')).text())
+      assert.ok(list.includes('Připomínky ke článkům'))
+      assert.ok(list.replaceAll('⁠', '').includes('upozorní autory e-mailem na nové připomínky'))
+      assert.ok(list.includes('každé 3 h od 0:00'))
+      let history = textOf(await (await browser.get(`/settings/jobs/${JOB}`)).text())
+      assert.ok(history.includes('Poslala 3 e-maily'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('names every unconfirmed e-mail under its Callout, without the banner for one run', async () => {
+    let { app, browser } = await setup()
+    try {
+      await commentsRun(
+        app,
+        JSON.stringify({
+          hasFailed: false,
+          sent: 1,
+          unconfirmed: [
+            { articleName: 'Sbor, který zkouší v kotelně', email: 'j.novotny@external.test' },
+            { articleName: 'Proč nechodíme volit', email: 'l.kralova@external.test' },
+            { articleName: 'Rozhovor s varhaníkem z Kostelce', email: 'j.novotny@external.test' },
+          ],
+        }),
+        'failed',
+      )
+      let list = textOf(await (await browser.get('/settings/jobs')).text()).replaceAll(' ', ' ')
+      assert.ok(list.includes('2 e-maily bez potvrzení'))
+      let home = textOf(await (await browser.get('/')).text()).replaceAll(' ', ' ')
+      assert.doesNotMatch(home, /nemusí autorům posílat/)
+
+      let html = await (await browser.get(`/settings/jobs/${JOB}`)).text()
+      let text = textOf(html).replaceAll(' ', ' ').replaceAll('⁠', '')
+      assert.ok(text.includes('Odeslání 2 e-mailů se nepodařilo potvrdit.'))
+      assert.ok(text.includes('Při dalším běhu se úloha pokusí upozornění odeslat znovu.'))
+      assert.ok(text.includes('Poslala 1 e-mail · u 2 e-mailů chybí potvrzení odeslání'))
+      assert.equal(html.match(/class="vdm-callout__group"/g)?.length, 2)
+      let novotny = text.indexOf('E-mail pro j.novotny@external.test:')
+      let kralova = text.indexOf('E-mail pro l.kralova@external.test:')
+      assert.ok(novotny !== -1 && novotny < kralova)
+      assert.ok(text.indexOf('Rozhovor s varhaníkem') < text.indexOf('Sbor, který zkouší'))
+    } finally {
+      await app.close()
+    }
+  })
+})

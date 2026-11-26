@@ -1019,6 +1019,11 @@ a.vdm-pagination__item:hover { background: var(--bg-tertiary); }
 .vdm-callout__group { margin: 6px 0 0; }
 .vdm-callout__group + .vdm-callout__list { margin-top: 2px; }
 .vdm-callout__list + .vdm-callout__group { margin-top: 10px; }
+/* The same parts list what an outcome message is about when nothing in the app mends or opens it
+   (e-mails nobody confirmed were sent): plain items, not links; a lead line per recipient, in the
+   words the title counts (E-mail pro ‹adresa›:), its things under it, also for a single recipient.
+   It stands under the text, which says what happens next. Nothing is shortened or collapsed.
+   Rozhodnuto 26. 11. 2026 (ezhxaz35, z Publikace) */
 .vdm-callout__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
 .vdm-callout__close { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; margin: -6px -8px -6px auto; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); cursor: pointer; }
 .vdm-callout__close:hover { background: var(--bg-hover); color: var(--text-primary); }

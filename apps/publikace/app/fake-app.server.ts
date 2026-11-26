@@ -444,6 +444,18 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         detail's <em>Podklady pro tisk</em> then counts them.
       </p>
 
+      <h2>Comment digest</h2>
+      <p>
+        ${button('/comments', 'Tell the authors of new comments')}
+        ${button('/comments', 'Tell them, one e-mail unconfirmed', { outcome: 'unconfirmed' })}
+        ${button('/comments', 'Tell them, the run fails', { outcome: 'failed' })} — one run of
+        <code>Article_Comments</code> through the app's API: it claims every article of an open
+        issue and reports one e-mail to each author as confirmed, or leaves the first author of the
+        first article unconfirmed.
+        <a href="${routes.settings.jobs.index.href()}">Úlohy na pozadí</a>
+        then shows the run.
+      </p>
+
       <h2>Proofreaders' digest</h2>
       <p>
         Address: ${(await proofreaders.find())?.email ?? 'none'}
@@ -784,6 +796,33 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
           ...(outcome === 'failed' ? { error: 'The fake Drive stopped answering.' } : {}),
           outcome,
           runKey,
+        })
+        if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
+        return backToControls()
+      }
+      case '/comments': {
+        let outcome = form?.get('outcome')
+        let claimed = await job(routes.api.articleComments.claim.href(), { intervalMinutes: 180 })
+        if (claimed.status !== 200) return new Response(`The API answered ${claimed.status}`)
+        let { articles, runKey } = (await claimed.json()) as {
+          articles: { articleId: number; authorEmails: string[] }[]
+          runKey: string
+        }
+        let [first] = articles
+        let left =
+          outcome === 'unconfirmed' && first?.authorEmails[0] !== undefined
+            ? { articleId: first.articleId, email: first.authorEmails[0] }
+            : null
+        let told = articles.filter((article) => article.articleId !== left?.articleId)
+        let emails = new Set(articles.flatMap((article) => article.authorEmails))
+        if (left !== null) emails.delete(left.email)
+        let answer = await job(routes.api.articleComments.report.href(), {
+          articles: told.map((article) => ({ articleId: article.articleId, suggestionHashes: [] })),
+          ...(outcome === 'failed' ? { error: 'The fake Docs stopped answering.' } : {}),
+          outcome: outcome === 'failed' ? 'failed' : 'ok',
+          runKey,
+          sent: emails.size,
+          unconfirmed: left === null ? [] : [left],
         })
         if (answer.status !== 200) return new Response(`The API answered ${answer.status}`)
         return backToControls()

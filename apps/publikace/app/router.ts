@@ -16,6 +16,7 @@ import createHomeController from './actions/controller.tsx'
 import createProofreadingController from './actions/proofreading/controller.tsx'
 import createIssuesController from './actions/issues/controller.tsx'
 import createApprovalsController from './actions/api/approvals/controller.ts'
+import createArticleCommentsController from './actions/api/article-comments/controller.ts'
 import createPrintHandoffController from './actions/api/print-handoff/controller.ts'
 import createArtworkRepliesController from './actions/api/artwork-replies/controller.ts'
 import createProofreadingDigestController from './actions/api/proofreading-digest/controller.ts'
@@ -63,6 +64,7 @@ import { createDriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
 import { createLinkStore } from './data/links.server.ts'
+import { createArticleCommentsStore } from './data/article-comments.server.ts'
 import { createPrintHandoffStore } from './data/print-handoff.server.ts'
 import { createProofreadersStore } from './data/proofreaders.server.ts'
 import { createRecordStore } from './data/record.server.ts'
@@ -299,6 +301,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   )
   let jobRuns = createJobRunStore(dependencies.database)
   let printHandoffs = createPrintHandoffStore(dependencies.database)
+  let articleComments = createArticleCommentsStore(dependencies.database)
   let proofreaders = createProofreadersStore(dependencies.database)
 
   let router = createRouter({
@@ -428,6 +431,23 @@ export function createAppRouter(dependencies: AppDependencies) {
     routes.api.printHandoff,
     createPrintHandoffController({
       handoffs: printHandoffs,
+      jobAccount: (
+        dependencies.jobAccount ?? scriptJobAccount(dependencies.environment)
+      ).toLowerCase(),
+      now,
+      runs: jobRuns,
+      verifyIdentityToken:
+        dependencies.verifyJobToken ??
+        createIdentityTokenVerifier({
+          audiences: scriptTokenAudiences(dependencies.environment),
+          fetch,
+        }),
+    }),
+  )
+  router.map(
+    routes.api.articleComments,
+    createArticleCommentsController({
+      digests: articleComments,
       jobAccount: (
         dependencies.jobAccount ?? scriptJobAccount(dependencies.environment)
       ).toLowerCase(),

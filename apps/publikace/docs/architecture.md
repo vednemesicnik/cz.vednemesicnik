@@ -24,7 +24,7 @@ flowchart LR
     GM["SCRIPT__Auth__Group_Membership"]
     MS["SCRIPT__Mail__Send<br/>publikace@"]
     RC["SCRIPT__Mail__Reply_Check<br/>publikace@"]
-    JOBS["Jobs as publikace.app@<br/>Artwork_Replies, Article_Approvals,<br/>Print_Handoff, Proofreading_Digest"]
+    JOBS["Jobs as publikace.app@<br/>Artwork_Replies, Article_Approvals,<br/>Print_Handoff, Proofreading_Digest,<br/>Article_Comments"]
   end
   ED -- "session cookie" --> HOST
   LK -- "/l/{key}/…" --> HOST
@@ -76,7 +76,8 @@ blocks every action that creates files, and a banner over every screen says so (
 States are not stored as enums. They are derived from timestamps such as `handed_over_at`,
 `consent_verified_at` and `closed_at` (see [Lifecycles](#lifecycles)). The diagram shows the
 tables that carry the product. Sessions, the access list, the proofreaders' address, the Drive
-account, `job_runs` and the record queue's own tables stand beside them.
+account, `job_runs`, the record queue's own tables and what the jobs leave between their runs (the
+print folder's copies, each article's last comment digest) stand beside them.
 
 ```mermaid
 erDiagram
@@ -344,17 +345,21 @@ Evidence, binned with its folder, is no longer written.
 
 **Apps Script jobs that talk to the app**, all as `publikace.app@` on their own triggers:
 
-| Job                                        | Interval         | API                                 | Exists                    |
-| ------------------------------------------ | ---------------- | ----------------------------------- | ------------------------- |
-| `SCRIPT__Publication__Artwork_Replies`     | 30 min           | `artwork-replies/claim`, `…/report` | yes                       |
-| `SCRIPT__Publication__Article_Approvals`   | 30 min           | `approvals/claim`, `…/report`       | yes, no trigger until #79 |
-| `SCRIPT__Publication__Print_Handoff`       | 6 h              | `print-handoff/claim`, `…/report`   | yes, no trigger until #79 |
-| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00 | `proofreading-digest/run`           | yes, no trigger until #79 |
+| Job                                        | Interval            | API                                  | Exists                    |
+| ------------------------------------------ | ------------------- | ------------------------------------ | ------------------------- |
+| `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes                       |
+| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes, no trigger until #79 |
+| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes, no trigger until #79 |
+| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until #79 |
+| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | not yet                   |
 
 Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A claim leaves out
 a removed article or group, its clauses and its batches, discarded ones included (`12z`, `12f`). A report must
 carry the run's key. Every e-mail carries a Mailer idempotency key, so a run that dies between
-sending and reporting does not send twice. `/settings/jobs` shows each job's last run (`14d`).
+sending and reporting does not send twice. The comment digest claims every article of an open
+issue with its authors and what its last report left; its report moves an article's
+`reported_until` to the claim's moment only once every author's e-mail was confirmed, so a failure
+is told again with the next run. `/settings/jobs` shows each job's last run (`14d`).
 Once two runs in a row fail or overdue, a banner appears over every editor's screen; for the
 digest, one run is enough (`14i`).
 

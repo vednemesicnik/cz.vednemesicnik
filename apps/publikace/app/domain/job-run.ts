@@ -32,6 +32,20 @@ export type JobRunRecord = JobRun & {
  */
 export type DailyWindow = { fromHour: number; toHour: number }
 
+/**
+ * A job whose trigger fires every few hours from an hour of Prague time, `everyHours(3)` from
+ * 0:00, each run at a minute Google picks within its hour (`14d`, _každé 3 h od 0:00_), as the
+ * comment digest does. Each such hour is a window, one hour long.
+ */
+export type HourlyWindows = { everyHours: number; fromHour: number }
+
+/** How a job's schedule is known when not from its reported interval. */
+export type JobWindow = DailyWindow | HourlyWindows
+
+function isHourly(window: JobWindow): window is HourlyWindows {
+  return 'everyHours' in window
+}
+
 const TIME_ZONE = 'Europe/Prague'
 
 /** The first window that starts after the moment, and where it ends. */
@@ -50,6 +64,23 @@ export function nextWindow(
   let start = startOn(day)
   if (Temporal.Instant.compare(start, after) <= 0) start = startOn(day.add({ days: 1 }))
   return { end: start.add({ hours: window.toHour - window.fromHour }), start }
+}
+
+/** The first of the hourly windows that starts after the moment, and where it ends. */
+export function nextHourlyWindow(
+  windows: HourlyWindows,
+  after: Temporal.Instant,
+): { end: Temporal.Instant; start: Temporal.Instant } {
+  let day = after.toZonedDateTimeISO(TIME_ZONE).toPlainDate()
+  for (let offset = 0; ; offset += 1) {
+    let date = day.add({ days: offset })
+    for (let hour = windows.fromHour; hour < 24; hour += windows.everyHours) {
+      let start = date
+        .toZonedDateTime({ plainTime: Temporal.PlainTime.from({ hour }), timeZone: TIME_ZONE })
+        .toInstant()
+      if (Temporal.Instant.compare(start, after) > 0) return { end: start.add({ hours: 1 }), start }
+    }
+  }
 }
 
 /** The tag of a job in `14d`, from its latest run. */
@@ -103,12 +134,33 @@ function windowHealth(latest: JobRun, now: Temporal.Instant, window: DailyWindow
   }
 }
 
+/**
+ * A job with hourly windows is _Neběží_ once two windows after its last run have passed without a
+ * run, as an interval job is after two intervals (`14d`). The run itself falls somewhere in its own
+ * window, so the next window is the first that starts a few minutes after it, which also keeps a
+ * clock that runs a little ahead from counting the run's own window. Its next run is that window's
+ * start, shown until the window ends.
+ */
+function hourlyHealth(latest: JobRun, now: Temporal.Instant, windows: HourlyWindows): JobHealth {
+  let next = nextHourlyWindow(windows, latest.startedAt.add({ minutes: GRACE_MINUTES }))
+  let second = nextHourlyWindow(windows, next.start)
+  if (Temporal.Instant.compare(now, second.end.add({ minutes: GRACE_MINUTES })) > 0) {
+    return { kind: 'stopped', lastStartedAt: latest.startedAt }
+  }
+  return {
+    kind: 'running',
+    lastStartedAt: latest.startedAt,
+    next: Temporal.Instant.compare(now, next.end) > 0 ? null : next.start,
+  }
+}
+
 export function jobHealth(
   latest: JobRun | null,
   now: Temporal.Instant,
-  window?: DailyWindow,
+  window?: JobWindow,
 ): JobHealth {
   if (latest === null) return { kind: 'never' }
+  if (window !== undefined && isHourly(window)) return hourlyHealth(latest, now, window)
   if (window !== undefined) return windowHealth(latest, now, window)
   let missedTwice = latest.startedAt.add({
     minutes: latest.intervalMinutes * 2 + GRACE_MINUTES,
@@ -137,7 +189,7 @@ export function isOverdue(run: JobRunRecord, now: Temporal.Instant): boolean {
 export function jobState(
   latest: JobRunRecord | null,
   now: Temporal.Instant,
-  window?: DailyWindow,
+  window?: JobWindow,
 ): JobState {
   let health = jobHealth(latest, now, window)
   if (latest === null || health.kind === 'never') return { kind: 'never' }
@@ -183,7 +235,7 @@ export function isFailingRepeatedly(runs: readonly JobRunRecord[], now: Temporal
 export function isInJobsBanner(
   runs: readonly JobRunRecord[],
   now: Temporal.Instant,
-  rules: { isAlarm?: (run: JobRunRecord) => boolean; window?: DailyWindow } = {},
+  rules: { isAlarm?: (run: JobRunRecord) => boolean; window?: JobWindow } = {},
 ): boolean {
   if (jobHealth(runs[0] ?? null, now, rules.window).kind === 'stopped') return true
   if (rules.isAlarm === undefined) return isFailingRepeatedly(runs, now)

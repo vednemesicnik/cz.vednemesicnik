@@ -4,7 +4,24 @@
  */
 
 import {
+  ARTICLE_COMMENTS_BANNER,
+  ARTICLE_COMMENTS_FAILED_CALLOUT,
+  ARTICLE_COMMENTS_FAILED_EVENT,
+  ARTICLE_COMMENTS_JOB,
+  ARTICLE_COMMENTS_JOB_NAME,
+  ARTICLE_COMMENTS_SUMMARY,
+  ARTICLE_COMMENTS_WINDOWS,
+  commentDigestFailureNote,
+  commentDigestRunEvent,
+  readCommentDigestRun,
+  recipientGroups,
+  type RecipientGroup,
+  UNCONFIRMED_COMMENTS_TEXT,
+  unconfirmedCalloutTitle,
+} from './article-comments.ts'
+import {
   type DailyWindow,
+  type HourlyWindows,
   isInJobsBanner,
   isOverdue,
   type JobRunRecord,
@@ -58,21 +75,37 @@ export type Job = {
    * its schedule and decides when it is _Neběží_ (`14d`). Without it, the reported interval does.
    */
   window?: DailyWindow
+  /**
+   * For a job that runs every few hours at an hour Google picks the minute of: its windows, which
+   * are its schedule and decide when it is _Neběží_ (`14d`).
+   */
+  windows?: HourlyWindows
   /** The job's own words for a run that ended, from what it reported (`14e`). */
   runEvent?(run: JobRunRecord): string | null
   /** What a failed run adds to the tag's line, after the last run (`14d`). */
   failureNote?(run: JobRunRecord): string | null
   /** Whether this one run already puts the job in the banner (`14i`); else two failures do. */
   isAlarm?(run: JobRunRecord): boolean
-  /** The Callout over the history after a failed run, when the job says more (`14e`). */
-  failedCalloutOf?(run: JobRunRecord): { text: string; title: string } | null
+  /**
+   * The Callout over the history after a failed run, when the job says more (`14e`); `generic` is
+   * the one every job gets, for a job that only adds to it. `null` shows none.
+   */
+  failedCalloutOf?(run: JobRunRecord, generic: string): FailedCallout | null
   /** The Callout's text while the job is _Neběží_, for a job with a window (`14e`). */
   stoppedText?: string
 }
 
+/** What a job's own Callout says after a failed run, and whom it was about (`14e`). */
+export type FailedCallout = {
+  groups?: readonly RecipientGroup[]
+  text: string
+  title: string | null
+}
+
 /**
- * The jobs that report their runs through the app's API. A job that still reads the sheets is not
- * here: it never reports, and _Zatím se neohlásila_ would be said of a job that runs.
+ * The jobs that report their runs through the app's API, in the order `14d` lists them. A job that
+ * still reads the sheets is not here: it never reports, and _Zatím se neohlásila_ would be said of
+ * a job that runs.
  */
 export const JOBS: readonly Job[] = [
   {
@@ -93,6 +126,41 @@ export const JOBS: readonly Job[] = [
     key: REPLY_CHECK_JOB,
     name: REPLY_CHECK_JOB_NAME,
     summary: tied`přečte „Souhlasím“ k licencím, archivuje`,
+  },
+  {
+    /* A failed run may have copied some texts and artworks and not others (`84m2ye59`). */
+    failedCallout: PRINT_HANDOFF_FAILED_CALLOUT,
+    failedEvent: PRINT_HANDOFF_FAILED_EVENT,
+    failingBanner: PRINT_HANDOFF_BANNER,
+    key: PRINT_HANDOFF_JOB,
+    name: PRINT_HANDOFF_JOB_NAME,
+    summary: PRINT_HANDOFF_SUMMARY,
+  },
+  {
+    failedCallout: ARTICLE_COMMENTS_FAILED_CALLOUT,
+    /* A run the job reported failed keeps the generic Callout; the e-mails it could not confirm
+       stand under it all the same (`ezhxaz35`). */
+    failedCalloutOf(run, generic) {
+      let digest = readCommentDigestRun(run.summary)
+      if (digest === null) return { text: generic, title: null }
+      let groups = recipientGroups(digest)
+      if (digest.hasFailed) return { groups, text: generic, title: null }
+      return { groups, text: UNCONFIRMED_COMMENTS_TEXT, title: unconfirmedCalloutTitle(digest) }
+    },
+    failedEvent: ARTICLE_COMMENTS_FAILED_EVENT,
+    failingBanner: ARTICLE_COMMENTS_BANNER,
+    failureNote(run) {
+      let digest = readCommentDigestRun(run.summary)
+      return digest === null ? null : commentDigestFailureNote(digest)
+    },
+    key: ARTICLE_COMMENTS_JOB,
+    name: ARTICLE_COMMENTS_JOB_NAME,
+    runEvent(run) {
+      let digest = readCommentDigestRun(run.summary)
+      return digest === null ? null : commentDigestRunEvent(digest)
+    },
+    summary: ARTICLE_COMMENTS_SUMMARY,
+    windows: ARTICLE_COMMENTS_WINDOWS,
   },
   {
     failedCallout: UNCONFIRMED_CALLOUT_TEXT,
@@ -117,15 +185,6 @@ export const JOBS: readonly Job[] = [
     stoppedText: STOPPED_DIGEST_TEXT,
     summary: PROOFREADING_DIGEST_SUMMARY,
     window: DIGEST_WINDOW,
-  },
-  {
-    /* A failed run may have copied some texts and artworks and not others (`84m2ye59`). */
-    failedCallout: PRINT_HANDOFF_FAILED_CALLOUT,
-    failedEvent: PRINT_HANDOFF_FAILED_EVENT,
-    failingBanner: PRINT_HANDOFF_BANNER,
-    key: PRINT_HANDOFF_JOB,
-    name: PRINT_HANDOFF_JOB_NAME,
-    summary: PRINT_HANDOFF_SUMMARY,
   },
 ]
 
@@ -158,8 +217,13 @@ export const TRIGGER_WHO = 'systém'
  * The _Kdy_ column, from the interval the job last reported. A rhythm, not a promise: Google picks
  * the minute (`14d`, `1jv85zum`).
  */
-export function scheduleText(intervalMinutes: number, window?: DailyWindow): string {
+export function scheduleText(
+  intervalMinutes: number,
+  window?: DailyWindow,
+  windows?: HourlyWindows,
+): string {
   if (window !== undefined) return `denně ${window.fromHour}:00–${window.toHour}:00`
+  if (windows !== undefined) return `každé ${windows.everyHours} h od ${windows.fromHour}:00`
   if (intervalMinutes === 1) return 'každou minutu'
   if (intervalMinutes === 60) return 'každou hodinu'
   if (intervalMinutes % 60 === 0) return `každých ${intervalMinutes / 60} h`
@@ -196,7 +260,7 @@ export type JobTag = { detail?: string; label: string }
 
 /** The tag of the job's latest run, by its own rules: its window, and what its runs report. */
 export function stateOfJob(job: Job, latest: JobRunRecord | null, now: Temporal.Instant): JobState {
-  return jobState(latest, now, job.window)
+  return jobState(latest, now, job.window ?? job.windows)
 }
 
 /** Whether the job stands in the banner over every editor screen (`14i`), by its own rules. */
@@ -205,7 +269,7 @@ export function isJobInBanner(
   runs: readonly JobRunRecord[],
   now: Temporal.Instant,
 ): boolean {
-  return isInJobsBanner(runs, now, { isAlarm: job.isAlarm, window: job.window })
+  return isInJobsBanner(runs, now, { isAlarm: job.isAlarm, window: job.window ?? job.windows })
 }
 
 /**
@@ -220,6 +284,12 @@ function windowNextText(
   let isTomorrow = formatDay(next, today) !== 'dnes'
   let expected = unbroken(isTomorrow ? 'další se očekává zítra' : 'další se očekává')
   return `${expected} ${unbroken(`mezi ${window.fromHour}:00 a ${window.toHour}:00`)}`
+}
+
+/** _mezi 12:00 a 13:00_: the hour Google picks the minute in, whole on its line (`14d`). */
+function hourWindowText(next: Temporal.Instant): string {
+  let end = next.add({ hours: 1 })
+  return unbroken(`mezi ${clockTime(next)} a ${clockTime(end)}`)
 }
 
 /** The tag and its line, as `14d`'s table defines each. */
@@ -248,9 +318,11 @@ export function jobTag(
       let last = lastRunText(state.lastStartedAt, today)
       if (state.next === null) return { detail: last, label: tied`V pořádku` }
       let next =
-        job?.window === undefined
-          ? unbroken(`další kolem ${clockTime(state.next)}`)
-          : windowNextText(job.window, state.next, today)
+        job?.window !== undefined
+          ? windowNextText(job.window, state.next, today)
+          : job?.windows !== undefined
+            ? `další ${hourWindowText(state.next)}`
+            : unbroken(`další kolem ${clockTime(state.next)}`)
       return { detail: `${last}${NBSP}· ${next}`, label: tied`V pořádku` }
     }
   }
@@ -292,9 +364,22 @@ export function failedCalloutText(job: Job, state: JobState): string | null {
   let parts = [
     state.isUnreported ? 'Úloha neohlásila, jak poslední běh skončil.' : job.failedCallout,
   ]
-  if (state.next !== null) parts.push(`Další běh proběhne kolem ${clockTime(state.next)}.`)
+  /* A job that runs in windows promises the window, not a minute (`0a92jylv`). */
+  if (state.next !== null && job.windows !== undefined) {
+    parts.push(`Další běh se očekává ${hourWindowText(state.next)}.`)
+  } else if (state.next !== null) {
+    parts.push(`Další běh proběhne kolem ${clockTime(state.next)}.`)
+  }
   parts.push('Pokud se to opakuje, obraťte se na toho, kdo má úlohu na starosti.')
   return parts.join(' ')
+}
+
+/** _každé 3 hodiny_, in words where the column has _každé 3 h od 0:00_ (`0a92jylv`). */
+function everyHoursText(windows: HourlyWindows): string {
+  let hours = windows.everyHours
+  if (hours === 1) return 'každou hodinu'
+  if (hours <= 4) return `každé ${hours} hodiny`
+  return `každých ${hours} hodin`
 }
 
 /** The title of the Callout over the history while the job is _Neběží_ (`14e`): the step first. */
@@ -315,6 +400,9 @@ export function stoppedCalloutText(
   if (state.kind !== 'stopped') return null
   if (job?.stoppedText !== undefined) return job.stoppedText
   let when = lastReportedAt(state.lastStartedAt, today)
+  if (job?.windows !== undefined) {
+    return `Úloha má běžet ${everyHoursText(job.windows)}. Naposledy se ohlásila ${when}. Příčinu aplikace nezná.`
+  }
   return `Úloha má běžet ${scheduleText(intervalMinutes)}. Naposledy se ohlásila ${when}. Příčinu aplikace nezná.`
 }
 
