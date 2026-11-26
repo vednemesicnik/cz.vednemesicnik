@@ -8,7 +8,7 @@ import type { MissingFolders } from './articles.server.ts'
 import { insertLink, toLink } from './links.server.ts'
 
 /**
- * Artwork groups in the app's database (#133, `12e`), and the attempts that create them.
+ * Artwork groups in the app's database (cz.vednemesicnik.publikace#133, `12e`), and the attempts that create them.
  *
  * As with an article, an attempt is written before Drive is asked for anything and keeps each
  * file's ID the moment Drive returns it, so a failed one knows what to put in the bin (`11c`).

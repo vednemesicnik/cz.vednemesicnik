@@ -19,7 +19,8 @@ Always install packages with exact versions — no `^` or `~` prefixes.
 ## Required flag
 
 ```sh
-pnpm add <package>@<version> --save-exact
+pnpm add <package>@<version> --save-exact                     # the host, at the root
+pnpm --filter <app> add <package>@<version> --save-exact      # an application
 ```
 
 ## Why

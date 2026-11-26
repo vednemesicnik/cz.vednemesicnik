@@ -22,7 +22,7 @@ export const FOLDER_KINDS: readonly FolderKind[] = ['issue', 'articles', 'print'
 
 /**
  * The issue's folders the app marks when it finds them missing (`12j`): the issue folder, and
- * `Články` in it, which the newsroom's link needs. The print folder is the print job's (#110).
+ * `Články` in it, which the newsroom's link needs. The print folder is the print job's (cz.vednemesicnik.publikace#110).
  */
 export type IssueFolderKind = Exclude<FolderKind, 'print'>
 
@@ -33,7 +33,7 @@ export const PRINT_FOLDER_NAME = '_Podklady_pro_tisk'
 export type Issue = {
   closedAt: Temporal.Instant | null
   completedAt: Temporal.Instant | null
-  /** The issue's Evidence, which the record queue creates once the issue is complete (#111). */
+  /** The issue's Evidence, which the record queue creates once the issue is complete (cz.vednemesicnik.publikace#111). */
   evidenceSpreadsheetId: string | null
   folderIds: Record<FolderKind, string | null>
   /** `Skupiny obrazových děl`, made with the issue's first artwork group and `null` until then. */
@@ -260,7 +260,7 @@ export const CLOSE_ISSUE_LABEL = 'Uzavřít vydání…'
 export const REOPEN_ISSUE_LABEL = 'Znovu otevřít vydání…'
 export const OPEN_FOLDER_LABEL = 'Otevřít složku na Disku'
 export const OPEN_PRINT_FOLDER_LABEL = 'Otevřít podklady pro tisk'
-/* `12a`, `12h`: first in the detail's „⋯“ once the record queue created it (#111). */
+/* `12a`, `12h`: first in the detail's „⋯“ once the record queue created it (cz.vednemesicnik.publikace#111). */
 export const OPEN_EVIDENCE_LABEL = 'Otevřít Evidenci'
 
 export function closeDialogTitle(name: string): string {
@@ -281,7 +281,7 @@ export const CLOSE_ANYWAY_LABEL = 'Přesto uzavřít'
  * does: _U 2 článků a 3 děl zatím chybí souhlas._ The counts stand in the genitive, so no verb
  * has to agree with them.
  *
- * The drawn _a do podkladů se nedostanou_ is left out while the print job runs nowhere (#119):
+ * The drawn _a do podkladů se nedostanou_ is left out while the print job runs nowhere (cz.vednemesicnik.publikace#119):
  * until it does, nothing of an issue made in the app reaches the print folder, closed or not, so
  * closing would be blamed for something it does not cause.
  */

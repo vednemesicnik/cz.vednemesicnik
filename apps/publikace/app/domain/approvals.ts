@@ -1,7 +1,7 @@
 /**
- * The clauses a final version sends to its authors (#88), as `SCRIPT__Publication__Article_Approvals`
+ * The clauses a final version sends to its authors (cz.vednemesicnik.publikace#88), as `SCRIPT__Publication__Article_Approvals`
  * claims them through the app's API, reports what the Mailer did with each, and then reports the
- * author's reply (#89).
+ * author's reply (cz.vednemesicnik.publikace#89).
  */
 
 import { mayArchive, UNCONFIRMED_SEND_LINE } from './artwork.ts'
@@ -65,7 +65,7 @@ export function correctedClauseKey(
 /**
  * The Mailer's idempotency key for one sending of a clause, which the job gets as `sendKey`. The
  * Mailer answers a key it has sent as sent without sending, so _Poslat žádost znovu_ needs a new
- * one; the first sending keeps the clause's own key, so what went before #92 keeps its key.
+ * one; the first sending keeps the clause's own key, so what went before cz.vednemesicnik.publikace#92 keeps its key.
  */
 export function sendKey(key: string, attempt: number): string {
   return attempt <= 1 ? key : `${key}_${attempt}`

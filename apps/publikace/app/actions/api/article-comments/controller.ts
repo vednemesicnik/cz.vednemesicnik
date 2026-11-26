@@ -21,7 +21,7 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
 
 /**
  * The API that `SCRIPT__Publication__Article_Comments` tells the authors of the issues made in the
- * app of new comments through (#170): a standalone Apps Script project running as `publikace.app@`,
+ * app of new comments through (cz.vednemesicnik.publikace#170): a standalone Apps Script project running as `publikace.app@`,
  * a Content manager of _Publikace_, on its own trigger every three hours from 0:00.
  * `Comment_Digest` under `publikace@` keeps the issues on the Registr's list _Vydání_ until the
  * cutover, so the two never share an issue. One run, _Připomínky ke článkům_ (`14d`), makes two

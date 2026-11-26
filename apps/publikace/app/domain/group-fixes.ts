@@ -1,5 +1,5 @@
 /**
- * Mending an artwork group made wrong (#154): _Upravit název a poznámku…_ and _Odebrat skupinu…_
+ * Mending an artwork group made wrong (cz.vednemesicnik.publikace#154): _Upravit název a poznámku…_ and _Odebrat skupinu…_
  * (`12f`), where each stands (`12u`) and every word of both dialogs. The edit's wording is the
  * copywriter's (`38hm36x7`) and the removal's (`ggqtf0xy`), both drawn in `12f` (`iuepzv2t`,
  * `786r4cpa`).

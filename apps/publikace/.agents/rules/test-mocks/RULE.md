@@ -17,9 +17,7 @@ description: |
 
 # Test mocks
 
-> Carried over from `cz.vednemesicnik.billing`.
-> The rule applies here as written; the files it cites as examples are billing's. Replace them
-> with this repository's own as the app grows.
+The helpers and endpoints below are invented; they illustrate the pattern, not tests of the app.
 
 ## One spy per method per test
 
@@ -36,29 +34,29 @@ When one test needs more than one answer, keep a single spy and move the answer 
 
 ```ts
 // bad — two spies on `fetch`, and the first one outlives the test
-let failed = await withResponse(t, { error: 'send_failed', ok: false }).send(message())
-let rejected = await withResponse(t, { error: 'unauthorized', ok: false }).send(message())
+let failed = await answering(t, { error: 'busy', ok: false }).notify(notice())
+let rejected = await answering(t, { error: 'unauthorized', ok: false }).notify(notice())
 
 // good — one spy, and the answer is what changes
-let refusal = 'send_failed'
+let refusal = 'busy'
 t.mock.method(
   globalThis,
   'fetch',
   async () => new Response(JSON.stringify({ error: refusal, ok: false })),
 )
-let delivery = createAppsScriptMailSend(ENDPOINT)
+let notifier = createNoticeSender(ENDPOINT)
 
-let failed = await delivery.send(message())
+let failed = await notifier.notify(notice())
 refusal = 'unauthorized'
-let rejected = await delivery.send(message())
+let rejected = await notifier.notify(notice())
 ```
 
 ## Count helper calls, not `t.mock.method`
 
 A helper that takes `t` installs a spy for its caller, so two calls to it in one test stack
 exactly as two literal ones do — and a search for `t.mock.method` finds neither. Reading a
-file for this means counting every `withResponse(t, …)`, `capturing(t, …)` and
-`answering(t, …)` that shares a test body.
+file for this means counting every helper call such as `answering(t, …)` or `capturing(t, …)`
+that shares a test body.
 
 ## Let the context do the restoring
 

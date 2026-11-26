@@ -4,7 +4,7 @@ import type { DriveFolders, FolderStanding } from './folders.server.ts'
 
 /**
  * Whether the issue folder and `Články` in it are where the app left them, and the record of it on
- * the issue (`12j`, #134). The newsroom's link page asks here when it opens and when its form is
+ * the issue (`12j`, cz.vednemesicnik.publikace#134). The newsroom's link page asks here when it opens and when its form is
  * sent, and the issue detail when it opens and on _Zkontrolovat znovu_. A folder found missing is
  * marked, one found again loses its mark, and neither is ever created again.
  */

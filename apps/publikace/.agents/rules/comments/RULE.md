@@ -14,10 +14,6 @@ description: |
 
 # Comments
 
-> Carried over from `cz.vednemesicnik.billing`.
-> The rule applies here as written; the files it cites as examples are billing's. Replace them
-> with this repository's own as the app grows.
-
 ## A comment explains the code as it stands
 
 It gives the reader context they cannot get from the code in front of them: why this value,
@@ -72,18 +68,15 @@ heavily, but every one of them is load-bearing.
    visible and editable, rather than in a leading nobody would think to look at. */
 ```
 
-## The codebase is mid-migration on this
+## Existing comments
 
-In `cz.vednemesicnik.billing` about thirty comments still narrate a change — `signature-storage.server.ts`,
-`domain/invoice.ts`, `sqlite-invoice-repository.server.ts` and others carry a paragraph
-about what a column or a type used to be. They predate this rule.
-
-Rewrite one when you are already working in it, the same way `app/ui/` converts to folders.
-Do not sweep the rest as a side errand: a comment nobody is reading is doing no harm, and a
+A comment that narrates a change and predates this rule is rewritten when you are already working
+in it. Do not sweep the rest as a side errand: a comment nobody is reading is doing no harm, and a
 mass rewrite of prose is a diff nobody can review.
 
 ## Where an argument is long, cite it rather than retell it
 
-Design decisions live in `Primitiva a sémantika.dc.html` and the answers beside it; schema decisions
-live in the migration. A comment names the address and states the conclusion. It does not
-reproduce the reasoning, because the copy is what goes stale.
+Design decisions live in the design project's answers ([docs/design-project.md](../../../docs/design-project.md)),
+the reasons for a direction in the repository's work log, schema decisions in the migration. A
+comment names the address and states the conclusion — a design answer by its code, as `(12c)` —
+and does not reproduce the reasoning, because the copy is what goes stale.

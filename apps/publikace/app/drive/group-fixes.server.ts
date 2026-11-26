@@ -20,7 +20,7 @@ import { logDriveFailure } from './log.server.ts'
 import { binOwnFolder, type ForeignChild } from './own-folder-bin.server.ts'
 
 /**
- * Mending an artwork group made wrong (#154, `12f`): its name and note, and removing one created by
+ * Mending an artwork group made wrong (cz.vednemesicnik.publikace#154, `12f`): its name and note, and removing one created by
  * mistake.
  *
  * All or nothing, as every fix (`11c`). A note alone is the app's and asks Drive nothing. A rename

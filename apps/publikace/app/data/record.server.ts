@@ -5,7 +5,7 @@ import { isFullRewriteDue, type RegistryIssue, retryDelay } from '../domain/reco
 import { parseStamp, stamp } from '../domain/time.ts'
 
 /**
- * The marks of the record queue (#111): which records are out of date, set by the triggers of
+ * The marks of the record queue (cz.vednemesicnik.publikace#111): which records are out of date, set by the triggers of
  * `20261130120000_record_queue` in the same transaction as the change they follow.
  */
 

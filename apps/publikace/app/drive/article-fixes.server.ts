@@ -27,8 +27,8 @@ import { logDriveFailure } from './log.server.ts'
 import { binOwnFolder, type ForeignChild } from './own-folder-bin.server.ts'
 
 /**
- * Mending what was typed wrong when an article was created (#152): its name (`12x`) and its
- * authors (`12y`); and removing one created by mistake (#153, `12z`).
+ * Mending what was typed wrong when an article was created (cz.vednemesicnik.publikace#152): its name (`12x`) and its
+ * authors (`12y`); and removing one created by mistake (cz.vednemesicnik.publikace#153, `12z`).
  *
  * All or nothing, as every fix (`11c`): Drive first, because a name on Drive is what a person may
  * still see, then the row, which commits only while nothing changed under it; otherwise every file
@@ -78,7 +78,7 @@ const RETRY = Symbol('retry')
 /**
  * Runs under the issue's current name, read again inside: a rename of the issue that finished
  * meanwhile changed the name, and the step tries once more under the new one. A fix of a group
- * runs under it too (#154), since a rename of the issue writes the group's `_meta.json` as well.
+ * runs under it too (cz.vednemesicnik.publikace#154), since a rename of the issue writes the group's `_meta.json` as well.
  */
 export async function underIssue<T>(
   setup: { issues: Pick<IssueStore, 'findById'> },

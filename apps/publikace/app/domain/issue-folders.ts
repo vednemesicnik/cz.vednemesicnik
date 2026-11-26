@@ -1,6 +1,6 @@
 /**
  * The words `12j` gives an issue whose own folder is missing: `Články`, which the newsroom's link
- * needs, or the whole issue folder (#134). The toasts after _Zkontrolovat znovu_ are an article
+ * needs, or the whole issue folder (cz.vednemesicnik.publikace#134). The toasts after _Zkontrolovat znovu_ are an article
  * folder's, in `article-folders.ts`.
  */
 

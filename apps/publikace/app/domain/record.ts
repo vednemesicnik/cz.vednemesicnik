@@ -1,5 +1,5 @@
 /**
- * The record of an issue made in the app (#111, `03` row 11): its row in the Registr and its
+ * The record of an issue made in the app (cz.vednemesicnik.publikace#111, `03` row 11): its row in the Registr and its
  * Evidence, in the columns the scripts have always written, so a licence is looked up the same
  * way for an old issue and a new one. The app writes them and never reads them.
  *

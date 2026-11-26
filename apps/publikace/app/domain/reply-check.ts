@@ -1,6 +1,6 @@
 /**
  * What a run of a reply check reports about one consent request, and what that does to it: a
- * batch of artworks (#31) or an author's clause of a final version (#89), which are decided alike.
+ * batch of artworks (cz.vednemesicnik.publikace#31) or an author's clause of a final version (cz.vednemesicnik.publikace#89), which are decided alike.
  *
  * The job asks `SCRIPT__Mail__Reply_Check` about the latest reply, archives the conversation into
  * the article's `Licence` where it may, and reports both at once. The app keeps the reply's own

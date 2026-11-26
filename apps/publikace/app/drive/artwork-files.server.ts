@@ -48,7 +48,7 @@ export type ArtworkFiles = Pick<ArticleFiles, 'findTagged' | 'trash'> & {
   placeOf(fileId: string): Promise<FilePlace>
   /**
    * When each revision of a Doc's text was last modified, from its revision history; `null` when
-   * Drive failed. Comments, renames and sharing make no revision (#101).
+   * Drive failed. Comments, renames and sharing make no revision (cz.vednemesicnik.publikace#101).
    */
   revisionTimesOf(docId: string): Promise<Temporal.Instant[] | null>
   /**

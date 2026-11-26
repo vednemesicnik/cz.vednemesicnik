@@ -112,7 +112,7 @@ export function checkProofreadersAddress(value: string, domain: string): Address
 }
 
 /* `14a`, `14f`, as the copywriter worded them (`tlb36tk0`). The sentences name the access to the
-   page _Korektura_ too, which the address decides once proofreaders sign in (#82). */
+   page _Korektura_ too, which the address decides once proofreaders sign in (cz.vednemesicnik.publikace#82). */
 export const PROOFREADERS_TITLE = 'Korektura'
 export const PROOFREADERS_LABEL = 'Adresa korektorů'
 

@@ -1,5 +1,5 @@
 /**
- * Artwork groups (#133, `12e`): images that go with several texts and so belong to no single
+ * Artwork groups (cz.vednemesicnik.publikace#133, `12e`): images that go with several texts and so belong to no single
  * article; the magazine illustrates no cover and no back page. Only the editors-in-chief create one, in the issue detail;
  * the link that goes out uploads into that one group (`03` rows 6 and 7). A group is tied to no
  * article: which texts its artworks go with, the note for the designer says.

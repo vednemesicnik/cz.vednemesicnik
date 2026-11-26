@@ -1,5 +1,5 @@
 /**
- * The comment digest of the issues made in the app (#170): `SCRIPT__Publication__Article_Comments`
+ * The comment digest of the issues made in the app (cz.vednemesicnik.publikace#170): `SCRIPT__Publication__Article_Comments`
  * reads each article's Doc for new comments, replies and suggestions and mails every author one
  * e-mail (`20e`) with all of their articles that have something new. The app hands it the articles
  * and keeps how far each was told of; the text of a comment and who wrote it never reach it. What

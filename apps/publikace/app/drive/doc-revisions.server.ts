@@ -2,7 +2,7 @@ import type { ArticleStore, DocCheckTarget } from '../data/articles.server.ts'
 import type { ArtworkFiles } from './artwork-files.server.ts'
 
 /**
- * Whether the Doc of an approved article was edited after its PDF (#101, `01a`): a revision of
+ * Whether the Doc of an approved article was edited after its PDF (cz.vednemesicnik.publikace#101, `01a`): a revision of
  * its text later than the baseline, the Doc's `modifiedTime` just before the export. A fresh PDF
  * is not compared with the stored one: Google's renderer changes now and then, and every export
  * then hashes differently. Comments, renames and sharing move `modifiedTime` but make no

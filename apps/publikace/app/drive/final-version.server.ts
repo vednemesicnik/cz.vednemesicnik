@@ -11,8 +11,8 @@ import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
 
 /**
- * _Označit finální verzi_, a new version in its place (`12r`, #90) and the cancel on Drive (`15f`,
- * `15g`, #88): the article's Doc as it is,
+ * _Označit finální verzi_, a new version in its place (`12r`, cz.vednemesicnik.publikace#90) and the cancel on Drive (`15f`,
+ * `15g`, cz.vednemesicnik.publikace#88): the article's Doc as it is,
  * exported to PDF and stored as `<sha256>.pdf` in the article folder, as `mark-for-finalization.gs`
  * does for the issues made before the app. The database is written only once the PDF exists, and
  * the PDF goes to the bin when the database refuses it: all or nothing (`11c`).
@@ -142,7 +142,7 @@ async function storeFinalVersion<Refusal extends { kind: string }>(
   if (doc.kind === 'gone') return { kind: 'doc-missing' }
 
   /* Read before the export: a revision later than this may not be in the PDF, so it counts as
-     an edit after it (#101). */
+     an edit after it (cz.vednemesicnik.publikace#101). */
   let docModifiedAt = doc.modifiedAt
   let pdf = await files.exportPdf(article.docId)
   if (pdf === null) return { kind: 'unavailable' }

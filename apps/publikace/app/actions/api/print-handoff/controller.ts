@@ -20,7 +20,7 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
 
 /**
  * The API that `SCRIPT__Publication__Print_Handoff` fills the print folders of the issues made in
- * the app through (#110): a standalone Apps Script project running as `publikace.app@` on its own
+ * the app through (cz.vednemesicnik.publikace#110): a standalone Apps Script project running as `publikace.app@` on its own
  * trigger, every six hours. `Designer_Handoff` under `publikace@` keeps the issues on the Registr's
  * list _Vydání_ until the cutover. One run, _Podklady pro tisk_ (`14d`), makes two calls:
  *
@@ -36,7 +36,7 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
  *    with neither text nor artworks. A text revised after its version, or a version that is no
  *    longer standing, keeps the copy it has, flagged `isTextChanged`.
  *
- *    Beside the articles, `groups` (#133): per artwork group with an artwork with consent or a copy,
+ *    Beside the articles, `groups` (cz.vednemesicnik.publikace#133): per artwork group with an artwork with consent or a copy,
  *    its `name`, its `note` for the designer, which goes to the _Podklady_ sheet beside each of its
  *    artworks, its source folder (`sourceFolderId`), `artworks` as above and `copy`, its folder in
  *    the print folder as the last report left it. A group gets a folder named after it, tagged
@@ -45,7 +45,7 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
  *    the whole issue (`isComplete`), and per article it reached the copy now in the folder, or
  *    `null` once the folder is gone; per group the same in `groups`. A report without `groups`
  *    leaves every group as it was, and its `isComplete` then speaks for the articles alone: the
- *    job is written against this version (#119), so none that predates groups is deployed. An
+ *    job is written against this version (cz.vednemesicnik.publikace#119), so none that predates groups is deployed. An
  *    article or a group left out stays as it was. It closes the run.
  *    Besides the limits on one issue and one article, the report as a whole holds at most
  *    `MAX_REPORT_ARTICLES` articles and groups together and `MAX_REPORT_ARTWORKS` artworks, or

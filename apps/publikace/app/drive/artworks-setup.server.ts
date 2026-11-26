@@ -41,7 +41,7 @@ import { createLock } from './one-at-a-time.server.ts'
 /**
  * The artworks sent through an article's or an artwork group's link (`21a`–`21d`), and what the
  * editors-in-chief do with a batch (`12a`, `12o`). Both are a _holder_ here: a folder with
- * `Obrazová díla` and `Licence` inside, which a link uploads to (#133).
+ * `Obrazová díla` and `Licence` inside, which a link uploads to (cz.vednemesicnik.publikace#133).
  *
  * A file is stored on Drive the moment it is chosen, in the holder's `Obrazová díla`, tagged with
  * its own upload key, and belongs to the page that uploaded it until a batch takes it; one never

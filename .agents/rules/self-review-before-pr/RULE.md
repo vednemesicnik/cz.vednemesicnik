@@ -22,8 +22,8 @@ billed, slow Copilot round-trip avoided.
 ## How
 
 Read every changed hunk and check it against the checklist below. Fix what you
-find, then re-run `pnpm app:typecheck`, `pnpm test`, and `pnpm biome:check` before
-pushing.
+find, then re-run the gates of the app the diff touches (its `AGENTS.md` § For the workflow
+skills) before pushing. The React items below apply to the web's code.
 
 ## Checklist
 
@@ -39,7 +39,7 @@ pushing.
   Router reuses a route component across param changes) must reset when its key
   (id/param) changes, or it leaks between records.
 
-### React / effects
+### React / effects (the web)
 
 - **Effect dependencies** — depend on the specific fields you read, not a whole
   object whose identity churns (e.g. `navigation.state`, not `navigation`).

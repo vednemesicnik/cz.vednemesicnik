@@ -25,7 +25,7 @@ export type Link = {
   /** The article an artworks link uploads to; `null` for an issue's link and a group's. */
   articleId: number | null
   createdAt: Temporal.Instant
-  /** The artwork group an artworks link uploads to, in place of an article (#133). */
+  /** The artwork group an artworks link uploads to, in place of an article (cz.vednemesicnik.publikace#133). */
   groupId: number | null
   id: number
   issueId: number

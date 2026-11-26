@@ -139,7 +139,7 @@ export type ReplaceFinalOutcome =
   | { issueName: string; kind: 'closed' }
   | { kind: 'gone' }
 
-/** A clause a run of `Article_Approvals` took to send: what its e-mail needs (#89). */
+/** A clause a run of `Article_Approvals` took to send: what its e-mail needs (cz.vednemesicnik.publikace#89). */
 export type ClaimedClause = {
   articleName: string
   authorEmail: string
@@ -152,13 +152,13 @@ export type ClaimedClause = {
   pdfHash: string
   /**
    * The clause replaces the same author's clause of an earlier marking that a run once took, so an
-   * e-mail may have reached the author, and this one says it replaces it (`20f`, #90).
+   * e-mail may have reached the author, and this one says it replaces it (`20f`, cz.vednemesicnik.publikace#90).
    */
   replacesEarlier: boolean
   /**
    * The author had given consent to the earlier marking (_Souhlas udělen_, _Souhlas zaznamenán_
    * or a consent whose archive failed), so the e-mail opens with the 20f lines for an author who
-   * agreed (#101, `znor6hp8`). Implies `replacesEarlier`.
+   * agreed (cz.vednemesicnik.publikace#101, `znor6hp8`). Implies `replacesEarlier`.
    */
   replacesAgreed: boolean
   /** The Mailer's key for this sending, a new one after _Poslat žádost znovu_ (`sendKey`). */
@@ -206,7 +206,7 @@ export type EditAuthorsOutcome =
 /** One author corrected after the final version: the clause the dialog showed, and its new data. */
 export type ClauseCorrection = { clauseId: number; email: string; name: string }
 
-/** A clause a run took to ask about its reply, and where its archive goes (#89). */
+/** A clause a run took to ask about its reply, and where its archive goes (cz.vednemesicnik.publikace#89). */
 export type ClaimedReply = {
   articleName: string
   authorEmail: string
@@ -238,7 +238,7 @@ export type ReplyAnswer = 'accepted' | 'superseded' | 'unknown'
 /**
  * The PDF a marking stored, and the tag it carries on Drive. `docModifiedAt` is the Doc's
  * `modifiedTime` read just before the export, the baseline a later revision is measured from
- * (#101); `null` when Drive gave none, and the marking's own time stands in.
+ * (cz.vednemesicnik.publikace#101); `null` when Drive gave none, and the marking's own time stands in.
  */
 export type FinalVersionPdf = {
   attemptKey: string
@@ -249,7 +249,7 @@ export type FinalVersionPdf = {
 
 /**
  * A standing marking of an open issue every author agreed to, whose Doc the issue detail asks
- * Drive about (#101): its Doc, the baseline a revision counts from, the `modifiedTime` the last
+ * Drive about (cz.vednemesicnik.publikace#101): its Doc, the baseline a revision counts from, the `modifiedTime` the last
  * check examined, and the revision found so far, so a check can tell a new find from one it knew.
  */
 export type DocCheckTarget = {
@@ -488,10 +488,10 @@ export type ArticleStore = {
   replacingVersionOf(clauseId: number): Promise<ArticleStep | null>
   /**
    * Every clause of the issue's markings that were not cancelled, replaced ones included, for
-   * Redakční doložky in the Evidence (#111). A cancelled marking never left the app.
+   * Redakční doložky in the Evidence (cz.vednemesicnik.publikace#111). A cancelled marking never left the app.
    */
   listClausesForRecord(issueId: number): Promise<RecordClause[]>
-  /** The markings of the issue the detail asks Drive about, while the issue is open (#101). */
+  /** The markings of the issue the detail asks Drive about, while the issue is open (cz.vednemesicnik.publikace#101). */
   listDocCheckTargets(issueId: number): Promise<DocCheckTarget[]>
   /**
    * What a check of the Doc found: the `modifiedTime` it examined and, when it found one, the
@@ -799,7 +799,7 @@ async function replaceFinalRefusalOf(
   if (!finalVersion.at.equals(markedAt)) return { kind: 'replaced', step: finalVersion }
   let isAllApproved = finalVersion.clauses.approved === finalVersion.clauses.total
   /* Every author agreed and the Doc was not edited since its PDF: nothing to replace (`12s`).
-     Edited, it is _Upraveno po schválení_ and the same step goes through (`12q`, #101). */
+     Edited, it is _Upraveno po schválení_ and the same step goes through (`12q`, cz.vednemesicnik.publikace#101). */
   if (isAllApproved) return finalVersion.docRevisedAt === null ? { kind: 'all-approved' } : null
   /* Not offered before a run takes a clause, where cancelling is the way: a crafted request. */
   if (!isReplaceable(finalVersion)) return { kind: 'gone' }
@@ -934,7 +934,7 @@ async function standingFinalVersions(
 
 /**
  * An earlier clause `p` whose author gave consent, as `clauseState` reads _Souhlas udělen_,
- * _Souhlas k archivaci_ and a consent whose archive failed (#101).
+ * _Souhlas k archivaci_ and a consent whose archive failed (cz.vednemesicnik.publikace#101).
  */
 const GAVE_CONSENT_P = sql`(p.approved_at IS NOT NULL OR (p.state != 'pending' AND (
     p.archive_failed_at IS NOT NULL
@@ -957,7 +957,7 @@ const WAITS_ON_EDITORS = sql`c.approved_at IS NULL AND c.state != 'pending' AND 
 
 /**
  * The markings `f` with at least one clause and every clause approved. Standing or not is the
- * caller's: the print folder keeps a replaced version every author agreed to (#110).
+ * caller's: the print folder keeps a replaced version every author agreed to (cz.vednemesicnik.publikace#110).
  */
 export const ALL_CLAUSES_APPROVED_F = sql`EXISTS (SELECT 1 FROM article_clauses c WHERE c.final_version_id = f.id)
   AND NOT EXISTS (SELECT 1 FROM article_clauses c
@@ -965,7 +965,7 @@ export const ALL_CLAUSES_APPROVED_F = sql`EXISTS (SELECT 1 FROM article_clauses 
 
 /**
  * The standing markings `f` that are _Upraveno po schválení_, as `articleState` reads them: every
- * clause approved and a revision of the Doc recorded after the PDF (#101). The revision is what
+ * clause approved and a revision of the Doc recorded after the PDF (cz.vednemesicnik.publikace#101). The revision is what
  * the issue detail last found on Drive, so the overview asks nobody. Written out for SQL; the
  * tests hold it to `articleState`.
  */

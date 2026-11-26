@@ -21,10 +21,25 @@ and the system lacks is added to the system rather than kept as a second one her
 
 ## The designer
 
-Artifacts have no chat of their own, so [.claude/agents/ux-designer.md](../.claude/agents/ux-designer.md)
+Artifacts have no chat of their own, so [.claude/agents/ux-designer.md](../../../.claude/agents/ux-designer.md) (the repository's one designer, for both applications; the brief names this canvas and this document)
 does the design work: it takes a brief, decides the UX, draws and publishes. Nobody pastes a
 prompt anywhere. The session that asked writes the brief under `questions/` and checks the result;
 the pages and the drawings are the agent's.
+
+What the designer reads for this canvas, since the agent holds nothing app-specific:
+
+- **The ground first:** `Main.dc.html` with `00a`, the map of every file and anchor;
+  `01-Stavy.dc.html`, the source of truth for every status tag; `03 K rozhodnutí` for the open
+  decisions.
+- **A split** adds the new file's row to `00a` and a `boards` entry in `project/canvas.json`.
+- **The page chrome** from `navrh.css`: `.sec` with its kicker, id and the `návrh` pill, `.url`
+  in English paths, `.anno`, `.slot`, a `.tbl` of messages (`Kdy · Hláška · Proč tak`), `.dec`.
+- **Measure against** a 390 px phone in a messenger's in-app browser, a 200-character article
+  title, ten authors and twenty artworks.
+- **A change to the shared design system** replaces only that component's block in each
+  `_ds_bundle.js` and its hash in the `@ds-bundle` header (the first 12 hex characters of the
+  source file's SHA-256), as the web's [design project document](../../web/docs/_design-project.md)
+  § The designer records; a whole bundle is never rebuilt by improvisation.
 
 ## Pages and files
 

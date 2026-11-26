@@ -55,7 +55,7 @@ export type IssueStore = {
   markMissing(id: number, kinds: readonly IssueFolderKind[], at: Temporal.Instant): Promise<void>
   /**
    * The `_Podklady` sheet the print job reported for the issue, an app's own file in its print
-   * folder (#110), or `null` when it reported none.
+   * folder (cz.vednemesicnik.publikace#110), or `null` when it reported none.
    */
   printSheetId(id: number): Promise<string | null>
   /** Only while Drive refused the issue folder itself, so nothing of the issue exists. */

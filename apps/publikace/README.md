@@ -55,7 +55,6 @@ pnpm test
 pnpm app:doctor
 pnpm lint
 pnpm format:check
-pnpm dev:setup-claude   # optional: skills and CLAUDE.md for Claude Code
 ```
 
 The app needs no `.env` to start: the database defaults to `./db/publikace.sqlite` and is

@@ -229,7 +229,7 @@ export function articleBadge(articleName: string): string {
   return tied`K článku ${articleName}`
 }
 
-/** `21a`: the same badge for an artwork group's link (#133). */
+/** `21a`: the same badge for an artwork group's link (cz.vednemesicnik.publikace#133). */
 export function groupBadge(groupName: string): string {
   return tied`Ke skupině ${groupName}`
 }

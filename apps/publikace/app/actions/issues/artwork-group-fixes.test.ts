@@ -17,9 +17,9 @@ import {
 } from '../../test-app.server.ts'
 
 /**
- * Correcting and removing an artwork group (#154, `12f`): the dialogs over the detail, the group
+ * Correcting and removing an artwork group (cz.vednemesicnik.publikace#154, `12f`): the dialogs over the detail, the group
  * folder and `_meta.json` on Drive, the row, the link, the claims, and every race `12f` draws. And
- * a new link for the group (#169, `02g`), which sits in the same „⋯“.
+ * a new link for the group (cz.vednemesicnik.publikace#169, `02g`), which sits in the same „⋯“.
  */
 
 const MARIE = 'marie@vednemesicnik.test'
@@ -574,7 +574,7 @@ describe('removing a group (12f)', () => {
     }))
 })
 
-describe('discarding a batch whose archive failed meanwhile (12o, #154)', () => {
+describe('discarding a batch whose archive failed meanwhile (12o, cz.vednemesicnik.publikace#154)', () => {
   it('goes back to the table instead of a missing page', () =>
     withGroup(async (context) => {
       let batchId = await sendBatch(context)
@@ -593,7 +593,7 @@ describe('discarding a batch whose archive failed meanwhile (12o, #154)', () => 
     }))
 })
 
-describe('a new link for a group (02g, #169)', () => {
+describe('a new link for a group (02g, cz.vednemesicnik.publikace#169)', () => {
   it('asks with the group’s name in the title and both paragraphs, Zrušit first', () =>
     withGroup(async (context) => {
       let html = await (await context.editor.get(renewPath(context))).text()

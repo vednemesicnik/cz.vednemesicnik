@@ -17,24 +17,17 @@ tmp/
 
 .coverage/
 
-# The scaffold's own Remix skill, copied rather than carried: `pnpm dev:setup-claude`
-# copies it from `@remix-run/cli`'s `template/`, pinned by the lockfile.
+# The scaffold's own Remix skill, copied rather than carried: the root's
+# `pnpm claude:skills:link` copies it from `@remix-run/cli`'s `template/`, pinned by the lockfile.
 .agents/skills/remix/
-
-# Somebody else's guides, fetched rather than carried. `skills-lock.json` names the source
-# and pins a hash, so `pnpm dev:setup-claude` restores this exact revision.
-.agents/skills/modern-web-guidance/
 
 # Editors and OS noise.
 .idea
 .DS_Store
 
-# Claude Code's own directory and the guide file named after it. `pnpm dev:setup-claude`
-# writes both: `skills/` is symlinks into `.agents/skills/`, `CLAUDE.md` imports `AGENTS.md`.
-# `agents/` is the one tracked path: a subagent is read from there and nowhere else.
-.claude/*
-!.claude/agents/
-CLAUDE.md
+# Claude Code's own directory: `skills/` is symlinks into `.agents/skills/`, written by the
+# root's `pnpm claude:skills:link`. Subagents live in the root's `.claude/agents/`.
+.claude/
 
 # Session notes of the Remember plugin.
 .remember/

@@ -53,7 +53,7 @@ flowchart LR
 - **`createPublikace(environment)`** in `app/publikace.server.ts` is the whole app as
   `{ fetch, close }`. It owns no process. A misconfiguration rejects before anything is opened.
   `server.ts` is the host for working on this repository alone (port 44100).
-- **Production** (#79, not running yet): one more host behind the front server of the Fly app
+- **Production** (cz.vednemesicnik.publikace#79, not running yet): one more host behind the front server of the Fly app
   `cz-vednemesicnik`, after this repository moves into that one as a package. Publikace keeps its
   own SQLite file on the machine's volume. A secret whose value differs from the web's carries a
   prefix, because one Fly app has one namespace of secrets.
@@ -203,7 +203,7 @@ erDiagram
 ```
 
 An artworks link, a batch and an artwork belong to exactly one article or one artwork group, which
-a `CHECK` on each table holds (#133). Code that does not care which reads both as a _holder_:
+a `CHECK` on each table holds (cz.vednemesicnik.publikace#133). Code that does not care which reads both as a _holder_:
 the folder with `Obrazová díla` and `Licence` in it, and the name the e-mails and the record show.
 A group's `_meta.json` carries its name and note as they were at the last rename of the group or
 of its issue: a note corrected alone touches no file on Drive (`12f`), and for an issue made in
@@ -345,13 +345,13 @@ Evidence, binned with its folder, is no longer written.
 
 **Apps Script jobs that talk to the app**, all as `publikace.app@` on their own triggers:
 
-| Job                                        | Interval            | API                                  | Exists                    |
-| ------------------------------------------ | ------------------- | ------------------------------------ | ------------------------- |
-| `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes                       |
-| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes, no trigger until #79 |
-| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes, no trigger until #79 |
-| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until #79 |
-| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes, no trigger until #79 |
+| Job                                        | Interval            | API                                  | Exists                                              |
+| ------------------------------------------ | ------------------- | ------------------------------------ | --------------------------------------------------- |
+| `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes                                                 |
+| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes, no trigger until cz.vednemesicnik.publikace#79 |
+| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes, no trigger until cz.vednemesicnik.publikace#79 |
+| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until cz.vednemesicnik.publikace#79 |
+| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes, no trigger until cz.vednemesicnik.publikace#79 |
 
 Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A claim leaves out
 a removed article or group, its clauses and its batches, discarded ones included (`12z`, `12f`). A report must
@@ -365,7 +365,7 @@ digest, one run is enough (`14i`).
 
 **The API is a contract with the scripts.** It is versioned (`/api/v1`), and a field is never
 renamed in place. A change to what an endpoint takes or returns is a change in the script too.
-Artwork groups were added that way (#133): `artwork-replies/claim` gives each batch a `kind`
+Artwork groups were added that way (cz.vednemesicnik.publikace#133): `artwork-replies/claim` gives each batch a `kind`
 (`article` or `artwork-group`) beside `articleName`, which carries the group's name for a group,
 and `print-handoff/claim` gives each issue its `groups` with their notes, which `…/report` takes
 back the same way and a job written before groups leaves out.

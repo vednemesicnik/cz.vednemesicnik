@@ -576,7 +576,7 @@ function issueMissingView(issue: Issue): IssueMissingView | null {
 
 /**
  * The Docs of the issue's approved articles, asked whether they were edited after their PDF
- * (#101, `01a`), once the detail stands (`12q`): what Drive said is recorded and the rows read it.
+ * (cz.vednemesicnik.publikace#101, `01a`), once the detail stands (`12q`): what Drive said is recorded and the rows read it.
  * Only an open issue, and without an account or an answer the records stand as they are.
  */
 async function recheckDocRevisions(context: PageContext, issue: Issue): Promise<DocChecks> {
@@ -2869,7 +2869,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           /* The provider's page sent the request while a dialog that did not say so was open:
              nothing to discard, the table now says _U poskytovatele_. Discarded in another tab,
              turned into an error of its archive, or the issue closed meanwhile: the table, or the
-             closed issue's Callout, says what holds now (#154). */
+             closed issue's Callout, says what holds now (cz.vednemesicnik.publikace#154). */
           case 'already-sent':
           case 'not-discardable':
           case 'closed':

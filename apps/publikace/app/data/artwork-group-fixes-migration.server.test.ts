@@ -32,7 +32,7 @@ async function withGroup(run: (db: Database) => Promise<void>): Promise<void> {
   }
 }
 
-describe('the migration for correcting and removing an artwork group (#154)', () => {
+describe('the migration for correcting and removing an artwork group (cz.vednemesicnik.publikace#154)', () => {
   it('marks the Evidence when a created group is removed', async () => {
     await withGroup(async (db) => {
       await db.exec(sql`UPDATE artwork_groups SET removed_at = ${AT} WHERE id = 1`)

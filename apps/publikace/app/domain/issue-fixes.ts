@@ -1,5 +1,5 @@
 /**
- * Mending a mistake made in creating an issue (#151): _Přejmenovat vydání…_ (`12v`) and _Odebrat
+ * Mending a mistake made in creating an issue (cz.vednemesicnik.publikace#151): _Přejmenovat vydání…_ (`12v`) and _Odebrat
  * vydání…_ (`12w`), where each stands (`12u`) and every word of both dialogs. The wording is the
  * copywriter's (`ggqtf0xy`, `34f11ror`), drawn in `786r4cpa`, `glcs8cga` and `2qzhntrn`.
  *

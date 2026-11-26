@@ -165,7 +165,7 @@ that needs a session belongs behind a guard instead.
 - **The record may lag.** A sheet that does not answer is a log line `[drive] … was not written`,
   nothing on a screen (`00d`), and the nightly rewrite mends it.
 - **Closing an issue leaves its files shared.** Cutting the inherited link sharing takes a Manager
-  of the shared drive, which `publikace.app@` is not (#120).
+  of the shared drive, which `publikace.app@` is not (cz.vednemesicnik.publikace#120).
 
 ## Personal data
 

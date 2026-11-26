@@ -15,7 +15,7 @@ import { ALL_CLAUSES_APPROVED_F } from './articles.server.ts'
 
 /**
  * The print folders of the issues made in the app as `SCRIPT__Publication__Print_Handoff` fills
- * them (#110): what each one should hold, what the job last reported it holds, and which run
+ * them (cz.vednemesicnik.publikace#110): what each one should hold, what the job last reported it holds, and which run
  * holds an issue now.
  */
 
@@ -62,7 +62,7 @@ export type ClaimedArticle = {
   } | null
 }
 
-/** What an artwork group's folder inside the print folder holds, as the job reported it (#133). */
+/** What an artwork group's folder inside the print folder holds, as the job reported it (cz.vednemesicnik.publikace#133). */
 export type GroupCopy = {
   artworks: { artworkId: number; fileId: string; name: string }[]
   folderId: string
@@ -70,7 +70,7 @@ export type GroupCopy = {
 }
 
 /**
- * One artwork group as a claim hands it to the job (#133): its artworks with consent, and its note
+ * One artwork group as a claim hands it to the job (cz.vednemesicnik.publikace#133): its artworks with consent, and its note
  * for the designer, which goes to the _Podklady_ sheet. A group with no artwork with consent and no
  * copy is left out, so an empty group gets no folder.
  */
@@ -96,7 +96,7 @@ export type ClaimedIssue = {
 /** What a run did with one issue. An article left out was not reached and stays as it was. */
 export type IssueReport = {
   articles: { articleId: number; copy: ArticleCopy | null }[]
-  /** Left out by a job written before groups (#133), which leaves every group as it was. */
+  /** Left out by a job written before groups (cz.vednemesicnik.publikace#133), which leaves every group as it was. */
   groups?: { copy: GroupCopy | null; groupId: number }[]
   isComplete: boolean
   issueId: number

@@ -105,7 +105,7 @@ export async function insertLink(
   link: {
     articleId: number | null
     at: Temporal.Instant
-    /** The artwork group an artworks link uploads to, in place of an article (#133). */
+    /** The artwork group an artworks link uploads to, in place of an article (cz.vednemesicnik.publikace#133). */
     groupId?: number
     issueId: number
     kind: LinkKind

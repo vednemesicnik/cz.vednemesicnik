@@ -206,7 +206,7 @@ export function answerMeta(at: Temporal.Instant, name: string, today: Temporal.I
 /** Under an answer whose send was never confirmed and which a newer message overtook (`13e`). */
 export const UNCONFIRMED_ANSWER_LINE = 'odeslání nepotvrzeno'
 
-/* ─── An answer to a replaced final version (issue #31, `gjovqe1p`, `injg8rmg`) ─────────── */
+/* ─── An answer to a replaced final version (issue cz.vednemesicnik.publikace#31, `gjovqe1p`, `injg8rmg`) ─────────── */
 
 export const UNSENT_ANSWER_TITLE = 'Odpověď neodešla'
 export const UNSENT_ANSWER_NOTE = tied`Po dalším načtení stránky už tu text nebude.`

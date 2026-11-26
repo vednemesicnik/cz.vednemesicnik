@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 /*
  * One screen out of a saved design file, as text. The canvas pages are tens of kilobytes of
@@ -89,7 +90,11 @@ async function main(): Promise<void> {
   let wantsNotes = rest.includes('--notes')
   let wantsHtml = rest.includes('--html')
   let ids = rest.filter((arg) => !arg.startsWith('--'))
-  let screens = screensIn(await readFile(file, 'utf8'))
+  // From the root's `pnpm publikace:design:screen` the working directory is apps/publikace;
+  // a relative path means the folder the command was typed in, which pnpm keeps in INIT_CWD.
+  let screens = screensIn(
+    await readFile(resolve(process.env.INIT_CWD ?? process.cwd(), file), 'utf8'),
+  )
 
   if (ids.length === 0) {
     for (let screen of screens) {
