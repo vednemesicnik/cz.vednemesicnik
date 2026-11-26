@@ -22,9 +22,9 @@ fly deploy
 ## Continuous deployment (CI/CD)
 
 Deploys are automated: merging a PR to `main` triggers
-`.github/workflows/deploy.yml`, which first runs the full CI suite (via
-`workflow_call` on `ci.yml`) and then deploys with `flyctl deploy` only if all
-checks pass. Per the [branching model](./_branching-model.md), `main` is only
+`.github/workflows/deploy.yml`, which first runs every check workflow (via
+`workflow_call` on `web.yml` and `repo.yml`) and then deploys with `flyctl deploy` only
+if all checks pass. Per the [branching model](./_branching-model.md), `main` is only
 updated by release PRs (`dev → main`) and hotfix PRs — so every deploy
 corresponds to a release, and day-to-day merges into `dev` never deploy.
 

@@ -118,7 +118,7 @@ when the change warrants a second opinion, never launch them.
 
 ### Phase D — Ready to merge
 
-1. **CI green** — `gh pr checks`. Red blocks; say what failed. `docker-build` has flaky GHA
+1. **CI green** — `gh pr checks`. Red blocks; say what failed. `image` has flaky GHA
    cache-export failures — rerun before investigating.
 2. Report: PR URL, checks, unresolved threads (0), acceptance criteria status, anything left
    open. Name the **direction** (feature/fix → `dev`, or onto its parent when stacked) and
