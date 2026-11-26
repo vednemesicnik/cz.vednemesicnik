@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "paths": {
+      "@constants/*": ["./constants/*"],
+      "@generated/*": ["./generated/*"],
+      "~/*": ["./app/*"],
+      "~~/*": ["./prisma/*"]
+    },
+    "resolveJsonModule": true,
+    "rootDirs": [".", "./.react-router/types"],
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["@react-router/node", "vite/client"],
+    "verbatimModuleSyntax": true
+  },
+  "include": [
+    "app/**/*",
+    "app/**/.server/**/*",
+    "app/**/.client/**/*",
+    "prisma/**/*",
+    "scripts/**/*",
+    ".react-router/types/**/*"
+  ]
+}

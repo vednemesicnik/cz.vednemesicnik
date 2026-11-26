@@ -1,3 +1,7 @@
+# One package per application under apps/; the root is the host server in front of them.
+packages:
+  - 'apps/*'
+
 # pnpm 11 enforces a ~24h minimum-release-age supply-chain policy by default.
 # Disabled to preserve pnpm 10 install behavior (no release-age gating in CI/dev).
 minimumReleaseAge: 0

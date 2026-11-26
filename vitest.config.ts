@@ -1,27 +1,9 @@
-import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
+// The host's tests. The web has its own config in apps/web.
 export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: [
-      { find: /^~\/(.+)/, replacement: '/app/$1' },
-      { find: /^~~\/(.+)/, replacement: '/prisma/$1' },
-      { find: /^@generated\/(.+)/, replacement: '/generated/$1' },
-      { find: /^@constants\/(.+)/, replacement: '/constants/$1' },
-    ],
-  },
   test: {
-    coverage: {
-      all: true,
-      include: ['app/**/*.{ts,tsx}'],
-    },
-    include: [
-      './app/**/*.test.{ts,tsx}',
-      './scripts/**/*.test.ts',
-      './server/**/*.test.ts',
-      './instrument.server.test.ts',
-    ],
+    include: ['./server/**/*.test.ts', './instrument.server.test.ts'],
     restoreMocks: true,
   },
 })

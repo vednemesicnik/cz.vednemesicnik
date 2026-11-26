@@ -11,15 +11,15 @@ there is no standing raw-SQL endpoint in production. Once you stop it, the capab
 is gone.
 
 > **Warning:** this is the live production database with no undo. Take a
-> [manual backup](_manual-database-backup.md) before making any writes, and know the
-> [restore procedure](_manual-database-restore.md). SQLite has a single writer, so
+> [manual backup](../../../docs/_manual-database-backup.md) before making any writes, and know the
+> [restore procedure](../../../docs/_manual-database-restore.md). SQLite has a single writer, so
 > editing next to the running app can briefly block writes on either side — keep the
 > session short, and remember every edit is instant on production.
 
 ## Prerequisites
 
 An authenticated `flyctl` with a fresh SSH certificate in your agent (valid 24h;
-same setup as the [backup doc](_manual-database-backup.md#setup-do-this-once-per-session)):
+same setup as the [backup doc](../../../docs/_manual-database-backup.md#setup-do-this-once-per-session)):
 
 ```shell
 fly ssh issue --agent -o <your-org-slug>
@@ -44,7 +44,7 @@ understanding what the script does or when you need finer control.
 
 ```shell
 fly ssh console --app cz-vednemesicnik --pty -C \
-  "sh -c 'cd /app && HOST=0.0.0.0 pnpm prisma:studio --port 5555 --browser none'"
+  "sh -c 'cd /srv && HOST=0.0.0.0 pnpm prisma:studio --port 5555 --browser none'"
 ```
 
 - `--browser none` — there is no browser on the server to open.

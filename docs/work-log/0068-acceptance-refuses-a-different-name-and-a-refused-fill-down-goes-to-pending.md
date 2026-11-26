@@ -48,7 +48,7 @@ nameless row.
 - The first sentence of the note approved in copy thread `63x81fno` promised the previous value, which a
   range cannot keep. Thread `8b7ril08` replaced it for all three refusals.
 
-The current state is in [the editorial-board sheet](../_editorial-board-google-sheet.md) and the project's
+The current state is in [the editorial-board sheet](../../apps/web/docs/_editorial-board-google-sheet.md) and the project's
 README.
 
 ## Turned down

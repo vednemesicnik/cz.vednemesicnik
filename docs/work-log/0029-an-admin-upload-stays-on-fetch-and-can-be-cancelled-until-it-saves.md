@@ -55,7 +55,7 @@ issue editor, the covers and the profile photo.
   reuse `UploadStatus` and the same rules, each with its own route.
 - Revisit once `fetch` gets upload progress events (being specified, 2026): only the transport and
   the bar change, the one-row design stays.
-- The current state is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The current state is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

@@ -43,7 +43,7 @@ podcast and `publishedSlug`.
 - **Writes outside the app must set `publishedSlug`** for a published or archived episode: the
   seed and any script. The migration backfilled published and archived episodes, and drafts that
   were published before.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

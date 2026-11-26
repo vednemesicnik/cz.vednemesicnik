@@ -28,7 +28,7 @@ type HostHandlerOptions = {
  * compressible is compressed, and only requests that reach the web app are logged, as morgan
  * logged them, though without the query.
  *
- * @param options.clientDirectory The client build (`build/client`).
+ * @param options.clientDirectory The web's client build (`apps/web/build/client`).
  * @param options.log Where access-log lines go; `console.log` when left out.
  * @param options.webHandler The web app, for every request no static file answers.
  * @returns The handler the Node server calls for each request.

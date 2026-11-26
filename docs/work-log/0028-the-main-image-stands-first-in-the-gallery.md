@@ -34,7 +34,7 @@ The main image is always the gallery's first image, in the editor as on the web.
 - The issue (26c) and episode (27d) editors do not show a gallery. If a content type ever gets one
   with a main image, it follows the same rule.
 - The current state is described in
-  [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+  [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

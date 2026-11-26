@@ -59,7 +59,7 @@ Three things had to be settled:
 - Changed meanwhile with nothing unsent, the editor shows no 24i dialog: there is nothing to
   rescue. It offers *Pokračovat v úpravě* while the content is free. Design is asked to confirm
   this (`/ask-design` after #671).
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

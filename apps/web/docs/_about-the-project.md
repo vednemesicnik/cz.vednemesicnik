@@ -54,14 +54,16 @@ The project leverages modern web technologies for scalability and maintainabilit
   - `vitest`, `@vitejs/plugin-react`
 
 ## Code and Repository Structure
-The repository is organized as follows:
+The web lives in `apps/web` of a pnpm workspace; the repository root holds the host server
+in front of it (`server.ts`, `server/`), Docker (`docker/`), CI and the repository docs
+(`docs/`). Inside `apps/web`:
 - **`app/`**: Core application code, including components, routes, and utilities.
 - **`data/`**: Local dev data volume (git-ignored), mirroring the production Fly volume: the SQLite database (`data/sqlite.db`) and the on-disk image store (`data/images`).
-- **`docker/`**: Docker configuration for containerization.
-- **`docs/`**: Project documentation.
+- **`docs/`**: The web's documentation.
+- **`documents/`**: Documents committed with the code, such as the statutes PDF.
 - **`prisma/`**: Database schema and migration files.
 - **`public/`**: Static assets like images and the font licence text.
-- **`scripts/`**: Utility scripts for tasks like database management.
+- **`scripts/`**: Utility scripts for the web: GAS types, design screens, static images, the object-store CLI.
 
 Components are styled with CSS modules for encapsulation and reuse. Non-route-specific components are in `app/components`, while route-specific components are organized under `app/routes`.
 

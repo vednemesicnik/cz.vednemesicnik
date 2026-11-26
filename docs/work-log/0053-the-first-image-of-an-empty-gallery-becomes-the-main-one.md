@@ -37,7 +37,7 @@ the gallery empty.
 
 - `saveArticleImageChange` has an `onSettled` step: it runs on the results of the change's own
   writes once they commit, and adds what only the commit decided to the answer.
-- The current state is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The current state is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

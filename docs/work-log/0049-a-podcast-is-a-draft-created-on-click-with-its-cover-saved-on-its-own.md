@@ -43,7 +43,7 @@ of #836 (#849) moved the podcast's address to `publishedSlug`
 - The podcast's detail has no *Převzít úpravu…*: the podcast's actions are the taxonomy set.
   The Coordinator keeps *Upravit*, and the editor's takeover dialog asks. A shared action for it
   would be a reason to revisit this.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

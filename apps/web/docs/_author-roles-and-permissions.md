@@ -57,7 +57,7 @@ or Creator must stay among the authors they save, so they add and remove co-auth
 themselves. The Coordinator, with `update` on any content, picks any authors, without
 themselves too. Only the Coordinator adds the association, *Vedneměsíčník, z. s.* (the Owner's
 author); one already on the article stays on anyone's save (design 24j, log
-[0026](./work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
+[0026](../../../docs/work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 
 ## Permissions Overview
 

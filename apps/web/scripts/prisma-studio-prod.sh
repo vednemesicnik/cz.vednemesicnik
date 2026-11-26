@@ -40,7 +40,7 @@ trap 'exit 143' TERM
 
 echo "🚀 Starting Prisma Studio on $APP (port $PORT, not publicly exposed)…"
 fly ssh console --app "$APP" -C \
-  "sh -c 'cd /app && HOST=0.0.0.0 pnpm prisma:studio --port $PORT --browser none'" &
+  "sh -c 'cd /srv && HOST=0.0.0.0 pnpm prisma:studio --port $PORT --browser none'" &
 STUDIO_PID=$!
 
 # Give Studio a moment to bind before the proxy forwards to it.

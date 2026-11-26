@@ -56,7 +56,7 @@ This entry changes direction from 0032 and carries over what of it still holds.
   that is always there, with an intro and a *Použít …* button. 26d's *Použít N* for a taken
   number shares that line. The wording is the copywriter's (k5m0j1ag, drawn in exxdkjaq).
 - Revisit if issues are ever created in bulk or imported, where the offer cannot be clicked.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

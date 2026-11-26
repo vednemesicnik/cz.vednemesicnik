@@ -34,7 +34,7 @@ one sentence and name the surfaces it touches — public website, administration
 form. If it does not fit one sentence, that is the first finding.
 
 Read what exists before weighing: the work log in `docs/work-log/`, the design screens
-that cover it (app project, one screen at a time per `docs/_design-project.md`), the code it would
+that cover it (app project, one screen at a time per `apps/web/docs/_design-project.md`), the code it would
 sit in, and the open issues — half of these
 proposals are already an issue under another name.
 

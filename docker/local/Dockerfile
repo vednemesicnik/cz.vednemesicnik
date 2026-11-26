@@ -16,33 +16,45 @@ RUN npm install -g pnpm@12.16.1
 # Install all node_modules, including dev dependencies
 FROM base AS deps
 
-WORKDIR /app
+# The image mirrors the repository under /srv: the host at the root, each application
+# under apps/. Only the manifests here, so the install layer stays cached until a
+# dependency changes.
+WORKDIR /srv
 
 ADD package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+ADD apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile
 
 # Setup production node_modules
 FROM base AS production-deps
 
-WORKDIR /app
+WORKDIR /srv
 
 ADD package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+ADD apps/web/package.json apps/web/package.json
 RUN pnpm install --prod --frozen-lockfile
 
-# Build the app
+# Build the web
 FROM base AS build
 
 # Set DATABASE_URL for Prisma generation
 ENV DATABASE_URL="file:/data/sqlite.db"
 
-WORKDIR /app
+WORKDIR /srv
 
-COPY --from=deps /app/node_modules /app/node_modules
+COPY --from=deps /srv/node_modules /srv/node_modules
+COPY --from=deps /srv/apps/web/node_modules /srv/apps/web/node_modules
 
-ADD . .
+# Only the web, so a change elsewhere in the repository doesn't rebuild it. The root
+# manifest and the workspace file let the root scripts below forward to it.
+ADD package.json pnpm-workspace.yaml ./
+ADD apps/web apps/web
 
 # Run the Prisma type generator
 RUN pnpm prisma:generate
+
+# Generate the GAS response types from the committed schemas (offline)
+RUN pnpm gas:types:generate
 
 # Run the build
 RUN pnpm app:build
@@ -72,32 +84,35 @@ RUN chmod +x /usr/local/bin/seed-owner
 # Add shortcut for the object-store CLI (S3/Tigris bucket). Locally it targets the
 # s3mock service behind the "tigris" compose profile — run it inside the container
 # with `docker compose exec app object-store ls`.
-ADD scripts/object-store.sh /usr/local/bin/object-store
+ADD apps/web/scripts/object-store.sh /usr/local/bin/object-store
 RUN chmod +x /usr/local/bin/object-store
 
-WORKDIR /app
+WORKDIR /srv
 
-COPY --from=production-deps /app/node_modules /app/node_modules
+COPY --from=production-deps /srv/node_modules /srv/node_modules
+COPY --from=production-deps /srv/apps/web/node_modules /srv/apps/web/node_modules
 # pnpm-workspace.yaml carries verifyDepsBeforeRun: false, which stops pnpm
 # from reinstalling the full (dev) dependency tree over the network when the
-# entrypoint runs `pnpm prisma:migrate:deploy` at startup.
-COPY --from=build /app/pnpm-workspace.yaml /app/pnpm-workspace.yaml
-COPY --from=build /app/build /app/build
-COPY --from=build /app/generated /app/generated
-# The statutes the membership application links to.
-COPY --from=build /app/documents /app/documents
-COPY --from=build /app/package.json /app/package.json
-# The host server that serves the build (app:start), run by Node's type stripping.
-COPY --from=build /app/server.ts /app/server.ts
-COPY --from=build /app/server /app/server
+# entrypoint runs `pnpm prisma:migrate:deploy` at startup. It also lists apps/*,
+# so the root script can forward to the web.
+COPY pnpm-workspace.yaml package.json ./
+# The host that serves the build (app:start), run by Node's type stripping.
+COPY server.ts ./
+COPY server server
 # Sentry instrument — app:start-with-sentry --imports it, so it must be in the image.
-COPY --from=build /app/instrument.server.ts /app/instrument.server.ts
-COPY --from=build /app/app/utils/sentry/scrub-sentry-event.ts /app/app/utils/sentry/scrub-sentry-event.ts
-COPY --from=build /app/prisma.config.ts /app/prisma.config.ts
-COPY --from=build /app/constants/env.ts /app/constants/env.ts
-COPY --from=build /app/prisma/schema.prisma /app/prisma/schema.prisma
-COPY --from=build /app/prisma/migrations /app/prisma/migrations
-COPY --from=build /app/scripts/object-store-cli.ts /app/scripts/object-store-cli.ts
-COPY --from=build /app/scripts/docker-entry-point-local.sh /app/scripts/docker-entry-point.sh
+COPY instrument.server.ts ./
+COPY scripts/docker-entry-point-local.sh scripts/docker-entry-point.sh
 
-ENTRYPOINT [ "/app/scripts/docker-entry-point.sh" ]
+# The web: its build, the generated clients, and what migrations and the CLIs read.
+COPY --from=build /srv/apps/web/build apps/web/build
+COPY --from=build /srv/apps/web/generated apps/web/generated
+COPY apps/web/package.json apps/web/prisma.config.ts apps/web/
+COPY apps/web/constants/env.ts apps/web/constants/env.ts
+COPY apps/web/prisma/schema.prisma apps/web/prisma/schema.prisma
+COPY apps/web/prisma/migrations apps/web/prisma/migrations
+COPY apps/web/app/utils/sentry/scrub-sentry-event.ts apps/web/app/utils/sentry/scrub-sentry-event.ts
+COPY apps/web/scripts/object-store-cli.ts apps/web/scripts/object-store-cli.ts
+# The statutes the membership application links to.
+COPY apps/web/documents apps/web/documents
+
+ENTRYPOINT [ "/srv/scripts/docker-entry-point.sh" ]

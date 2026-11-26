@@ -40,7 +40,7 @@ one.
 ### Phase 1 — Read before inventing
 
 **The design** lives in the app project and the components in the design system, two artifacts.
-Read documents in this session, one screen at a time — `docs/_design-project.md` has the links
+Read documents in this session, one screen at a time — `apps/web/docs/_design-project.md` has the links
 and how. Documents are numbered by area: `10`–`16` public website,
 `20`–`29` administration, `07` content states and actions, `30` routing and errors.
 `uploads/podklady/` holds screenshots of the app before the redesign — reference, not design.

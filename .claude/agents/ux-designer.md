@@ -23,7 +23,7 @@ the reply together, and rewrite the answer so that it stays the current one, not
 corrections. A correction by message works the same way.
 
 The links, what each artifact holds and how to read and write them are in
-`docs/_design-project.md`. Read it first, then:
+`apps/web/docs/_design-project.md`. Read it first, then:
 
 - the brief, and the documents it names;
 - `artifact-type/reference/format.md`, the `.dc.html` rules;
@@ -83,13 +83,13 @@ every anchor's code, and update the links between documents and `project/CLAUDE.
   keeps it.
 - **Read the artifact's bare `url` first,** then the files you will change, right before editing
   them. A publish without that read is refused, even when nobody has saved meanwhile.
-- **One publish per artifact,** as `docs/_design-project.md` § Writing gives it. Refused because
+- **One publish per artifact,** as `apps/web/docs/_design-project.md` § Writing gives it. Refused because
   someone saved: read again and redo the edit, once.
 - **A component or a token goes in the design-system source and in the app project's `_ds/` copy**
   in the same pass. The two have drifted apart in both directions before, so read both first and
   splice the change rather than copying files over. In each `_ds_bundle.js` replace only that
   component's block and its hash in the `@ds-bundle` header (the first 12 hex characters of the
-  source file's SHA-256), as `docs/_design-project.md` § The designer gives it. A whole rebuild
+  source file's SHA-256), as `apps/web/docs/_design-project.md` § The designer gives it. A whole rebuild
   has not been tried: if the change needs more than that, say so in the answer and don't improvise.
 - Commit nothing and change nothing in any git repository.
 

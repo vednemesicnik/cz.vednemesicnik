@@ -53,7 +53,7 @@ Design decided the episode's prefill separately, after 0034 (00l7fuiu, 26 Oct 20
 - **A new platform is one host in `get-link-platform.ts`.** Labels already stored keep their text;
   a stored label that now matches a platform reads as filled from the address.
 - The cover (27d, the third PR of #837) uploads on its own and ends the empty draft too.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 
