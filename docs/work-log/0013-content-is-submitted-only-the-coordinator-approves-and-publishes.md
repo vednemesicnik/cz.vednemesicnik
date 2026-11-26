@@ -40,7 +40,7 @@ retracting or archiving their own published content.
 - The review gate from [0005](0005-review-gate-keys-off-role-level.md) stays as a server-side
   guard.
 - The current state is described in
-  [_author-roles-and-permissions.md](../_author-roles-and-permissions.md#submission).
+  [_author-roles-and-permissions.md](../../apps/web/docs/_author-roles-and-permissions.md#submission).
 
 ## Turned down
 

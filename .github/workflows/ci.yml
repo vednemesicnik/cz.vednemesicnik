@@ -94,11 +94,15 @@ jobs:
               - 'scripts/docker-entry-point*'
               - 'server.ts'
               - 'server/**'
+              - 'instrument.server.ts'
               - '.dockerignore'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
-              - 'prisma/**'
+              - 'apps/web/package.json'
+              - 'apps/web/prisma.config.ts'
+              - 'apps/web/prisma/**'
+              - 'apps/web/scripts/object-store*'
       - uses: docker/setup-buildx-action@v4
         if: steps.changes.outputs.docker == 'true'
       - uses: docker/build-push-action@v7

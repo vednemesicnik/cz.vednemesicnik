@@ -1,5 +1,5 @@
-// Imported by instrument.server.ts, which Node runs by type stripping and ahead of
-// the app bundle: keep it free of path aliases and runtime imports.
+// Imported by the host's instrument.server.ts at the repository root, which Node runs by
+// type stripping and ahead of the app bundle: keep it free of path aliases and runtime imports.
 
 import type { ErrorEvent } from '@sentry/react-router'
 

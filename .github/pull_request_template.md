@@ -16,7 +16,7 @@ Closes #NNN
 <!-- Confirm before requesting review. -->
 - [ ] `pnpm app:typecheck` passes
 - [ ] `pnpm test` passes
-- [ ] Prisma migration (`prisma/migrations/**`): none / included — call it out
+- [ ] Prisma migration (`apps/web/prisma/migrations/**`): none / included — call it out
 
 ## Merge method
 

@@ -83,7 +83,7 @@ Report what each step did or why it was a no-op.
    version, a Fly secret, files in the Tigris bucket. Clean up only unambiguous test debris;
    ask before anything in production.
 8. **Offer the design pairs this issue was waiting on.** Read `questions/_index.json` in the
-   design project (`docs/_design-project.md`) and list entries whose `for` or `names` holds the
+   design project (`apps/web/docs/_design-project.md`) and list entries whose `for` or `names` holds the
    retired issue. Recommend `/ask-design tidy #<n>` by name; do not run it.
 
 ### Phase 2 — Bank what outlives the issue

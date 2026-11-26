@@ -37,7 +37,7 @@ address (`/archive/:fileName`). Design 26j shows no address until the number is 
   and a first upload leaves the draft no longer empty.
 - The PDF card's first line without a number is provisional (the uploaded name) until design
   says otherwise.
-- The current state is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The current state is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

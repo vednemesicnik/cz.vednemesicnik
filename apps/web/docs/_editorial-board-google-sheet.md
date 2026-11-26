@@ -114,7 +114,7 @@ Behaviour:
   `Odchod či vyřazení` and `Dotaz odeslán`. `Zápis do Kontaktů` then keeps a retry or a fill-down from adding
   anyone twice, and nobody gets an e-mail. No role, another name on the address or a failure refuses the
   row: `Stav` goes back and a note on the cell says why. A fill-down has no old values, so its refused rows
-  go to `Čeká na přijetí` ([log 0068](work-log/0068-acceptance-refuses-a-different-name-and-a-refused-fill-down-goes-to-pending.md)).
+  go to `Čeká na přijetí` ([log 0068](../../../docs/work-log/0068-acceptance-refuses-a-different-name-and-a-refused-fill-down-goes-to-pending.md)).
   `Nepřijato` moves nothing.
 - `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts when one `Stav` cell
   changes on a named row of `Kontakty`: it clears `Dotaz odeslán`, and for `V redakci` writes today's
@@ -126,7 +126,7 @@ Behaviour:
   months after `Ověření e-mailu` whatever their `Stav`, sorts `Kontakty` by `Jméno` with reserve rows last and,
   on Mondays while someone is `Čeká na přijetí`, tells the chief editors' group how many wait and how long the
   longest has waited. The message names nobody, and when nobody waits nothing goes out
-  ([log 0070](work-log/0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md)).
+  ([log 0070](../../../docs/work-log/0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md)).
 - The same trigger asks whether people are still in the editorial board (#392). In September everyone
   `V redakci` whose `Poslední potvrzení` is empty or at least three months old gets an e-mail with *Jsem pořád
   v redakci* and *Odcházím z redakce*, and today's `Dotaz odeslán`. Reminders follow 4 and 8 weeks later, the
@@ -135,7 +135,7 @@ Behaviour:
   typed into `Poslední potvrzení` on or after the round's day ends the round, and people sharing an address
   under different names are never asked. The buttons lead to `/editorial-board/activity/confirm`, where opening
   the link writes nothing and the press posts `confirmActive`, `leave` or `reactivate`
-  ([log 0072](work-log/0072-re-confirmation-links-are-signed-by-the-script-and-the-ladder-keeps-its-rungs-in-script-properties.md)).
+  ([log 0072](../../../docs/work-log/0072-re-confirmation-links-are-signed-by-the-script-and-the-ladder-keeps-its-rungs-in-script-properties.md)).
 
 The steps below are for the read, in the Contacts project.
 

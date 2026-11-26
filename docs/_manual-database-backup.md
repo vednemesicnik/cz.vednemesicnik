@@ -85,7 +85,7 @@ Once `STORE_DRIVER=tigris` is in effect, backups get both simpler and faster:
 
 Store backups under a sibling prefix in the shared bucket — `s3://$BUCKET_NAME/db/`.
 This is safe next to the images: the image store only ever touches its own `images/`
-prefix — a seed/reset (`imageStore.delete([''])` in `prisma/seed.ts`) wipes just
+prefix — a seed/reset (`imageStore.delete([''])` in `apps/web/prisma/seed.ts`) wipes just
 `images/`, not the whole bucket — so backups under `db/` are never affected. (A
 dedicated backups bucket is fine too if you want stricter isolation; just adjust the
 paths below.)
@@ -119,7 +119,7 @@ gzip -t backup-*.db.gz && echo "OK"
 
 The command above is now automated by `scripts/backup-database.sh`, which runs the
 same steps on the machine (the same `object-store` upload — see
-[`scripts/object-store-cli.ts`](../scripts/object-store-cli.ts)) and adds a
+[`scripts/object-store-cli.ts`](../apps/web/scripts/object-store-cli.ts)) and adds a
 `gzip -t` integrity check, an upload verification, and retention pruning. Two
 workflows call it:
 
@@ -127,7 +127,7 @@ workflows call it:
   runs on a cron (1st of Jan/Apr/Jul/Oct) and on `workflow_dispatch`.
 - **Pre-migration** — [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
   backs up (with a `-pre-migration` key suffix) before `flyctl deploy` whenever the
-  push touches `prisma/migrations/**`. Migrations apply at machine startup, so this
+  push touches `apps/web/prisma/migrations/**`. Migrations apply at machine startup, so this
   captures the old schema first; a failed backup blocks the deploy.
 
 Both workflows authenticate with a dedicated `FLY_BACKUP_TOKEN` repo secret (an

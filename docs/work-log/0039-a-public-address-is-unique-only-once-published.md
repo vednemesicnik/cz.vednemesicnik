@@ -95,7 +95,7 @@ about a taken value needs to say only that it is taken.
   refuse the save, because nothing typed is lost there.
 - **Revisit this** if a draft ever needs a public address of its own, for example a shareable
   preview by slug. Today a draft's web preview goes by `id`.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

@@ -66,7 +66,7 @@ The shared logic lives in `app/utils/edit-hold/`: the `where` builders, the stat
   to tell a reload from a duplicated tab, which `sessionStorage` cannot.
 - Revisit this entry if `updatedAt` stops being the moment of the last save, for example a
   separate saved-at column. Then hold writes may use `updateMany` freely.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

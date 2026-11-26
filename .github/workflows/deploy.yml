@@ -46,7 +46,7 @@ jobs:
           base: main
           filters: |
             migrations:
-              - 'prisma/migrations/**'
+              - 'apps/web/prisma/migrations/**'
       - name: Pre-migration database backup
         if: steps.changes.outputs.migrations == 'true'
         # No continue-on-error: a failed backup must block the deploy.

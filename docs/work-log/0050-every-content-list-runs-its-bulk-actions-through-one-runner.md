@@ -57,7 +57,7 @@ retract, archive, restore and delete in its `content-state-handlers.server.ts`.
   its publish is the shared `BulkConfirmDialog` with the noun's `publish` sentence and the
   exceptions as `notes`, the same shape 26f draws. `ContentSelectionBar` is that list's bar
   (decided with the issues, #772 PR 2).
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

@@ -1,17 +1,15 @@
-/node_modules
+node_modules/
 
-/.react-router/
-
-/build
-/public/build
-
-# Generated files
-/generated/
-
-# Prisma
-/prisma/*.sql
-
+# The web (apps/web): build output, generated types and clients, local data
+/apps/web/.react-router/
+/apps/web/build
+/apps/web/public/build
+/apps/web/generated/
+/apps/web/prisma/*.sql
+/apps/web/storybook-static
 # Local data volume (dev): SQLite DB + image store
+/apps/web/data
+# Left over from before the web moved into apps/web (#1071)
 /data
 
 # Scratch docs for drafting GitHub issues (issue is the source of truth)
@@ -26,7 +24,6 @@
 /.claude/*
 !/.claude/agents/
 *storybook.log
-storybook-static
 
 # Scratch drafts (/ask-copy questions and the join prompt)
 /tmp/

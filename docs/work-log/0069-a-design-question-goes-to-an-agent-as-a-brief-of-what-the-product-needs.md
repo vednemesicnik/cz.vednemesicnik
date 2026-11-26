@@ -47,7 +47,7 @@ saved files locally has not been tried on artifacts.
 `/ask-copy` still hands over a join prompt, because the copywriter is a participant in the shared room. The
 same move could apply there later.
 
-The current state is in [the design project](../_design-project.md).
+The current state is in [the design project](../../apps/web/docs/_design-project.md).
 
 ## Turned down
 

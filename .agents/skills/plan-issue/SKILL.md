@@ -59,7 +59,7 @@ You are the **planning stage** of the issue pipeline:
    open the design project (the app project, components in the design system). Read a
    document **in this session** and cut one screen out of it with
    `pnpm design:screen "<saved file>" 22a` — see
-   [docs/\_design-project.md](../../../docs/_design-project.md). Where the design is silent or
+   [apps/web/docs/\_design-project.md](../../../apps/web/docs/_design-project.md). Where the design is silent or
    two screens disagree, say so in the plan and point at `/ask-design` rather than inventing
    the answer.
 

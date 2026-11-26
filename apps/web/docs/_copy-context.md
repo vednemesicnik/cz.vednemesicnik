@@ -3,7 +3,7 @@
 Tenhle text je jediná věc, kterou copywriter o aplikaci ví, aniž by se ho někdo ptal. Je **jen ke
 čtení** — popisuje, co kód doopravdy dělá, a přepsat ho znamená přepsat aplikaci, ne text.
 
-Vede se v repozitáři jako `docs/_copy-context.md` a copywriter ho dostává **celý v otevíracím tahu
+Vede se v repozitáři jako `apps/web/docs/_copy-context.md` a copywriter ho dostává **celý v otevíracím tahu
 každého vlákna**: jeho nářadí jsou nástroje `ask_*` a žádný z nich neotevírá soubor. Co drží ve
 vlákně, je otisk téhle chvíle — a když něco tady nesedí s tím, co přišlo v otázce, **je to
 nález**: řekni to, neopravuj to.

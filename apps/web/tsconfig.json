@@ -25,12 +25,8 @@
     "app/**/*",
     "app/**/.server/**/*",
     "app/**/.client/**/*",
-    "server.ts",
-    "server/**/*",
     "prisma/**/*",
     "scripts/**/*",
-    "instrument.server.ts",
-    "instrument.server.test.ts",
     ".react-router/types/**/*"
   ]
 }

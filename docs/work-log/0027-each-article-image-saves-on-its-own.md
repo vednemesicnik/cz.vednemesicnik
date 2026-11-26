@@ -62,7 +62,7 @@ image is still processing.
 - An upload that got no answer may still have landed: removing its failed tile asks the server
   too, and a removal of an image that does not exist counts as done.
 - Progress bars are #227. The current state is described in
-  [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+  [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

@@ -53,7 +53,7 @@ own redesigns (26, 27), with their own columns.
 - Deleting a record takes its lock with it. No table holds orphaned locks.
 - Revisit this entry if a content type needs more than one holder, or a history of past locks.
   Neither fits on the row.
-- The current lifecycle is in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The current lifecycle is in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

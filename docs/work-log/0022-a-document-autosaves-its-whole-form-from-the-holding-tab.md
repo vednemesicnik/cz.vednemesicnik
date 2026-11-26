@@ -68,7 +68,7 @@ The client side is `app/hooks/use-autosave.ts`, the article's route is
   second while someone types. Revisit this if that becomes a load problem.
 - The per-image saves of #673 replace the gallery part of the whole-form save. The browser-made
   ids carry over.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

@@ -138,8 +138,8 @@ its own creation and publish dates, without names.
 
 ## New article drafts and the edit hold
 
-Built in #668 (epic #667, logs [0019](./work-log/0019-the-edit-lock-lives-on-the-content-row.md)
-and [0020](./work-log/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
+Built in #668 (epic #667, logs [0019](../../../docs/work-log/0019-the-edit-lock-lives-on-the-content-row.md)
+and [0020](../../../docs/work-log/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
 to `add-article`, which creates an empty draft of the signed-in author and opens its edit page.
 The draft has no title, text or address (`slug` is null) and no history; `firstContentAt` stays
 null until the first save with content, which logs *Vytvořeno*. Until then the draft is in no
@@ -148,7 +148,7 @@ with an address. Each *Nový článek* also deletes empty drafts older than a da
 is free.
 
 The edit hold is built in #669 (design 07g, 24g; logs 0019 and
-[0021](./work-log/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
+[0021](../../../docs/work-log/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
 Only a draft is held, by one browser tab. The editor takes the hold when it opens and the hold
 is free (no holder, or `heldUntil` passed), renews it about every 30 s, and releases it when it
 closes and when the tab closes. Without a signal it expires
@@ -164,7 +164,7 @@ one *Upraveno* per hold. Hold writes keep `updatedAt` as it was. Gallery images 
 `position`.
 
 Autosave is built in #670 (design 24e, 24d; log
-[0022](./work-log/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
+[0022](../../../docs/work-log/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
 no *Uložit*, no leave dialog and no copy in the browser's storage. The editor sends the whole
 form about a second after the last change, at once on leaving a field and on ⌘S (Ctrl+S
 elsewhere). One save is on its way at a time, to the `save` route, which takes it only from the
@@ -174,7 +174,7 @@ The line under the heading is the only sign: *Zatím prázdné*, *ukládá se* (
 *uloženo dnes v 14:02* (another day with the date), *bez připojení · čeká na uložení* (it sends
 again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. The address
 saves as typed even when another article holds it as published (log
-[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the address an
+[0039](../../../docs/work-log/0039-a-public-address-is-unique-only-once-published.md)): only the address an
 article holds since its last publish (`publishedSlug`) is unique, and only publish writes it.
 Retract and archive keep it. The field then says *Zadejte jinou
 adresu — tato je obsazená.* through Conform and offers *Použít …* with a free address. Submit,
@@ -185,7 +185,7 @@ The browser's own dialog asks only offline, after a failure, or when what waits 
 while the page closes.
 
 The gallery saves image by image, built in #673 (design 24b; log
-[0027](./work-log/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
+[0027](../../../docs/work-log/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
 once to the `images` route, under an id made in the editor, and its row exists only once the
 file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
 first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
@@ -194,13 +194,13 @@ on a phone) or by *Posunout dopředu*, *Posunout dozadu*. Every stored image sho
 its place on the web. The main image stands first, as on the web: setting one moves it there,
 and it is neither moved nor passed (yj2t50dd). The first image uploaded into an empty gallery
 becomes the main one; of several uploaded together, the first to save (log
-[0053](./work-log/0053-the-first-image-of-an-empty-gallery-becomes-the-main-one.md)). Each change
+[0053](../../../docs/work-log/0053-the-first-image-of-an-empty-gallery-becomes-the-main-one.md)). Each change
 checks the hold in its own write and moves `updatedAt`. An upload under way still lands after the hold was released, on a draft nobody holds and
 not submitted since; never over someone else's hold. An upload and a failure show only in
 the open editor.
 
 An upload is one step under the tile's preview (#704, design 24b; log
-[0029](./work-log/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
+[0029](../../../docs/work-log/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
 *Nahrává se* with an indeterminate bar, since `fetch` reports no progress, and *Zrušit* until it
 saves. A cancelled new image's tile goes, and the server keeps nothing of it. A cancelled
 replacement returns to the stored image; only one whose answer crossed the cancel stays replaced
@@ -208,7 +208,7 @@ on the server. *Zavřít* and a link out of the
 editor ask while an image uploads, because leaving cancels it.
 
 Losing the hold is built in #671 (design 24h, 24i; log
-[0023](./work-log/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
+[0023](../../../docs/work-log/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
 went to the Coordinator or to the same person's other tab shows *Úpravu přebírá …* and turns
 read-only: grey fields, no text toolbar, no buttons that change something. Autosave stops. It
 says *Všechny změny jsou uložené.* only when nothing was waiting; otherwise *Některé změny se
@@ -222,7 +222,7 @@ mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*,
 while someone holds it or it is no longer an editable draft.
 
 A deleted article or issue is built in #756 (design 24k, 26m, 23g, 26i; log
-[0036](./work-log/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
+[0036](../../../docs/work-log/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
 open editor, one's own in another tab included: it repeats "the hold is free" in its own write,
 while the other transitions keep "not held by someone else". The detail answers *Smazat…* with
 a toast instead of the confirmation while one's own editor holds it, and a bulk delete skips
@@ -233,7 +233,7 @@ smazán* (*Číslo bylo smazáno*) with *Přejít na seznam*, turns read-only fo
 values in the fields.
 
 Choosing authors is built in #674 (design 24j; log
-[0026](./work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
+[0026](../../../docs/work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 The authors are rows with an avatar and a ×. Under them is *Přidat autora*, a search field (a
 `ChipInput` without chips) whose list opens with the focus and narrows through every author
 while typing. An article always has at least one author, a draft too, and the last row has no
@@ -259,7 +259,7 @@ save.
 ## Archive issue drafts and the edit hold
 
 Built in #717 (epic #719, design 26c, 26d, 26i–26l; log
-[0034](./work-log/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
+[0034](../../../docs/work-log/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
 the same way as the article. *Nové číslo* posts to `add-issue`, which creates a draft without a
 year or an order and opens `edit-issue`. A line under the pair, always there so typing does not move
 the form, offers the next free number: *Další číslo: Použít 5/2026* (this year and its next free
@@ -276,7 +276,7 @@ until it is set by hand or a supplement is filled; a typed or reloaded one stays
 („Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read
 is left out while the rest saves, and the field says why. A number another issue holds as
 published saves as typed (log
-[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the number an
+[0039](../../../docs/work-log/0039-a-public-address-is-unique-only-once-published.md)): only the number an
 issue holds since its last publish (`publishedNumber`, `2026-4` or `2026-2-maturitni-ples`) is
 unique, and only publish writes it. Retract and archive keep it. The field changed last (before
 any change *Pořadí v roce*, or *Doplněk* for a supplement) then says *Zadejte jiné pořadí — číslo 3/2026 je obsazené.* (the year and
@@ -304,8 +304,8 @@ because the editor writes no reviews. Its author takes it back to a draft instea
 ## Episode number and address
 
 An episode's number and address are unique within its podcast once published (#830, #837, log
-[0047](./work-log/0047-an-episode-address-is-unique-within-its-podcast-once-published.md), after
-[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)). The editor saves
+[0047](../../../docs/work-log/0047-an-episode-address-is-unique-within-its-podcast-once-published.md), after
+[0039](../../../docs/work-log/0039-a-public-address-is-unique-only-once-published.md)). The editor saves
 any number and slug. Only publishing writes them to `publishedNumber` and `publishedSlug`, each
 unique together with the podcast, and retract, archive and restore keep them. The episode page
 shows the episode published at the address, else one its viewer may see by the typed slug, and a
@@ -332,7 +332,7 @@ log 0020) is in no list, count or preview, and a podcast's delete takes its free
 along.
 
 *Nová epizoda* creates a draft with the podcast's next number, the highest plus one (27d, log
-[0048](./work-log/0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md)),
+[0048](../../../docs/work-log/0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md)),
 and opens the editor, which saves as it goes under the edit hold. The first save with a title, a
 description or a link ends the empty draft. A taken number or address saves and is said at its
 field with *Použít …* (27f). A link saves as typed, without its platform name or with an invalid
@@ -343,7 +343,7 @@ address; only a fully empty row is not saved. With a title the episode always ha
 ## Podcast address
 
 A podcast's address is unique once published (#836, log
-[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)). A draft saves any
+[0039](../../../docs/work-log/0039-a-public-address-is-unique-only-once-published.md)). A draft saves any
 slug, an empty one included. Only publishing writes it to `publishedSlug`, which is unique, and
 retract, archive and restore keep it. The podcast page and its episode pages look the podcast up
 by the address it holds as published, else by the typed slug among the drafts and archived
@@ -364,7 +364,7 @@ episode drafts. An empty podcast draft (no `firstContentAt`, log 0020) is in no 
 preview, and its detail opens its editor.
 
 *Nový podcast* creates a draft and opens the editor, which saves as it goes under the edit hold
-(27e, log [0049](./work-log/0049-a-podcast-is-a-draft-created-on-click-with-its-cover-saved-on-its-own.md)).
+(27e, log [0049](../../../docs/work-log/0049-a-podcast-is-a-draft-created-on-click-with-its-cover-saved-on-its-own.md)).
 The first save with a title or a description, or a cover upload, ends the empty draft. The
 cover saves on its own as it is picked and is replaced, never removed by the editor. Like the
 issue's files, it uploads with one *Nahrává se · Zrušit* row and can be cancelled until it saves
