@@ -89,17 +89,16 @@ edited; the journal keeps its checksum and both refuse a database whose history 
 [docs/migrations.md](docs/migrations.md) has the layout, the commands and how the SQL is
 written.
 
-`lefthook` runs lint and format on commit, and lint, format, typecheck, the suite and doctor on
-push. `postinstall` writes the hooks by running
-`lefthook install`, and [pnpm-workspace.yaml](pnpm-workspace.yaml) refuses lefthook's own install
-script so that the step reads from this repository. A clone whose hooks never fire had its
-install scripts skipped: `pnpm exec lefthook install` is the fix.
-[ci.yml](.github/workflows/ci.yml) runs the PR title, the release version, lint, format,
-typecheck, the suite and doctor on every PR into `dev` or `main`, and the `branch-protection`
-ruleset requires them. Every merge into `main` is tagged
-with a version by [release.yml](.github/workflows/release.yml): `0.x` until the app runs on
-Fly.io, and from `v1.0.0` also a GitHub Release. See
-[docs/branching-model.md](docs/branching-model.md).
+Publikace is `apps/publikace` in the `cz.vednemesicnik` workspace. The root
+[lefthook.yaml](../../lefthook.yaml) runs lint and format on commit, and lint, format,
+typecheck, the suite and doctor on push, for Publikace's files. The root `postinstall` writes
+the hooks by running `lefthook install`, and the root
+[pnpm-workspace.yaml](../../pnpm-workspace.yaml) refuses lefthook's own install script. A clone
+whose hooks never fire had its install scripts skipped: `pnpm lefthook:install` at the root is
+the fix. [publikace.yml](../../.github/workflows/publikace.yml) runs `publikace-lint`,
+`publikace-format`, `publikace-typecheck`, `publikace-test` and `publikace-doctor` on every PR
+that touches Publikace, and the `branch-protection` ruleset requires them. Releases are the
+repository's. See [docs/branching-model.md](docs/branching-model.md).
 
 ## What the app will be
 

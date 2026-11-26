@@ -6,8 +6,9 @@
 
 A pnpm workspace. The root is the host server (`server.ts`, `server/`) that serves every
 application on the Fly machine, with the Docker, Fly and CI setup. The web, a React Router app,
-lives in [`apps/web`](./apps/web). The root scripts forward to it, so the commands below run
-from the root.
+lives in [`apps/web`](./apps/web), and Publikace, a Remix 3 app, in
+[`apps/publikace`](./apps/publikace). The root scripts forward to them (`pnpm app:dev` for the
+web, `pnpm publikace:app:dev` for Publikace), so the commands below run from the root.
 
 ## Development
 

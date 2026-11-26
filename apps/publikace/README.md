@@ -42,7 +42,9 @@ lists where design, product and code still disagree.
 ## Requirements
 
 - **Node 26 or newer.**
-- **pnpm 12.** The lockfile and the `packageManager` field expect it.
+- **pnpm 12.** The root lockfile and `packageManager` field of the `cz.vednemesicnik`
+  workspace expect it. Run `pnpm install` at the repository root; the commands below run
+  here in `apps/publikace`, or from the root as `pnpm publikace:<command>`.
 
 ```sh
 pnpm install
@@ -64,9 +66,8 @@ app will read.
 
 [AGENTS.md](AGENTS.md) is the guide for people and agents alike: the workflow skills, the rules,
 the house style and the data rules. [docs/branching-model.md](docs/branching-model.md) covers
-branches, merge methods, versions and releases: work goes to `dev` by squash, `dev` goes to
-`main` by a merge commit, and every merge into `main` is tagged with a version — `0.x` until
-the app runs on Fly.io, published on GitHub Releases from `v1.0.0`.
+branches, merge methods and releases: work goes to `dev` by squash, `dev` goes to `main` by a
+merge commit, and one release covers the whole repository.
 
 ## License
 
