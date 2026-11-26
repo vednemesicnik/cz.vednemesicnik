@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y openssl sqlite3
 # base stage, so the runtime image has pnpm available offline — the entrypoint
 # runs pnpm at startup. Keep the version in sync with the "packageManager" field
 # in package.json (the project's declared pnpm version).
-RUN npm install -g pnpm@12.16.1
+RUN npm install -g pnpm@12.18.0
 
 # Install all node_modules, including dev dependencies
 FROM base AS deps

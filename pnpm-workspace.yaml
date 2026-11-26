@@ -13,12 +13,28 @@ minimumReleaseAge: 0
 # over the network. Disabled to preserve pnpm 10 behavior (no pre-run check).
 verifyDepsBeforeRun: false
 
-# pnpm 11 replaces `onlyBuiltDependencies` (list) with `allowBuilds` (map).
+# pnpm 11 replaces `onlyBuiltDependencies` (list) with `allowBuilds` (map). An install
+# script is somebody else's code running on this machine, so anything new here is worth a
+# second look before it is allowed.
 allowBuilds:
   '@prisma/engines': true
   '@sentry/cli': false
   better-sqlite3: true
+  # esbuild links its platform binary in its install script; vite (web) and
+  # @remix-run/test (publikace) need it.
   esbuild: true
-  lefthook: true
+  # Refused, not merely left out: pnpm fails an install over a build script it skipped
+  # without being told to. lefthook's binary ships inside lefthook-<platform>, a package
+  # with no scripts, and the root `postinstall` runs `lefthook install` where it can be read.
+  lefthook: false
   prisma: true
   sharp: true
+
+# GHSA-g7r4-m6w7-qqqr: esbuild >= 0.27.3 < 0.28.1 allows arbitrary file read via its
+# development server on Windows. @remix-run/test (publikace) asks for ^0.27.1, which caps
+# at 0.27.x and so cannot reach the fix on its own — hence the override.
+#
+# Drop this once @remix-run/test asks for a range that already includes 0.28.x; an
+# override that outlives its cause silently pins the whole tree.
+overrides:
+  esbuild: '0.28.2'

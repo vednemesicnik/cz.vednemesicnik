@@ -13,9 +13,12 @@ apps/web/generated
 # Ignore environment variables
 **/.env
 
-# Ignore local data volumes (SQLite DB + image store)
+# Ignore local data volumes (SQLite DB + image store) and Publikace's local databases
 data
 apps/web/data
+apps/publikace/db/*.sqlite
+apps/publikace/db/*.sqlite-shm
+apps/publikace/db/*.sqlite-wal
 
 # Ignore local development files
 .idea
@@ -27,6 +30,7 @@ coverage
 # Ignore temporary files
 tmp
 temp
+apps/publikace/tmp
 
 # Ignore Docker files
 .dockerignore

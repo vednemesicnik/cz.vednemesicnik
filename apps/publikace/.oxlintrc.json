@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "import", "unicorn", "oxc"],
+  "env": {
+    "builtin": true,
+    "node": true
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": ["node_modules/**", "tmp/**", "public/**"],
+  "rules": {
+    "import/extensions": ["error", "always", { "ignorePackages": true }],
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports", "fixStyle": "separate-type-imports" }
+    ],
+    "no-var": "error",
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }]
+  }
+}

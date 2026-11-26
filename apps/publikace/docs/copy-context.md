@@ -1,0 +1,205 @@
+# Kontext pro copywriting
+
+Tenhle text je jediná věc, kterou copywriter o aplikaci ví, aniž by se ho někdo ptal. Je **jen ke
+čtení** — je to popis toho, co aplikace dělá (podle návrhu; část z toho už aplikace umí), a přepsat
+ho znamená přepsat aplikaci, ne text.
+
+Vede se v repozitáři jako `docs/copy-context.md` a copywriter ho dostává **celý v otevíracím tahu
+každého vlákna**: jeho nástroje `ask_*` neotevírají soubory. Když si všimneš, že něco tady nesedí
+s tím, co ti přišlo v otázce, **je to nález**: řekni to, neopravuj to.
+
+## Co je to za aplikaci
+
+Publikace je aplikace redakce studentského časopisu Vedneměsíčník na `publikace.vednemesicnik.cz`.
+Provází jedno vydání od založení po podklady pro tisk:
+
+- **Šéfredakce** (pár lidí, přihlášení přes Google) zakládá vydání, posílá redakci odkazy,
+  zakládá skupiny obrazových děl, vidí, kde je který článek a dílo, a rozhoduje o odpovědích,
+  kterým systém nerozuměl.
+- **Redakce** se nepřihlašuje. Dostane od šéfredakce odkaz (obvykle do WhatsAppu) a jím založí
+  článek. Otevírá ho většinou na telefonu ve vestavěném prohlížeči messengeru.
+- **Poskytovatel děl** (autor článku, ilustrátor, fotograf) je ten, koho formulář uvádí jménem
+  a e-mailem: dává souhlas s licencí odpovědí na e-mail. Díla za něj může nahrát i někdo jiný,
+  kdo má odkaz na nahrání obrazových děl, takže věta na stránce nepředpokládá, že nahrává sám.
+- **Korektoři** jsou pevná skupina lidí s vlastní skupinou Google. Přihlašují se přes Google
+  stejně jako šéfredakce a vidí jen stránku **Korektura** přes všechna otevřená vydání: vezmou si
+  korekturu článku, mohou ji zrušit a hotovou korekturu zakončí označením finální verze. Ostatní
+  obrazovky aplikace je odmítnou. Od aplikace
+  dostávají jediný e-mail, **ranní přehled**: jednou denně mezi 7:00
+  a 8:00, a jen v den, kdy přibylo nové předání nebo šéfredakce zrušila předání, o kterém už
+  korektoři z přehledu věděli. Přehled pak nese i články, které stále čekají na korekturu.
+  Adresu korektorů nastavuje a mění jen správce v Nastavení › Korektura. Ta adresa určuje i to,
+  kdo se jako korektor přihlásí. Dokud chybí, předání se zapíše, jen přehled neodejde a žádný
+  korektor se nepřihlásí.
+
+Psaní a korektura probíhají v dokumentu Google, mimo aplikaci. Kdo text dopíše (autor nebo
+redaktor), **dá vědět šéfredakci** a ta článek v detailu vydání **předá ke korektuře**: článek je
+pak _Dopsáno_. Omyl šéfredakce napraví _Zrušit předání_. Po kliknutí nic neodchází, korektoři se
+o předání dozvědí z ranního přehledu, a proto obojí jde hned vrátit. Korektor si článek vezme na
+stránce Korektura (_Vzít si korekturu_) a omyl napraví _Zrušit korekturu_; i to jde hned vrátit.
+Hotovou korekturu korektor zakončí na téže stránce krokem _Označit finální verzi…_, jediným s
+dialogem: aplikace uloží dokument jako PDF, každému autorovi zapíše redakční doložku _K odeslání_
+a článek je _K souhlasu_. Šéfredakce smí krok udělat za korektora. Kliknutí samo nic neposílá:
+e-mail s PDF a doložkou pošle autorům úloha na pozadí při dalším běhu, nejdéle do 30 minut, a
+dokud si úloha doložky nevezme, jde krok zrušit (_Zrušit finální verzi_). Pak už to nejde.
+Dokument nese jen text: v dokumentech vydání z aplikace není žádné menu, odkaz ani doplněk, takže
+text, který autor čte, žádnou položku v dokumentu nejmenuje.
+
+Souhlas s finální verzí textu i s užitím děl se dává **odpovědí přesně „Souhlasím“** na e-mail.
+Jiná odpověď jde ke kontrole šéfredakci. Autor článku tím souhlasí s **redakční doložkou**
+v e-mailu, tedy nejen s textem finální verze: i s jejím zveřejněním, s licencí pro časopis,
+s jazykovými úpravami a zkrácením a s tvarem jména v podpisu.
+
+**Komentáře a návrhy úprav** v dokumentu píše kdokoli, kdo ho má otevřený, nejčastěji při
+korektuře, až je text dopsaný. Autorům o nich chodí souhrnný e-mail, a jen když v některém jejich
+článku přibylo něco nového: co přibude mezi dvěma běhy úlohy, spojí do jednoho. Kolikrát denně
+úloha běží, texty pro autora neříkají. E-mail říká, _že_ v článku přibyly komentáře,
+odpovědi nebo návrhy úprav, ne _co_ v nich je: u každého článku má odkaz do dokumentu. Komentáře
+a odpovědi autorů článku do něj nejdou; návrhy úprav autora nemají, takže jdou všechny. Tomu
+všemu e-mail říká **připomínky**.
+
+## Termíny: co se nesmí přejmenovat
+
+| Termín                      | Význam                                                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------------------- |
+| **vydání**                  | Připravované číslo časopisu, `VDM_2026_5`. Ne „číslo“: to je na webu hotový výtisk.                 |
+| **článek**                  | Text s autory a dokumentem Google.                                                                  |
+| **skupina obrazových děl**  | Obrázky k více textům, které nepatří k jednomu článku. Obálku ani zadní stranu časopis neilustruje. |
+| **obrazové dílo**, **dílo** | Jeden nahraný obrázek. V nadpisech „obrazová díla“, v běžné větě „dílo“.                            |
+| **poskytovatel**            | Koho formulář uvádí a kdo dává souhlas. **Autor díla** je jen jméno do podpisu.                     |
+| **souhlas**                 | Odpověď „Souhlasím“ na e-mail. Nikdy „schválení“ pro to, co dělá autor.                             |
+| **redakční doložka**        | Text v e-mailu s finální verzí, se kterým autor souhlasí. Viz níže.                                 |
+| **podklady pro tisk**       | Složka pro grafika se schválenými texty a díly. Viz níže.                                           |
+| **odkaz**                   | Adresa, která umí jednu věc: založit článek, nebo nahrát díla.                                      |
+| **šéfredakce**              | Lidé s přístupem do aplikace. Ne „administrátor“, ne „admin“.                                       |
+| **správce**                 | Šéfredaktor, který smí měnit přístup. Ne „admin“.                                                   |
+| **přístup**                 | Kdo se smí přihlásit: jmenované účty a skupiny Google. Ne „oprávnění“.                              |
+| **připojit**, **připojení** | Trvalé spojení aplikace s účtem `publikace.app@`. Ne „přihlásit“: to dělá šéfredakce.               |
+
+**Podklady pro tisk** plní úloha na pozadí _Podklady pro tisk_, každých 6 hodin. Pro vydání založená
+v aplikaci je zatím jen navržená a nikde neběží, takže text o podkladech slibuje jen to, co jí aplikace
+předá: při každém běhu aktuální názvy, poznámky pro grafika a díla se souhlasem. Do složky kopíruje
+schválené texty, tedy poslední verzi, se kterou souhlasili všichni autoři, a díla se souhlasem.
+Text upravený po schválení zůstává ve složce v poslední schválené verzi. Aplikace ví jen to, co
+úloha naposledy ohlásila: detail vydání ukazuje počet a čas posledního celého běhu, ne živý obsah
+složky. Uzavřené vydání úloha přeskakuje.
+
+**Skupina Google v Přístupu** neznamená, že se přihlásí každý její člen. Přihlásí se jen člen,
+který má účet na doméně redakce; skupina může mít i členy s jinou adresou a ti se nepřihlásí nikdy.
+Věta o skupině proto netvrdí, že _členové mají přístup_. Skupina má název z Google Workspace, který
+aplikace přebírá, jak je, a nezná ho vždy; bez něj ji jmenuje adresou.
+
+**Co aplikace smí dělat s Diskem účtu `publikace.app@`** se neříká přístupem ani oprávněním, ale
+činností: _povolit aplikaci pracovat se soubory na Disku_. _Povolení_ pak odkazuje jen na tuto
+činnost. _Přístup_ zůstává jen pro to, kdo se smí přihlásit.
+
+**Redakční doložka** má dva významy a oba se jmenují stejně:
+
+- **Text v e-mailu**, který dostane každý autor článku s PDF finální verze. Autor jím potvrzuje,
+  že se s verzí seznámil a souhlasí s jejím zveřejněním, že je autorem a nikdo jiný nemá k dílu
+  práva, která by užití bránila, že spolku dává bezúplatnou nevýhradní licenci (tisk, web,
+  archiv, sociální sítě), že souhlasí s jazykovými úpravami a zkrácením a s uvedením jména
+  v daném tvaru. Je to licence a její znění zůstává slovo od slova jako ve skriptu; kolem ní se
+  smí měnit jen převod do vykání.
+- **Záznam souhlasu jednoho autora.** Každý autor má k článku svou doložku se stavem (_K
+  odeslání_, _Čeká na odpověď_…). V Evidenci je list _Redakční doložky_ s řádkem za každého
+  autora a rozbalený řádek článku v detailu vydání ukazuje doložky autorů po jednom.
+
+## Stavy: přesná jména
+
+Štítky, jak je aplikace ukazuje (zdroj pravdy je stránka `01 Stavy a souhlasy` v návrhu):
+
+- Článek: _Píše se_, _Dopsáno_, _Korektura_, _K souhlasu_, _Ke kontrole_, _Schváleno_, _Upraveno
+  po schválení_, _Chyba_. _Dopsáno_ znamená, že je článek předaný ke korektuře a žádný korektor
+  zatím neoznačil, že na něm pracuje. _Korektura_ znamená, že korektura probíhá. _K souhlasu_
+  znamená, že finální verze jde autorům a čeká se na „Souhlasím“ od každého z nich.
+- Obrazové dílo: _Zpracovává se_, _U poskytovatele_, _Ke kontrole_, _Schváleno_, _Chyba_.
+- Vydání: _Nedokončené_, _Aktivní_, _Uzavřené_.
+
+V Evidenci (tabulka na Disku) mají stavy jiná jména (_Rozpracováno_, _Čeká na odpověď_,
+_Souhlas udělen_…). Šéfredakce je zná z tabulky; aplikace je v textu nepoužívá, kromě míst, kde
+výslovně mluví o tabulce. Výjimka: _Dopsáno_ se v Evidenci jmenuje stejně.
+
+## Hlas
+
+- **Aplikace vyká** a mluví neosobně, bez omluv. Nemá já ani osobnost.
+- **E-maily a stránky z odkazu mluví za redakci** a smějí mít _my_ („Na ‹e-mail› jsme poslali
+  žádost o souhlas.“). Hlášky aplikace _my_ nemají.
+- **E-maily vykají, ale přátelsky.** Čtou je členové redakce, se kterými se známe, a zároveň
+  mluví za časopis: tón je slušný, reprezentativní a trochu formální, ne úřední. Začínají „Dobrý
+  den“ jako e-maily v návrhu: uvítání autorů, žádost o souhlas s díly, e-maily korektorům,
+  finální verze s redakční doložkou.
+- **Text nese to, co čtenář potřebuje teď.** Platí pro e-mail, obrazovku, stránku z odkazu,
+  toast i nápovědu u pole. Teď potřebuje dvojí: co ovlivní rozhodnutí, které právě dělá, a co ho
+  dovede k místu, kde dostane další informace. O tom, co ho čeká dál, rozhoduje jedna otázka:
+  **řekne mu to později jiné místo, až to bude potřebovat?**
+  - **Ano** (další e-mail, jiná obrazovka, krok, na který teprve dojde): text to neohlašuje.
+    Pozdější místo to řekne samo, až je na řadě. Uvítání autora proto nepopisuje finální verzi
+    ani odpověď „Souhlasím“; o tu požádá až e-mail s finální verzí. Toast po kliknutí neslibuje
+    e-mail, který odejde až zítra.
+  - **Ne**: text to řekne celé hned, protože jinde to čtenář neuslyší. Hláška u _Spustit teď_
+    proto říká, že opakovaný přehled může přijít podruhé, a nápověda u adresy korektorů, že
+    další přehled jde na novou adresu, i když se spustí ručně.
+- **Aplikace ví, že e-mail odešel, ne že došel.** Věta smí říct _odešel_, nikdy _korektoři
+  dostali_ ani _vědí_. A když se e-mail vrátí jako nedoručitelný, neprokazuje to špatnou adresu:
+  skupina Google může odmítat zprávy z `publikace@`, i když adresa platí.
+- **Chybová věta začíná tím, co udělat**: _Zkraťte název na nejvýš 200 znaků._, _Vyberte obrázek
+  do 15 MB — ples.tif má 22 MB._ Výjimka: když udělat nejde nic, věta řekne, co platí.
+- **Nikdy nepojmenuje stroj.** Žádná tabulka, řádek, server, token, metadata. Výjimka:
+  **Registr** a **Evidence** jsou dokumenty, které šéfredakce zná jménem a v nichž dohledává
+  licence, takže se smějí jmenovat, i jako tabulky, když se o nich mluví jako o dokumentu. Popis
+  vnitřního provozu (fronta, zápis, přepis) tuhle výjimku nemá. Skutečný ovládací prvek se
+  jmenuje přesně, jak se jmenuje, i se zakázaným slovem.
+- **Aplikace nezná rod.** O člověku ví jen adresu a po přihlášení jméno z Googlu. Věta o něm nesmí
+  rod ani pád jména odhadovat: _poslední přihlášení včera_, _účet přidán 10. 11. 2026_, ne
+  _přihlásila se_, ne _Odebrat Jakuba?_
+- **Čas dalšího běhu úlohy aplikace jen odhaduje.** Úlohy na pozadí spouští Google v intervalu,
+  ale minutu si volí sám, takže věta smí slíbit jen přibližný čas. U úlohy, která se neozývá,
+  aplikace žádný další běh neslibuje: ví jen, že hlášení nepřichází, ne jestli úloha běží.
+- Kratší vyhrává, ale nikdy za cenu tvrzení, které není pravda.
+
+## Formáty a typografie
+
+- Datum v aplikaci `14. 11. 2026`, čas `9:12`. V e-mailech totéž. V aktuálním roce smí rok
+  odpadnout: _zjištěno 14. 11. v 8:12_, _naposledy 10. 11._
+- Před časem se píše „ve“ u hodin 2, 3, 4, 12, 13, 14 a 20–23, jinak „v“: _ve 2:15_, _ve 13:30_,
+  _ve 21:47_, _v 9:12_, _v 18:04_. Platí v aplikaci i v e-mailech. Je to konvence Publikace, ne
+  obecné pravidlo češtiny.
+- Počet souhlasících autorů se píše _souhlas N z/ze M autora/autorů_. „Ze“ se píše při M = 2, 3,
+  4, 6 a 7, jinak „z“, protože rozhoduje výslovnost čísla ve 2. pádě („ze dvou“, „z pěti“). Při
+  M = 1 je tvar „autora“, při M = 2 až 10 „autorů“: _souhlas 0 z 1 autora_, _souhlas 1 ze 2
+  autorů_, _souhlas 2 z 5 autorů_. N tvar ani předložku nemění a „souhlas“ zůstává v jednotném
+  čísle. Platí pro tuto řádku a pro 1 až 10 autorů, ne jako obecné pravidlo skloňování.
+- „Z“ před časem nebo datem (_čtení z 9:12_) se mění na „ze“ podle výslovnosti: před hodinami
+  2, 3, 4, 6, 7, 12, 13, 14, 16, 17 a 20–23, a stojí-li tam datum, rozhoduje jen den, „ze“ před
+  dny 2, 3, 4, 6, 7, 12, 13, 14, 16, 17 a 20–31: _čtení ze 7:05_, _čtení ze 22. 11. v 9:12_,
+  _čtení z 18. 11. ve 12:00_. Konvence Publikace jako „v/ve“.
+- Časové okno se píše rozsahem: _9:00–10:00_.
+- Pomlčka ve větě je em dash `—` s mezerami.
+- Uvozovky české „…“.
+- V e-mailech zůstává jednopísmenná předložka nebo spojka (_v, s, k, z, o, u, a, i_) na řádku se
+  slovem za ní. Zařídí to aplikace a skripty, v textu se píše obyčejná mezera. Jméno nebo název,
+  které někdo zadal, zůstávají, jak je zadal.
+
+## Co v otázce nikdy nebude
+
+Žádná skutečná data. Jména jsou vymyšlená, odkazy a ID na Disku smyšlené. Repozitář je veřejný.
+Adresy stojí na dvou doménách `.test`, které nikdo nezaregistruje a na které žádný e-mail nedojde:
+
+- **`vednemesicnik.test`** pro redakci: šéfredaktory, účty a skupiny v Přístupu. Ve skutečnosti
+  přihlášení pustí jen adresu `@vednemesicnik.cz`; ukázka na ni míří, ale nikoho skutečného
+  nejmenuje.
+- **`external.test`** pro všechny zvenku: autory, poskytovatele a adresu, kterou přihlášení
+  odmítne.
+
+Vlastní účty aplikace (`publikace.app@vednemesicnik.cz`, `publikace@vednemesicnik.cz`) jsou
+skutečné a smějí se jmenovat, když je text na obrazovce jmenuje.
+
+Když v otázce uvidíš něco, co vypadá jako skutečný záznam, **je to nález** — řekni to.
+
+## Jak má vypadat odpověď
+
+- **Dvě nebo tři varianty**, ne jedna. U každé, co získává a co obětuje.
+- **Termín se smí napadnout, ale musí se pojmenovat** — a s důvodem.
+- Když věta nemůže být pravdivá a krátká zároveň, **řekni to** a nech rozhodnout.
+- Když otázka nenese kontext, který by odpověď rozhodl, **zeptej se** místo hádání.

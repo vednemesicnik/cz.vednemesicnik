@@ -1,0 +1,41 @@
+# The browsers this app promises to work in.
+#
+# `[production]` is the truthful minimum: the versions the app already needs, and not one
+# step higher. Two CSS features set it, both of them load-bearing rather than decorative:
+#
+#   light-dark()  Chrome 123 · Firefox 120 · Safari 17.5 · Samsung 27
+#                 52 uses in `app/ui/tokens.ts` — the entire semantic colour layer. Below
+#                 this every one of them is invalid and the colour falls back to inherited.
+#   pow()         Chrome 120 · Firefox 118 · Safari 15.4
+#                 9 uses in `app/ui/tokens.ts` — every step of the app's type scale except
+#                 `md`, which is `1rem` itself. Written as
+#                 `calc(1rem * pow(var(--type-scale-ratio), n))` so that changing a ratio
+#                 recomputes the row rather than leaving thirty stale literals behind.
+#
+# `light-dark()` is therefore the binding one, and **Safari is the binding browser**: it
+# ships with macOS and cannot be updated on its own, so raising this line is not asking
+# somebody to update a browser, it is asking them to update their computer. That is the
+# reason this floor is the minimum rather than something roomier — a promise that is
+# already untrue on the day it is written is worse than no promise, and one that is
+# needlessly high locks people out for a feature nobody used yet.
+#
+# `[development]` is our own machines, so it may as well be the newest thing; `not dead`
+# is not optional there, because `last 1 version` on its own still answers `ie 11`.
+#
+# Nothing enforces the CSS floor. The stylesheet never passes through a build step —
+# `css()` emits it during SSR and `tokens.ts` is a template string — so `light-dark()` and
+# `pow()` are kept by reading, not by tooling. The one place a version does bite is the
+# islands' JavaScript, which `app/browser-support.ts` compiles against the production
+# floor below, in development too: what gets tested should be what ships.
+
+[production]
+chrome >= 123
+edge >= 123
+firefox >= 120
+safari >= 17.5
+ios_saf >= 17.5
+samsung >= 27
+
+[development]
+last 1 version
+not dead

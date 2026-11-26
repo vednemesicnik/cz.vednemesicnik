@@ -1,0 +1,36 @@
+---
+name: Issue
+about: Something an application does wrong, or does not do yet
+title: ''
+---
+
+<!-- The title is one plain English sentence about the problem, not a commit subject:
+     "An act that dies in flight leaves the card open and says nothing", never
+     "fix(card): …". Name the area inside the sentence when it matters.
+
+     A proposal goes through /review-idea before it gets here, and its answers become this body.
+     Check first that no open issue would carry it, and that it is the size of one PR. For
+     Publikace, until v1.0.0, label it `can wait` when the release does not need it —
+     apps/publikace/docs/workflow-skills.md § Filing an issue.
+     Headings are a skeleton, not a form — rename, merge or drop them when the issue reads
+     better without. -->
+
+<!-- Where this comes from, in a sentence or two: the issue, PR or design answer it follows. -->
+
+## Today
+
+<!-- What the application does now, with the file and the lines that do it. What the reader
+     sees. -->
+
+## What it has to do
+
+<!-- The mechanism, and what each surface gets: who reads each screen, page or e-mail. Cite
+     the drawing by file and anchor (`12b`, `21b` column 2); if it is not drawn, that is
+     /ask-design first, not a section here. -->
+
+## Not in scope
+
+<!-- What a planner might reasonably fold in, and why it stays out. -->
+
+<!-- One step of an epic: link it as a sub-issue after creating it — "Part of #n" in the body
+     is only a cross-reference. -->

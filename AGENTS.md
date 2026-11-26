@@ -16,10 +16,16 @@ A pnpm workspace (`pnpm-workspace.yaml`, `packages: ['apps/*']`), one lockfile:
   branching, work log).
 - **The web lives in `apps/web`** (package `web`): the React Router app, its Prisma schema and
   migrations, public files, configs and its own docs in `apps/web/docs/`.
+- **Publikace lives in `apps/publikace`** (package `publikace`): a Remix 3 app on `node:sqlite`
+  with its own tools (oxlint, oxfmt, `remix test`, `remix doctor`) and its own guide,
+  [apps/publikace/AGENTS.md](apps/publikace/AGENTS.md). Biome and the rules below are the
+  web's and the host's; they do not apply to Publikace. It is not served yet
+  (vednemesicnik/cz.vednemesicnik.publikace#79).
 
 Run commands from the root: its scripts forward to the web (`pnpm app:dev` runs
-`pnpm --filter web app:dev`), and the web's scripts run with `apps/web` as the working
-directory. Web paths in the skills and rules (`app/…`, `prisma/…`, `.storybook/…`) are relative
+`pnpm --filter web app:dev`) and to Publikace (`pnpm publikace:test` runs
+`pnpm --filter publikace test`), and each application's scripts run with its own folder as the
+working directory. Web paths in the skills and rules (`app/…`, `prisma/…`, `.storybook/…`) are relative
 to `apps/web`. In the image the repository sits under `/srv` (`/srv/server.ts`,
 `/srv/apps/web`).
 
@@ -63,8 +69,10 @@ to no application: `repo-lint` (the lockfile, Biome outside `apps/`), `host-type
 `host-test` and `image` (the one Docker image). On a pull request each job runs only when
 its files change: a `dorny/paths-filter` job and a job-level `if:`, never `on.paths`, since a
 skipped job passes a required check and a workflow that never starts leaves it "expected".
-`deploy.yml` calls both workflows, with every job running. A new application gets its own
-workflow, with jobs named `<app>-…`.
+`.github/workflows/publikace.yml` checks Publikace: `publikace-lint`, `publikace-format`,
+`publikace-typecheck`, `publikace-test`, `publikace-doctor`. `deploy.yml` calls every
+workflow, with every job running. A new application gets its own workflow, with jobs named
+`<app>-…`.
 
 ### Git Hooks
 
