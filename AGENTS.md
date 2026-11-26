@@ -125,6 +125,15 @@ target `dev` in the PR. A small follow-up goes straight to a PR without an issue
 branch without a number (e.g. `ci/pr-title-check`). Releases (`dev → main`) and hotfixes
 target `main`. See `docs/_branching-model.md` for the full flow and merge-method conventions.
 
+### Issues
+
+One repository holds the issues of every application, told apart by labels: `web` for the web,
+`publikace` for Publikace, both for the host or the repository's own work (CI, Docker, the agent
+setup). Every issue is opened with its organisation type and its label in one command
+(`gh issue create --type Bug|Feature|Task --label web|publikace`), and work on an app lists its
+own (`gh issue list --label publikace`). A new application gets a label of its own.
+[docs/\_workflow-skills.md](docs/_workflow-skills.md) § The issue's type and status has the rest.
+
 ### Releases
 
 One Fly app, one image and one deploy for every application: a release is one `dev → main`

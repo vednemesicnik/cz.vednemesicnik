@@ -50,6 +50,12 @@ Every issue carries a type from the organisation: _Bug_ when the app does someth
 it should, _Feature_ when it does not yet do what the design draws, _Task_ for a deployment, a
 job to set up or anything else that is work rather than behaviour.
 
+Every issue also carries the **label of its application**, `web` or `publikace`, and both when
+the work is the host's or the repository's own (CI, Docker, the agent setup). Type and label go
+on in the same command, `gh issue create --type Feature --label publikace`, and an issue opened
+without them gets them at once with `gh issue edit <n> --type … --add-label …`. A skill that
+lists or picks issues keeps the ones of the app it works in: `gh issue list --label publikace`.
+
 Its status on GitHub follows the line of skills, and the _Active_ tab of the issue list shows
 what is _Todo_, _In progress_ or _In review_:
 
@@ -73,7 +79,7 @@ holds the context and the user does not. It reports what it filed, what it added
 and what it left out, one line each.
 
 **1. Does an open issue carry it already?** Read the open issues by their bodies, not only their
-titles (`gh issue list --limit 100`, then `gh issue view` on the ones near it). Work the same PR
+titles (`gh issue list --label <app> --limit 100`, then `gh issue view` on the ones near it). Work the same PR
 would touch anyway — the same screen, the same flow, the same files, the same blocker — goes into
 that issue as a comment saying what it adds and why it belongs there. When it widens what the
 issue is about, the title is rewritten to cover both, and a `can wait` issue that takes on

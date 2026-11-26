@@ -11,7 +11,7 @@ allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*)
 
 ## Open issues
 
-!`gh issue list --limit 60`
+!`gh issue list --limit 60 --json number,title,labels --template '{{range .}}{{.number}}  [{{range .labels}}{{.name}} {{end}}]  {{.title}}{{"\n"}}{{end}}'`
 
 ## Recent work
 
@@ -111,8 +111,9 @@ describes, then give the verdict.
 - **Write the issue.** Every question answered with evidence. The answers become the issue (in
   English): 1–2 the motivation, 4 the mechanism, 6 what each surface gets, 7 the design
   citations, 8–9 its security section, plus acceptance-criteria checkboxes. It names its type —
-  _Bug_, _Feature_ or _Task_ ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The
-  issue's type and status) — which sections of the written design it changes and in what words,
+  _Bug_, _Feature_ or _Task_ — and carries its app's label, `web` or `publikace` (both for the
+  host or the repository), in the same `gh issue create`
+  ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and status) — which sections of the written design it changes and in what words,
   and which review finding it resolves: the documents change in the same PR as the code. Before
   writing, put the three questions of § Filing an issue to it: an open issue that carries the work
   gets a comment instead (its title rewritten if the scope widens); work the size of two PRs is

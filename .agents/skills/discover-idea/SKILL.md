@@ -11,7 +11,7 @@ allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*), Ar
 
 ## Open issues
 
-!`gh issue list --limit 80 --json number,title --template '{{range .}}{{.number}}  {{.title}}{{"\n"}}{{end}}'`
+!`gh issue list --limit 80 --json number,title,labels --template '{{range .}}{{.number}}  [{{range .labels}}{{.name}} {{end}}]  {{.title}}{{"\n"}}{{end}}'`
 
 ## Closed issues — including the ones that were refused
 
@@ -39,9 +39,9 @@ before reading, which surfaces the area covers: the design documents, the sectio
 design, the directories and routes of the app. An area that turns out to be the whole app is not
 an area — ask for a narrower one.
 
-The issues of every app share this repository and carry no app label, so the lists above hold
-both. Keep the ones whose body names this area's surfaces or files (`gh issue view` on the ones
-near it).
+The issues of every app share this repository, and each carries its app's label (`web`,
+`publikace`; both for the host or the repository). Keep the ones labelled with this area's app,
+then those whose body names its surfaces or files (`gh issue view` on the ones near it).
 
 ### Phase 1 — Read before inventing
 

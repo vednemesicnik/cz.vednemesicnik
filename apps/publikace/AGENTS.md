@@ -231,7 +231,7 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   keeps the cutover from happening. Everything else — polish, a departure from the drawing that
   misleads nobody, a convenience, a second way to do something that already works — is labelled
   **`can wait`**: would the newsroom switch the scripts off without it? If yes, it can wait. The
-  label goes on in the same command as the type (`gh issue create --type Feature --label "can
+  label goes on in the same command as the type (`gh issue create --type Feature --label publikace --label "can
   wait"`). `/next-issue` picks a `can wait` issue only once no issue the release needs can be
   worked on, then the oldest first. From `v1.0.0` on the label is no longer given, and the
   issues still carrying it are weighed again as ordinary work.
@@ -278,7 +278,7 @@ Rules and bind Publikace as well, and the web's rules never apply here.
   would carry it gets a comment instead, it is the size of one PR, and until `v1.0.0` one the
   release does not need is labelled `can wait`. The agent decides and files; it does not ask the
   user to pick follow-ups.
-- An issue is opened with its type in the same command, `gh issue create --type Bug` (or
+- An issue is opened with its type in the same command, `gh issue create --type Bug --label publikace` (or
   `Feature`, `Task`), whichever skill or session files it. The types are defined in
   [docs/\_workflow-skills.md](../../docs/_workflow-skills.md). One opened without it gets it at once with
   `gh issue edit <n> --type …`.
