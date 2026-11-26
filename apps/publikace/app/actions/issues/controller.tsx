@@ -216,8 +216,8 @@ import {
   GROUP_LINK_RENEWED_TOAST,
   groupLinkChangedMeanwhileToast,
   LINK_CHANGED_MEANWHILE_TOAST,
-  renewGroupLinkClosedToast,
   renewGroupLinkTitle,
+  renewLinkClosedToast,
   RENEWED_TOAST,
   shareText,
   shownUrl,
@@ -2414,7 +2414,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
             flashGroupChanged(context.get(Session), group.id)
             return back()
           case 'closed':
-            flashToast(context, renewGroupLinkClosedToast(outcome.issueName))
+            flashToast(context, renewLinkClosedToast(outcome.issueName))
             return back()
           case 'gone':
             flashToast(context, GROUP_LINK_GROUP_REMOVED_TOAST)
@@ -2646,8 +2646,12 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
 
       async renewLink(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
-        if (issue === null || issue.completedAt === null || issue.closedAt !== null)
-          return notFound()
+        if (issue === null || issue.completedAt === null) return notFound()
+        /* Closed while the dialog was open: the detail says so, as for a group's link (`02g`). */
+        if (issue.closedAt !== null) {
+          flashToast(context, renewLinkClosedToast(issue.name))
+          return redirect(routes.issues.show.href({ name: issue.name }), 303)
+        }
         let outcome = await articlesOf(context).links.renew(
           issue.id,
           formText(context, 'shownKey'),

@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import { createArticleStore } from '../../data/articles.server.ts'
+import { createIssueStore } from '../../data/issues.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
 import { now } from '../../domain/time.ts'
 import {
@@ -401,6 +402,30 @@ describe('the link and the articles in the detail (12a, 12c, 02d)', () => {
       )
       assert.ok(detail.includes('vdm-changed'))
       assert.equal(await validKey(), renewed)
+    }))
+
+  it('goes back to the detail with the reason when the issue closed under the dialog', () =>
+    withLink(async ({ app, editor, key, visitor }) => {
+      assert.equal((await editor.get('/issues/VDM_2026_5/link/renew')).status, 200)
+      let issues = createIssueStore(app.database)
+      let issue = await issues.findByName('VDM_2026_5')
+      assert.ok(issue !== null)
+      await issues.close(issue.id, now())
+
+      /* The token comes from the detail, as for a dialog left open: the dialog no longer opens. */
+      let answered = await editor.post(
+        '/issues/VDM_2026_5/link/renew',
+        { shownKey: key },
+        '/issues/VDM_2026_5',
+      )
+      assert.equal(answered.status, 303)
+      assert.equal(answered.headers.get('Location'), '/issues/VDM_2026_5')
+      let detail = await (await editor.get('/issues/VDM_2026_5')).text()
+      assert.ok(
+        textOf(detail).includes('Vydání VDM_2026_5 je uzavřené. Nový odkaz už nejde vydat.'),
+      )
+      assert.equal((await createLinkStore(app.database).articleLinkOf(issue.id))?.key, key)
+      assert.equal((await visitor.get(`/l/${key}/article`)).status, 410)
     }))
 
   it('refuses a renewal sent without the form’s token, keeping the link', () =>

@@ -146,7 +146,8 @@ export function groupLinkChangedMeanwhileToast(name: string): string {
   return tied`Odkaz ke skupině „${name}“ se mezitím změnil. Aktuální odkaz můžete zkopírovat.`
 }
 export const GROUP_LINK_GROUP_REMOVED_TOAST = tied`Skupina už je odebraná.`
-export function renewGroupLinkClosedToast(issueName: string): string {
+/** An issue closed while the dialog was open, for the newsroom's link (`02d`) and a group's alike. */
+export function renewLinkClosedToast(issueName: string): string {
   return tied`Vydání ${issueName} je uzavřené. Nový odkaz už nejde vydat.`
 }
 
