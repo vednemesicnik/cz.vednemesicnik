@@ -63,11 +63,15 @@ pre-commit:
     # results are re-staged rather than only failing at pre-push.
     publikace-format:
       root: apps/publikace/
-      glob: "apps/publikace/**/*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}"
+      glob:
+        - "apps/publikace/*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}"
+        - "apps/publikace/**/*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}"
       run: pnpm exec oxfmt {staged_files} --write
       stage_fixed: true
     publikace-lint:
       root: apps/publikace/
-      glob: "apps/publikace/**/*.{js,ts,cjs,mjs,jsx,tsx}"
+      glob:
+        - "apps/publikace/*.{js,ts,cjs,mjs,jsx,tsx}"
+        - "apps/publikace/**/*.{js,ts,cjs,mjs,jsx,tsx}"
       run: pnpm exec oxlint {staged_files} --fix --max-warnings=0
       stage_fixed: true
