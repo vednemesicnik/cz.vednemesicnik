@@ -132,6 +132,10 @@ One repository holds the issues of every application, told apart by labels: `web
 setup). Every issue is opened with its organisation type and its label in one command
 (`gh issue create --type Bug|Feature|Task --label web|publikace`), and work on an app lists its
 own (`gh issue list --label publikace`). A new application gets a label of its own.
+Publikace's issues are also ordered by the org project
+[Publikace (7)](https://github.com/orgs/vednemesicnik/projects/7) — `Priority` decides, age breaks
+a tie — and an application that gets a project names it in its own `AGENTS.md`; the web has
+none yet.
 [docs/\_workflow-skills.md](docs/_workflow-skills.md) § The issue's type and status has the rest.
 
 ### Releases

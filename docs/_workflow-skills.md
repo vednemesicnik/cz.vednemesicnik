@@ -82,8 +82,8 @@ and what it left out, one line each.
 titles (`gh issue list --label <app> --limit 100`, then `gh issue view` on the ones near it). Work the same PR
 would touch anyway — the same screen, the same flow, the same files, the same blocker — goes into
 that issue as a comment saying what it adds and why it belongs there. When it widens what the
-issue is about, the title is rewritten to cover both, and a `can wait` issue that takes on
-something the release needs loses the label. A new issue is for work no open one would carry.
+issue is about, the title is rewritten to cover both, and its priority is weighed again
+(§ Ordering by a project). A new issue is for work no open one would carry.
 
 **2. Is it the size of one PR?** An issue is one change a reviewer reads in one sitting and the
 application can ship on its own: one behaviour on its surfaces, one job, one fix with its cause.
@@ -97,9 +97,38 @@ application can ship on its own: one behaviour on its surfaces, one job, one fix
 - **A bug no open issue carries is filed however small it is.** The size rule folds work into
   other issues; it never drops it.
 
-**3. Does the release need it?** Each application weighs this its own way, and its `AGENTS.md`
-§ For the workflow skills says how — Publikace, until its `v1.0.0`, labels what the release
-does not need `can wait`.
+**3. How much does it matter?** Each application weighs this its own way, and its `AGENTS.md`
+§ For the workflow skills, **Issue weighing**, says how. An application with a project gives
+every new issue a priority there (§ Ordering by a project); the skill filing it decides the
+priority itself and says why in a sentence.
+
+## Ordering by a project
+
+An application may order its issues in an organisation GitHub Project; its **Issue weighing**
+names the project's number (Publikace: 7). The project has a `Priority` field (P1, P2, P3, each
+app's Issue weighing says what they mean) and a `Status` field (Todo, In Progress, Done).
+
+- **Order.** Priority decides; among the same priority the older issue goes first; a real
+  blocker still holds, so an issue that waits on another one, on a hand step or on a decision
+  of the user's waits whatever its priority. `/next-issue` reads the order from
+  `gh project item-list <n> --owner vednemesicnik --format json --limit 200` and skips items
+  whose Status is Done.
+- **Filing.** Open the issue with its type and label, then add it and set its Priority:
+
+  ```sh
+  gh project item-add <n> --owner vednemesicnik --url <issue-url> --format json --jq .id     # the item id
+  gh project view <n> --owner vednemesicnik --format json --jq .id                         # the project id
+  gh project field-list <n> --owner vednemesicnik --format json                            # field and option ids
+  gh project item-edit --id <item-id> --project-id <project-id> --field-id <priority-field-id> --single-select-option-id <option-id>
+  ```
+
+  Look the field and option ids up each time; they are never written into a skill.
+- **Status.** `/implement-issue` sets the item to In Progress when it starts on the branch, the
+  same way, with the Status field; closing the issue moves it to Done through the project's own
+  workflow.
+
+An application without a project (the web, for now) orders by the three questions above and its
+label alone. A new project belongs in its application's `AGENTS.md`, never in a skill.
 
 ## Where each one stops, and why
 

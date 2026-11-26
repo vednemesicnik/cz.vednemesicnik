@@ -224,17 +224,22 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   scopes (`agents`, `skills`, `docs`).
 - **Rules** — Publikace's rules (§ Agent Rules below) and the repository's shared rules; the
   `remix` skill and `modern-web-guidance`.
-- **Issue weighing** — until `v1.0.0`, the release that first runs on Fly.io and lets the
-  newsroom switch the scripts off, every issue is weighed against it. The release needs an
-  issue when without it the app cannot do its job for the newsroom, loses or corrupts data,
-  sends a wrong e-mail, leaves a door [docs/security.md](docs/security.md) does not guard, or
-  keeps the cutover from happening. Everything else — polish, a departure from the drawing that
-  misleads nobody, a convenience, a second way to do something that already works — is labelled
-  **`can wait`**: would the newsroom switch the scripts off without it? If yes, it can wait. The
-  label goes on in the same command as the type (`gh issue create --type Feature --label publikace --label "can
-  wait"`). `/next-issue` picks a `can wait` issue only once no issue the release needs can be
-  worked on, then the oldest first. From `v1.0.0` on the label is no longer given, and the
-  issues still carrying it are weighed again as ordinary work.
+- **Issue weighing** — the org project **Publikace**,
+  [number 7](https://github.com/orgs/vednemesicnik/projects/7), orders the issues labelled
+  `publikace` by its `Priority`, weighed against `v1.0.0`, the release that first runs on Fly.io
+  and lets the newsroom switch the scripts off:
+  - **P1** — the release needs it now: without it the app cannot do its job for the newsroom,
+    loses or corrupts data, sends a wrong e-mail, leaves a door
+    [docs/security.md](docs/security.md) does not guard, or keeps the cutover from happening;
+  - **P2** — needed for `v1.0.0`, not yet blocking;
+  - **P3** — can wait: polish, a departure from the drawing that misleads nobody, a
+    convenience, a second way to do something that already works. Would the newsroom switch the
+    scripts off without it? If yes, it is P3.
+
+  Priority decides, age breaks a tie, and a real blocker still holds
+  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Ordering by a project). The
+  skill filing an issue adds it to the project and decides its priority itself.
+
 - **Traps** — § Things that will bite you below; above all: an applied migration is never
   edited (the journal keeps its checksum and refuses a changed history), and `oxfmt` formats
   Markdown while the pre-commit hook globs only code, so run `pnpm format` after a docs change or
@@ -275,8 +280,8 @@ Rules and bind Publikace as well, and the web's rules never apply here.
   on `dev`.
 - Before an issue is filed, three questions decide it
   ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Filing an issue): an open issue that
-  would carry it gets a comment instead, it is the size of one PR, and until `v1.0.0` one the
-  release does not need is labelled `can wait`. The agent decides and files; it does not ask the
+  would carry it gets a comment instead, it is the size of one PR, and it goes into the project
+  with a priority (§ For the workflow skills, Issue weighing). The agent decides and files; it does not ask the
   user to pick follow-ups.
 - An issue is opened with its type in the same command, `gh issue create --type Bug --label publikace` (or
   `Feature`, `Task`), whichever skill or session files it. The types are defined in

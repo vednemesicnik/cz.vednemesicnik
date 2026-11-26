@@ -2,7 +2,7 @@
 name: implement-issue
 description: Implement the approved plan for a GitHub issue on a feature branch — autonomous edits, typecheck + tests, Conventional Commits (stops before the PR). Use when a plan for an issue is approved and the code has to be written, or when work resumes on a feature branch that already has one.
 argument-hint: [issue-number]
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(ls:*), Bash(node --version), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(ls:*), Bash(node --version), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*), Bash(gh project item-list:*), Bash(gh project field-list:*), Bash(gh project view:*)
 ---
 
 ## Requested issue number
@@ -77,6 +77,8 @@ before pushing and before the PR — that is `/ship-issue`.
    `gh api repos/{owner}/{repo}/issues/<number> --jq .status.name`, and unless it is already
    _In progress_ or _In review_, set it with
    `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status='In progress' --jq .status.name`.
+   When the app's **Issue weighing** names a project, set the item's Status there to In Progress
+   too ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Ordering by a project).
 
 6. **Load what governs the files you'll touch** before the first edit: the app's **Rules**
    (its rule files, its guidance skills, the `modern-web-guidance` search for HTML, CSS and
