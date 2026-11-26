@@ -47,9 +47,11 @@ request went (#153); and _Upravit název a poznámku…_ and _Odebrat skupinu…
 which rename its folder and `_meta.json` or save a note alone, or bin a group without artworks
 (#154); and the comment digest's API, through which `SCRIPT__Publication__Article_Comments` claims
 the articles of the open issues with their authors and how far each was told of, and reports the
-e-mails the Mailer confirmed, which _Připomínky ke článkům_ in `/settings/jobs` shows (#170).
+e-mails the Mailer confirmed, which _Připomínky ke článkům_ in `/settings/jobs` shows (#170), and
+the job itself, which reads each Doc's new comments, replies and suggestions and mails each author
+one digest (#186).
 Nothing runs on Fly.io yet, and the background jobs still read the sheets,
-except the artwork reply check, the article approvals, the print folder, the comment digest's API and the proofreaders' digest, which go
+except the artwork reply check, the article approvals, the print folder, the comment digest and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
 digest). What the app does on Drive and through the Mailer

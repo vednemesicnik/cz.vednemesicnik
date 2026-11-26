@@ -33,9 +33,10 @@ export type JobRunRecord = JobRun & {
 export type DailyWindow = { fromHour: number; toHour: number }
 
 /**
- * A job whose trigger fires every few hours from an hour of Prague time, `everyHours(3)` from
- * 0:00, each run at a minute Google picks within its hour (`14d`, _každé 3 h od 0:00_), as the
- * comment digest does. Each such hour is a window, one hour long.
+ * A job whose triggers fire every few hours from an hour of Prague time, one daily `atHour`
+ * trigger for each of 0:00, 3:00 … 21:00, each run at a minute Google picks within its hour
+ * (`14d`, _každé 3 h od 0:00_), as the comment digest does. `everyHours(3)` would not do: it
+ * cannot be told to start at 0:00. Each such hour is a window, one hour long.
  */
 export type HourlyWindows = { everyHours: number; fromHour: number }
 

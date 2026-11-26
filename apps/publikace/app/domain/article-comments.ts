@@ -15,7 +15,10 @@ export const ARTICLE_COMMENTS_JOB_NAME = 'Připomínky ke článkům'
 /* A word joiner after the hyphen, so _e-mailem_ never breaks at it (`14d`). */
 export const ARTICLE_COMMENTS_SUMMARY = tied`upozorní autory e-⁠mailem na nové připomínky`
 
-/** `everyHours(3)` from midnight in Prague: Google picks the minute within each hour (`14d`). */
+/**
+ * Every three hours from midnight in Prague, one daily trigger per hour (the job's
+ * `CONFIG.digestHours`, which must stay equal): Google picks the minute within each hour (`14d`).
+ */
 export const ARTICLE_COMMENTS_WINDOWS: HourlyWindows = { everyHours: 3, fromHour: 0 }
 
 /** An article claimed this recently is not handed to another run: one run lasts ten minutes at most. */

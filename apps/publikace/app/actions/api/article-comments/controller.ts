@@ -36,11 +36,12 @@ import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
  *    the suggestions already told of. The answer carries the run's `runKey`.
  *
  *    The job reads each Doc's comments and replies modified after `reportedUntil` and its open
- *    suggestions whose hash is not listed, leaves out what an author of the article wrote, and
- *    sends each author one e-mail (`20e`) with every article of theirs that has something new. It
- *    sends through the Mailer, signed with the Mailer's secret in its Script Properties, under an
- *    idempotency key derived from the author's address and the e-mail's content, so a retry of the
- *    same e-mail is not sent twice and one with something new is.
+ *    suggestions whose hash is not listed, and sends each author one e-mail (`20e`) with every
+ *    article of theirs that has something new. An author's own comment counts too: Drive never
+ *    gives a comment's author by address, and a name tells no author from a namesake. It sends
+ *    through the Mailer, signed with the Mailer's secret in its Script Properties, under an
+ *    idempotency key derived from the author's address and the IDs of what is new, so a retry of
+ *    the same e-mail is not sent twice and one with something new is.
  * 2. `report` with the run's key gives `outcome` (`ok` or `failed`) and `error`; `articles`, each
  *    article the job read and whose every author with something new the Mailer confirmed, or that
  *    had nothing new, with `suggestionHashes`, every suggestion now told of; `unconfirmed`, an

@@ -378,6 +378,36 @@ gets no trigger until the app is on its public address (#79): each step runs
    history says _Odeslání přehledu se nepodařilo potvrdit._, and the banner stands over every
    screen. Mend it and run again: one e-mail, and the banner goes.
 
+## The comment digest
+
+`SCRIPT__Publication__Article_Comments`, a standalone project under `publikace.app@` (#186),
+tells the authors of the issues made in the app of new comments, replies and suggestions in
+their Docs. Each run makes one `/api/v1/article-comments/claim`, reads every claimed Doc, mails
+each author one e-mail (`20e`) and makes one `/api/v1/article-comments/report`. The suite covers
+what the app hands out and records; what it cannot cover is what Drive and Docs return for a Doc
+on the shared drive, and whether the Mailer's key keeps a retry to one e-mail. The token is
+checked as the reply check's is, so the same `testConfiguration` step applies, and the run goes
+behind the same tunnel. Its project holds `MAIL_SEND_URL` and `MAIL_SEND_SECRET` and gets no
+trigger until #79: each step runs `sendCommentDigests` by hand. The old
+`SCRIPT__Publication__Comment_Digest` under `publikace@` keeps the issues on the Registr's
+_Vydání_; the two never see each other's articles.
+
+1. Take an article with two test authors whose mailboxes you can read. As somebody who is not
+   its author, add a comment, a reply to it, and a suggestion in its Doc, then run the job. Each
+   author gets one e-mail, _Nové připomínky ke článku „‹název›“ – ‹dnešní datum›_, with the
+   article and _Otevřít dokument_, word for word as the old job sends it. `/settings/jobs` shows
+   _Připomínky ke článkům_ with _Poslala 2 e-maily_.
+2. Run it again at once: no e-mail, and the history says _Nic nového k poslání_.
+3. As one of the authors, add a comment and run it: both authors get the e-mail. Drive never gives
+   a comment's author by address, so an author's own comment is told of like anybody's.
+4. Give one author new comments in two articles and run it: one e-mail, _Nové připomínky
+   k vašim článkům – ‹dnešní datum›_, with both.
+5. Break `MAIL_SEND_SECRET`, add a comment and run it: the run is _S chybou_, and its history
+   lists each address with its article under _U 2 e-mailů chybí potvrzení odeslání_. Mend it and
+   run again: each author gets one e-mail.
+6. The run's log says how many articles it claimed: the articles of the open issues made in the
+   app, and none of an issue on _Vydání_.
+
 ## Answering a reply from Ke kontrole
 
 The answer goes through the Mailer as a reply in the thread of the consent request (#31,
