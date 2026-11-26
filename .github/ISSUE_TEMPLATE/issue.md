@@ -1,6 +1,6 @@
 ---
 name: Issue
-about: Something the app does wrong, or does not do yet
+about: Something an application does wrong, or does not do yet
 title: ''
 ---
 
@@ -9,9 +9,9 @@ title: ''
      "fix(card): …". Name the area inside the sentence when it matters.
 
      A proposal goes through /review-idea before it gets here, and its answers become this body.
-     Check first that no open issue would carry it, and that it is the size of one PR. Until
-     v1.0.0, label it `can wait` when the release does not need it — docs/workflow-skills.md
-     § Filing an issue.
+     Check first that no open issue would carry it, and that it is the size of one PR. For
+     Publikace, until v1.0.0, label it `can wait` when the release does not need it —
+     apps/publikace/docs/workflow-skills.md § Filing an issue.
      Headings are a skeleton, not a form — rename, merge or drop them when the issue reads
      better without. -->
 
@@ -19,13 +19,14 @@ title: ''
 
 ## Today
 
-<!-- What the app does now, with the file and the lines that do it. What the reader sees. -->
+<!-- What the application does now, with the file and the lines that do it. What the reader
+     sees. -->
 
 ## What it has to do
 
-<!-- The mechanism, and what each surface gets — the screens are the editors-in-chief's, the
-     shared-link page and the e-mails go to authors and providers. Cite the drawing by file and
-     anchor (`12b`, `21b` column 2); if it is not drawn, that is /ask-design first, not a section here. -->
+<!-- The mechanism, and what each surface gets: who reads each screen, page or e-mail. Cite
+     the drawing by file and anchor (`12b`, `21b` column 2); if it is not drawn, that is
+     /ask-design first, not a section here. -->
 
 ## Not in scope
 

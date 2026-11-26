@@ -1,0 +1,128 @@
+name: Publikace
+
+# The checks of Publikace in apps/publikace, with its own tools: oxlint, oxfmt, tsc,
+# `remix test` and `remix doctor`. Each job carries the application's name, because the
+# branch-protection ruleset requires checks by job name.
+#
+# On a pull request a job runs only when Publikace or a file it depends on changed. The
+# gate is a job-level `if:`, never `on.paths`: a skipped job counts as passed for a
+# required check, while a workflow that never starts leaves the check "expected" forever.
+# Called from deploy.yml, every job runs.
+
+on:
+  pull_request:
+    branches: [main, dev]
+  workflow_call:
+
+permissions:
+  contents: read
+
+# Never cancel a run called from deploy.yml; in a called workflow github.workflow is the
+# caller's name, so the prefix keeps this group apart from the other check workflows.
+concurrency:
+  group: publikace-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  publikace-changes:
+    runs-on: ubuntu-latest
+    # dorny/paths-filter reads the PR's changed files via the API on pull_request
+    # events; the top-level contents:read alone is not enough.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      publikace: ${{ steps.filter.outputs.publikace }}
+    steps:
+      - uses: dorny/paths-filter@v4
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            publikace:
+              - 'apps/publikace/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.github/workflows/publikace.yml'
+
+  publikace-lint:
+    needs: publikace-changes
+    if: github.event_name != 'pull_request' || needs.publikace-changes.outputs.publikace == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # reads version from packageManager field
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      # Publikace's dependencies only, not the web's.
+      - run: pnpm install --frozen-lockfile --filter publikace
+      - run: pnpm --filter publikace lint
+
+  publikace-format:
+    needs: publikace-changes
+    if: github.event_name != 'pull_request' || needs.publikace-changes.outputs.publikace == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # reads version from packageManager field
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      # Publikace's dependencies only, not the web's.
+      - run: pnpm install --frozen-lockfile --filter publikace
+      # Its own job because of how it is usually broken: oxfmt formats Markdown, the
+      # pre-commit hook only globs code, so an unformatted .md commits fine and fails here.
+      - run: pnpm --filter publikace format:check
+
+  publikace-typecheck:
+    needs: publikace-changes
+    if: github.event_name != 'pull_request' || needs.publikace-changes.outputs.publikace == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # reads version from packageManager field
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      # Publikace's dependencies only, not the web's.
+      - run: pnpm install --frozen-lockfile --filter publikace
+      - run: pnpm --filter publikace typecheck
+
+  publikace-test:
+    needs: publikace-changes
+    if: github.event_name != 'pull_request' || needs.publikace-changes.outputs.publikace == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # reads version from packageManager field
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      # Publikace's dependencies only, not the web's.
+      - run: pnpm install --frozen-lockfile --filter publikace
+      # No database to provision: the store is node:sqlite and every test opens :memory:.
+      - run: pnpm --filter publikace test
+
+  publikace-doctor:
+    needs: publikace-changes
+    if: github.event_name != 'pull_request' || needs.publikace-changes.outputs.publikace == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # reads version from packageManager field
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      # Publikace's dependencies only, not the web's.
+      - run: pnpm install --frozen-lockfile --filter publikace
+      # Whether the project still has the shape Remix expects: engines.node against the
+      # runtime, `remix` resolvable, app/routes.ts and every route's controller on disk.
+      # It fails on warnings because doctor.strict in remix.json says so.
+      - run: pnpm --filter publikace app:doctor
