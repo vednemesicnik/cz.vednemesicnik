@@ -2,7 +2,7 @@
 name: review-idea
 description: Weigh a proposal against product, evidence, design and security before it becomes an issue — and say no when it should be no, or change the written plan when the plan is what is out of date. Use when an idea or a change is proposed and it is not yet settled whether it deserves an issue at all, or when circumstances have changed and an app's product, architecture or security documents may no longer say what is true.
 argument-hint: <what is being proposed>
-allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*)
+allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*), Bash(gh project item-list:*), Bash(gh project field-list:*), Bash(gh project view:*)
 ---
 
 ## What is being proposed
@@ -11,7 +11,7 @@ allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*)
 
 ## Open issues
 
-!`gh issue list --limit 60`
+!`gh issue list --limit 60 --json number,title,labels --template '{{range .}}{{.number}}  [{{range .labels}}{{.name}} {{end}}]  {{.title}}{{"\n"}}{{end}}'`
 
 ## Recent work
 
@@ -111,8 +111,11 @@ describes, then give the verdict.
 - **Write the issue.** Every question answered with evidence. The answers become the issue (in
   English): 1–2 the motivation, 4 the mechanism, 6 what each surface gets, 7 the design
   citations, 8–9 its security section, plus acceptance-criteria checkboxes. It names its type —
-  _Bug_, _Feature_ or _Task_ ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The
-  issue's type and status) — which sections of the written design it changes and in what words,
+  _Bug_, _Feature_ or _Task_ — and carries its app's label, `web` or `publikace` (both for the
+  host or the repository), in the same `gh issue create`, and, when the app's Issue weighing names a project, it is added
+  there with the priority you decide
+  ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and status,
+  § Ordering by a project) — which sections of the written design it changes and in what words,
   and which review finding it resolves: the documents change in the same PR as the code. Before
   writing, put the three questions of § Filing an issue to it: an open issue that carries the work
   gets a comment instead (its title rewritten if the scope widens); work the size of two PRs is

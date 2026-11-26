@@ -19,7 +19,7 @@ allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api repos/{
 
 ## Open issues (fallback list)
 
-!`gh issue list --limit 20`
+!`gh issue list --limit 20 --json number,title,labels --template '{{range .}}{{.number}}  [{{range .labels}}{{.name}} {{end}}]  {{.title}}{{"\n"}}{{end}}'`
 
 ## Task
 
