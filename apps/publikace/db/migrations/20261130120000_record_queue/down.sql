@@ -1,0 +1,16 @@
+DROP TRIGGER record_artwork;
+DROP TRIGGER record_batch;
+DROP TRIGGER record_clause_changed;
+DROP TRIGGER record_clause_inserted;
+DROP TRIGGER record_final_version_changed;
+DROP TRIGGER record_final_version_inserted;
+DROP TRIGGER record_author_changed;
+DROP TRIGGER record_author_inserted;
+DROP TRIGGER record_article;
+DROP TRIGGER record_link_revoked;
+DROP TRIGGER record_link_inserted;
+DROP TRIGGER record_issue_evidence;
+DROP TRIGGER record_issue_registry;
+DROP TABLE record_rewrites;
+DROP TABLE record_marks;
+ALTER TABLE issues DROP COLUMN evidence_spreadsheet_id;

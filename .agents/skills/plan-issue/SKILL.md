@@ -2,7 +2,7 @@
 name: plan-issue
 description: Fetch a GitHub issue and produce a repo-aware implementation plan (plan mode). Use when an issue is about to be worked on and needs a plan before any code is written.
 argument-hint: <issue-number>
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
 ---
 
 ## Requested issue number
@@ -19,7 +19,7 @@ allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*)
 
 ## Open issues (fallback list)
 
-!`gh issue list --limit 20`
+!`gh issue list --limit 20 --json number,title,labels --template '{{range .}}{{.number}}  [{{range .labels}}{{.name}} {{end}}]  {{.title}}{{"\n"}}{{end}}'`
 
 ## Task
 
@@ -35,70 +35,104 @@ You are the **planning stage** of the issue pipeline:
    - **Does anything produce the data the issue consumes, and does that thing exist?**
    - **If the record is missing, does its absence mean anything?**
 
-   A "not designed yet — do not invent it here" note that names the _producer_ is a blocker
+   A "not drawn yet — do not invent it here" note that names the _producer_ is a blocker
    wearing the clothes of a scope note. If either question comes out badly, **stop and say so
-   before planning** and offer `/review-idea` instead.
+   before planning** and offer `/review-idea` instead. Weighing whether the issue should exist
+   is not this skill's job; noticing that nobody did is.
 
 3. **Enter plan mode.** If the session is not already in plan mode, call `EnterPlanMode`
    before anything else.
 
-4. **Explore — and read it yourself unless you cannot.** Read `AGENTS.md` first, then the
-   `.agents/rules/*/RULE.md` for the file types the change touches and the relevant
-   `.agents/skills/*/SKILL.md` (react-router for routes/loaders/actions/middleware, prisma-*
-   for schema work, general-guidance for `.css` and `.stories.tsx`, component-authoring for
-   markup and components), and the `modern-web-guidance` search for HTML/CSS/client-side JS.
-   Prefer reusing existing functions and components over proposing new code.
+4. **Explore — and read it yourself unless you cannot.** Decide which app the issue belongs
+   to by the files it will touch (`apps/web/**`, `apps/publikace/**`, or the repository's own
+   outside `apps/`). Read the root `AGENTS.md`, then that app's `AGENTS.md` — where a change
+   belongs is often decided there alone — and from its § For the workflow skills:
+   - **Rules** — the rule files and guidance skills for the file types the change touches;
+   - **Written design** — the sections the issue touches (a state, a rule, a limit, a table, a
+     flow, a job, a boundary, a field about a person), and the findings of the newest dated
+     review document it resolves, when the app has one. They are the plan the change has to
+     fit or, where the issue says so, the plan it changes. A plan that departs from them
+     without the issue saying why has found a question, not an answer: name it and offer
+     `/review-idea` on it.
+
+   When the issue names a parent epic, read the epic too — it holds constraints the
+   sub-issue leaves out. Prefer reusing existing functions and components over proposing new
+   code.
 
    **Subagents are the exception, not the method.** Most issues name the function and the
-   file, and a `grep` plus a `sed -n` answers them for a fraction of what an agent costs.
-   Spawn one only when the scope is genuinely unknown or the answer needs sweeping many files
-   and naming conventions — and say which. Its brief is **one target and one question**, plus
-   the shape of the answer.
+   file, and a `grep` plus a `sed -n` answers them for a fraction of what an agent costs — the
+   agent pays twice, once to read and once for what it hands back. Before spawning one, say
+   which of these is true; if neither is, do it yourself:
+   - the scope is genuinely unknown — you cannot name the file to open;
+   - the answer needs sweeping many files or several naming conventions.
+
+   A design document is not on that list, however large it is: step 5 reads one screen of it
+   here. When an agent is warranted, its brief is **one named target and one question**, plus
+   the shape of the answer and what not to return — "return the decision note under the
+   consent heading of screen `13a`, verbatim" is a brief; "map everything around the picker"
+   is how a plan that needed a fifth of it pays for all of it. One agent with a narrow brief
+   beats three with wide ones, and beats one with a five-part questionnaire.
 
 5. **Read the design, not the issue's paraphrase of it.** When the issue touches a screen,
-   open the design project (the app project, components in the design system). Read a
-   document **in this session** and cut one screen out of it with
-   `pnpm design:screen "<saved file>" 22a` — see
-   [apps/web/docs/\_design-project.md](../../../apps/web/docs/_design-project.md). Where the design is silent or
-   two screens disagree, say so in the plan and point at `/ask-design` rather than inventing
-   the answer.
+   open the app's design project (its § For the workflow skills, **Design project**): the
+   canvas for screens, the design system for a token or a component. A component card lags
+   the screens, so check the screen documents too before concluding the design is silent.
+
+   **The unit of a screen document is the screen ID, never the file.** A document runs to
+   tens of thousands of tokens and a plan needs one screen of it. Read it **here, in this
+   session, never in a subagent**: `Artifact` `read` with its `path` saves the file without
+   putting it into the conversation, and the app's screen cutter (named under **Design
+   project**) prints one screen by its ID with its decision notes. Where the design is silent
+   or two screens disagree, say so in the plan and point at `/ask-design` rather than
+   inventing the answer.
 
 6. **Draft the plan** with these sections:
    - **In short** — what the approval is actually read from, so it comes first and stays
      short: what changes from what to what, why now, and a handful of bullets pointing at
      what deserves a second look (a false premise in the issue, a decision that contradicts
-     existing code, scope past the issue's examples, a migration). Each bullet names the
-     section that carries the detail. **Added, never traded for.**
+     existing code, scope past the issue's examples, a migration, a change of direction from
+     a work-log entry). Each bullet names the section that carries the detail. **Added, never
+     traded for**: nothing is thinned out of what follows to make room for it.
    - **Context** — issue URL and a short summary of the problem and intended outcome.
    - **Acceptance criteria** — the issue's checkboxes, or an explicit list when it is prose.
      Quote a design decision rather than paraphrase it.
    - **Scope** — what changes, what stays out.
+   - **The written design** — which sentences of the app's **Written design** the change makes
+     untrue and their new wording, and which review finding it resolves. These edits are
+     implementation steps like any other, landed in the same PR. When none is touched, say so
+     in a line: that is a claim the review in `/ship-issue` checks.
    - **Implementation steps** — concrete files, referencing existing utilities to reuse.
-     When the plan settles something later work should know (see `/log-work`), its last
-     step writes the entry in the same PR. Read `docs/work-log/` first: a plan that changes
-     direction from an entry says so and why in **In short**, and logs the change.
-   - **Verification** — `pnpm app:typecheck` and `pnpm test`, plus how to see it in the app
-     when the change is user-visible.
+     Read `docs/work-log/` for the area first. When the plan settles something later work
+     should know (see `/log-work`), its last step writes the entry in the same PR; a plan that
+     changes direction from an entry says so and why in **In short**, and logs the change.
+   - **Verification** — the app's **Gates**, plus how to see it (**Seeing a change**) when the
+     change is user-visible, naming any check only the user can make.
 
-7. **Respect the repo's conventions** in the plan:
-   - branch `feat/<issue-number>-<kebab-slug>` (`fix/…` for bugfixes) off `dev`;
-   - kebab-case files, `type` over `interface`, no abbreviations, functional style, TSDoc on
-     exported functions (`.agents/rules/`);
-   - `.module.css` rules wrapped in `@layer`;
+7. **Respect the repository's conventions** in the plan:
+   - branch `feat/<issue-number>-<kebab-slug>` (`fix/…` for bugfixes) off `dev`
+     ([docs/\_branching-model.md](../../../docs/_branching-model.md));
+   - the app's **Rules** and **Traps** — a migration that has already run is never edited, so
+     plan a new one, and a consent-guarded command is a step the user confirms;
    - Czech for anything a user reads, English for code, comments and commits;
-   - `prisma migrate dev`/`reset` is consent-guarded for agents — plan it as a step the user
-     confirms;
-   - Conventional Commits — **the PR title included**: a multi-commit squash puts the PR
-     title on `dev`; an issue title is not one (`pull-request-workflow`); issue and PR
-     text in English.
+   - no real data: e-mail addresses on `vednemesicnik.test` for the newsroom and
+     `external.test` for everybody else;
+   - Conventional Commits with the app's **Commit scopes** — **the PR title included**: a
+     multi-commit squash puts the PR title on `dev`; an issue title is a plain sentence, never
+     one. Issue and PR text in English.
 
 8. **Present the plan for approval** with `ExitPlanMode`. Write no file before this — plan
    mode blocks writes, and an earlier write skips the approval step.
 
-9. **Save the plan file** once approved: `~/.claude/plans/plan-issue-<number>-<slug>.md`. It
-   is the only thing this skill writes — no repo edits, nothing on GitHub. (Billing uses
-   `plan-billing-issue-*` in the same directory; the prefixes keep the overlapping issue
-   numbers apart.)
+9. **Save the plan file** once approved: `~/.claude/plans/plan-issue-<number>-<slug>.md`.
+
+   **Move the issue to _Todo_**: read its status with
+   `gh api repos/{owner}/{repo}/issues/<number> --jq .status.name`, and only when it is
+   _Backlog_ or empty, set it with
+   `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status=Todo --jq .status.name`. A
+   plan redrawn for an issue already _In progress_ or _In review_ never moves it back
+   ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and
+   status). The plan file and the status are the only things this skill writes — no repo
+   edits, nothing else on GitHub.
 
 10. **Close with what is open, in the order it should be done.** `/implement-issue <number>`
     is **one item on that list, not the list.** Planning turns up things beside the plan — a
@@ -106,4 +140,4 @@ You are the **planning stage** of the issue pipeline:
     short numbered list, most important first, one or two lines each (what, what it waits on,
     the command that starts it). Say plainly when the honest first item is not implementing.
     Offer the top one as a question answerable in a word. Three or four items is a list; ten
-    is a backlog.
+    is a backlog, and the backlog is `gh issue list`.

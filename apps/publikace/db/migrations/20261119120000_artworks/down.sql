@@ -1,0 +1,10 @@
+DROP INDEX public_mail_log_by_time;
+DROP TABLE public_mail_log;
+DROP INDEX artworks_by_batch;
+DROP INDEX artworks_by_form;
+DROP INDEX artworks_by_link;
+DROP TABLE artworks;
+DROP INDEX artwork_batches_by_issue;
+DROP INDEX artwork_batches_by_link;
+DROP INDEX artwork_batches_one_tag_per_article;
+DROP TABLE artwork_batches;

@@ -1,0 +1,270 @@
+/* ============================================================
+   Vedneměsíčník — Semantic tokens
+   The roles components consume. Light values on :root, dark values
+   on [data-theme="dark"] — one map for the public web and the
+   administration (rd9daf6z). Each dark value is written out by hand,
+   not derived. In the app every role becomes
+   light-dark(<light>, <dark>) with exactly these two values.
+   Every value is exactly one step of colors.css — a hex is a step,
+   an rgba() is a step at an alpha — or white / black / transparent.
+   Nothing outside colors.css (0imbycuj). Logo colors are not roles;
+   they live in VdmLogo.
+   ============================================================ */
+
+:root {
+  /* Backgrounds */
+  --bg-primary:   #ffffff;
+  --bg-secondary: #f8fafb;
+  --bg-tertiary:  #f0f4f8;
+  --bg-accent:    #ede9fe;
+  --bg-hover:     #e2ebf3; /* one step past tertiary, as in dark */
+  --bg-disabled:  #f0f4f8; /* = tertiary, as in dark */
+
+  /* Borders */
+  --border:        #e2ebf3;
+  --border-hover:  #cad5e2;
+  --border-strong: #9ca3af;
+  --border-accent: #8b5cf6;
+  --border-on-tint: #6b7280; /* charcoal-500: control border on a tinted surface, ≥3:1 (jb81di02) */
+  --tooltip-bg:   #121418; /* charcoal-900 (jb81di02) */
+  --tooltip-text: #ffffff;
+
+  /* Text */
+  --text-primary:   #121418;
+  --text-secondary: #4b5563;
+  --text-tertiary:  #6b7280; /* charcoal-500, 4,8 : 1 na bílém; dřív charcoal-400. Rozhodnuto 13. 10. 2026 (5mehib4t) */
+  --text-on-accent: #ffffff;
+
+  /* Primary (violet) & secondary (amber) */
+  --primary:        #8b5cf6;
+  --primary-hover:  #7c3aed;
+  --primary-active: #6d28d9;
+  --primary-light:  #ede9fe;
+
+  --secondary:        #f59e0b;
+  --secondary-hover:  #d97706;
+  --secondary-active: #b45309;
+  --secondary-light:  #fef3c7;
+
+  /* Status */
+  --success: #10b981;
+  --error:   #f43f5e;
+  --warning: #f59e0b;
+  --info:    #3b82f6;
+
+  --error-bg:   #ffe4e6;
+  --error-text: #be123c;
+  --bg-success:   #d1fae5;
+  --text-success: #047857;
+
+  /* Danger (destructive) — rose-600 → 700 → 800, white text ≥ 4.5:1 */
+  --danger:        #e11d48;
+  --danger-hover:  #be123c;
+  --danger-active: #9f1239;
+  --danger-text:   #ffffff;
+
+  /* Links. --link-strong = small accent text on tinted/gray grounds
+     (active tab, active sidebar item, preview bar link, step links) */
+  --link:         #8b5cf6;
+  --link-hover:   #7c3aed;
+  --link-visited: #6d28d9;
+  --link-strong:  #6d28d9;
+
+  /* Category / tag badges */
+  --badge-emerald-bg: #d1fae5; --badge-emerald-text: #065f46;
+  --badge-violet-bg:  #ede9fe; --badge-violet-text:  #6d28d9;
+  --badge-amber-bg:   #fef3c7; --badge-amber-text:   #92400e;
+  --badge-rose-bg:    #ffe4e6; --badge-rose-text:    #9f1239;
+  --badge-azure-bg:   #dbeafe; --badge-azure-text:   #1d4ed8;
+  --badge-outline-border: #cad5e2;
+
+  /* Content states (StatusTag) — meaning from Fakturace:
+     gray nobody waits · amber waits for you · green done · gray out of play */
+  --state-draft-bg:     #f0f4f8; --state-draft-text:     #4b5563; --state-draft-border:     #cad5e2;
+  --state-pending-bg:   #fef3c7; --state-pending-text:   #92400e; --state-pending-border:   #fcd34d;
+  --state-approved-bg:  transparent; --state-approved-text: #065f46; --state-approved-border: #34d399;
+  --state-published-bg: #d1fae5; --state-published-text: #065f46; --state-published-border: #6ee7b7;
+  --state-archived-bg:  #f0f4f8; --state-archived-text:  #4b5563; --state-archived-border:  #cad5e2;
+  --state-attention-text: #92400e; /* queue count that waits for you */
+  /* Two more meanings, from Fakturace (a6bqeswz): red = something went wrong
+     and waits for you (an undelivered e-mail, a payment past due), blue = in
+     motion, nobody has to act (sent, waiting for the money). Fill 100, text
+     800 / 700, border 300, as the states above. A tag picks them by meaning
+     (StatusTag `tone`), never by hue. Rozhodnuto 14. 11. 2026 (a6bqeswz). */
+  --state-problem-bg:   #ffe4e6; --state-problem-text:   #9f1239; --state-problem-border:   #fda4af;
+  --state-running-bg:   #dbeafe; --state-running-text:   #1d4ed8; --state-running-border:   #93c5fd;
+
+  /* Surfaces */
+  --card-bg:     #ffffff;
+  --card-border: #e2ebf3;
+  --header-bg:     #ffffff;
+  --header-border: #e2ebf3;
+  --footer-bg:     #f8fafb;
+  --footer-text:   #6b7280;
+  --surface-inverse: #121418; /* toast */
+  --text-inverse:    #ffffff;
+  --toast-action:    #c4b5fd;
+  --partner-logo-bg: #ffffff; /* plocha cizího loga, v obou režimech bílá (gm5nuxml) */
+  --qr-bg:           #ffffff; /* plocha QR kódu, v obou režimech bílá: čtečky v bankách čekají tmavé moduly na světlém (tfma8scr) */
+  --toast-error:     #fda4af;
+  --overlay: rgba(10, 10, 15, 0.4); /* charcoal-950 / 40 % */
+  --viewer-backdrop: rgba(10, 10, 15, 0.92); /* charcoal-950 / 92 %: prohlížeč obrázků přes celé okno, v obou režimech stejné (zn43av9y) */
+  --placeholder-bg: #cad5e2;   /* drawing stand-in for a real cover / photo */
+  --preview-outline: #6b7280;  /* dashed frame: newsroom preview */
+
+  --callout-info-bg:    #eff6ff;
+  --callout-success-bg: #ecfdf5;
+  --callout-warning-bg: #fffbeb;
+  --callout-error-bg:   #fff1f2;
+  /* Callout border = the tone's 300 step, icon = its text step (rmridl1f) */
+  --callout-info-border:    #93c5fd;
+  --callout-success-border: #6ee7b7;
+  --callout-warning-border: #fcd34d;
+  --callout-error-border:   #fda4af;
+  --callout-warning-icon:   #92400e; /* amber-800, 6,8 : 1 on its fill */
+  --callout-error-icon:     #be123c; /* rose-700, 5,9 : 1 on its fill */
+
+  --nav-item-text:        #4b5563;
+  --nav-item-text-hover:  #121418;
+  --nav-item-text-active: #7c3aed;
+
+  /* Mirrored signature gradient for the mirrored letters of Wordmark */
+  --gradient-signature-flip: linear-gradient(225deg, #8b5cf6 0%, #7c3aed 25%, #10b981 75%, #34d399 100%); /* @kind color */
+
+  /* Focus rings: a 1px gap in the page colour, then a solid 2px band, 3px
+     from the edge in all. The band is one step past the element's accent and
+     has ≥ 3:1 against every surface it is drawn on (WCAG 1.4.11); the gap
+     parts it from a filled button. No alpha. Rozhodnuto 12. 11. 2026 (80lyvxih). */
+  --focus-shadow:        0 0 0 1px #ffffff, 0 0 0 3px #7c3aed; /* violet-600, 5.7:1 on white */
+  --focus-shadow-error:  0 0 0 1px #ffffff, 0 0 0 3px #e11d48; /* rose-600, 4.7:1 */
+  --focus-shadow-danger: 0 0 0 1px #ffffff, 0 0 0 3px #be123c; /* rose-700, 6.3:1 */
+}
+
+/* ============================================================
+   Dark map. Scope it to any element: <html data-theme="dark"> in the
+   app, a single frame in a drawing.
+   Notes on the hand-picked values:
+   - surfaces step 950 → 900 → 800; cards sit on 900, so the hairline
+     is 700 (the light hairline has the same ~1.2 : 1 against its card);
+   - --primary stays violet-500: buttons keep white text at the same
+     contrast as in light; text-sized accent goes to violet-300/400;
+   - status / badge / state fills go to the 900–950 shade, text to 300.
+   ============================================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-primary:   #0a0a0f;
+  --bg-secondary: #121418;
+  --bg-tertiary:  #1a1d24;
+  --bg-accent:    rgba(139, 92, 246, 0.18);
+  --bg-hover:     #1e2229;
+  --bg-disabled:  #1a1d24;
+
+  --border:        #1e2229;
+  --border-hover:  #4b5563;
+  --border-strong: #6b7280;
+  --border-accent: #a78bfa;
+  --border-on-tint: #9ca3af;
+  --tooltip-bg:   #f0f4f8;
+  --tooltip-text: #121418;
+
+  --text-primary:   #f8fafb;
+  --text-secondary: #cad5e2;
+  --text-tertiary:  #9ca3af;
+  --text-on-accent: #ffffff;
+
+  --primary:        #8b5cf6;
+  --primary-hover:  #7c3aed;
+  --primary-active: #6d28d9;
+  --primary-light:  rgba(139, 92, 246, 0.18);
+
+  --secondary:        #fbbf24;
+  --secondary-hover:  #f59e0b;
+  --secondary-active: #d97706;
+  --secondary-light:  #451a03;
+
+  --success: #34d399;
+  --error:   #fb7185;
+  --warning: #fbbf24;
+  --info:    #60a5fa;
+
+  --error-bg:   #4c0519;
+  --error-text: #fda4af;
+  --bg-success:   #064e3b;
+  --text-success: #6ee7b7;
+
+  --danger:        #e11d48;
+  --danger-hover:  #be123c;
+  --danger-active: #9f1239;
+  --danger-text:   #ffffff;
+
+  --link:         #a78bfa;
+  --link-hover:   #c4b5fd;
+  --link-visited: #a78bfa;
+  --link-strong:  #c4b5fd;
+
+  --badge-emerald-bg: #064e3b; --badge-emerald-text: #6ee7b7;
+  --badge-violet-bg:  #2e1065; --badge-violet-text:  #c4b5fd;
+  --badge-amber-bg:   #451a03; --badge-amber-text:   #fcd34d;
+  --badge-rose-bg:    #4c0519; --badge-rose-text:    #fda4af;
+  --badge-azure-bg:   #172554; --badge-azure-text:   #93c5fd;
+  --badge-outline-border: #4b5563;
+
+  --state-draft-bg:     #1a1d24; --state-draft-text:     #cad5e2; --state-draft-border:     #4b5563;
+  --state-pending-bg:   #451a03; --state-pending-text:   #fcd34d; --state-pending-border:   #b45309;
+  --state-approved-bg:  transparent; --state-approved-text: #6ee7b7; --state-approved-border: #059669;
+  --state-published-bg: #064e3b; --state-published-text: #6ee7b7; --state-published-border: #047857;
+  --state-archived-bg:  #1a1d24; --state-archived-text:  #cad5e2; --state-archived-border:  #4b5563;
+  --state-attention-text: #fcd34d;
+  --state-problem-bg:   #4c0519; --state-problem-text:   #fda4af; --state-problem-border:   #be123c;
+  --state-running-bg:   #172554; --state-running-text:   #93c5fd; --state-running-border:   #1d4ed8;
+
+  --card-bg:     #121418;
+  --card-border: #1e2229;
+  --header-bg:     #0a0a0f;
+  --header-border: #1e2229;
+  --footer-bg:     #121418;
+  --footer-text:   #9ca3af;
+  --surface-inverse: #f0f4f8;
+  --text-inverse:    #121418;
+  --toast-action:    #6d28d9;
+  --partner-logo-bg: #ffffff; /* stejná jako ve světlém: logo v originále na bílém (gm5nuxml) */
+  --qr-bg:           #ffffff; /* stejná jako ve světlém (tfma8scr) */
+  --toast-error:     #be123c;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --viewer-backdrop: rgba(10, 10, 15, 0.92); /* stejné jako ve světlém (zn43av9y) */
+  --placeholder-bg: #1e2229;
+  --preview-outline: #9ca3af;
+
+  --callout-info-bg:    rgba(59, 130, 246, 0.14);
+  --callout-success-bg: rgba(16, 185, 129, 0.14);
+  --callout-warning-bg: rgba(245, 158, 11, 0.14);
+  --callout-error-bg:   rgba(244, 63, 94, 0.14);
+  --callout-info-border:    #1d4ed8; /* 700, as the dark state-tag borders */
+  --callout-success-border: #047857;
+  --callout-warning-border: #b45309;
+  --callout-error-border:   #be123c;
+  --callout-warning-icon:   #fcd34d; /* 300, as dark badge text */
+  --callout-error-icon:     #fda4af;
+
+  --nav-item-text:        #cad5e2;
+  --nav-item-text-hover:  #f8fafb;
+  --nav-item-text-active: #c4b5fd;
+
+  --gradient-signature:      linear-gradient(135deg, #a78bfa 0%, #8b5cf6 25%, #34d399 75%, #6ee7b7 100%); /* @kind color */
+  --gradient-signature-flip: linear-gradient(225deg, #a78bfa 0%, #8b5cf6 25%, #34d399 75%, #6ee7b7 100%); /* @kind color */
+
+  /* Shadows: black, stronger — a white glow reads as a border in dark */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.55), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+
+  --focus-shadow:        0 0 0 1px #0a0a0f, 0 0 0 3px #a78bfa; /* violet-400, 7.3:1 on charcoal-950 */
+  --focus-shadow-error:  0 0 0 1px #0a0a0f, 0 0 0 3px #fb7185; /* rose-400, 7.3:1 */
+  --focus-shadow-danger: 0 0 0 1px #0a0a0f, 0 0 0 3px #fb7185; /* rose-400, 7.3:1 */
+
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}

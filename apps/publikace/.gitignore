@@ -1,0 +1,33 @@
+node_modules/
+
+# Secrets: the Google OAuth client, the token of publikace.app@ and the secrets for the Mailer
+# and the scripts live in .env locally and in `fly secrets` once deployed. `.env.example` is
+# the tracked template and must never hold a real value.
+.env
+.env.*
+!.env.example
+
+# The local database and its WAL files (DATABASE_PATH defaults to db/publikace.sqlite).
+db/*.sqlite
+db/*.sqlite-shm
+db/*.sqlite-wal
+
+# Scratch drafts (/ask-copy questions, probes, saved design files).
+tmp/
+
+.coverage/
+
+# The scaffold's own Remix skill, copied rather than carried: the root's
+# `pnpm claude:skills:link` copies it from `@remix-run/cli`'s `template/`, pinned by the lockfile.
+.agents/skills/remix/
+
+# Editors and OS noise.
+.idea
+.DS_Store
+
+# Claude Code's own directory: `skills/` is symlinks into `.agents/skills/`, written by the
+# root's `pnpm claude:skills:link`. Subagents live in the root's `.claude/agents/`.
+.claude/
+
+# Session notes of the Remember plugin.
+.remember/

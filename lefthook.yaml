@@ -1,6 +1,14 @@
 # Lefthook Git hooks configuration
 # Refer for explanation to following link:
 # https://lefthook.dev/configuration/
+#
+# Installed by the root `postinstall`, which runs `lefthook install`. lefthook's own
+# install script would do the same and is refused in pnpm-workspace.yaml.
+#
+# One file for the repository; each application's commands check its own files with its
+# own tools. Biome covers the root and the web (biome.json leaves apps/publikace out), and
+# Publikace's commands run inside apps/publikace with oxfmt, oxlint, tsc, `remix test` and
+# `remix doctor`.
 
 pre-push:
   parallel: true
@@ -15,6 +23,27 @@ pre-push:
     prisma-format:
       run: pnpm prisma:format
       glob: "*.prisma"
+    # Publikace's gates, only when the push touches it.
+    publikace-format:
+      root: apps/publikace/
+      glob: "apps/publikace/**"
+      run: pnpm format:check
+    publikace-lint:
+      root: apps/publikace/
+      glob: "apps/publikace/**"
+      run: pnpm lint
+    publikace-typecheck:
+      root: apps/publikace/
+      glob: "apps/publikace/**"
+      run: pnpm typecheck
+    publikace-test:
+      root: apps/publikace/
+      glob: "apps/publikace/**"
+      run: pnpm test
+    publikace-doctor:
+      root: apps/publikace/
+      glob: "apps/publikace/**"
+      run: pnpm app:doctor
 
 pre-commit:
   parallel: true
@@ -29,4 +58,20 @@ pre-commit:
     prisma-format:
       run: pnpm prisma:format
       glob: "*.prisma"
+      stage_fixed: true
+    # oxfmt formats, oxlint --fix applies auto-fixable lint errors. Both write, so their
+    # results are re-staged rather than only failing at pre-push.
+    publikace-format:
+      root: apps/publikace/
+      glob:
+        - "apps/publikace/*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}"
+        - "apps/publikace/**/*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}"
+      run: pnpm exec oxfmt {staged_files} --write
+      stage_fixed: true
+    publikace-lint:
+      root: apps/publikace/
+      glob:
+        - "apps/publikace/*.{js,ts,cjs,mjs,jsx,tsx}"
+        - "apps/publikace/**/*.{js,ts,cjs,mjs,jsx,tsx}"
+      run: pnpm exec oxlint {staged_files} --fix --max-warnings=0
       stage_fixed: true
