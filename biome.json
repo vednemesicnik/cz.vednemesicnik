@@ -69,7 +69,7 @@
   },
   "overrides": [
     {
-      "includes": ["public/**/*.svg"],
+      "includes": ["apps/web/public/**/*.svg"],
       "linter": {
         "rules": {
           "a11y": {

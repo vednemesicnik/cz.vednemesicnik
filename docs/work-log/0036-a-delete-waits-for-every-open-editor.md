@@ -60,7 +60,7 @@ other transitions leave the text in place, so the editor can react to them (0023
 - Once an editor knows its content is gone, it must not revalidate its own loader: the loader
   is a 404 then. An upload under way therefore ends without the cancel's removal and reload
   (`abandon` in the issue editor).
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

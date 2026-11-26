@@ -76,7 +76,7 @@ row with the same address and form date is the same application, and nothing is 
   person confirmed by e-mail, as a settled `invalid_request`.
 - Revisit the shared-mailbox rule if `ambiguous` keeps firing on the same people.
 
-The current state is in [Apps Script web apps](../_apps-script-web-apps.md) and the project's README.
+The current state is in [Apps Script web apps](../../apps/web/docs/_apps-script-web-apps.md) and the project's README.
 
 ## Turned down
 

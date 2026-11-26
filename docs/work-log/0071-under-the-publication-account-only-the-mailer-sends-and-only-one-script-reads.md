@@ -44,7 +44,7 @@ too.
 - The five other running scripts moved to these names the same day, one release at a time, with the web
   app answers `mail_send_failed` and `mailError`. The app read both names until the last of them was out,
   and `SCRIPT__Auth__Magic_Link` went last, proven by a real sign-in. `sendViaMailer` went after that.
-- The scripts and their accounts are in [`_apps-script-web-apps.md`](../_apps-script-web-apps.md).
+- The scripts and their accounts are in [`_apps-script-web-apps.md`](../../apps/web/docs/_apps-script-web-apps.md).
 
 ## Turned down
 

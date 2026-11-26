@@ -29,7 +29,7 @@ run — say so and stop.
 **The copywriter has `ask_*` and nothing else. It cannot read any file** — not in this repository,
 not in the room. A prompt that names a file buys a round trip in which it asks for the content.
 
-**So the context rides in the thread.** [docs/_copy-context.md](../../../docs/_copy-context.md) is
+**So the context rides in the thread.** [apps/web/docs/_copy-context.md](../../../apps/web/docs/_copy-context.md) is
 the durable half of the loop — terms, content states, roles, voice, the claims that are not true,
 and the answer shape — and its **whole content goes into the opening turn**, above the question,
 in every thread. The copy in a thread is a snapshot: a later fix to the file reaches an open
@@ -69,7 +69,7 @@ judged against its neighbours. Validation messages live in `_schema.ts` files.
 
 ## 2. Give each string what a copywriter cannot guess
 
-`docs/_copy-context.md` carries what is true of every string — **do not repeat it**. The prompt
+`apps/web/docs/_copy-context.md` carries what is true of every string — **do not repeat it**. The prompt
 owes what is true of _these_ strings:
 
 - **Where it sits** — which control, what is above and below, label or note or button.
@@ -98,7 +98,7 @@ character budget, one candidate, a wording that must match a sibling string.
 
 **Open the thread, context first.** Draft the question in `tmp/copy/<YYYY-MM-DD>-<slug>.md`
 (create the folder), then `ask_open` with `kind: "copy"`, a short topic, and a body that is **the
-whole of `docs/_copy-context.md`, then the question**. The body must stand alone.
+whole of `apps/web/docs/_copy-context.md`, then the question**. The body must stand alone.
 
 **Then the join prompt.** Copy [join-room-template.md](join-room-template.md) to
 `tmp/copy/join-room.md` if it is not there, and set its first line to the new thread's code and
@@ -128,10 +128,10 @@ opening turn. Before anything reaches a source file:
 
 1. **Check every claim against the code**, not against how good it sounds. Grep every noun that
    names a thing.
-2. **Check the terms survived** against `docs/_copy-context.md`. A term the answer challenged
+2. **Check the terms survived** against `apps/web/docs/_copy-context.md`. A term the answer challenged
    **by name** is a question back — answer it rather than overrule it.
 3. **Check it still fits** — length, neighbours, the state it appears in.
-4. **Fix what the context file got wrong** in `docs/_copy-context.md` in the same branch.
+4. **Fix what the context file got wrong** in `apps/web/docs/_copy-context.md` in the same branch.
 5. **Say which candidate you would take and why**, then take it.
 
 When something is missing, `ask_reply` on the same thread rather than a guess. Once the choice is

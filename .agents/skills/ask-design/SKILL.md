@@ -17,7 +17,7 @@ $ARGUMENTS names the subject. `check` (or `--check`) means read an answer back: 
 narrows it to the pairs the index ties to that issue.
 
 **How to read the project cheaply, which project holds what, and what `questions/_index.json`
-holds is in [docs/_design-project.md](../../../docs/_design-project.md).** Read it first.
+holds is in [apps/web/docs/_design-project.md](../../../apps/web/docs/_design-project.md).** Read it first.
 
 ## A question is named by its code
 
@@ -124,7 +124,7 @@ an issue or an earlier decision matters, carry what it decides into the brief, n
 
 ## 4. Upload it
 
-Into the app project, in one publish as `docs/_design-project.md` § Writing gives it.
+Into the app project, in one publish as `apps/web/docs/_design-project.md` § Writing gives it.
 
 **Add the pair to `questions/_index.json` in the same publish**: read it fresh, add
 `"<code>": { "topic": "<téma>", "asked": "<date>", "for": [<issues>], "answered": null }`.
@@ -196,7 +196,7 @@ a drawing adds or changes goes to the copywriter (`/ask-copy`) before it is impl
 - **A screen still waiting on a correction or a `reply`** — not yet; its words may change again.
 
 Give the copywriter the facts from this side — what the app will do, who sees the string, when —
-and say which points of `docs/_copy-context.md` the drawing no longer matches, since a redesign
+and say which points of `apps/web/docs/_copy-context.md` the drawing no longer matches, since a redesign
 draws the future app. The wording copy settles goes back to the designer as a new question through
 steps 3–5, so the drawing carries it; implementation takes the words from the drawing.
 

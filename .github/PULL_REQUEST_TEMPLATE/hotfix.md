@@ -10,7 +10,7 @@
 
 ## Deploy expectation
 
-<!-- Does this hotfix include a Prisma migration (prisma/migrations/**)?
+<!-- Does this hotfix include a Prisma migration (apps/web/prisma/migrations/**)?
      - No migration  → the `Pre-migration database backup` step is SKIPPED.
      - Has migration → the backup step RUNS; call it out here. -->
 No Prisma migration in this hotfix, so the `Pre-migration database backup` step

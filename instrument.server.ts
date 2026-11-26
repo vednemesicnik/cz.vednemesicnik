@@ -4,7 +4,7 @@
 
 import * as Sentry from '@sentry/react-router'
 
-import { scrubSentryEvent } from './app/utils/sentry/scrub-sentry-event.ts'
+import { scrubSentryEvent } from './apps/web/app/utils/sentry/scrub-sentry-event.ts'
 
 // Gate on the DSN: calling Sentry.init at all registers OpenTelemetry module
 // hooks (and emits a Node deprecation warning), so skip it entirely when unset to

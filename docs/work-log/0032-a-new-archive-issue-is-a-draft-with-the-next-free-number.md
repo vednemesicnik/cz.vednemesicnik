@@ -59,7 +59,7 @@ stored both as required columns.
 - Uploads (#711) also set `firstContentAt`, because a draft with a file is not empty.
 - Revisit this entry if an issue's number has to save field by field, for example once a
   supplement links to its main issue.
-- The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+- The lifecycle is described in [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

@@ -6,6 +6,23 @@ Agent guidance for working with code in this repository.
 
 This is a student magazine publishing platform built with React Router v8, Prisma ORM, and SQLite. The application serves as a content management system for publishing articles, podcast episodes, and archived magazine issues (PDFs). It features role-based access control for both users and authors with a complex permission system tied to content lifecycle states.
 
+## Repository Layout
+
+A pnpm workspace (`pnpm-workspace.yaml`, `packages: ['apps/*']`), one lockfile:
+
+- **The root is the host**: `server.ts` + `server/`, the Node server that serves every
+  application on the Fly machine by `Host`, with `instrument.server.ts` (Sentry), Docker, Fly,
+  CI, the backup scripts, the agent setup and the repository docs in `docs/` (deploy, backups,
+  branching, work log).
+- **The web lives in `apps/web`** (package `web`): the React Router app, its Prisma schema and
+  migrations, public files, configs and its own docs in `apps/web/docs/`.
+
+Run commands from the root: its scripts forward to the web (`pnpm app:dev` runs
+`pnpm --filter web app:dev`), and the web's scripts run with `apps/web` as the working
+directory. Web paths in the skills and rules (`app/…`, `prisma/…`, `.storybook/…`) are relative
+to `apps/web`. In the image the repository sits under `/srv` (`/srv/server.ts`,
+`/srv/apps/web`).
+
 ## Code Editing Workflow
 
 Change existing files with the Edit tool, so every change reaches the user as a reviewable diff in the IDE; use Write only for new files.
@@ -97,7 +114,8 @@ pnpm prisma:studio                 # Open Prisma Studio
 ### Testing and Utilities
 
 ```bash
-pnpm test                          # Run all Vitest tests
+pnpm test                          # Run all Vitest tests (the web's, then the host's)
+pnpm --filter web test <path>      # Run one web test file (a path relative to apps/web)
 pnpm sql:generate                  # Generate SQL scripts
 pnpm generate:static-images        # Generate static images using Sharp
 pnpm docker:compose:up             # Start Docker containers
@@ -107,8 +125,8 @@ pnpm docker:compose:down           # Stop Docker containers
 ### Google Apps Script Contracts
 
 The Google Apps Script web apps expose their JSON-Schema response contract via
-`doGet`. The committed schema under `schemas/<name>/` is the source of truth;
-types are generated into the gitignored `generated/<name>/` (regenerated in
+`doGet`. The committed schema under `apps/web/schemas/<name>/` is the source of truth;
+types are generated into the gitignored `apps/web/generated/<name>/` (regenerated in
 CI/Docker, like the Prisma client).
 
 ```bash
@@ -118,16 +136,16 @@ pnpm gas:types:generate            # Generate types from the committed schemas (
 
 On a fresh checkout, run `pnpm gas:types:generate` (like `pnpm prisma:generate`)
 before `pnpm app:typecheck`, otherwise the `@generated/<name>/response` imports
-won't resolve. Endpoints are registered in `constants/gas-endpoints.ts`.
+won't resolve. Endpoints are registered in `apps/web/constants/gas-endpoints.ts`.
 
 ## Architecture
 
 ### Path Aliases
 
-- `~/` → `./app/` - Application code
-- `~~/` → `./prisma/` - Database schema and migrations
-- `@generated/` → `./generated/` - Generated files
-- `@constants/` → `./constants/` - Shared constants
+- `~/` → `./apps/web/app/` - Application code
+- `~~/` → `./apps/web/prisma/` - Database schema and migrations
+- `@generated/` → `./apps/web/generated/` - Generated files
+- `@constants/` → `./apps/web/constants/` - Shared constants
 
 ### Routing Structure
 
@@ -137,7 +155,7 @@ React Router v8 file-based routing with nested layouts:
 - Administration routes: Nested under `/administration` with authentication required
 - Resource routes: Image serving endpoints (`/resources/*`)
 
-Routes are defined in `app/routes.ts` using the React Router config format.
+Routes are defined in `apps/web/app/routes.ts` using the React Router config format.
 
 ### Database Schema
 
@@ -167,8 +185,8 @@ All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support thr
 
 Permissions are checked via:
 
-- `app/utils/permissions/user/context/get-user-permission-context.server.ts` - System permissions (User/Author entities)
-- `app/utils/permissions/author/context/get-author-permission-context.server.ts` - Content permissions (articles, podcasts, issues, etc.)
+- `apps/web/app/utils/permissions/user/context/get-user-permission-context.server.ts` - System permissions (User/Author entities)
+- `apps/web/app/utils/permissions/author/context/get-author-permission-context.server.ts` - Content permissions (articles, podcasts, issues, etc.)
 
 Permissions use `action` (view, create, update, delete, publish, retract, archive, restore), `entity` (user, author, article, etc.), `access` (own, any), and `state` (draft, published, archived) fields.
 
@@ -184,10 +202,10 @@ Archived content can be restored to draft (Coordinator only).
 
 ### Component Organization
 
-- `app/components/` - Reusable UI components (each with its own directory containing component file and CSS module)
-- `app/routes/` - Route-specific components organized by route path
-- `app/utils/` - Server and client utilities
-- `app/styles/` - Global CSS: primitive tokens (`primitive-tokens.css`), semantic tokens — one role map, light/dark via `light-dark()` (`semantic-tokens.css`), fonts, sizes, global styles
+- `apps/web/app/components/` - Reusable UI components (each with its own directory containing component file and CSS module)
+- `apps/web/app/routes/` - Route-specific components organized by route path
+- `apps/web/app/utils/` - Server and client utilities
+- `apps/web/app/styles/` - Global CSS: primitive tokens (`primitive-tokens.css`), semantic tokens — one role map, light/dark via `light-dark()` (`semantic-tokens.css`), fonts, sizes, global styles
 
 Each component lives in its own kebab-case directory: `_component.tsx`, `_styles.module.css` and `index.ts`, with stories in `_component.stories.tsx` (see `.agents/skills/general-guidance/references/storybook.md`).
 
@@ -204,8 +222,8 @@ Images live in an object store under the `images/` prefix — a volume or Tigris
 
 Utilities:
 
-- `app/utils/image-store/` - the image store, variant generation, serving and responsive sources (`create-image-sources.ts`)
-- `app/utils/sharp.server.ts` - Sharp image transformations
+- `apps/web/app/utils/image-store/` - the image store, variant generation, serving and responsive sources (`create-image-sources.ts`)
+- `apps/web/app/utils/sharp.server.ts` - Sharp image transformations
 
 ### Authentication
 
@@ -217,11 +235,11 @@ Session-based authentication with multiple methods:
   (`can-use-emergency-password.ts`)
 - Emergency sign-in link — under the same switch, an Owner or Administrator issues a one-time
   15-minute link for an account they may edit (`can-issue-emergency-sign-in-link.ts`,
-  `app/utils/emergency-sign-in-link/`); handed over by phone or chat, never by e-mail
+  `apps/web/app/utils/emergency-sign-in-link/`); handed over by phone or chat, never by e-mail
 
-Session management in `app/utils/auth.server.ts` using cookie-based sessions.
+Session management in `apps/web/app/utils/auth.server.ts` using cookie-based sessions.
 
-CSRF protection via `app/utils/csrf.server.ts` and honeypot via `app/utils/honeypot.server.ts`.
+CSRF protection via `apps/web/app/utils/csrf.server.ts` and honeypot via `apps/web/app/utils/honeypot.server.ts`.
 Administration actions check the session before the token (design 30h): `checkCSRF` for a
 form that stays on screen (returns the form message as data; the layout revalidates and
 reissues the token), `requireCSRF` for one-click actions (throws the 403 token marker).
@@ -236,10 +254,18 @@ Forms use Conform (@conform-to/react + @conform-to/zod) with Zod validation:
 
 ### Configuration Files
 
-- `vite.config.ts` - Dev server on port 3000, React Router plugin, tsconfig paths
-- `react-router.config.ts` - SSR enabled
+The host, at the root:
+
 - `server.ts` + `server/` - Production server (`app:start`) on Remix 3 packages: compression (Brotli/gzip),
   404 for unknown hosts, static files, access log without the query, then the React Router build
+- `tsconfig.json`, `vitest.config.ts` - the host's own typecheck and tests
+- `pnpm-workspace.yaml` - the workspace (`apps/*`) and pnpm's settings for all of it
+- `biome.json`, `lefthook.yaml` - one lint/format config and one set of Git hooks for the repository
+
+The web, in `apps/web`:
+
+- `vite.config.ts` - Dev server on port 3000, React Router plugin, tsconfig paths
+- `react-router.config.ts` - SSR enabled
 - `tsconfig.json` - Path aliases configured (`~/*`, `~~/*`, `@generated/*`, `@constants/*`)
 - `prisma/schema.prisma` - Database schema with SQLite provider
 
@@ -282,16 +308,16 @@ const canPublish = authorContext.can({
 
 ### Content State Management
 
-Content state transitions must respect the lifecycle and role permissions. Use the configuration from `app/config/content-state-config.ts`.
+Content state transitions must respect the lifecycle and role permissions. Use the configuration from `apps/web/app/config/content-state-config.ts`.
 
 ### Slugs
 
-URL-friendly slugs are generated using `app/utils/slugify.ts` for articles, podcasts, tags, and categories.
+URL-friendly slugs are generated using `apps/web/app/utils/slugify.ts` for articles, podcasts, tags, and categories.
 
 ### Error Handling
 
-- `app/utils/throw-error.server.ts` - General error throwing
-- `app/utils/throw-db-error.server.ts` - Database-specific errors
+- `apps/web/app/utils/throw-error.server.ts` - General error throwing
+- `apps/web/app/utils/throw-db-error.server.ts` - Database-specific errors
 
 ### Testing
 
@@ -302,26 +328,26 @@ calling `cleanup` in `afterEach`.
 
 ## Documentation
 
-Comprehensive project documentation is in the `docs/` directory:
+The deployment and the repository are documented in `docs/`, the web in `apps/web/docs/`:
 
-- `docs/_about-the-project.md` - Project overview and architecture
-- `docs/_user-roles-and-permissions.md` - User role details
-- `docs/_author-roles-and-permissions.md` - Author role details
-- `docs/_content-creation-lifecycle.md` - Content states and transitions
-- `docs/_authentication-middleware.md` - Authentication architecture and future middleware migration plan
+- `apps/web/docs/_about-the-project.md` - Project overview and architecture
+- `apps/web/docs/_user-roles-and-permissions.md` - User role details
+- `apps/web/docs/_author-roles-and-permissions.md` - Author role details
+- `apps/web/docs/_content-creation-lifecycle.md` - Content states and transitions
+- `apps/web/docs/_authentication-middleware.md` - Authentication architecture and future middleware migration plan
 - `docs/_branching-model.md` - Branching model, merge methods, hotfix procedure
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures
-- `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
-- `docs/_apps-script-web-apps.md` - Which Google Apps Script does what for the web, with a diagram
-- `docs/_design-project.md` - The design project and design system, two artifacts (links, documents, `questions/`), reading and writing them, and reading a screen with `pnpm design:screen`
-- `docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
+- `apps/web/docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
+- `apps/web/docs/_apps-script-web-apps.md` - Which Google Apps Script does what for the web, with a diagram
+- `apps/web/docs/_design-project.md` - The design project and design system, two artifacts (links, documents, `questions/`), reading and writing them, and reading a screen with `pnpm design:screen`
+- `apps/web/docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
 - `docs/work-log/` - Numbered work log: what the work settled on, when and why, and what was turned down; context, not rules (index and format in `README.md`, template in `_template.md`)
 
 ## Environment
 
-Node.js >= 26.0.0 required (see `engines.node` in `package.json`; `.nvmrc` pins the major to `26`). Environment variables should be in `.env` (see `.env.example`).
+Node.js >= 26.0.0 required (see `engines.node` in `package.json`; `.nvmrc` pins the major to `26`). The web's environment variables go in `apps/web/.env` (see `apps/web/.env.example`); its dev server and Prisma run with `apps/web` as the working directory.
 
 ## Agent Skills
 
@@ -409,8 +435,8 @@ What the work settles that later work should know gets an entry in `docs/work-lo
 
 Loops for decisions this repository does not own. Load when a screen, component or token needs a decision from the design project, when a design document comes back with open questions, or when user-facing Czech needs a copywriter.
 
-- `.agents/skills/ask-design/SKILL.md` — brief the `ux-designer` agent, which answers and draws in the design project, read the answer back (`check`), retire settled questions (`tidy`). See `docs/_design-project.md`.
-- `.agents/skills/ask-copy/SKILL.md` — take strings through the copywriter in the shared room (`vdm-dev-exchange` in `.mcp.json`). Every thread opens with the whole of `docs/_copy-context.md`.
+- `.agents/skills/ask-design/SKILL.md` — brief the `ux-designer` agent, which answers and draws in the design project, read the answer back (`check`), retire settled questions (`tidy`). See `apps/web/docs/_design-project.md`.
+- `.agents/skills/ask-copy/SKILL.md` — take strings through the copywriter in the shared room (`vdm-dev-exchange` in `.mcp.json`). Every thread opens with the whole of `apps/web/docs/_copy-context.md`.
 
 ## Agent Rules
 

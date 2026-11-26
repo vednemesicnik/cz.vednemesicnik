@@ -21,6 +21,10 @@ const schema = z
     // doesn't use them, so `STORE_DRIVER=tigris` needn't set otherwise-unused vars.
     [ENV_KEYS.IMAGE_STORE_PATH]: z.string().optional(),
     [ENV_KEYS.PDF_STORE_PATH]: z.string().optional(),
+    // Where the documents committed with the web (`documents/`) are. Optional: the
+    // fallback is `documents/` in the working directory, which is the web's own in
+    // development; the host (server.ts) sets it, as it runs from the repository root.
+    [ENV_KEYS.DOCUMENTS_PATH]: z.string().optional(),
     // Tigris/S3 credentials and bucket. Fly sets these automatically for a bucket
     // created via `fly storage create`. Optional in the shape because they are only
     // required when STORE_DRIVER is "tigris" — enforced there by the superRefine

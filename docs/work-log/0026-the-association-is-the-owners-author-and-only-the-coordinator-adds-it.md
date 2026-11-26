@@ -37,7 +37,7 @@ There is exactly one Owner ([0003](0003-exactly-one-owner.md)).
   Owner's account stops being the association's: then the schema needs a flag, and the `where`
   changes in one place.
 - The editor and its authors are described in
-  [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
+  [_content-creation-lifecycle.md](../../apps/web/docs/_content-creation-lifecycle.md).
 
 ## Turned down
 

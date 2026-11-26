@@ -6,8 +6,12 @@ import { buildPdfResponse } from '~/utils/pdf-store/serve-pdf.server'
 const FILE_NAME = 'stanovy-spolku.pdf'
 
 // Committed with the code and copied into the image, as it changes only when the
-// spolek adopts new statutes.
-const FILE_PATH = join(process.cwd(), 'documents', FILE_NAME)
+// spolek adopts new statutes. The host runs from the repository root and names the
+// folder in DOCUMENTS_PATH.
+const FILE_PATH = join(
+  process.env.DOCUMENTS_PATH ?? join(process.cwd(), 'documents'),
+  FILE_NAME,
+)
 
 export const loader = async () => {
   try {

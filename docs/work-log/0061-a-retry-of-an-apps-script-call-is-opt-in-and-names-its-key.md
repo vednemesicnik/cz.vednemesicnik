@@ -51,7 +51,7 @@ not under a lock, so two copies of one link can go out. That is a nuisance, not 
 Revisit if the Sentry warning never fires, which would mean the retry buys nothing here, or if it
 fires often, which would make the 404 worth diagnosing after all.
 
-The current state is in [Apps Script web apps](../_apps-script-web-apps.md), with why each of the
+The current state is in [Apps Script web apps](../../apps/web/docs/_apps-script-web-apps.md), with why each of the
 other endpoints does not opt in.
 
 ## Turned down

@@ -35,7 +35,7 @@ changes form below five. Sorting the list
 by last sign-in is not possible without a relation from `AuthLog` to `User`, which 0004 rules
 out on purpose. A reason to revisit: the Administrator needs to tell "never" from "long ago"
 for old accounts, which would need data kept beyond the window. The current state of both logs
-is in [`docs/_audit-logging.md`](../_audit-logging.md).
+is in [`docs/_audit-logging.md`](../../apps/web/docs/_audit-logging.md).
 
 ## Turned down
 
