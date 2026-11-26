@@ -1,0 +1,18 @@
+DROP INDEX job_runs_by_job;
+DROP TABLE job_runs;
+DROP INDEX artwork_batches_by_claim;
+ALTER TABLE artwork_batches DROP COLUMN archive_error;
+ALTER TABLE artwork_batches DROP COLUMN archive_failed_at;
+ALTER TABLE artwork_batches DROP COLUMN consent_file_id;
+ALTER TABLE artwork_batches DROP COLUMN approved_at;
+ALTER TABLE artwork_batches DROP COLUMN consent_verified_by_name;
+ALTER TABLE artwork_batches DROP COLUMN consent_verified_by_email;
+ALTER TABLE artwork_batches DROP COLUMN consent_verified_at;
+ALTER TABLE artwork_batches DROP COLUMN claimed_at;
+ALTER TABLE artwork_batches DROP COLUMN claim_key;
+ALTER TABLE artwork_batches DROP COLUMN checked_at;
+ALTER TABLE artwork_batches DROP COLUMN is_exact_consent;
+ALTER TABLE artwork_batches DROP COLUMN reply_text;
+ALTER TABLE artwork_batches DROP COLUMN reply_received_at;
+ALTER TABLE artwork_batches DROP COLUMN reply_message_id;
+ALTER TABLE artwork_batches DROP COLUMN reply_thread_id;

@@ -1,0 +1,28 @@
+/* ============================================================
+   Vedneměsíčník — Webfonts
+   The product ships Inter / InterVariable as its single typeface.
+   The same files the app loads from rsms.me (app/root.tsx), version 4.1,
+   family InterVariable, which carries the optical-size axis, so large
+   sizes render in the display cut. Google Fonts' Inter has no working
+   opsz axis; don't use it. Rozhodnuto 13. 10. 2026 (btiprlvb).
+   Kept beside this file since 4. 11. 2026: an artifact blocks the
+   stylesheet from rsms.me.
+   ============================================================ */
+
+@font-face {
+  font-family: InterVariable;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("font-files/InterVariable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: InterVariable;
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("font-files/InterVariable-Italic.woff2") format("woff2");
+}
+
+/* --font-family (Inter → InterVariable via @supports) lives in typography.css. */

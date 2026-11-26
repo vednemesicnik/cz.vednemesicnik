@@ -1,0 +1,14 @@
+DROP INDEX article_clauses_by_claim;
+ALTER TABLE article_clauses DROP COLUMN archive_error;
+ALTER TABLE article_clauses DROP COLUMN archive_failed_at;
+ALTER TABLE article_clauses DROP COLUMN consent_file_id;
+ALTER TABLE article_clauses DROP COLUMN approved_at;
+ALTER TABLE article_clauses DROP COLUMN consent_verified_by_name;
+ALTER TABLE article_clauses DROP COLUMN consent_verified_by_email;
+ALTER TABLE article_clauses DROP COLUMN consent_verified_at;
+ALTER TABLE article_clauses DROP COLUMN checked_at;
+ALTER TABLE article_clauses DROP COLUMN is_exact_consent;
+ALTER TABLE article_clauses DROP COLUMN reply_text;
+ALTER TABLE article_clauses DROP COLUMN reply_received_at;
+ALTER TABLE article_clauses DROP COLUMN reply_message_id;
+ALTER TABLE article_clauses DROP COLUMN reply_thread_id;

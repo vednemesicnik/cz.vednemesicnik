@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/remix/schema/remix.json",
+  "db": {
+    // What `pnpm db:status`, `db:migrate` and `db:rollback` open. The default is the same
+    // file `app/data/database.server.ts` opens, so the CLI and the running app agree unless
+    // `DATABASE_PATH` points both somewhere else.
+    "adapter": {
+      "type": "sqlite",
+      "filename": { "env": "DATABASE_PATH", "default": "./db/publikace.sqlite" },
+      "foreignKeys": true
+    },
+    "migrations": { "directory": "./db/migrations" }
+  },
+  "doctor": {
+    // Without this, doctor prints its findings and exits 0 — a check nothing can fail.
+    // Strict fails on warnings only. It is set here rather than as `--strict` in the script so
+    // that a bare `remix doctor` answers what the hook and CI answer; `--no-strict` is the
+    // escape for one run.
+    "strict": true
+  },
+  "test": {
+    // Replaces the runner's default rather than extending it, so `node_modules/**` is named
+    // again here. `tmp/` holds probes and scratch, and discovery is otherwise repository-wide:
+    // without this line a probe named `*.test.ts` joins the suite.
+    "exclude": ["node_modules/**", "tmp/**"]
+  }
+}
