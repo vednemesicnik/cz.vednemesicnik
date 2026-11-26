@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  changes:
+  repo-changes:
     runs-on: ubuntu-latest
     # dorny/paths-filter reads the PR's changed files via the API on pull_request
     # events; the top-level contents:read alone is not enough.
@@ -73,8 +73,8 @@ jobs:
           xargs -0 pnpm exec biome check --no-errors-on-unmatched --files-ignore-unknown=true
 
   host-typecheck:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.host == 'true'
+    needs: repo-changes
+    if: github.event_name != 'pull_request' || needs.repo-changes.outputs.host == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -87,8 +87,8 @@ jobs:
       - run: pnpm exec tsc
 
   host-test:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.host == 'true'
+    needs: repo-changes
+    if: github.event_name != 'pull_request' || needs.repo-changes.outputs.host == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
