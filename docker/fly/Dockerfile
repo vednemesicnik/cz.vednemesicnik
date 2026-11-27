@@ -31,6 +31,7 @@ WORKDIR /srv
 
 ADD package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 ADD apps/web/package.json apps/web/package.json
+ADD apps/publikace/package.json apps/publikace/package.json
 RUN pnpm install --frozen-lockfile
 
 # Setup production node_modules
@@ -40,6 +41,7 @@ WORKDIR /srv
 
 ADD package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 ADD apps/web/package.json apps/web/package.json
+ADD apps/publikace/package.json apps/publikace/package.json
 RUN pnpm install --prod --frozen-lockfile
 
 # Build the web
@@ -90,6 +92,14 @@ ENV IMAGE_STORE_PATH="/data/images"
 ENV PDF_STORE_PATH="/data/pdfs"
 ENV HOST="0.0.0.0"
 ENV PORT="8080"
+# Publikace's configuration that is not secret, under the prefix the host strips
+# (server/publikace-environment.ts); its secrets are fly secrets, listed in
+# docs/_deploy-to-fly.md. Its database is a file of its own on the same volume.
+ENV PUBLIKACE_APP_ORIGIN="https://publikace.vednemesicnik.cz"
+ENV PUBLIKACE_AUTHORIZED_DOMAIN="vednemesicnik.cz"
+ENV PUBLIKACE_DATABASE_PATH="/data/publikace.sqlite"
+ENV PUBLIKACE_DRIVE_ACCOUNT_EMAIL="publikace.app@vednemesicnik.cz"
+ENV PUBLIKACE_SCRIPT_JOB_ACCOUNT="publikace.app@vednemesicnik.cz"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
 ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK="1"
 # Fewer glibc malloc arenas, so Sharp's freed memory is reused instead of piling
@@ -110,6 +120,7 @@ WORKDIR /srv
 
 COPY --from=production-deps /srv/node_modules /srv/node_modules
 COPY --from=production-deps /srv/apps/web/node_modules /srv/apps/web/node_modules
+COPY --from=production-deps /srv/apps/publikace/node_modules /srv/apps/publikace/node_modules
 # pnpm-workspace.yaml carries verifyDepsBeforeRun: false, which stops pnpm
 # from reinstalling the full (dev) dependency tree over the network when the
 # entrypoint runs `pnpm prisma:migrate:deploy` at startup. It also lists apps/*,
@@ -133,5 +144,13 @@ COPY apps/web/app/utils/sentry/scrub-sentry-event.ts apps/web/app/utils/sentry/s
 COPY apps/web/scripts/object-store-cli.ts apps/web/scripts/object-store-cli.ts
 # The statutes the membership application links to.
 COPY apps/web/documents apps/web/documents
+
+# Publikace runs from its sources, which its own loader transforms at start; the loader
+# reads tsconfig.json for the JSX runtime and package.json for the module type. Its
+# migrations run at its start too, and remix.json points the `remix db` CLI at them.
+COPY apps/publikace/package.json apps/publikace/tsconfig.json apps/publikace/remix.json apps/publikace/
+COPY apps/publikace/app apps/publikace/app
+COPY apps/publikace/public apps/publikace/public
+COPY apps/publikace/db/migrations apps/publikace/db/migrations
 
 ENTRYPOINT [ "/srv/scripts/docker-entry-point.sh" ]
