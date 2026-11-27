@@ -185,23 +185,24 @@ field on 27 Nov 2026 (log 0091), and nothing reads it. A new project belongs in 
 
 ## Planning a version
 
-Every application tagged by semver (its style in `RELEASE_STYLES`, `scripts/release-version.ts`)
-plans each version as a GitHub milestone titled after the tag, `<app>-vX.Y.Z`. The milestone
-holds the issues that version needs, the one that turns its gated work on included
-([\_branching-model.md](_branching-model.md) § Unreleased work behind a gate), and the release
-whose tag matches closes it. An application tagged by date (the web) has no milestones.
+An application tagged by semver (its style in `RELEASE_STYLES`, `scripts/release-version.ts`)
+plans only its **majors**, each as a GitHub milestone titled after the tag, `<app>-vX.0.0`
+([\_branching-model.md](_branching-model.md) § Versions). A patch or a minor is not planned:
+the release names it by what it carries, and it has no milestone. Priority puts nothing into a
+milestone; the application's **Issue weighing** says what Priority is weighed against. An
+application tagged by date (the web) has no milestones.
 
-- **Filling it.** Priority fills it: every issue of the application with Priority _High_ or
-  _Medium_ is in the current version's milestone, and none with _Low_. An _Urgent_ one goes out
-  as a hotfix, which takes the next patch, and joins no milestone. The application's **Issue
-  weighing** names the current version. Whoever sets or changes the Priority sets the
-  milestone in the same step: `--milestone "<title>"` on `gh issue create`,
-  `gh issue edit <n> --milestone "<title>"`, or `--remove-milestone` when the issue leaves it.
-  Both take the title, so a milestone's number is never written into a skill.
-- **Reading it.** `/next-issue` says how many of its issues are open and closed and fixes an
-  issue whose weighing and milestone disagree.
-- **Closing it.** `/release-pr` names a version only once its milestone has no open issue, and
-  closes the milestone after the merge. The application's guide then names the next one.
+- **Opening it.** The first issue whose work needs a major creates its milestone
+  (`gh api -X POST repos/{owner}/{repo}/milestones -f title="<app>-v2.0.0"`) and joins it.
+- **Filling it.** An issue joins the milestone when its work is part of that major: work behind
+  the gate, the PR that turns it on ([\_branching-model.md](_branching-model.md) § Unreleased
+  work behind a gate), a contract step that ships with it. It joins whatever its Priority, with
+  `--milestone "<title>"` on `gh issue create` or `gh issue edit <n> --milestone "<title>"`,
+  and leaves with `--remove-milestone` when its work stops being part of the major. Both take
+  the title, so a milestone's number is never written into a skill.
+- **Reading it.** `/next-issue` says how many of an open major's issues are open and closed.
+- **Closing it.** `/release-pr` names a major only once its milestone has no open issue, and
+  closes the milestone after the merge.
 
 ## Where each one stops, and why
 

@@ -12,12 +12,12 @@ do not.
 
 ```mermaid
 flowchart LR
-  M["Milestone per app version<br/>(semver apps)"] -. plans .-> F
+  M["Milestone per major<br/>(semver apps)"] -. plans .-> F
   F["Feature branch<br/>one per issue"] -->|squash PR| D[dev]
   I["Integration branch<br/>(rare)"] -.->|one PR| D
   D -->|"release PR dev → main<br/>names versions, release-version check"| MA[main]
   MA --> DEP["One deploy<br/>every app"]
-  MA --> T["Tag per changed app<br/>closes its milestone"]
+  MA --> T["Tag per changed app<br/>a major closes its milestone"]
   H["Hotfix branch"] -->|squash PR| MA
   MA -->|back-merge| D
 ```
@@ -45,9 +45,9 @@ own rule says it is not production (local development, tests, the fake app; each
 - **Migrations cannot be gated**, because they run on deploy; they go
   [expand, then contract](#migrations-expand-then-contract).
 - **Turning it on is its own PR.** The PR that removes the gate is the step that releases the
-  work. For an application tagged by semver it belongs to the version's milestone
-  ([\_workflow-skills.md](_workflow-skills.md) § Planning a version), and the release that
-  carries it names that version. A release carrying only gated work gives such an application
+  work, and the release that carries it names the version it turns on. When that version is a
+  major of an application tagged by semver, the PR belongs to the major's milestone
+  ([\_workflow-skills.md](_workflow-skills.md) § Planning a version). A release carrying only gated work gives such an application
   the next patch (`publikace-v1.0.1`).
 - **Work that cannot be gated** — a change of the host, a dependency, a shared layout, a
   schema whose old and new shape cannot coexist — goes to a short-lived integration branch off
@@ -73,8 +73,8 @@ flowchart LR
    to; the code production runs keeps using the old one.
 3. **Turn on.** The PR that removes the gate also stops reading the old structure, and its
    release names the version.
-4. **Contract.** Dropping the old structure is an issue of its own, in the same milestone or
-   the next, and ships in a later release than the turn-on, never the same one, so rolling back
+4. **Contract.** Dropping the old structure is an issue of its own, and ships in a later
+   release than the turn-on, never the same one, so rolling back
    to the previous image still works. It is the one destructive step: the web's deploy takes
    the pre-migration backup itself, of the web's database and Publikace's alike.
 
@@ -173,9 +173,10 @@ folder in `apps/` without one fails the `release-version` check on every PR.
 | `date` | the web | `web-2026-11-27`, a second one that day `web-2026-11-27-2` | the day of the merge in Prague |
 | `semver` | Publikace | `publikace-v1.1.0` | a release names it under `## Versions`; a hotfix is the next patch |
 
-**Why two styles.** An application that plans its versions as milestones needs semver, since a
-milestone needs its name before anyone knows the day it ships. An application that ships
-continuously with no plan per version is tagged by date. What makes releases continuous is the
+**Why two styles.** An application that plans its majors as milestones needs semver, since a
+milestone needs its name before anyone knows the day it ships, and the number tells its users
+what a release does to them. An application that ships continuously with no plan per version
+is tagged by date. What makes releases continuous is the
 one deploy from `dev`, not the numbering, so one repository holds both.
 
 **Which part of a semver version moves**, in the application's own terms (its `AGENTS.md`
@@ -186,20 +187,18 @@ one deploy from `dev`, not the numbering, so one repository holds both.
 - **minor** — at least one new thing is turned on, and nobody who uses the application or
   calls it has to change anything for it.
 - **major** — something its users have to relearn, an incompatible change to an API others
-  call, or a data migration that needs somebody to act. A major is planned as its own
-  milestone (`<app>-v2.0.0`), its work lands on `dev` behind the gate, and the release that
-  removes the gate names it.
+  call, or a data migration that needs somebody to act. A major is planned as a milestone
+  (`<app>-v2.0.0`), its work lands on `dev` behind the gate, and the release that removes the
+  gate names it.
 
 A semver version is the next patch, minor or major after the application's newest tag. The
-first one is always `v1.0.0`, and until a release names it the application stays untagged:
-**Publikace has no tag until the release that has the host serve
-`publikace.vednemesicnik.cz` (#1082) names `- publikace-v1.0.0`**, and then it is tagged even
-if only the host changed. A hotfix never gives a first version. The web's Releases carry the
-repository's "Latest" badge; the others do not.
+first one is always `v1.0.0`, and until a release names it the application stays untagged; it
+is tagged even if only the host changed. A hotfix never gives a first version. The web's
+Releases carry the repository's "Latest" badge; the others do not.
 
-**A semver version is planned as a milestone** titled after its tag, and the release that
-names the version closes it ([\_workflow-skills.md](_workflow-skills.md) § Planning a version).
-A release that changes such an application only with work still
+**Only a major is planned as a milestone**, titled after its tag, and the release that names
+the major closes it ([\_workflow-skills.md](_workflow-skills.md) § Planning a version). A
+patch or a minor has none. A release that changes such an application only with work still
 [behind a gate](#unreleased-work-behind-a-gate) gives it the next patch, once it has a first
 version. An illustration, with Publikace's 1.1 built behind its gate between two releases:
 

@@ -114,7 +114,7 @@ describes, then give the verdict.
   _Bug_, _Feature_ or _Task_ — and carries its app's label, `web` or `publikace` (both for the
   host or the repository), in the same `gh issue create`; it gets the Priority you weigh by the
   app's **Issue weighing** and the Effort its size gives, each with its reason in a sentence, the
-  milestone of the version that Priority puts it in, and the board when the weighing names one
+  milestone of the major its work is part of, if any, and the board when the weighing names one
   ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and status,
   § Priority and effort, § Planning a version) — which sections of the written design it changes and in what words,
   and which review finding it resolves: the documents change in the same PR as the code. Before
