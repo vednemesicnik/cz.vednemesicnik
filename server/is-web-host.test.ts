@@ -17,6 +17,7 @@ describe('isWebHost', () => {
 
   test.each([
     'publikace.vednemesicnik.cz',
+    'publikace.localhost',
     'other-app.fly.dev',
     'unknown.test',
     'localhost.unknown.test',

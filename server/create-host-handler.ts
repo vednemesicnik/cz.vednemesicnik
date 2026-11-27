@@ -6,6 +6,7 @@ import { staticFiles } from '@remix-run/static-middleware'
 
 import { addDefaultCharset } from './add-default-charset.ts'
 import type { FetchHandler } from './create-web-handler.ts'
+import { isPublikaceHost } from './is-publikace-host.ts'
 import { refuseUnknownHost } from './refuse-unknown-host.ts'
 
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable'
@@ -17,25 +18,31 @@ const isFingerprintedAsset = (relativePath: string) =>
 type HostHandlerOptions = {
   clientDirectory: string
   log?: LoggerFunction
+  publikaceHandler?: FetchHandler
   webHandler: FetchHandler
 }
 
 /**
- * Creates the host's request handler: what `react-router-serve` did in front of the web app.
+ * Creates the host's request handler: Publikace for its hosts, and in front of the web app
+ * what `react-router-serve` did.
  *
- * A host the web doesn't answer gets 404 before anything else. Fingerprinted files under
+ * A request for one of Publikace's hosts goes to Publikace as it came, since Publikace
+ * compresses, serves its files and logs by itself. Of the rest, a host the web doesn't answer
+ * gets 404 before anything else. Fingerprinted files under
  * `/assets` are cached for a year, the rest of the client build revalidates, everything
  * compressible is compressed, and only requests that reach the web app are logged, as morgan
  * logged them, though without the query.
  *
  * @param options.clientDirectory The web's client build (`apps/web/build/client`).
  * @param options.log Where access-log lines go; `console.log` when left out.
+ * @param options.publikaceHandler Publikace, for its hosts; without it they get 404.
  * @param options.webHandler The web app, for every request no static file answers.
  * @returns The handler the Node server calls for each request.
  */
 export function createHostHandler({
   clientDirectory,
   log,
+  publikaceHandler,
   webHandler,
 }: HostHandlerOptions): FetchHandler {
   const router = createRouter({
@@ -67,5 +74,8 @@ export function createHostHandler({
     ],
   })
 
-  return (request) => router.fetch(request)
+  return (request) =>
+    publikaceHandler && isPublikaceHost(new URL(request.url).hostname)
+      ? publikaceHandler(request)
+      : router.fetch(request)
 }

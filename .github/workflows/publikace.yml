@@ -41,6 +41,9 @@ jobs:
           filters: |
             publikace:
               - 'apps/publikace/**'
+              # Publikace's typecheck holds createPublikace to the shape the host loads.
+              - 'server/start-publikace.ts'
+              - 'server/publikace-environment.ts'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
