@@ -64,14 +64,14 @@ sends to nobody the request does not name:
 
 - [ ] `GET` on its `/exec` URL answers with the JSON contract. An HTML page means the deployment
       is not _Anyone_ or the project was never authorised;
-- [ ] that URL as `MAIL_SEND_URL`, and `OWN_SECRET` from the project's Script Properties as
-      `MAIL_SEND_SECRET`, copied by the tester;
+- [ ] that URL as `GAS_MAIL_SEND_URL`, and `OWN_SECRET` from the project's Script Properties as
+      `GAS_MAIL_SEND_SECRET`, copied by the tester;
 - [ ] every address the run types into a form is one a tester reads.
 
 **`.env`**, edited by the tester:
 
-- [ ] `ISSUES_FOLDER_ID` and `ARTICLE_TEMPLATE_DOCUMENT_ID` as above, `MAIL_SEND_URL` and
-      `MAIL_SEND_SECRET`, and `DRIVE_TOKEN_KEY` set;
+- [ ] `ISSUES_FOLDER_ID` and `ARTICLE_TEMPLATE_DOCUMENT_ID` as above, `GAS_MAIL_SEND_URL` and
+      `GAS_MAIL_SEND_SECRET`, and `DRIVE_TOKEN_KEY` set;
 - [ ] `DRIVE_ACCOUNT_EMAIL` empty (it defaults to `publikace.app@` on `AUTHORIZED_DOMAIN`);
 - [ ] `REGISTRY_SPREADSHEET_ID` the test Registr's, never the real one's.
 

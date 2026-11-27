@@ -396,7 +396,7 @@ Evidence.
 | Sign-in          | `APP_ORIGIN`, `AUTHORIZED_DOMAIN`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `INITIAL_ADMIN_EMAIL`  |
 | Group membership | `GAS_GROUP_MEMBERSHIP_URL`, `GAS_GROUP_MEMBERSHIP_SECRET`                                                               |
 | Drive            | `DRIVE_ACCOUNT_EMAIL`, `DRIVE_TOKEN_KEY`, `ISSUES_FOLDER_ID`, `ARTICLE_TEMPLATE_DOCUMENT_ID`, `REGISTRY_SPREADSHEET_ID` |
-| Mail             | `MAIL_SEND_URL`, `MAIL_SEND_SECRET`, `PUBLIC_MAIL_PER_DAY`                                                              |
+| Mail             | `GAS_MAIL_SEND_URL`, `GAS_MAIL_SEND_SECRET`, `PUBLIC_MAIL_PER_DAY`                                                      |
 | Jobs             | `SCRIPT_TOKEN_AUDIENCE`, `SCRIPT_JOB_ACCOUNT`, `SCRIPT_RUN_SECRET` (not read yet, see the review)                       |
 | Storage          | `DATABASE_PATH`                                                                                                         |
 

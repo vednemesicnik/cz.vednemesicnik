@@ -94,7 +94,7 @@ whole list there from one database, so two databases would replace each other's 
 ## Turned down
 
 - **Prefixing only the names that collide today.** A web variable added later, such as a
-  `MAIL_SEND_URL` of its own, would then collide silently.
+  `GAS_MAIL_SEND_URL` of its own, would then collide silently.
 - **Publikace's non-secret values in `fly.toml [env]`.** The web keeps its fixed values in the
   image and only toggles such as `STORE_DRIVER` in `fly.toml`. With one Fly app and no staging,
   `[env]` gains nothing.
