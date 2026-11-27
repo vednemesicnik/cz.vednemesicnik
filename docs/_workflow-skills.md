@@ -123,6 +123,14 @@ app's Issue weighing says what they mean) and a `Status` field (Todo, In Progres
   ```
 
   Look the field and option ids up each time; they are never written into a skill.
+- **Milestone.** An application's Issue weighing may also name a milestone for the release its
+  priorities are weighed against, and which priorities belong in it (Publikace:
+  `publikace-v1.0.0` holds every P1 and P2, no P3). The milestone follows the priority and is
+  never weighed on its own: whoever sets or changes a priority sets the milestone in the same
+  step — `--milestone "<title>"` on `gh issue create`, `gh issue edit <n> --milestone "<title>"`
+  or `--remove-milestone` when a priority crosses the line. Both take the title, so the
+  milestone's number is never written down. `/next-issue` reports how many of its issues are
+  open and closed; `/release-pr` closes it once the release that names its version is merged.
 - **Status.** `/implement-issue` sets the item to In Progress when it starts on the branch, the
   same way, with the Status field; closing the issue moves it to Done through the project's own
   workflow.

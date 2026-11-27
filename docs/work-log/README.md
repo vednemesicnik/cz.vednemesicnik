@@ -120,3 +120,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0087](0087-publikace-joins-as-apps-publikace-with-its-history-and-its-own-tools.md) | Publikace joins as apps/publikace, with its history and its own tools | 2026-11-26 | [0089](0089-every-app-gets-its-own-tags-and-releases-and-one-deploy-remains.md) |
 | [0088](0088-one-agent-setup-serves-both-applications-and-reads-each-apps-guide.md) | One agent setup serves both applications and reads each app's guide | 2026-11-26 |  |
 | [0089](0089-every-app-gets-its-own-tags-and-releases-and-one-deploy-remains.md) | Every app gets its own tags and Releases, and one deploy remains | 2026-11-27 |  |
+| [0090](0090-a-release-milestone-follows-the-projects-priority-and-closes-with-its-release.md) | A release milestone follows the project's priority and closes with its release | 2026-11-27 |  |

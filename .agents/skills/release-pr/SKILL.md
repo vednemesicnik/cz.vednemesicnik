@@ -36,7 +36,10 @@ gh pr create --base main --head dev --template release.md \
   the host serve it (#1082), which names `- publikace-v1.0.0`; before that, name nothing for
   it. Once the PR is open, read the `release-version` check's summary: it lists the tag every
   changed application will get, and fails on a missing or wrong version. Fix the body, never
-  the check.
+  the check. When the app's **Issue weighing** names a milestone for the version, the release
+  names it only once the milestone has no open issue left
+  (`gh issue list --milestone "<title>" --state open`); one still open is either weighed down out
+  of it or the version waits.
 - **Deploy expectation** — does the release include a migration of a served application's
   database (the web's `apps/web/prisma/migrations/**`)? No migration → the `Pre-migration
   database backup` step is **skipped**. Has migration → the backup step **runs**; call it out.
@@ -61,7 +64,10 @@ question or a soft "probably fine" is not one.
 3. **Check the tags.** `release.yml` tags the merge commit for each changed application and
    publishes its Release: `gh release list --limit 5` shows them next to the run's summary. A
    failed or cancelled run is re-run from the Actions page
-   ([docs/\_branching-model.md](../../../docs/_branching-model.md) § Versions).
+   ([docs/\_branching-model.md](../../../docs/_branching-model.md) § Versions). Close the
+   milestone of each version the release named, looked up by its title:
+   `gh api 'repos/{owner}/{repo}/milestones?state=open' --jq '.[] | select(.title == "<title>") | .number'`,
+   then `gh api -X PATCH repos/{owner}/{repo}/milestones/<number> -f state=closed`.
 4. **Merge the back-merge.** `sync-dev.yml` opens `chore: back-merge main into dev`. Once its
    checks are green, merge it with a merge commit in the same turn, then confirm that `main`
    still exists (`git ls-remote --heads origin main`) and that `dev` is not behind it. The

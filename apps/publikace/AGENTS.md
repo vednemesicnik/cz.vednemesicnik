@@ -247,6 +247,11 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Ordering by a project). The
   skill filing an issue adds it to the project and decides its priority itself.
 
+  The milestone **`publikace-v1.0.0`** holds every issue with P1 or P2 and none with P3: the
+  priority puts an issue in it, and moving an issue between P2 and P3 moves it in or out in the
+  same step. The release that names `publikace-v1.0.0` closes it; the next release this guide
+  weighs against then gets a milestone of its own, named here.
+
 - **Traps** — § Things that will bite you below; above all: an applied migration is never
   edited (the journal keeps its checksum and refuses a changed history), and `oxfmt` formats
   Markdown while the pre-commit hook globs only code, so run `pnpm format` after a docs change or
