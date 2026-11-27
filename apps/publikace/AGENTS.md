@@ -109,7 +109,8 @@ whose hooks never fire had its install scripts skipped: `pnpm lefthook:install` 
 the fix. [publikace.yml](../../.github/workflows/publikace.yml) runs `publikace-lint`,
 `publikace-format`, `publikace-typecheck`, `publikace-test` and `publikace-doctor` on every PR
 that touches Publikace, and the `branch-protection` ruleset requires them. Releases are the
-repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See [docs/branching-model.md](docs/branching-model.md).
+repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
+[docs/branching-model.md](docs/branching-model.md).
 
 ## What the app will be
 
@@ -232,8 +233,8 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   `remix` skill and `modern-web-guidance`.
 - **Issue weighing** — the org project **Publikace**,
   [number 7](https://github.com/orgs/vednemesicnik/projects/7), orders the issues labelled
-  `publikace` by its `Priority`, weighed against `publikace-v1.0.0`, the release that first runs on Fly.io
-  and lets the newsroom switch the scripts off:
+  `publikace` by its `Priority`, weighed against `publikace-v1.0.0`, the release that first runs
+  on Fly.io and lets the newsroom switch the scripts off:
   - **P1** — the release needs it now: without it the app cannot do its job for the newsroom,
     loses or corrupts data, sends a wrong e-mail, leaves a door
     [docs/security.md](docs/security.md) does not guard, or keeps the cutover from happening;

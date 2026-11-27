@@ -137,12 +137,21 @@ styles.
 tag and the Release through the API.
 
 **When a run fails or is cancelled**, re-run it from the Actions page: the event is the same,
-a tag already on the merge commit counts as done, and a missing Release is published. Two
-merges into `main` within a minute can cancel the waiting run of the first (GitHub keeps one
-pending run per concurrency group); re-run that one too. A version taken by another merge in
-the meantime (a hotfix took the patch the release named) fails `release-decide`: tag that
-merge by hand with `gh release create <tag> --target <sha>
---title <tag> --notes-file <notes>`.
+a tag already on the merge commit counts as done, and a missing Release is published. Merges
+into `main` queue one run at a time, and GitHub keeps one waiting run: a third merge while one
+runs and one waits cancels the waiting one. Re-run it only when no later merge has been tagged
+since; a later tag covers it (its notes include those commits), and the re-run skips that
+application.
+
+**When one application fails after the merge** (a hotfix took the patch the release named),
+the others are tagged and the run fails for that one. The body is frozen in the event, so a
+re-run fails again: tag it by hand, with `--latest=false` for every application but the web:
+
+```bash
+git log --no-merges --format='- %s (%h)' <previous-tag>..<merge-sha> -- apps/<app>/ > notes.md
+gh release create <app>-v<version> --target <merge-sha> --title <app>-v<version> \
+  --notes-file notes.md --latest=false
+```
 
 ## Release procedure
 

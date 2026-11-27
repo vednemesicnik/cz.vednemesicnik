@@ -10,7 +10,7 @@ repository's `release.yml` makes after a merge into `main` that changed `apps/pu
 ([docs/\_branching-model.md § Versions](../../../docs/_branching-model.md#versions)). A release
 names the version under `## Versions` in its body; a hotfix gets the next patch. Publikace has
 no tag yet: its first is `publikace-v1.0.0`, named in the release that has the host serve
-`publikace.vednemesicnik.cz` (cz.vednemesicnik#1082). Its former `release.yml` ended with the move.
+`publikace.vednemesicnik.cz` (#1082). Its former `release.yml` ended with the move.
 
 **Checks.** [publikace.yml](../../../.github/workflows/publikace.yml) runs `publikace-lint`,
 `publikace-format`, `publikace-typecheck`, `publikace-test` and `publikace-doctor` on a PR that

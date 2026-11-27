@@ -69,13 +69,14 @@ what it checks. `.github/workflows/web.yml` checks the web: `web-lint`, `web-typ
 `publikace-lint`, `publikace-format`, `publikace-typecheck`, `publikace-test`,
 `publikace-doctor`. `.github/workflows/repo.yml` checks what belongs to no application:
 `repo-lint` (the lockfile, Biome outside `apps/`), `host-typecheck`, `host-test` and `image`
-(the one Docker image). `.github/workflows/release-version.yml` runs `release-version`, the tag
-each changed application would get from a PR into `main`, and `release.yml` writes those tags
-after the merge (§ Releases). On a pull request each job runs only when its files change: a
+(the one Docker image). On a pull request each of these jobs runs only when its files change: a
 `dorny/paths-filter` job and a job-level `if:`, never `on.paths`, since a skipped job passes a
 required check and a workflow that never starts leaves it "expected". `deploy.yml` calls every
 workflow, with every job running. A new application gets its own workflow, with jobs named
-`<app>-…`, and its names go into the ruleset.
+`<app>-…`, and its names go into the ruleset. Two checks run on every PR, with no paths filter:
+`pr-title` (`pr-title.yml`) and `release-version` (`release-version.yml`), the tag each changed
+application would get from a PR into `main`; `release.yml` writes those tags after the merge
+(§ Releases).
 
 ### Git Hooks
 
@@ -159,7 +160,7 @@ it. [docs/\_branching-model.md](docs/_branching-model.md) § Versions has the re
 The repository's documents are in `docs/`; each application documents itself in its own
 `docs/`.
 
-- `docs/_branching-model.md` - Branching model, merge methods, stacked PRs, hotfix procedure
+- `docs/_branching-model.md` - Branching model, merge methods, stacked PRs, versions (tags, Releases, the `release-version` gate), hotfix procedure
 - `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, where each stops, where the skills live
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
