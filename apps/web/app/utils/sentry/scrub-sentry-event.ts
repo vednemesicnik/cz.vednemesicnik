@@ -8,22 +8,32 @@ const REFERER_HEADER = 'referer'
 const BREADCRUMB_URL_FIELDS = ['url', 'from', 'to']
 const BREADCRUMB_QUERY_FIELDS = ['http.query', 'http.fragment']
 
-const removeQueryAndFragment = (url: string) => url.split(/[?#]/, 1)[0]
+// Publikace's shared links carry their key in the path (`/l/{key}/article`), and its
+// requests pass through the same process.
+const SHARED_LINK_KEY = /\/l\/[^/]+/
+
+const removeSecretsFromUrl = (url: string) =>
+  url.split(/[?#]/, 1)[0].replace(SHARED_LINK_KEY, '/l/…')
 
 /**
  * Removes what must not reach Sentry from an event: request bodies (typed
- * passwords, application data), cookies and secret headers, and every query
- * string, because sign-in links and OAuth callbacks carry live tokens in theirs.
+ * passwords, application data), cookies and secret headers, every query string,
+ * because sign-in links and OAuth callbacks carry live tokens in theirs, and the
+ * key of a Publikace shared link.
  */
 export const scrubSentryEvent = (event: ErrorEvent): ErrorEvent => {
   const { breadcrumbs, request } = event
+
+  // The SDK names every incoming request's scope `METHOD /path`, tracing or not.
+  if (event.transaction)
+    event.transaction = removeSecretsFromUrl(event.transaction)
 
   if (request) {
     delete request.cookies
     delete request.data
     delete request.query_string
 
-    if (request.url) request.url = removeQueryAndFragment(request.url)
+    if (request.url) request.url = removeSecretsFromUrl(request.url)
 
     for (const [name, value] of Object.entries(request.headers ?? {})) {
       const lowerCaseName = name.toLowerCase()
@@ -31,7 +41,7 @@ export const scrubSentryEvent = (event: ErrorEvent): ErrorEvent => {
       if (SECRET_HEADERS.has(lowerCaseName)) {
         delete request.headers?.[name]
       } else if (lowerCaseName === REFERER_HEADER && request.headers) {
-        request.headers[name] = removeQueryAndFragment(value)
+        request.headers[name] = removeSecretsFromUrl(value)
       }
     }
   }
@@ -43,7 +53,7 @@ export const scrubSentryEvent = (event: ErrorEvent): ErrorEvent => {
 
     for (const field of BREADCRUMB_URL_FIELDS) {
       const value = data[field]
-      if (typeof value === 'string') data[field] = removeQueryAndFragment(value)
+      if (typeof value === 'string') data[field] = removeSecretsFromUrl(value)
     }
   }
 

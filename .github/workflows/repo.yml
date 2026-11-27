@@ -133,6 +133,9 @@ jobs:
               - 'apps/web/constants/env.ts'
               - 'apps/web/app/utils/sentry/scrub-sentry-event.ts'
               - 'apps/web/documents/**'
+              - 'apps/publikace/package.json'
+              - 'apps/publikace/tsconfig.json'
+              - 'apps/publikace/remix.json'
               - '.github/workflows/repo.yml'
       - uses: docker/setup-buildx-action@v4
         if: steps.changes.outputs.docker == 'true'

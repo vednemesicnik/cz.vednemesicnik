@@ -27,12 +27,14 @@ Nothing here is real data in the repository: the IDs, the URLs and the testers' 
       (`documents.batchUpdate`, `replaceAllText`); the Sheets API writes the Registr and each
       Evidence (cz.vednemesicnik.publikace#111).
 
-**A test Registr**, never the real one:
+**A test Registr**, never the real one. Each write puts the app's whole list _Vydání z aplikace_
+from one database, so a local run against the real Registr would replace production's rows with
+its own:
 
-- [ ] a spreadsheet named `Registr (test)` with a list `Vydání` holding a header row and one
-      made-up issue, as the scripts' list looks;
-- [ ] shared with `publikace.app@` as an editor, a file share: the account belongs to no other
-      shared drive, and the real Registr will need the same share;
+- [ ] a spreadsheet named `Registr` in the root of the test shared drive, with a list
+      `Vydání` holding a header row and one made-up issue, as the scripts' list looks;
+- [ ] `publikace.app@` edits it as a Content manager of the test drive, with nothing shared by
+      hand;
 - [ ] its ID is `REGISTRY_SPREADSHEET_ID`.
 
 **A test shared drive**, never _Publikace_ or a folder the scripts use:
@@ -62,14 +64,14 @@ sends to nobody the request does not name:
 
 - [ ] `GET` on its `/exec` URL answers with the JSON contract. An HTML page means the deployment
       is not _Anyone_ or the project was never authorised;
-- [ ] that URL as `MAIL_SEND_URL`, and `OWN_SECRET` from the project's Script Properties as
-      `MAIL_SEND_SECRET`, copied by the tester;
+- [ ] that URL as `GAS_MAIL_SEND_URL`, and `OWN_SECRET` from the project's Script Properties as
+      `GAS_MAIL_SEND_SECRET`, copied by the tester;
 - [ ] every address the run types into a form is one a tester reads.
 
 **`.env`**, edited by the tester:
 
-- [ ] `ISSUES_FOLDER_ID` and `ARTICLE_TEMPLATE_DOCUMENT_ID` as above, `MAIL_SEND_URL` and
-      `MAIL_SEND_SECRET`, and `DRIVE_TOKEN_KEY` set;
+- [ ] `ISSUES_FOLDER_ID` and `ARTICLE_TEMPLATE_DOCUMENT_ID` as above, `GAS_MAIL_SEND_URL` and
+      `GAS_MAIL_SEND_SECRET`, and `DRIVE_TOKEN_KEY` set;
 - [ ] `DRIVE_ACCOUNT_EMAIL` empty (it defaults to `publikace.app@` on `AUTHORIZED_DOMAIN`);
 - [ ] `REGISTRY_SPREADSHEET_ID` the test Registr's, never the real one's.
 
@@ -458,9 +460,9 @@ The Registr and each Evidence follow the database through the record queue (cz.v
 5. Close the issue: _Aktivní_ is cleared. Reopen it: ticked again.
 6. Disconnect `publikace.app@` in Nastavení, change something, connect it again: the record
    catches up within a minute, and the log has no failed write in between.
-7. Take the account's share off the test Registr for a minute: the log says
-   `[drive] the Registr was not written`, the actions still work, and once the share is back the
-   list catches up within the hour the backoff allows.
+7. Start the app with `REGISTRY_SPREADSHEET_ID` set to an ID the account cannot open and change
+   something: the log says `[drive] the Registr was not written`, and the actions still work.
+   Start it again with the real ID, and the list catches up.
 
 ## Renaming and removing an issue
 
@@ -499,9 +501,9 @@ The suite runs both on the fake Drive; what is left is what only the real one sh
 - [ ] put the origin back by pushing the project from CI (`workflow_dispatch` of `deploy.yml`),
       and run `setupTriggers` as `publikace.app@` only once the app answers on its public origin;
       until then every run stops at the claim;
-- [ ] remove `publikace.app@` from the test shared drive: _Publikace_ is the only shared drive
-      it belongs to, because it holds the full `drive` scope;
-- [ ] delete the shared drive `Publikace (test)`, once its bin has been looked at;
-- [ ] delete `./db/round-trip.sqlite` and the test Registr;
+- [ ] keep the shared drive `Publikace (test)` and `publikace.app@` in it for the next run, with
+      fictional data only: it is the one shared drive beside _Publikace_ the account belongs to;
+- [ ] delete `./db/round-trip.sqlite`, and the list _Vydání z aplikace_ from the test Registr,
+      which the next run lays out again;
 - [ ] write the results into the issue: each check passed, fixed in a commit, or moved to a new
       issue.
