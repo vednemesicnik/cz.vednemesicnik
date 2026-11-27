@@ -39,8 +39,7 @@ gh pr create --base main --head dev --template release.md \
   version); it is named only once the milestone has no open issue left
   (`gh issue list --milestone "<title>" --state open`), the one that turns its work on included;
   one still open either leaves it, when its work is no longer part of the major, or the major
-  waits. A release that carries only
-  gated work gives the application the next patch.
+  waits. A release that carries only gated work gives the application the next patch.
 - **Gates** — for each application whose **Release gate** (its `AGENTS.md` § For the workflow
   skills) names a helper, list the gates still in place on `dev`
   (`git grep -n "<helper>" origin/dev -- apps/<app>/`) and the ones this release adds or removes

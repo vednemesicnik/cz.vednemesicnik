@@ -47,8 +47,8 @@ own rule says it is not production (local development, tests, the fake app; each
 - **Turning it on is its own PR.** The PR that removes the gate is the step that releases the
   work, and the release that carries it names the version it turns on. When that version is a
   major of an application tagged by semver, the PR belongs to the major's milestone
-  ([\_workflow-skills.md](_workflow-skills.md) § Planning a version). A release carrying only gated work gives such an application
-  the next patch (`publikace-v1.0.1`).
+  ([\_workflow-skills.md](_workflow-skills.md) § Planning a version). A release carrying only
+  gated work gives such an application the next patch (`publikace-v1.0.1`).
 - **Work that cannot be gated** — a change of the host, a dependency, a shared layout, a
   schema whose old and new shape cannot coexist — goes to a short-lived integration branch off
   `dev` as a rare exception: its PRs target that branch, the workflows' `pull_request.branches`
@@ -74,9 +74,9 @@ flowchart LR
 3. **Turn on.** The PR that removes the gate also stops reading the old structure, and its
    release names the version.
 4. **Contract.** Dropping the old structure is an issue of its own, and ships in a later
-   release than the turn-on, never the same one, so rolling back
-   to the previous image still works. It is the one destructive step: the web's deploy takes
-   the pre-migration backup itself, of the web's database and Publikace's alike.
+   release than the turn-on, never the same one, so rolling back to the previous image still
+   works. It is the one destructive step: the web's deploy takes the pre-migration backup
+   itself, of the web's database and Publikace's alike.
 
 When the old and the new structure cannot coexist — a new constraint the old data breaks, say
 — a gate does not help. That is the integration branch above: data and code land in one
@@ -192,8 +192,8 @@ one deploy from `dev`, not the numbering, so one repository holds both.
   gate names it.
 
 A semver version is the next patch, minor or major after the application's newest tag. The
-first one is always `v1.0.0`, and until a release names it the application stays untagged; it
-is tagged even if only the host changed. A hotfix never gives a first version. The web's
+first one is always `v1.0.0`, and until a release names it the application stays untagged; a
+release that names the first version tags it even when only the host changed. A hotfix never gives a first version. The web's
 Releases carry the repository's "Latest" badge; the others do not.
 
 **Only a major is planned as a milestone**, titled after its tag, and the release that names

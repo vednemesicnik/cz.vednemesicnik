@@ -257,6 +257,8 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
     convenience, a second way to do something that already works. Would the newsroom move to
     the app without it? If yes, it is Low.
 
+  Once the newsroom has moved, this guide names what Priority is weighed against next.
+
   Priority decides, age breaks a tie, and a real blocker still holds. The skill filing an issue
   sets its Priority and Effort itself and adds it to the board, the org project **Publikace**
   ([number 7](https://github.com/orgs/vednemesicnik/projects/7)), which holds no priority: its

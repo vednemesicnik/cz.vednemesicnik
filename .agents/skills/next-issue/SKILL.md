@@ -158,9 +158,11 @@ order, and a new issue is recommended only when the first three are empty:
    § Priority and effort. Show each candidate's Priority and Effort beside it, with the reason
    in a sentence — unblocked, adjacent to what just shipped, or blocking something else. An
    open issue without a Priority or an Effort gets one now, and the report says which.
-   When the app has an open major's milestone, say how many of its issues are open and closed
-   (`gh issue list --milestone "<title>" --state all --limit 200 --json state`)
-   (§ Planning a version).
+   List the app's open majors
+   (`gh api 'repos/{owner}/{repo}/milestones?state=open' --jq '.[].title | select(startswith("<app>-v"))'`)
+   and say for each how many of its issues are open and closed
+   (`gh issue list --milestone "<title>" --state all --limit 200 --json state`; § Planning a
+   version).
    Check each candidate's blocker rather than assuming it: a hand step, a decision that is the
    user's, a merged PR waiting on a manual check. Say that 1–3 are empty.
 

@@ -6,8 +6,9 @@
 ## Context
 
 [0090](0090-semver-versions-are-milestones-and-unreleased-work-reaches-dev-behind-a-gate.md)
-planned every semver version as a milestone, and Publikace's Priority filled it: every _High_
-and _Medium_ in, no _Low_. Its first milestone, `publikace-v1.0.0`, was closed by the release
+planned every semver version as a milestone, and
+[0091](0091-priority-and-effort-are-the-organisations-issue-fields-for-every-app.md) had the
+Priority fill it: every _High_ and _Medium_ in, no _Low_. Its first milestone, `publikace-v1.0.0`, was closed by the release
 of 27 Nov 2026, and `publikace-v1.1.0` was tagged the same day with no milestone at all. The
 guide still weighed every issue against the shipped `v1.0.0`, and every open Publikace issue was
 _Low_, so the next milestone would have been empty (#1111). On 27 Nov 2026 Libor decided:
