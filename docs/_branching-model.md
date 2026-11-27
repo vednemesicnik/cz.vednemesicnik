@@ -98,6 +98,52 @@ read & write**.
 > automatically while `main`/`dev` survive. #143 folds this deletion rule into the
 > fuller branch-protection ruleset.
 
+## Versions
+
+One deploy ships every application, but each has its own tags and GitHub Releases, so
+`git tag` says which version of which application went out with which merge.
+
+**After every merge into `main`** `.github/workflows/release.yml` looks at each `apps/<app>/`.
+An application whose folder changed since its newest tag (with no tag yet: in the commits the
+PR brings into `main`) gets a tag `<app>-<version>` on the merge commit and a Release of the
+same name, whose notes are the commits that touched its folder. An unchanged application gets
+nothing.
+
+**Each application picks its style** in `RELEASE_STYLES` in `scripts/release-version.ts`; a
+folder in `apps/` without one fails the `release-version` check on every PR.
+
+| Style | Applications | Tag | Who picks the version |
+| --- | --- | --- | --- |
+| `date` | the web | `web-2026-11-27`, a second one that day `web-2026-11-27-2` | the day of the merge in Prague |
+| `semver` | Publikace | `publikace-v1.1.0` | a release names it under `## Versions`; a hotfix is the next patch |
+
+A semver version is the next patch, minor or major after the application's newest tag. The
+first one is always `v1.0.0`, and until a release names it the application stays untagged:
+**Publikace has no tag until the release that has the host serve
+`publikace.vednemesicnik.cz` (#1082) names `- publikace-v1.0.0`**, and then it is tagged even
+if only the host changed. A hotfix never gives a first version. The web's Releases carry the
+repository's "Latest" badge; the others do not.
+
+**Checked before the merge.** `.github/workflows/release-version.yml` (job `release-version`)
+runs the same script on every PR into `main`, again when its body is edited, and shows each
+application's tag in the run's summary. It fails when a changed semver application has no
+version named, when a named version does not follow the newest tag or names an unchanged
+application, and when a date application is given one. On a PR into `dev` it only checks the
+styles.
+
+**No code from the repository runs with a token that can write.** `release.yml` has two jobs:
+`release-decide` checks out the merge commit and runs the script on a read-only token;
+`release-tag` never checks anything out, re-validates each tag it is handed and writes the
+tag and the Release through the API.
+
+**When a run fails or is cancelled**, re-run it from the Actions page: the event is the same,
+a tag already on the merge commit counts as done, and a missing Release is published. Two
+merges into `main` within a minute can cancel the waiting run of the first (GitHub keeps one
+pending run per concurrency group); re-run that one too. A version taken by another merge in
+the meantime (a hotfix took the patch the release named) fails `release-decide`: tag that
+merge by hand with `gh release create <tag> --target <sha>
+--title <tag> --notes-file <notes>`.
+
 ## Release procedure
 
 1. Create the release PR with the named template and a `release:` title:
@@ -113,7 +159,9 @@ read & write**.
    `release.md` and `hotfix.md` are **named opt-in** templates that override the default
    when passed with `--template`. The template fills the PR body only; set the title
    yourself (e.g. `release: 2026-07-18 — admin tables & lists rollout`).
-2. Fill in Summary / What ships / Deploy expectation.
+2. Fill in Summary / What ships / Versions / Deploy expectation. Under **Versions** name the
+   version of each semver application the release changes (`- publikace-v1.1.0`); the
+   `release-version` check's summary lists what every changed application would get.
 3. Merge with a **merge commit** (never squash — see [Merge methods](#merge-methods)).
 
 ## Hotfix procedure
