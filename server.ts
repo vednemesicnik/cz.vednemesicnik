@@ -14,6 +14,7 @@ import { createHostHandler } from './server/create-host-handler.ts'
 import { createWebHandler } from './server/create-web-handler.ts'
 import { publikaceEnvironment } from './server/publikace-environment.ts'
 import { registerShutdown } from './server/register-shutdown.ts'
+import { createPublikaceErrorReporter } from './server/report-publikace-error.ts'
 import {
   type CreatePublikace,
   startPublikace,
@@ -59,6 +60,7 @@ const loadCreatePublikace = async () => {
 const publikace = startPublikace({
   environment: publikaceEnvironment(process.env),
   load: loadCreatePublikace,
+  reportError: createPublikaceErrorReporter(),
 })
 
 const handler = createHostHandler({

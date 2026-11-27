@@ -26,25 +26,35 @@ describe('startPublikace', () => {
   test('hands each request to Publikace once it has started', async () => {
     const app = runningApp()
     const create = vi.fn(async () => app)
+    const reportError = vi.fn()
     const publikace = startPublikace({
       environment: ENVIRONMENT,
       load: async () => create,
+      reportError,
     })
 
     const response = await publikace.fetch(new Request(REQUEST_URL))
 
     expect(await response.text()).toBe('publikace')
-    expect(create).toHaveBeenCalledWith({ NODE_ENV: 'production' })
+    expect(create).toHaveBeenCalledWith(
+      { NODE_ENV: 'production' },
+      { reportError },
+    )
   })
 
-  test('answers 503 and logs once when the start rejects', async () => {
+  test('answers 503, logs and reports once when the start rejects', async () => {
+    const failure = new Error(
+      'Chybí povinná proměnná prostředí SESSION_SECRET.',
+    )
     const logError = vi.fn()
+    const reportError = vi.fn()
     const publikace = startPublikace({
       environment: ENVIRONMENT,
       load: async () => async () => {
-        throw new Error('Chybí povinná proměnná prostředí SESSION_SECRET.')
+        throw failure
       },
       logError,
+      reportError,
     })
 
     const first = await publikace.fetch(new Request(REQUEST_URL))
@@ -53,15 +63,18 @@ describe('startPublikace', () => {
     expect(first.status).toBe(503)
     expect(second.status).toBe(503)
     expect(logError).toHaveBeenCalledOnce()
+    expect(reportError).toHaveBeenCalledExactlyOnceWith(failure, 'startup')
   })
 
   test('answers 503 without loading Publikace when the host refuses it', async () => {
     const load = vi.fn()
     const logError = vi.fn()
+    const reportError = vi.fn()
     const publikace = startPublikace({
       environment: { environment: null, refusal: 'NODE_ENV is unset on Fly' },
       load,
       logError,
+      reportError,
     })
 
     const response = await publikace.fetch(new Request(REQUEST_URL))
@@ -70,6 +83,10 @@ describe('startPublikace', () => {
     expect(load).not.toHaveBeenCalled()
     expect(logError).toHaveBeenCalledWith(
       '[publikace] not started: NODE_ENV is unset on Fly',
+    )
+    expect(reportError).toHaveBeenCalledExactlyOnceWith(
+      new Error('Publikace not started: NODE_ENV is unset on Fly'),
+      'startup',
     )
   })
 

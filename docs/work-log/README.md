@@ -123,3 +123,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0090](0090-semver-versions-are-milestones-and-unreleased-work-reaches-dev-behind-a-gate.md) | Semver versions are milestones, and unreleased work reaches dev behind a gate | 2026-11-27 | [0091](0091-priority-and-effort-are-the-organisations-issue-fields-for-every-app.md) |
 | [0091](0091-priority-and-effort-are-the-organisations-issue-fields-for-every-app.md) | Priority and Effort are the organisation's issue fields, for every app | 2026-11-27 |  |
 | [0092](0092-the-host-serves-publikace-from-its-prefixed-variables-and-only-its-start-fails-alone.md) | The host serves Publikace from its prefixed variables, and only its start fails alone | 2026-11-27 |  |
+| [0093](0093-the-host-reports-publikaces-errors-to-the-webs-sentry-and-only-those-no-retry-mends.md) | The host reports Publikace's errors to the web's Sentry, and only those no retry mends | 2026-11-27 |  |

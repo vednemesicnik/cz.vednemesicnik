@@ -168,6 +168,38 @@ describe('the record queue', () => {
     }
   })
 
+  it('reports a record once, on its third failure in a row', async () => {
+    let app = await createTestApp()
+    try {
+      await connectDriveAccount(app)
+      app.drive.failStep('sheets')
+      await seedIssue(app)
+      let reported: string[] = []
+      let at = Temporal.Now.instant()
+      let queue = {
+        ...app.record,
+        now: () => at,
+        reportError: (error: unknown, area: string) => reported.push(`${area}: ${error}`),
+      }
+
+      let reportsAfter: number[] = []
+      for (let pass = 0; pass < 4; pass += 1) {
+        await drainRecordQueue(queue)
+        reportsAfter.push(reported.length)
+        /* Past every backoff, so each pass tries every record again. */
+        at = at.add({ hours: 2 })
+      }
+
+      assert.equal(reportsAfter[1], 0)
+      assert.ok(reportsAfter[2]! > 0)
+      assert.equal(reportsAfter[3], reportsAfter[2])
+      assert.ok(reported.every((line) => line.startsWith('record: Error: ')))
+      assert.ok(reported.some((line) => line.includes('was not written')))
+    } finally {
+      await app.close()
+    }
+  })
+
   it('keeps a record a failing Sheets did not take, and writes it once Sheets answers', async () => {
     let app = await createTestApp()
     try {

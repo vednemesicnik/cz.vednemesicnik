@@ -21,7 +21,10 @@ import { createLock } from './one-at-a-time.server.ts'
  * a cancel would otherwise bin a file an earlier marking still points to.
  */
 
-export type FinalVersionSetup = Pick<ArtworksSetup, 'articles' | 'files' | 'now' | 'token'>
+export type FinalVersionSetup = Pick<
+  ArtworksSetup,
+  'articles' | 'files' | 'now' | 'reportError' | 'token'
+>
 
 /**
  * What marking came to. `done` is recorded; the rest wrote nothing and say why: the database
@@ -235,8 +238,9 @@ async function cancel(
     )
   } catch (error) {
     /* Rolled back with the transaction: the marking stands whole and the toast says to try
-       again. Logged, so a cancel that keeps failing is seen. */
+       again. Logged and reported, so a cancel that keeps failing is seen. */
     console.error(`[final-version] the cancel of article ${input.id} was not written:`, error)
+    setup.reportError?.(error, 'data')
     return { kind: 'unavailable' }
   }
   if (outcome.kind !== 'done') return { kind: 'refused', refusal: outcome }

@@ -98,6 +98,7 @@ import { publicLinkHeaders, skipWithoutSession } from './middleware/public-link.
 import { render } from './middleware/render.tsx'
 import { logRequests } from './middleware/request-log.server.ts'
 import { takeToasts } from './middleware/toasts.server.ts'
+import { ignoreErrors, type ReportError } from './report.server.ts'
 import { routes } from './routes.ts'
 
 /* `favicon.svg` and the like, from the repository whichever directory the process started in. */
@@ -160,6 +161,8 @@ export type AppDependencies = {
   mailPerDay?: number
   /** The Registr the record queue writes its list into. Defaults to `REGISTRY_SPREADSHEET_ID`. */
   registrySpreadsheetId?: string
+  /** The host's error tracking. Defaults to none: the log line alone. */
+  reportError?: ReportError
   /** The Doc every article is copied from. Defaults to `ARTICLE_TEMPLATE_DOCUMENT_ID`. */
   templateId?: string
   /** The account the background jobs run as. Defaults to `SCRIPT_JOB_ACCOUNT`. */
@@ -186,9 +189,11 @@ export function createArticleSetup(dependencies: SetupDependencies): ArticleSetu
     dependencies.googleCredentials === undefined
       ? googleCredentials(dependencies.environment)
       : dependencies.googleCredentials
+  let reportError = dependencies.reportError ?? ignoreErrors
   let driveAccountStore = createDriveAccountStore(
     dependencies.database,
     dependencies.driveTokenKey ?? driveTokenKey(dependencies.environment),
+    reportError,
   )
   return {
     articles: createArticleStore(dependencies.database),
@@ -203,6 +208,7 @@ export function createArticleSetup(dependencies: SetupDependencies): ArticleSetu
     mailer: dependencies.mailer ?? defaultMailer(dependencies.environment),
     now,
     origin: appOrigin(dependencies.environment),
+    reportError,
     templateId: dependencies.templateId ?? articleTemplateDocumentId(dependencies.environment),
     token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
   }
@@ -230,6 +236,7 @@ export function createArtworksSetup(
     mailPerDay: articleSetup.mailPerDay,
     mailer: articleSetup.mailer,
     now,
+    reportError: articleSetup.reportError,
     token: articleSetup.token,
   }
 }
@@ -253,14 +260,20 @@ export function createRecordQueue(
     origin: appOrigin(dependencies.environment),
     registryId:
       dependencies.registrySpreadsheetId ?? registrySpreadsheetId(dependencies.environment),
+    reportError: dependencies.reportError ?? ignoreErrors,
     sheets: (accessToken) => createRecordSheets({ accessToken, editor, fetch }),
     token: articleSetup.token,
   }
 }
 
-function defaultMembershipCheck(environment: Environment): MembershipCheck {
+function defaultMembershipCheck(
+  environment: Environment,
+  reportError: ReportError,
+): MembershipCheck {
   let endpoint = groupMembershipEndpoint(environment)
-  return endpoint === null ? membershipUnavailable : createMembershipCheck(endpoint)
+  return endpoint === null
+    ? membershipUnavailable
+    : createMembershipCheck(endpoint, { reportError })
 }
 
 /**
@@ -271,9 +284,11 @@ export function createAppRouter(dependencies: AppDependencies) {
   let sessionCookie = createSessionCookie(dependencies.environment)
   let signedInUntil = createSignedInUntilCookie(dependencies.environment)
   let directory = createAccessDirectory(dependencies.database)
+  let reportError = dependencies.reportError ?? ignoreErrors
   let driveAccountStore = createDriveAccountStore(
     dependencies.database,
     dependencies.driveTokenKey ?? driveTokenKey(dependencies.environment),
+    reportError,
   )
   let fetch = dependencies.fetch ?? globalThis.fetch
   let credentials =
@@ -297,8 +312,9 @@ export function createAppRouter(dependencies: AppDependencies) {
     token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
   }
   let checkMembership = rememberGroupNames(
-    dependencies.checkMembership ?? defaultMembershipCheck(dependencies.environment),
+    dependencies.checkMembership ?? defaultMembershipCheck(dependencies.environment, reportError),
     directory.recordGroupName,
+    reportError,
   )
   let jobRuns = createJobRunStore(dependencies.database)
   let printHandoffs = createPrintHandoffStore(dependencies.database)

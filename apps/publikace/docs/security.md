@@ -47,7 +47,7 @@ flowchart TB
   JOBS -- "Google ID token" --> HOST
   HOST -- "publikace.vednemesicnik.cz" --> APP
   HOST --> WEB
-  HOST -. "uncaught errors, scrubbed" .-> SENTRY
+  HOST -. "errors, scrubbed" .-> SENTRY
   APP --> DB
   APP -- "code + PKCE, then userinfo" --> OAUTH
   APP -- "access token of publikace.app@" --> API
@@ -168,8 +168,10 @@ that needs a session belongs behind a guard instead.
 - **The web's process holds Publikace's secrets.** The host serves both applications from one
   process (#1082), so every `PUBLIKACE_*` secret and, once read, the token of `publikace.app@`
   are within reach of anything that compromises the web or one of its dependencies. An uncaught
-  error in either reaches Sentry with its request's address, the query and a link's key cut out
-  (`scrub-sentry-event.ts`). Two processes would close this and cost a second Node runtime on the
+  error in the web, and an error Publikace reports through the host (a 500, a record that keeps
+  failing, a refused start, a misconfiguration), reaches Sentry with its request's address, the
+  query and a link's key cut out (`scrub-sentry-event.ts`), tagged `app: web` or
+  `app: publikace`. Two processes would close this and cost a second Node runtime on the
   1 GB machine (log 0084).
 - **A forwarded link works for whoever holds it.** That is the price of no sign-in from a
   messenger's browser (`02a`). It is limited to one action in one place. The newsroom's link and

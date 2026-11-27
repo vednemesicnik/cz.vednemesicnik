@@ -100,4 +100,29 @@ describe('createPublikace', () => {
       await publikace.close()
     })
   })
+
+  it('answers 500 for an error the router let through, and reports it to the host', async (t) => {
+    t.mock.method(console, 'error', () => {})
+    await inTemporaryDirectory(async (directory) => {
+      let environment: Environment = {
+        DATABASE_PATH: join(directory, 'publikace.sqlite'),
+        NODE_ENV: 'test',
+      }
+      let reported: [unknown, string][] = []
+      let publikace = await createPublikace(environment, {
+        reportError: (error, area) => reported.push([error, area]),
+      })
+      /* A closed database makes a link's page throw past every controller. */
+      await publikace.close()
+
+      let response = await publikace.fetch(
+        new Request('http://localhost:44100/l/FakeLinkKey1/article'),
+      )
+
+      assert.equal(response.status, 500)
+      assert.equal(reported.length, 1)
+      assert.ok(reported[0]?.[0] instanceof Error)
+      assert.equal(reported[0]?.[1], 'request')
+    })
+  })
 })

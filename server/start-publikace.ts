@@ -14,15 +14,28 @@ export type PublikaceApp = {
   fetch(request: Request): Promise<Response>
 }
 
+/**
+ * Hands an unexpected error to the host's error tracking. `area` says which part of Publikace
+ * it came from (`request`, `record`, `startup`…).
+ */
+export type ReportError = (error: unknown, area: string) => void
+
+/** What the host gives Publikace beside its record. */
+export type PublikaceHost = {
+  reportError?: ReportError
+}
+
 /** `createPublikace`: rejects, with nothing left open, when its configuration is wrong. */
 export type CreatePublikace = (
   environment: PublikaceEnvironment,
+  host?: PublikaceHost,
 ) => Promise<PublikaceApp>
 
 type StartPublikaceOptions = {
   environment: PublikaceEnvironmentResult
   load: () => Promise<CreatePublikace>
   logError?: (message: string, error?: unknown) => void
+  reportError?: ReportError
 }
 
 /** Publikace behind the host: its handler, and what stops it. */
@@ -48,22 +61,32 @@ const unavailable = () =>
  * @param options.environment Publikace's record, or why the host refuses to start it.
  * @param options.load Imports `createPublikace`.
  * @param options.logError Where the reason a start failed goes; `console.error` by default.
+ * @param options.reportError The host's error tracking: a failed start, and everything Publikace
+ *   reports once running. Nothing by default.
  */
 export function startPublikace({
   environment,
   load,
   logError = console.error,
+  reportError = () => {},
 }: StartPublikaceOptions): HostedPublikace {
   const started: Promise<PublikaceApp | null> =
     environment.refusal !== null
       ? Promise.resolve().then(() => {
           logError(`[publikace] not started: ${environment.refusal}`)
+          reportError(
+            new Error(`Publikace not started: ${environment.refusal}`),
+            'startup',
+          )
           return null
         })
       : load()
-          .then((createPublikace) => createPublikace(environment.environment))
+          .then((createPublikace) =>
+            createPublikace(environment.environment, { reportError }),
+          )
           .catch((error: unknown) => {
             logError('[publikace] the start failed:', error)
+            reportError(error, 'startup')
             return null
           })
 
