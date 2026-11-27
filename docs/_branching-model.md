@@ -62,9 +62,9 @@ change is split so that each release runs on both the old and the new structure:
 
 ```mermaid
 flowchart LR
-  E["Expand<br/>add new, keep old<br/>any release"] --> S["Switch code<br/>gated code uses new<br/>any release"]
-  S --> T["Turn on<br/>remove the gate, stop reading old<br/>names the version"]
-  T --> C["Contract<br/>drop old<br/>a later release, backup first"]
+  E["<b>Expand</b><br/>add new, keep old<br/><i>any release</i>"] --> S["<b>Switch</b><br/>gated code uses new<br/><i>any release</i>"]
+  S --> T["<b>Turn on</b><br/>gate off, old unread<br/><i>names the version</i>"]
+  T --> C["<b>Contract</b><br/>drop old<br/><i>later release, backup</i>"]
 ```
 
 1. **Expand.** A migration adds the new structure beside the old one. It can ship in any
@@ -208,15 +208,15 @@ gitGraph
   commit id: "release" tag: "publikace-v1.0.0"
   branch dev
   checkout dev
-  commit id: "publikace: 1.1 part 1 (gated)"
-  commit id: "web: fix"
-  commit id: "publikace: 1.1 part 2 (gated)"
+  commit id: "1.1 part 1, gated"
+  commit id: "web fix"
+  commit id: "1.1 part 2, gated"
   checkout main
   merge dev id: "release A" tag: "web-YYYY-MM-DD + publikace-v1.0.1"
   checkout dev
   merge main id: "back-merge A"
-  commit id: "web: new page"
-  commit id: "publikace: turn 1.1 on"
+  commit id: "web page"
+  commit id: "turn 1.1 on"
   checkout main
   merge dev id: "release B" tag: "web-YYYY-MM-DD + publikace-v1.1.0"
   checkout dev
