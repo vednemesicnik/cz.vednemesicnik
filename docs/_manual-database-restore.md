@@ -34,9 +34,14 @@ gunzip /srv/backup.db.gz
 ```shell
 sqlite3 $DATABASE_URL ".restore /srv/backup.db"
 ```
-   For Publikace, restore into its own file instead, from a `db/publikace-backup-…` key:
+   For Publikace, restore into its own file instead, from a `db/publikace-backup-…` key, then
+   restart the machine: Publikace migrates only at its start, so a `-pre-migration` backup keeps
+   its old schema until then. Drive is not restored with it. Folders and Docs made after the
+   backup stay on Drive unknown to the database, and the record queue rewrites the Registr and
+   each Evidence from the restored rows.
 ```shell
 sqlite3 "$PUBLIKACE_DATABASE_PATH" ".restore /srv/backup.db"
+fly machine restart --app cz-vednemesicnik
 ```
 7. Delete the unzipped backup file from the app directory.
 ```shell

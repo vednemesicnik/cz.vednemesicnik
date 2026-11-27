@@ -27,10 +27,13 @@ flowchart TB
     LINK["Holder of a link key"]
     USER["Editor or proofreader<br/>with a session"]
   end
-  subgraph Host["Fly.io machine"]
+  subgraph Host["Fly.io machine, one process"]
+    HOST["The host<br/>routes by Host"]
     APP["Publikace<br/>createPublikace(environment)"]
+    WEB["The magazine's web"]
     DB[("SQLite<br/>on the volume")]
   end
+  SENTRY["Sentry"]
   subgraph Google["Google"]
     OAUTH["Google sign-in"]
     API["Drive, Docs, Sheets"]
@@ -38,10 +41,13 @@ flowchart TB
     MAIL["Mailer and reply check<br/>publikace@"]
     GM["Membership service"]
   end
-  ANON -- "/sign-in only" --> APP
-  LINK -- "/l/{key}/…, no cookie, no CSRF" --> APP
-  USER -- "session cookie, CSRF" --> APP
-  JOBS -- "Google ID token" --> APP
+  ANON -- "/sign-in only" --> HOST
+  LINK -- "/l/{key}/…, no cookie, no CSRF" --> HOST
+  USER -- "session cookie, CSRF" --> HOST
+  JOBS -- "Google ID token" --> HOST
+  HOST -- "publikace.vednemesicnik.cz" --> APP
+  HOST --> WEB
+  HOST -. "uncaught errors, scrubbed" .-> SENTRY
   APP --> DB
   APP -- "code + PKCE, then userinfo" --> OAUTH
   APP -- "access token of publikace.app@" --> API
@@ -159,6 +165,12 @@ that needs a session belongs behind a guard instead.
 
 ## Accepted risks
 
+- **The web's process holds Publikace's secrets.** The host serves both applications from one
+  process (#1082), so every `PUBLIKACE_*` secret and, once read, the token of `publikace.app@`
+  are within reach of anything that compromises the web or one of its dependencies. An uncaught
+  error in either reaches Sentry with its request's address, the query and a link's key cut out
+  (`scrub-sentry-event.ts`). Two processes would close this and cost a second Node runtime on the
+  1 GB machine (log 0084).
 - **A forwarded link works for whoever holds it.** That is the price of no sign-in from a
   messenger's browser (`02a`). It is limited to one action in one place. The newsroom's link and
   an artwork group's link can be renewed by an editor-in-chief (`02d`, `02g`); an article's

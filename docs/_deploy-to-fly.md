@@ -264,7 +264,8 @@ answers 503 on its hosts, and the web keeps serving.
 `PUBLIKACE_ARTICLE_TEMPLATE_DOCUMENT_ID`, `PUBLIKACE_MAIL_SEND_URL`, `PUBLIKACE_MAIL_SEND_SECRET`
 and `PUBLIKACE_SCRIPT_TOKEN_AUDIENCE`, the `aud` of every job that calls the API,
 comma-separated. `PUBLIKACE_REGISTRY_SPREADSHEET_ID` is optional: without it only each issue's
-Evidence is written. `PUBLIC_MAIL_PER_DAY` keeps its default of 300 unless set.
+Evidence is written. `PUBLIKACE_PUBLIC_MAIL_PER_DAY` keeps its default of 300 unless set, and
+`PUBLIKACE_SCRIPT_RUN_SECRET` waits for #1083.
 
 ### Going live
 
@@ -300,8 +301,12 @@ After the deploy, whose second smoke test asks `/sign-in` on Publikace's certifi
 Fly origin (`--connect-to`, so it never meets Cloudflare):
 
 1. Sign in, connect `publikace.app@` in Nastavení, and fill Přístup and Korektura.
-2. Run `setupTriggers` as `publikace.app@` in each job that talks to the app, and delete the old
-   trigger under `publikace@` the same day where a job replaces one.
+2. Run `setupTriggers` as `publikace.app@` in the five jobs that talk to the app:
+   `SCRIPT__Publication__Artwork_Replies`, `…__Article_Approvals`, `…__Print_Handoff`,
+   `…__Proofreading_Digest` and `…__Article_Comments`. The old scripts under `publikace@`
+   (`Approval_Send`, `Artwork_Upload`, `Designer_Handoff`, `Comment_Digest`) keep their triggers
+   for the issues made before the app, until none of them is open. A `publikace@` trigger is
+   deleted the same day only when that same script moves to `publikace.app@`.
 3. A proofreader in the group of Nastavení › Korektura signs in and sees `/proofreading`.
 
 A local Publikace never writes the real Registr once production holds an issue: each write puts
