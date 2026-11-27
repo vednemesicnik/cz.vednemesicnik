@@ -31,7 +31,7 @@ export type ActionMenuProps = {
  * The design system's `ActionMenu` on a row (`11a`): `⋯` opens a short list of shortcuts below
  * it. Its items are links, a copy and a form or two, so it is a list that `Tab` walks rather than
  * an arrow-key menu, and it carries no `menu` roles. A click elsewhere or Escape closes it, Escape
- * returning focus to `⋯`.
+ * returning focus to `⋯`, and so does following an item that stays in the app.
  *
  * Drawn by the design system's own `.vdm-actionmenu` and `.vdm-menu`, but placed `fixed` from
  * where its trigger is, so a card that rounds its corners with `overflow: hidden` or a table that
@@ -54,6 +54,7 @@ export const ActionMenu = clientEntry(
   import.meta.url,
   function ActionMenu(handle: Handle<ActionMenuProps>) {
     let isOpen = false
+    let isLeaving = false
     let announced = ''
     let root: HTMLElement | null = null
     let trigger: HTMLButtonElement | null = null
@@ -62,9 +63,20 @@ export const ActionMenu = clientEntry(
     let outside: AbortController | null = null
     let menuId = `action-menu-${handle.id}`
     handle.signal.addEventListener('abort', () => outside?.abort(), { once: true })
+    /* The next page is drawn into the same document, so a menu left open would stand over the
+       dialog its item led to. It closes once that navigation starts, not in the click: the
+       re-render would take the link out before the browser follows it. */
+    handle.frame.addEventListener(
+      'reloadStart',
+      () => {
+        if (isOpen && isLeaving) close(false)
+      },
+      { signal: handle.signal },
+    )
 
     function close(shouldFocusTrigger: boolean): void {
       isOpen = false
+      isLeaving = false
       place = null
       outside?.abort()
       outside = null
@@ -76,6 +88,7 @@ export const ActionMenu = clientEntry(
       if (trigger === null) return
       let box = trigger.getBoundingClientRect()
       isOpen = true
+      isLeaving = false
       place = { right: box.right, top: box.bottom + GAP }
       outside = new AbortController()
       document.addEventListener(
@@ -147,7 +160,14 @@ export const ActionMenu = clientEntry(
         )
       }
       return item.isSameTab === true ? (
-        <a class="vdm-menu__item" href={item.href} key={index}>
+        <a
+          class="vdm-menu__item"
+          href={item.href}
+          key={index}
+          mix={on('click', () => {
+            isLeaving = true
+          })}
+        >
           {item.label}
         </a>
       ) : (
