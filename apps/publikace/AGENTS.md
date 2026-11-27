@@ -126,8 +126,10 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
   scripts could not read, is the app's _Ke kontrole_.
 - **The Registr and each issue's Evidence stay, as a record the app writes and never reads.**
   They are where a licence is looked up, in the same columns for every issue, old or new. The
-  Registr sits in the root of the shared drive _Publikace_, outside the issues folder and its
-  link share. Each write puts the app's whole list there from one database, so a local app
+  app's Registr is a spreadsheet of its own, `Registr` in the root of the shared drive
+  _Publikace_, outside the issues folder and its link share; the scripts keep theirs for the
+  issues made before the app, so until the cutover a licence is looked up in the Registr of the
+  issue's flow. Each write puts the app's whole list there from one database, so a local app
   writes `Registr (test)` on the test drive instead, never this one. The
   app writes the database first and the sheet after it, from a queue that retries, so a sheet
   that does not answer delays the record and blocks nothing; a nightly rewrite from the database
@@ -363,10 +365,10 @@ so a run that dies between sending an e-mail and reporting it does not send it t
 **The app's Registr rows are in its own list, _Vydání z aplikace_, never in _Vydání_.** Six
 scripts pick their issues from _Vydání_ by _Aktivní_ and follow its _ID tabulky_ into the Evidence,
 so an issue made in the app there would have `Approval_Send` send its clauses a second time. The
-app renames, writes and protects no list but its own, by name, and puts its protection back
-before every write; `_meta.json` keeps `sheetId: null` so that the scripts' upload never writes
-into the app's Evidence. The lists merge, if they
-do, only at the cutover.
+app's Registr is another spreadsheet than the scripts', and the app still renames, writes and
+protects no list but its own, by name, and puts its protection back before every write;
+`_meta.json` keeps `sheetId: null` so that the scripts' upload never writes into the app's
+Evidence. The two Registrs merge, if they do, only at the cutover.
 
 **SQLite triggers mark the record, not the controllers.** `20261130120000_record_queue` marks an
 issue's Evidence or the Registr in the same transaction as the change, on the columns the record

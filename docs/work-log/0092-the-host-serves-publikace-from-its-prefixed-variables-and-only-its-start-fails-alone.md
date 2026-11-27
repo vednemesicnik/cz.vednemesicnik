@@ -72,7 +72,8 @@ test asks `/sign-in` on that certificate through the Fly origin (`--connect-to`)
 errors still reach only the Fly log (#1098).
 
 **Drive is split into production and a test drive.** Production is a new shared drive
-_Publikace_ with the Registr in its root. The test drive _Publikace (test)_ stays for the local
+_Publikace_ with the app's own `Registr` in its root, a new spreadsheet, while the scripts keep
+theirs for the issues made before the app. The test drive _Publikace (test)_ stays for the local
 round trip, and `publikace.app@` belongs to these two drives and no other. A local app writes
 `Registr (test)` in the root of the test drive, never the real Registr. Each write puts the app's
 whole list there from one database, so two databases would replace each other's rows.

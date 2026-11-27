@@ -273,8 +273,8 @@ Before the release that first carries Publikace:
 
 1. **The shared drive _Publikace_**, new and empty, never the test one: sharing outside the
    organisation allowed, `publikace.app@` a Content manager, the issues folder shared once as
-   _Každý, kdo má odkaz · Přispěvatel_, and the Registr in its root. Its IDs go into the secrets
-   below.
+   _Každý, kdo má odkaz · Přispěvatel_, and the app's own `Registr` in its root, a new
+   spreadsheet apart from the scripts' Registr. Its IDs go into the secrets below.
 2. **The OAuth client** of Publikace (its own, with the `drive` scope): add
    `https://publikace.vednemesicnik.cz/sign-in/google/callback` and
    `https://publikace.vednemesicnik.cz/settings/account/callback` to its redirect URIs.
