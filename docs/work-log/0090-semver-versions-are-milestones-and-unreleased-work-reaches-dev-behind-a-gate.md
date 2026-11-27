@@ -74,5 +74,11 @@ The rules are in [docs/\_workflow-skills.md](../_workflow-skills.md) § Planning
 - **Dropping the old structure in the turn-on release.** A rollback to the previous image would
   meet a schema it cannot read.
 - **Date tags for Publikace too.** A milestone could not be named before its release day.
+- **Runtime feature flags** (an environment variable, a database setting or a flag service). A
+  feature turns on for everyone at once, in the release that names its version, so turning it
+  on without a deploy or for part of the users is not needed yet, and `NODE_ENV` is enough.
+  Revisit when a feature should turn on without a release or for testers in production; then
+  turning it on for everyone is still a PR that flips the default, whose release names the
+  version, and a later PR removes the flag.
 - **Scattered `process.env.NODE_ENV` checks.** Nothing would list the gates before a release,
   and turning one on could miss a check.
