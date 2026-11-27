@@ -379,7 +379,7 @@ gets no trigger until the app is on its public address (#1082): each step runs
 5. Stop the Mailer's deployment or break its secret, hand over a third article and run it: the
    history says _Odeslání přehledu se nepodařilo potvrdit._, and the banner stands over every
    screen. Mend it and run again: one e-mail, and the banner goes.
-6. _Spustit teď_ (#1083): with the project's `doPost` deployed as a web app, its `RUN_SECRET` in
+6. _Spustit teď_ (#1083): with the project's `doPost` deployed as a web app, its `OWN_SECRET` in
    Script Properties and the same pair in `GAS_PROOFREADING_DIGEST_URL` and `_SECRET`, press
    _Spustit teď_ on the digest's page. The row is _Běží_ at once and, within a minute, the
    history has _Spuštěno ručně. …_ with the tester's name. With a wrong secret in the app the

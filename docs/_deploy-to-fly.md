@@ -268,7 +268,7 @@ Evidence is written. `PUBLIKACE_PUBLIC_MAIL_PER_DAY` keeps its default of 300 un
 _Spustit teď_ (#1083) takes one optional pair per job, `PUBLIKACE_GAS_<JOB>_URL` and
 `PUBLIKACE_GAS_<JOB>_SECRET`, with `<JOB>` one of `ARTICLE_APPROVALS`, `ARTICLE_COMMENTS`,
 `ARTWORK_REPLIES`, `PRINT_HANDOFF` and `PROOFREADING_DIGEST`: the job's `doPost` web app and the
-`RUN_SECRET` in its Script Properties. A job without its pair has no button.
+`OWN_SECRET` in its Script Properties. A job without its pair has no button.
 
 ### Going live
 
