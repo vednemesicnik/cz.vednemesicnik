@@ -128,7 +128,7 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
   They are where a licence is looked up, in the same columns for every issue, old or new. The
   Registr sits in the root of the shared drive _Publikace_, outside the issues folder and its
   link share. Each write puts the app's whole list there from one database, so a local app
-  leaves `REGISTRY_SPREADSHEET_ID` empty once production holds an issue. The
+  writes `Registr (test)` on the test drive instead, never this one. The
   app writes the database first and the sheet after it, from a queue that retries, so a sheet
   that does not answer delays the record and blocks nothing; a nightly rewrite from the database
   mends whatever the queue missed. Only `publikace.app@` may edit them, people read them, and

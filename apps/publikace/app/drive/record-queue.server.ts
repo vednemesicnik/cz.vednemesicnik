@@ -35,7 +35,7 @@ export type RecordQueue = {
   now: () => Temporal.Instant
   /** The app's origin, for the link to new articles in the Registr. */
   origin: string
-  /** The Registr spreadsheet; empty skips it, as a laptop does once production holds an issue. */
+  /** The Registr spreadsheet; empty skips it, as a laptop without a test Registr does. */
   registryId: string
   sheets: (accessToken: string) => RecordSheets
   token: () => Promise<DriveAccessToken>

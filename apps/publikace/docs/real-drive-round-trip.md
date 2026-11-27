@@ -27,14 +27,15 @@ Nothing here is real data in the repository: the IDs, the URLs and the testers' 
       (`documents.batchUpdate`, `replaceAllText`); the Sheets API writes the Registr and each
       Evidence (cz.vednemesicnik.publikace#111).
 
-**The Registr**, the real one in the root of the shared drive _Publikace_, and only while
-production holds no issue. Each write puts the app's whole list _Vydání z aplikace_ there from
-one database, so a local run would replace production's rows with its own:
+**A test Registr**, never the real one. Each write puts the app's whole list _Vydání z aplikace_
+from one database, so a local run against the real Registr would replace production's rows with
+its own:
 
-- [ ] `publikace.app@` edits it as a Content manager of _Publikace_, with nothing shared by hand;
-- [ ] its ID is `REGISTRY_SPREADSHEET_ID`;
-- [ ] once production holds an issue, `REGISTRY_SPREADSHEET_ID` stays empty and the Registr's
-      checks in § The record (2, 3 for the Registr, 5 and 7) are skipped.
+- [ ] a spreadsheet named `Registr (test)` in the root of the test shared drive, with a list
+      `Vydání` holding a header row and one made-up issue, as the scripts' list looks;
+- [ ] `publikace.app@` edits it as a Content manager of the test drive, with nothing shared by
+      hand;
+- [ ] its ID is `REGISTRY_SPREADSHEET_ID`.
 
 **A test shared drive**, never _Publikace_ or a folder the scripts use:
 
@@ -72,7 +73,7 @@ sends to nobody the request does not name:
 - [ ] `ISSUES_FOLDER_ID` and `ARTICLE_TEMPLATE_DOCUMENT_ID` as above, `MAIL_SEND_URL` and
       `MAIL_SEND_SECRET`, and `DRIVE_TOKEN_KEY` set;
 - [ ] `DRIVE_ACCOUNT_EMAIL` empty (it defaults to `publikace.app@` on `AUTHORIZED_DOMAIN`);
-- [ ] `REGISTRY_SPREADSHEET_ID` the Registr's while production holds no issue, empty after.
+- [ ] `REGISTRY_SPREADSHEET_ID` the test Registr's, never the real one's.
 
 The run's database is not a line in `.env`. It is set on the command line, because Node's
 `--env-file` never overrides a variable that is already set, so the run stays apart from the dev
@@ -449,7 +450,7 @@ The Registr and each Evidence follow the database through the record queue (cz.v
 1. Once the first issue is complete, within a minute: an `Evidence` in its folder with the lists
    _Články_, _Redakční doložky_ and _Obrazová díla_, their headers dark, their status dropdowns
    in place (_Dopsáno_ among those of _Články_), and _Otevřít Evidenci_ first in the issue's „⋯“.
-2. The Registr has a list _Vydání z aplikace_ with the issue, _Aktivní_ ticked and _ID
+2. The test Registr has a list _Vydání z aplikace_ with the issue, _Aktivní_ ticked and _ID
    tabulky_ the Evidence. The list _Vydání_ shows no new version in the version history.
 3. As a tester who is not `publikace.app@`, try to type into either list: the sheet refuses. The
    log has no `[record] the protection of the list … was put back` after the first write: one
@@ -502,7 +503,7 @@ The suite runs both on the fake Drive; what is left is what only the real one sh
       until then every run stops at the claim;
 - [ ] keep the shared drive `Publikace (test)` and `publikace.app@` in it for the next run, with
       fictional data only: it is the one shared drive beside _Publikace_ the account belongs to;
-- [ ] delete `./db/round-trip.sqlite`, and the list _Vydání z aplikace_ from the Registr, which
-      production lays out again at its first write;
+- [ ] delete `./db/round-trip.sqlite`, and the list _Vydání z aplikace_ from the test Registr,
+      which the next run lays out again;
 - [ ] write the results into the issue: each check passed, fixed in a commit, or moved to a new
       issue.

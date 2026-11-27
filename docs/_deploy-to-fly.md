@@ -309,8 +309,8 @@ Fly origin (`--connect-to`, so it never meets Cloudflare):
    deleted the same day only when that same script moves to `publikace.app@`.
 3. A proofreader in the group of Nastavení › Korektura signs in and sees `/proofreading`.
 
-A local Publikace never writes the real Registr once production holds an issue: each write puts
-the app's whole list from one database (`REGISTRY_SPREADSHEET_ID` empty in the local `.env`).
+A local Publikace never writes the real Registr: each write puts the app's whole list from one
+database, so a local `.env` names `Registr (test)` in the root of _Publikace (test)_.
 
 ## Image store
 
