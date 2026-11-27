@@ -522,7 +522,7 @@ const linkLabelStyle = css({ fontSize: '15px', fontWeight: 600 })
 
 /* The Doc's title takes most of what is left and the artworks the rest; the tag keeps the width
    of _Upraveno po schválení_ and the actions that of the longest button, _Označit novou verzi…_,
-   and `⋯`, 218 px in 224 (`12a`, nk55z29s). Their minimums, three gaps of 12 px and the row's
+   and `⋯`, 218 px in 224 (`12a`). Their minimums, three gaps of 12 px and the row's
    2 × 8 px come to 706 px, within the 719 px from which the table no longer scrolls (`11a`). */
 const ARTICLE_COLUMNS = 'minmax(160px, 3fr) 160px minmax(110px, 1fr) 224px'
 
