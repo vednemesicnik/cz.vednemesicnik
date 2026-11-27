@@ -30,8 +30,8 @@ export type ActionMenuProps = {
 /**
  * The design system's `ActionMenu` on a row (`11a`): `⋯` opens a short list of shortcuts below
  * it. Its items are links, a copy and a form or two, so it is a list that `Tab` walks rather than
- * an arrow-key menu, and it carries no `menu` roles. A click elsewhere or Escape closes it, Escape
- * returning focus to `⋯`, and so does following an item that stays in the app.
+ * an arrow-key menu, and it carries no `menu` roles. A click elsewhere, Escape or following an item
+ * that stays in the app closes it, Escape returning focus to `⋯`.
  *
  * Drawn by the design system's own `.vdm-actionmenu` and `.vdm-menu`, but placed `fixed` from
  * where its trigger is, so a card that rounds its corners with `overflow: hidden` or a table that
@@ -164,8 +164,9 @@ export const ActionMenu = clientEntry(
           class="vdm-menu__item"
           href={item.href}
           key={index}
-          mix={on('click', () => {
-            isLeaving = true
+          mix={on('click', (event) => {
+            /* A modified click opens a new tab or window, and this page stays. */
+            isLeaving = !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
           })}
         >
           {item.label}
