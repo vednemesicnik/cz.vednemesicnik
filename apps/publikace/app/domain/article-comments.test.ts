@@ -169,7 +169,7 @@ describe('Připomínky ke článkům among the jobs (14d, 14e, 14i)', () => {
     assert.equal(isJobInBanner(job, [ok], past), true)
     assert.equal(
       plain(stoppedCalloutText(state, 180, past, job)),
-      'Úloha má běžet každé 3 hodiny. Naposledy se ohlásila v 9:12. Příčinu aplikace nezná.',
+      'Úloha má běžet každé 3 hodiny. Z běhu podle plánu se naposledy ohlásila v 9:12. Příčinu aplikace nezná.',
     )
   })
 })

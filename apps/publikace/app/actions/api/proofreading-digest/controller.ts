@@ -27,9 +27,8 @@ import { bodyOf, intervalOf, json, openRun, refusal } from '../job-request.ts'
  * One call, `run`, with the trigger's interval and the `startKey` of a start by hand: the app
  * opens the run, builds the digest, sends it when there is something new and an address to send
  * it to, records what a confirmed digest told, and closes the run with what came of it, which
- * `14e` shows. A digest the Mailer did not
- * confirm marks nothing, so the next run sends it again, under the same idempotency key while
- * its content is the same.
+ * `14e` shows. A digest the Mailer did not confirm marks nothing, so the next run sends it again,
+ * under the same idempotency key while its content is the same.
  *
  * The call carries the job's Google identity token as a bearer, and only the account in
  * `SCRIPT_JOB_ACCOUNT` is let in, as for the reply check. No cookie is set. A path or a field is

@@ -285,6 +285,14 @@ export function lastRunText(startedAt: Temporal.Instant, today: Temporal.Instant
   return `Poslední běh ${lastReportedAt(startedAt, today)}`
 }
 
+/**
+ * _Poslední běh podle plánu v 9:00_, under _Neběží_: the time is the trigger's last run, so a
+ * later run by hand, in the history, does not read as the reason for the tag (`8huj7wqi`).
+ */
+function scheduledRunText(startedAt: Temporal.Instant, today: Temporal.Instant): string {
+  return `Poslední běh podle plánu ${lastReportedAt(startedAt, today)}`
+}
+
 /** The tone stays with the page, which knows the design system's tones. */
 export type JobTag = { detail?: string; label: string }
 
@@ -346,7 +354,7 @@ export function jobTag(
     case 'never':
       return { label: 'Zatím se neohlásila' }
     case 'stopped':
-      return { detail: lastRunText(state.lastStartedAt, today), label: 'Neběží' }
+      return { detail: scheduledRunText(state.lastStartedAt, today), label: 'Neběží' }
     case 'running':
       return { detail: `spuštěno ${unbroken(atTime(state.startedAt))}`, label: 'Běží' }
     case 'failed': {
@@ -449,8 +457,9 @@ function everyHoursText(windows: HourlyWindows): string {
 export const STOPPED_CALLOUT_TITLE = 'Dejte vědět tomu, kdo má úlohu na starosti.'
 
 /**
- * The Callout's text under that title (`14e`, the copywriter's `8ltizgsg`). It says only what the
- * app knows: how often the job should run and when it last reported. Whether the job stopped
+ * The Callout's text under that title (`14e`, the copywriter's `8ltizgsg`, `8huj7wqi`). It says
+ * only what the app knows: how often the job should run and when a run its trigger started last
+ * reported, which a later run by hand does not change. Whether the job stopped
  * running or its reports stopped arriving, the app cannot tell, so neither is claimed. That
  * _Spustit teď_ runs the job once stands by the button, not here (`START_ONCE_TEXT`).
  */
@@ -464,9 +473,9 @@ export function stoppedCalloutText(
   if (job?.stoppedText !== undefined) return job.stoppedText
   let when = lastReportedAt(state.lastStartedAt, today)
   if (job?.windows !== undefined) {
-    return `Úloha má běžet ${everyHoursText(job.windows)}. Naposledy se ohlásila ${when}. Příčinu aplikace nezná.`
+    return tied`Úloha má běžet ${everyHoursText(job.windows)}. Z běhu podle plánu se naposledy ohlásila ${when}. Příčinu aplikace nezná.`
   }
-  return `Úloha má běžet ${scheduleText(intervalMinutes)}. Naposledy se ohlásila ${when}. Příčinu aplikace nezná.`
+  return tied`Úloha má běžet ${scheduleText(intervalMinutes)}. Z běhu podle plánu se naposledy ohlásila ${when}. Příčinu aplikace nezná.`
 }
 
 /** The history of a job that never reported (`13c`, the same sentence over the queue). */

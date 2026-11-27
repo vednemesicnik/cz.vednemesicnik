@@ -275,7 +275,10 @@ describe('the history of a job (14e)', () => {
       await run(app, 60 * 24 * 35, { outcome: 'ok' })
       let html = await (await browser.get('/settings/jobs/artwork-replies')).text()
       assert.equal(html.match(/vdm-history__item/g)?.length, 1)
-      assert.match(html, /Naposledy se ohlásila \d+\. \d+\.( \d{4})? ve?\u00a0\d+:\d\d\./)
+      assert.match(
+        html,
+        /Z\u00a0běhu podle plánu se naposledy ohlásila \d+\. \d+\.( \d{4})? ve?\u00a0\d+:\d\d\./,
+      )
     } finally {
       await app.close()
     }
@@ -293,7 +296,7 @@ describe('the history of a job (14e)', () => {
       )
       assert.match(
         html,
-        /Úloha má běžet každých 30 min\. Naposledy se ohlásila ve?\u00a0\d+:\d\d\. Příčinu aplikace nezná\./,
+        /Úloha má běžet každých 30 min\. Z\u00a0běhu podle plánu se naposledy ohlásila ve?\u00a0\d+:\d\d\. Příčinu aplikace nezná\./,
       )
       assert.match(
         html,

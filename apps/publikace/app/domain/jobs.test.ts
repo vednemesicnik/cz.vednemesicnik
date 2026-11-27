@@ -77,11 +77,11 @@ describe('the tag of a job (14d)', () => {
   it('names the day of a last run that was not today', () => {
     let stopped: JobState = { kind: 'stopped', lastStartedAt: LAST }
     assert.deepEqual(spaced(jobTag(stopped, TODAY.add({ hours: 48 }))), {
-      detail: 'Poslední běh 19. 11. v 9:00',
+      detail: 'Poslední běh podle plánu 19. 11. v 9:00',
       label: 'Neběží',
     })
     let nextYear = spaced(jobTag(stopped, Temporal.Instant.from('2027-01-02T08:00:00Z')))
-    assert.equal(nextYear.detail, 'Poslední běh 19. 11. 2026 v 9:00')
+    assert.equal(nextYear.detail, 'Poslední běh podle plánu 19. 11. 2026 v 9:00')
   })
 
   it('draws the other three tags', () => {
@@ -157,20 +157,20 @@ describe('the history of a job (14e)', () => {
     assert.equal(STOPPED_CALLOUT_TITLE, 'Dejte vědět tomu, kdo má úlohu na starosti.')
     assert.equal(
       stoppedCalloutText(stopped, 30, TODAY.add({ hours: 2 })),
-      'Úloha má běžet každých 30 min. Naposledy se ohlásila v\u00a09:00. Příčinu aplikace nezná.',
+      'Úloha má běžet každých 30 min. Z\u00a0běhu podle plánu se naposledy ohlásila v\u00a09:00. Příčinu aplikace nezná.',
     )
     let afternoon: JobState = { kind: 'stopped', lastStartedAt: LAST.add({ hours: 5 }) }
     assert.match(
       stoppedCalloutText(afternoon, 60, TODAY.add({ hours: 7 })) ?? '',
-      /^Úloha má běžet každou hodinu\. Naposledy se ohlásila ve\u00a014:00\./,
+      /^Úloha má běžet každou hodinu\. Z\u00a0běhu podle plánu se naposledy ohlásila ve\u00a014:00\./,
     )
     assert.match(
       stoppedCalloutText(stopped, 30, TODAY.add({ hours: 48 })) ?? '',
-      /Naposledy se ohlásila 19\. 11\. v\u00a09:00\./,
+      /Z\u00a0běhu podle plánu se naposledy ohlásila 19\. 11\. v\u00a09:00\./,
     )
     assert.match(
       stoppedCalloutText(stopped, 30, Temporal.Instant.from('2027-01-02T08:00:00Z')) ?? '',
-      /Naposledy se ohlásila 19\. 11\. 2026 v\u00a09:00\./,
+      /Z\u00a0běhu podle plánu se naposledy ohlásila 19\. 11\. 2026 v\u00a09:00\./,
     )
   })
 

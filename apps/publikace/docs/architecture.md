@@ -373,15 +373,15 @@ Evidence, binned with its folder, is no longer written.
 | `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until #1082 |
 | `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes, no trigger until #1082 |
 
-Every claim opens a run in `job_runs`, unless its `startKey` is refused (below), and leases what it returns for 10 minutes. A claim leaves out
-a removed article or group, its clauses and its batches, discarded ones included (`12z`, `12f`). A report must
-carry the run's key. Every e-mail carries a Mailer idempotency key, so a run that dies between
-sending and reporting does not send twice. The comment digest claims every article of an open
-issue with its authors and what its last report left; its report moves an article's
-`reported_until` to the claim's moment only once every author's e-mail was confirmed, so a failure
-is told again with the next run. `/settings/jobs` shows each job's last run (`14d`).
-Once two runs in a row fail or overdue, a banner appears over every editor's screen; for the
-digest, one run is enough (`14i`).
+Every claim opens a run in `job_runs`, unless its `startKey` is refused (below), and leases what it
+returns for 10 minutes. A claim leaves out a removed article or group, its clauses and its batches,
+discarded ones included (`12z`, `12f`). A report must carry the run's key. Every e-mail carries a
+Mailer idempotency key, so a run that dies between sending and reporting does not send twice. The
+comment digest claims every article of an open issue with its authors and what its last report left;
+its report moves an article's `reported_until` to the claim's moment only once every author's e-mail
+was confirmed, so a failure is told again with the next run. `/settings/jobs` shows each job's last
+run (`14d`). Once two runs in a row fail or overdue, a banner appears over every editor's screen;
+for the digest, one run is enough (`14i`).
 
 **Starting a job by hand.** _Spustit teď_ on a job's row (`14d`, _V pořádku_ and _Zatím se
 neohlásila_) and on its page (`14e`, every state but _Běží_) records a request in `job_starts`
@@ -394,7 +394,8 @@ second later, so the run is `publikace.app@`'s as on its schedule. The job's cla
 the request on the job is _Běží_, for at most the 10 minutes a run can last; a `doPost` that does
 not take it marks the request failed and the row stays as it was (`11c`). A run by hand says
 nothing about the trigger: _Neběží_, the next run and the banner's _stopped_ read the latest
-scheduled run only, so one click does not clear a job whose trigger is gone. A job without its two
+scheduled run only, so one click does not clear a job whose trigger is gone; the time _Neběží_
+shows is that run's too (_Poslední běh podle plánu_). A job without its two
 variables has no button.
 
 **The API is a contract with the scripts.** It is versioned (`/api/v1`), and a field is never

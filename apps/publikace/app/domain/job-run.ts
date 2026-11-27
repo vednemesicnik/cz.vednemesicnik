@@ -218,8 +218,8 @@ export function jobState(
   if (pendingStartAt !== null) return { kind: 'running', startedAt: pendingStartAt }
   if (latest === null) return { kind: 'never' }
   let health = jobHealth(facts.scheduled === undefined ? latest : facts.scheduled, now, window)
-  /* _Neběží_ is the trigger's, but its time is the job's last report, a run by hand included. */
-  if (health.kind === 'stopped') return { kind: 'stopped', lastStartedAt: latest.startedAt }
+  /* _Neběží_ is the trigger's, and so is its time: the last run its trigger started. */
+  if (health.kind === 'stopped') return health
   let next = health.kind === 'running' ? health.next : null
   if (latest.finishedAt === null || latest.outcome === 'failed') {
     return {

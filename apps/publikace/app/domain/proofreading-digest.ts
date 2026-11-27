@@ -167,7 +167,7 @@ export const UNCONFIRMED_CALLOUT_TEXT = tied`Pro další pokus zvolte Spustit te
 export const UNCONFIRMED_WAIT_CALLOUT_TEXT = tied`Pro další pokus počkejte na další plánovaný běh. Přehled se sestaví podle aktuálního stavu. Pokud první e-mail odešel, některá předání se mohou objevit podruhé.`
 
 /** The Callout's text while the job is _Neběží_, its window instead of an interval (`14e`). */
-export const STOPPED_DIGEST_TEXT = tied`Úloha má běžet denně mezi 7:00 a 8:00. Dnes se úloha neohlásila.`
+export const STOPPED_DIGEST_TEXT = tied`Úloha má běžet denně mezi 7:00 a 8:00. Z posledního plánovaného běhu chybí hlášení.`
 
 /** The banner's sentence (`14i`), true of an unconfirmed digest and of a silent job alike. */
 export const DIGEST_BANNER = tied`Přehled pro korektory teď nemá potvrzené odeslání.`
