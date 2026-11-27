@@ -237,7 +237,7 @@ describe('closing an issue (12g, 12h)', () => {
     assert.equal(first(5, 0), 'U 5 článků zatím chybí souhlas')
     assert.match(
       closeWarningText(1, 1) ?? '',
-      /Dokud je vydání uzavřené, aplikace neodesílá žádosti o\u00a0souhlas ani nečte odpovědi\.$/,
+      /Dokud je vydání uzavřené, aplikace neodesílá žádosti o\u00a0souhlas, nečte odpovědi a\u00a0nedoplňuje podklady pro tisk\.$/,
     )
   })
 
