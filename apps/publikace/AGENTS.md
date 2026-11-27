@@ -242,37 +242,36 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   `remix` skill and `modern-web-guidance`.
 - **Issue weighing** — the organisation's **Priority** on every issue labelled `publikace`
   ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Priority and effort), weighed
-  against `publikace-v1.0.0`, the release that first runs on Fly.io and lets the newsroom switch
-  the scripts off:
-  - **Urgent** — production is broken: once the app is served, the newsroom cannot do its work
-    in it or the jobs fail against it, and the fix goes out as a hotfix;
-  - **High** — the release needs it now: without it the app cannot do its job for the newsroom,
+  against **the newsroom's move to the app**: new issues are created in the app instead of
+  through the scripts, once the round trip against the real Drive has passed locally and in
+  production ([docs/product.md](docs/product.md) § Old issues and the cutover). The scripts
+  that serve the older issues run until none of them is open; that is the cutover, and nothing
+  is weighed against it:
+  - **Urgent** — production is broken: the newsroom cannot do its work in the app or the jobs
+    fail against it, and the fix goes out as a hotfix;
+  - **High** — the move needs it now: without it the app cannot do its job for the newsroom,
     loses or corrupts data, sends a wrong e-mail, leaves a door
-    [docs/security.md](docs/security.md) does not guard, or keeps the cutover from happening;
-  - **Medium** — needed for `publikace-v1.0.0`, not yet blocking;
+    [docs/security.md](docs/security.md) does not guard, or keeps the newsroom from moving;
+  - **Medium** — needed for the move, not yet blocking;
   - **Low** — can wait: polish, a departure from the drawing that misleads nobody, a
-    convenience, a second way to do something that already works. Would the newsroom switch the
-    scripts off without it? If yes, it is Low.
+    convenience, a second way to do something that already works. Would the newsroom move to
+    the app without it? If yes, it is Low.
 
   Priority decides, age breaks a tie, and a real blocker still holds. The skill filing an issue
   sets its Priority and Effort itself and adds it to the board, the org project **Publikace**
   ([number 7](https://github.com/orgs/vednemesicnik/projects/7)), which holds no priority: its
   own `Priority` field (P1–P3) is retired.
 
-  Publikace plans each version as a milestone
-  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Planning a version), and the
-  priority fills it: the current one, **`publikace-v1.0.0`**, holds every issue with High or
-  Medium and none with Low, and moving an issue between Medium and Low moves it in or out in the
-  same step.
-  Once the release naming it closes it, this guide names the next version the priorities are
-  weighed against.
+  Patches and minors are not planned: a release names the next one by what it carries. Only a
+  **major** is planned, as a milestone (`publikace-v2.0.0`) that the first issue whose work
+  needs it creates ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Planning a
+  version). Its issues join it whatever their Priority, and its work waits behind the gate.
 
   A version moves ([docs/\_branching-model.md](../../docs/_branching-model.md) § Versions) by
   what the release does to the newsroom and the Apps Script jobs: a **patch** carries only fixes
   or only gated work; a **minor** turns at least one new thing on that neither the newsroom nor
   the jobs must change for; a **major** is something the newsroom has to relearn, an
-  incompatible change to the API the jobs call, or a data migration that needs somebody to act,
-  and is planned as its own milestone (`publikace-v2.0.0`) whose work waits behind the gate.
+  incompatible change to the API the jobs call, or a data migration that needs somebody to act.
 
 - **Release gate** — `isUnreleased()`, true only where `isProduction()` is false (`NODE_ENV`
   `development` or `test`), the one call
