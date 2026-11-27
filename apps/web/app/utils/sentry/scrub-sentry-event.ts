@@ -12,7 +12,7 @@ const BREADCRUMB_QUERY_FIELDS = ['http.query', 'http.fragment']
 // requests pass through the same process.
 const SHARED_LINK_KEY = /\/l\/[^/]+/
 
-const removeQueryAndFragment = (url: string) =>
+const removeSecretsFromUrl = (url: string) =>
   url.split(/[?#]/, 1)[0].replace(SHARED_LINK_KEY, '/l/…')
 
 /**
@@ -24,12 +24,16 @@ const removeQueryAndFragment = (url: string) =>
 export const scrubSentryEvent = (event: ErrorEvent): ErrorEvent => {
   const { breadcrumbs, request } = event
 
+  // The SDK names every incoming request's scope `METHOD /path`, tracing or not.
+  if (event.transaction)
+    event.transaction = removeSecretsFromUrl(event.transaction)
+
   if (request) {
     delete request.cookies
     delete request.data
     delete request.query_string
 
-    if (request.url) request.url = removeQueryAndFragment(request.url)
+    if (request.url) request.url = removeSecretsFromUrl(request.url)
 
     for (const [name, value] of Object.entries(request.headers ?? {})) {
       const lowerCaseName = name.toLowerCase()
@@ -37,7 +41,7 @@ export const scrubSentryEvent = (event: ErrorEvent): ErrorEvent => {
       if (SECRET_HEADERS.has(lowerCaseName)) {
         delete request.headers?.[name]
       } else if (lowerCaseName === REFERER_HEADER && request.headers) {
-        request.headers[name] = removeQueryAndFragment(value)
+        request.headers[name] = removeSecretsFromUrl(value)
       }
     }
   }
@@ -49,7 +53,7 @@ export const scrubSentryEvent = (event: ErrorEvent): ErrorEvent => {
 
     for (const field of BREADCRUMB_URL_FIELDS) {
       const value = data[field]
-      if (typeof value === 'string') data[field] = removeQueryAndFragment(value)
+      if (typeof value === 'string') data[field] = removeSecretsFromUrl(value)
     }
   }
 
