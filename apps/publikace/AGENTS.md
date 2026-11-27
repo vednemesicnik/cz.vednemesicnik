@@ -59,7 +59,7 @@ the articles of the open issues with their authors and how far each was told of,
 e-mails the Mailer confirmed, which _Připomínky ke článkům_ in `/settings/jobs` shows (cz.vednemesicnik.publikace#170), and
 the job itself, which reads each Doc's new comments, replies and suggestions and mails each author
 one digest (cz.vednemesicnik.publikace#186).
-Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+The app runs on `publikace.vednemesicnik.cz`, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals, the print folder, the comment digest and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
@@ -114,8 +114,10 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
 
 ## What the app will be
 
-- **Remix 3 on Fly.io, the stack of Fakturace.** Node 26, `node:sqlite`, one machine with a
-  volume, the same patterns for the repository, migrations and backups. Refer to
+- **Remix 3 on Fly.io, the stack of Fakturace.** Node 26, `node:sqlite`, one more host behind
+  the repository's front server in the Fly app `cz-vednemesicnik`, its own SQLite file on that
+  machine's volume, and the same patterns for the repository, migrations and backups
+  ([docs/architecture.md](docs/architecture.md#the-stack-and-where-it-runs)). Refer to
   `./.agents/skills/remix/SKILL.md` (the `remix` skill) once the root's `pnpm claude:skills:link` has copied
   it.
 - **The app's SQLite database is the source of truth** for issues, articles, editorial clauses,
@@ -124,6 +126,9 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
   scripts could not read, is the app's _Ke kontrole_.
 - **The Registr and each issue's Evidence stay, as a record the app writes and never reads.**
   They are where a licence is looked up, in the same columns for every issue, old or new. The
+  Registr sits in the root of the shared drive _Publikace_, outside the issues folder and its
+  link share. Each write puts the app's whole list there from one database, so a local app
+  leaves `REGISTRY_SPREADSHEET_ID` empty once production holds an issue. The
   app writes the database first and the sheet after it, from a queue that retries, so a sheet
   that does not answer delays the record and blocks nothing; a nightly rewrite from the database
   mends whatever the queue missed. Only `publikace.app@` may edit them, people read them, and
@@ -145,7 +150,8 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
 - **Two accounts, as `web.app@` in `cz.vednemesicnik`.** `publikace@vednemesicnik.cz` is a mailbox
   and nothing else: it runs the deployments of `SCRIPT__Mail__Send` and `SCRIPT__Mail__Reply_Check`.
   `publikace.app@vednemesicnik.cz` runs everything else and is a Content manager of the shared
-  drive _Publikace_, where every new issue lives, and a member of no other shared drive, because
+  drive _Publikace_, where every new issue lives, and a member of no other shared drive but the
+  test one a local app tries Drive against (_Publikace (test)_, fictional data only), because
   it holds the full `drive` scope. Files on a shared drive belong to the drive, not to an account.
   The article template is the one exception: `TEMPLATE__Publication__Article` lives in
   `publikace.app@`'s own _Můj disk → Templates_, beside _Scripts_ for its standalone projects.

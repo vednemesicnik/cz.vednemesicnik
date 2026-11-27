@@ -76,7 +76,7 @@ flowchart LR
 4. **Contract.** Dropping the old structure is an issue of its own, in the same milestone or
    the next, and ships in a later release than the turn-on, never the same one, so rolling back
    to the previous image still works. It is the one destructive step: the web's deploy takes
-   the pre-migration backup itself; Publikace's backup arrives with #1082.
+   the pre-migration backup itself, of the web's database and Publikace's alike.
 
 When the old and the new structure cannot coexist — a new constraint the old data breaks, say
 — a gate does not help. That is the integration branch above: data and code land in one

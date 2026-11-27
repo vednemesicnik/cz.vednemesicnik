@@ -34,6 +34,10 @@ gunzip /srv/backup.db.gz
 ```shell
 sqlite3 $DATABASE_URL ".restore /srv/backup.db"
 ```
+   For Publikace, restore into its own file instead, from a `db/publikace-backup-…` key:
+```shell
+sqlite3 "$PUBLIKACE_DATABASE_PATH" ".restore /srv/backup.db"
+```
 7. Delete the unzipped backup file from the app directory.
 ```shell
 rm /srv/backup.db

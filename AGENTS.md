@@ -20,8 +20,8 @@ A pnpm workspace (`pnpm-workspace.yaml`, `packages: ['apps/*']`), one lockfile:
 - **The web lives in `apps/web`** (package `web`): the React Router app, its Prisma schema and
   migrations, public files, configs and its own docs in `apps/web/docs/`.
 - **Publikace lives in `apps/publikace`** (package `publikace`): a Remix 3 app with its own
-  tools (oxlint, oxfmt, `remix test`, `remix doctor`). It is not served yet
-  (#1082).
+  tools (oxlint, oxfmt, `remix test`, `remix doctor`). The host serves it on
+  `publikace.vednemesicnik.cz` from its sources, with its variables prefixed `PUBLIKACE_`.
 
 Run commands from the root: its scripts forward to the web (`pnpm app:dev` runs
 `pnpm --filter web app:dev`) and to Publikace (`pnpm publikace:test` runs

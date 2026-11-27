@@ -53,10 +53,23 @@ flowchart LR
 - **`createPublikace(environment)`** in `app/publikace.server.ts` is the whole app as
   `{ fetch, close }`. It owns no process. A misconfiguration rejects before anything is opened.
   `server.ts` is the host for working on this repository alone (port 44100).
-- **Production** (#1082, not running yet): one more host behind the front server of the Fly app
-  `cz-vednemesicnik`, after this repository moves into that one as a package. Publikace keeps its
-  own SQLite file on the machine's volume. A secret whose value differs from the web's carries a
-  prefix, because one Fly app has one namespace of secrets.
+- **Production** (#1082): `publikace.vednemesicnik.cz`, one more host behind the front server
+  (`server.ts` at the repository root) in the Fly app `cz-vednemesicnik`, in the web's process.
+  The host loads `createPublikace` through Publikace's own TSX loader, starts it once its port is
+  open and sends every request for Publikace's hosts to it, ahead of the web's middleware.
+  - **Its variables are `PUBLIKACE_<name>`**, because one Fly app has one namespace and the web
+    already reads `SESSION_SECRET` and `GOOGLE_CLIENT_ID`. The host hands them over without the
+    prefix, with its own `NODE_ENV` and nothing else of its environment
+    (`server/publikace-environment.ts`). What is not secret is an `ENV` line of the image
+    (`docker/fly/Dockerfile`); the rest are `fly secrets`.
+  - **Only its start fails alone.** A refused configuration, or `NODE_ENV` other than
+    `production` on Fly, leaves Publikace's hosts answering 503 while the web serves on. Once
+    started it shares one event loop with the web: an uncaught exception ends both.
+  - **Its database is `/data/publikace.sqlite`** on the machine's volume, beside the web's, and
+    the host's backup copies both (`scripts/backup-database.sh`, before every deploy that ships a
+    migration of either).
+  - **Its DNS record is not proxied by Cloudflare**, which refuses datacenter addresses, the jobs'
+    among them. Fly holds its certificate, and the deploy probes it on the Fly origin.
 
 ## Identities
 
@@ -372,8 +385,9 @@ back the same way and a job written before groups leaves out.
 
 ## Configuration
 
-[.env.example](../.env.example) documents every variable by name and purpose. In production,
-`createPublikace` refuses to start when any of them is missing. There is one exception:
+[.env.example](../.env.example) documents every variable by name and purpose; in production each
+is set as `PUBLIKACE_<name>`. In production, `createPublikace` refuses to start when any of them is
+missing. There is one exception:
 `REGISTRY_SPREADSHEET_ID` is optional until the cutover, and without it the app writes only the
 Evidence.
 
