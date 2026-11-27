@@ -123,20 +123,30 @@ app's Issue weighing says what they mean) and a `Status` field (Todo, In Progres
   ```
 
   Look the field and option ids up each time; they are never written into a skill.
-- **Milestone.** An application's Issue weighing may also name a milestone for the release its
-  priorities are weighed against, and which priorities belong in it (Publikace:
-  `publikace-v1.0.0` holds every P1 and P2, no P3). The milestone follows the priority and is
-  never weighed on its own: whoever sets or changes a priority sets the milestone in the same
-  step — `--milestone "<title>"` on `gh issue create`, `gh issue edit <n> --milestone "<title>"`
-  or `--remove-milestone` when a priority crosses the line. Both take the title, so the
-  milestone's number is never written down. `/next-issue` reports how many of its issues are
-  open and closed; `/release-pr` closes it once the release that names its version is merged.
 - **Status.** `/implement-issue` sets the item to In Progress when it starts on the branch, the
   same way, with the Status field; closing the issue moves it to Done through the project's own
   workflow.
 
 An application without a project (the web, for now) orders by the three questions above and its
 label alone. A new project belongs in its application's `AGENTS.md`, never in a skill.
+
+## Planning a version
+
+Every application tagged by semver (its style in `RELEASE_STYLES`, `scripts/release-version.ts`)
+plans each version as a GitHub milestone titled after the tag, `<app>-vX.Y.Z`. The milestone
+holds the issues that version needs, the one that turns its gated work on included
+([\_branching-model.md](_branching-model.md) § Unreleased work behind a gate), and the release
+whose tag matches closes it. An application tagged by date (the web) has no milestones.
+
+- **Filling it.** The application's **Issue weighing** says which issues go in (Publikace: every
+  P1 and P2 of its project, no P3). Whoever sets or changes what puts an issue in sets the
+  milestone in the same step: `--milestone "<title>"` on `gh issue create`,
+  `gh issue edit <n> --milestone "<title>"`, or `--remove-milestone` when the issue leaves it.
+  Both take the title, so a milestone's number is never written into a skill.
+- **Reading it.** `/next-issue` says how many of its issues are open and closed and fixes an
+  issue whose weighing and milestone disagree.
+- **Closing it.** `/release-pr` names a version only once its milestone has no open issue, and
+  closes the milestone after the merge. The application's guide then names the next one.
 
 ## Where each one stops, and why
 

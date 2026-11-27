@@ -152,16 +152,21 @@ picks its style in `scripts/release-version.ts`: the web by date (`web-2026-11-2
 by semver (`publikace-v1.1.0`), named under `## Versions` in the release PR's body; a hotfix
 takes the next patch. The `release-version` check shows every tag before the merge. Publikace
 stays untagged until the release that has the host serve it (#1082) names `publikace-v1.0.0`.
-Work in progress of one application stays off `dev`, because a release takes everything on
-it. [docs/\_branching-model.md](docs/_branching-model.md) § Versions has the rest.
+A semver application plans each version as a milestone titled after its tag, which the
+release naming it closes ([docs/\_workflow-skills.md](docs/_workflow-skills.md) § Planning a
+version). A release takes everything on `dev`, so user-visible work not to be released yet
+merges there behind its application's release gate, hidden in production by `NODE_ENV` and
+404 on the server; the PR that removes the gate turns it on
+([docs/\_branching-model.md](docs/_branching-model.md) § Unreleased work behind a gate,
+§ Versions).
 
 ## Documentation
 
 The repository's documents are in `docs/`; each application documents itself in its own
 `docs/`.
 
-- `docs/_branching-model.md` - Branching model, merge methods, stacked PRs, versions (tags, Releases, the `release-version` gate), hotfix procedure
-- `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, where each stops, where the skills live
+- `docs/_branching-model.md` - Branching model, unreleased work behind a gate, merge methods, stacked PRs, versions (tags, Releases, the `release-version` gate), hotfix procedure
+- `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, ordering by a project, planning a version, where each stops, where the skills live
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures

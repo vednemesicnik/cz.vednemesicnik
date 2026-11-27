@@ -21,10 +21,37 @@ hotfix ────────────────────────�
 ```
 
 - **Feature / fix:** branch off `dev`, PR back into `dev`. No deploy. A change too large
-  for one diff runs as a chain of [stacked PRs](#stacked-prs).
+  for one diff runs as a chain of [stacked PRs](#stacked-prs). User-visible work that is not
+  to be released yet goes in [behind a gate](#unreleased-work-behind-a-gate).
 - **Release:** PR `dev → main`. This is the only moment a deploy happens.
 - **Hotfix:** branch off `main`, PR directly into `main` (deploys), then back-merge
   into `dev`.
+
+## Unreleased work behind a gate
+
+A release takes everything on `dev`, for every application. So new user-visible work that is
+not to be released yet still merges into `dev`, hidden in production: it shows when
+`NODE_ENV !== 'production'` (local development, tests, the fake app) and is hidden when the app
+runs in production.
+
+- **One helper per application.** Each application's guide names it (its `AGENTS.md` § For the
+  workflow skills, **Release gate**), and it is written by the application's own rules. Every
+  gate calls it, never `process.env.NODE_ENV` directly, so one `git grep` lists every gate. The
+  first issue that needs a gate adds the helper.
+- **The server is gated too.** A gated route or action answers 404 in production, as if it did
+  not exist; hiding the link alone leaves it reachable.
+- **Migrations cannot be gated**, because they run on deploy. A gated change only adds to the
+  schema (a new table, a nullable or defaulted column) and removes nothing that production
+  still reads; what the feature makes obsolete is removed after it is turned on.
+- **Turning it on is its own PR.** The PR that removes the gate is the step that releases the
+  work. For an application tagged by semver it belongs to the version's milestone
+  ([\_workflow-skills.md](_workflow-skills.md) § Planning a version), and the release that
+  carries it names that version. A release carrying only gated work gives such an application
+  the next patch (`publikace-v1.0.1`).
+- **Work that cannot be gated** — a change of the host, a dependency, a shared layout — goes to
+  a short-lived integration branch off `dev` as a rare exception: its PRs target that branch,
+  the workflows' `pull_request.branches` list gets it for as long as it lives, and it merges
+  into `dev` in one PR when it is ready to ship.
 
 ## Merge methods
 
@@ -123,6 +150,12 @@ first one is always `v1.0.0`, and until a release names it the application stays
 `publikace.vednemesicnik.cz` (#1082) names `- publikace-v1.0.0`**, and then it is tagged even
 if only the host changed. A hotfix never gives a first version. The web's Releases carry the
 repository's "Latest" badge; the others do not.
+
+**A semver version is planned as a milestone** titled after its tag, and the release that
+names the version closes it ([\_workflow-skills.md](_workflow-skills.md) § Planning a version).
+A release that changes such an application only with work still
+[behind a gate](#unreleased-work-behind-a-gate) gives it the next patch, once it has a first
+version.
 
 **Checked before the merge.** `.github/workflows/release-version.yml` (job `release-version`)
 runs the same script on every PR into `main`, again when its body is edited, and shows each

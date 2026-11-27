@@ -36,10 +36,19 @@ gh pr create --base main --head dev --template release.md \
   the host serve it (#1082), which names `- publikace-v1.0.0`; before that, name nothing for
   it. Once the PR is open, read the `release-version` check's summary: it lists the tag every
   changed application will get, and fails on a missing or wrong version. Fix the body, never
-  the check. When the app's **Issue weighing** names a milestone for the version, the release
-  names it only once the milestone has no open issue left
-  (`gh issue list --milestone "<title>" --state open`); one still open is either weighed down out
-  of it or the version waits.
+  the check. A version that has a milestone
+  ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Planning a version) is named
+  only once the milestone has no open issue left
+  (`gh issue list --milestone "<title>" --state open`), the one that turns its work on included;
+  one still open is either weighed out of it or the version waits. A release that carries only
+  gated work gives the application the next patch.
+- **Gates** — for each application whose **Release gate** (its `AGENTS.md` § For the workflow
+  skills) names a helper, list the gates still in place on `dev`
+  (`git grep -n "<helper>" origin/dev -- apps/<app>/`) and the ones this release adds or removes
+  (`git log --oneline -G "<helper>" origin/main..origin/dev -- apps/<app>/`), so the body says
+  what production will show and what stays hidden
+  ([docs/\_branching-model.md](../../../docs/_branching-model.md) § Unreleased work behind a
+  gate).
 - **Deploy expectation** — does the release include a migration of a served application's
   database (the web's `apps/web/prisma/migrations/**`)? No migration → the `Pre-migration
   database backup` step is **skipped**. Has migration → the backup step **runs**; call it out.
