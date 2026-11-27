@@ -43,9 +43,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: superfly/flyctl-actions/setup-flyctl@1.6
-      # Migrations run at machine startup (docker-entry-point-fly.sh), so back up
-      # the still-running old machine BEFORE deploying when this push ships new
-      # migrations. base: main is required — paths-filter's default base is the
+      # Migrations run at machine startup (the web's in docker-entry-point-fly.sh,
+      # Publikace's in createPublikace), so back up the still-running old machine
+      # BEFORE deploying when this push ships new migrations of either; the backup
+      # covers both databases. base: main is required — paths-filter's default base is the
       # repo default branch (dev), so without it the release diffs against
       # merge-base(dev, main), which is empty at a dev→main merge and skips the
       # backup every release. When base names the branch that was pushed to,
@@ -59,6 +60,7 @@ jobs:
           filters: |
             migrations:
               - 'apps/web/prisma/migrations/**'
+              - 'apps/publikace/db/migrations/**'
       - name: Pre-migration database backup
         if: steps.changes.outputs.migrations == 'true'
         # No continue-on-error: a failed backup must block the deploy.
@@ -87,6 +89,16 @@ jobs:
           curl --fail --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 5 \
             https://cz-vednemesicnik.fly.dev/health
+      # Publikace's own certificate on the same origin, reached without the public
+      # DNS (--connect-to), so the probe never meets Cloudflare whatever its record
+      # does. Its sign-in page answers only once createPublikace started; a refused
+      # configuration answers 503 here while the web above still passes.
+      - name: Smoke test Publikace on the Fly origin
+        run: |
+          curl --fail --silent --show-error --output /dev/null \
+            --retry 5 --retry-all-errors --retry-delay 5 --max-time 20 \
+            --connect-to publikace.vednemesicnik.cz:443:cz-vednemesicnik.fly.dev:443 \
+            https://publikace.vednemesicnik.cz/sign-in
       - name: Show app status
         if: always()
         run: flyctl status --app cz-vednemesicnik
