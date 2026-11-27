@@ -168,12 +168,12 @@ export type MailSendEndpoint = { secret: string; url: string }
 export function mailSendEndpoint(environment: Environment): MailSendEndpoint | null {
   if (isProduction(environment)) {
     return {
-      secret: required(environment, 'MAIL_SEND_SECRET'),
-      url: required(environment, 'MAIL_SEND_URL'),
+      secret: required(environment, 'GAS_MAIL_SEND_SECRET'),
+      url: required(environment, 'GAS_MAIL_SEND_URL'),
     }
   }
-  let url = optional(environment, 'MAIL_SEND_URL')
-  let secret = optional(environment, 'MAIL_SEND_SECRET')
+  let url = optional(environment, 'GAS_MAIL_SEND_URL')
+  let secret = optional(environment, 'GAS_MAIL_SEND_SECRET')
   return url === '' || secret === '' ? null : { secret, url }
 }
 

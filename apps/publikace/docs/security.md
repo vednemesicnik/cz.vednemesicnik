@@ -6,17 +6,17 @@ The findings of the review that are not fixed yet are in
 
 ## What is worth protecting
 
-| Asset                                                                                                          | Why it matters                                                                                              | Where it lives                                                                                      |
-| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Refresh token of `publikace.app@`                                                                              | full `drive` scope: it reads, writes and bins everything on _Publikace_ and in the account's own _Můj disk_ | `drive_account`, AES-256-GCM under `DRIVE_TOKEN_KEY`                                                |
-| `DRIVE_TOKEN_KEY`, `SESSION_SECRET`, `GOOGLE_CLIENT_SECRET`, `MAIL_SEND_SECRET`, `GAS_GROUP_MEMBERSHIP_SECRET` | decrypt the token, forge a session, send mail as `publikace@`, ask about group membership                   | `.env` locally, `fly secrets` in production; never in the repository                                |
-| Sessions                                                                                                       | each one is a signed-in editor-in-chief or proofreader                                                      | `sessions` table; cookie with a signed id                                                           |
-| The access list and the proofreaders' address                                                                  | decide who signs in and who is an administrator                                                             | `access_accounts`, `access_groups`, `proofreaders`                                                  |
-| Link keys                                                                                                      | each one creates articles, uploads files and starts e-mails from `publikace@`                               | `links.key`                                                                                         |
-| Personal data: names and addresses of authors and providers, reply texts, editors' names                       | people outside the newsroom, under GDPR                                                                     | the database, every Evidence, the licence PDFs, Gmail                                               |
-| Proof of consent                                                                                               | the legal record of a licence                                                                               | the archived Gmail conversation in `Licence`; the licence PDF and its SHA-256 quoted in the request |
-| The API                                                                                                        | its claims return authors' addresses, its reports set consent states                                        | `/api/v1/*`                                                                                         |
-| The mail budget                                                                                                | the Gmail quota of `publikace@`, which the jobs and the answers need too                                    | `public_mail_log`, `PUBLIC_MAIL_PER_DAY`                                                            |
+| Asset                                                                                                              | Why it matters                                                                                              | Where it lives                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Refresh token of `publikace.app@`                                                                                  | full `drive` scope: it reads, writes and bins everything on _Publikace_ and in the account's own _Můj disk_ | `drive_account`, AES-256-GCM under `DRIVE_TOKEN_KEY`                                                |
+| `DRIVE_TOKEN_KEY`, `SESSION_SECRET`, `GOOGLE_CLIENT_SECRET`, `GAS_MAIL_SEND_SECRET`, `GAS_GROUP_MEMBERSHIP_SECRET` | decrypt the token, forge a session, send mail as `publikace@`, ask about group membership                   | `.env` locally, `fly secrets` as `PUBLIKACE_<name>` in production; never in the repository          |
+| Sessions                                                                                                           | each one is a signed-in editor-in-chief or proofreader                                                      | `sessions` table; cookie with a signed id                                                           |
+| The access list and the proofreaders' address                                                                      | decide who signs in and who is an administrator                                                             | `access_accounts`, `access_groups`, `proofreaders`                                                  |
+| Link keys                                                                                                          | each one creates articles, uploads files and starts e-mails from `publikace@`                               | `links.key`                                                                                         |
+| Personal data: names and addresses of authors and providers, reply texts, editors' names                           | people outside the newsroom, under GDPR                                                                     | the database, every Evidence, the licence PDFs, Gmail                                               |
+| Proof of consent                                                                                                   | the legal record of a licence                                                                               | the archived Gmail conversation in `Licence`; the licence PDF and its SHA-256 quoted in the request |
+| The API                                                                                                            | its claims return authors' addresses, its reports set consent states                                        | `/api/v1/*`                                                                                         |
+| The mail budget                                                                                                    | the Gmail quota of `publikace@`, which the jobs and the answers need too                                    | `public_mail_log`, `PUBLIC_MAIL_PER_DAY`                                                            |
 
 ## Trust boundaries
 
@@ -27,10 +27,13 @@ flowchart TB
     LINK["Holder of a link key"]
     USER["Editor or proofreader<br/>with a session"]
   end
-  subgraph Host["Fly.io machine"]
+  subgraph Host["Fly.io machine, one process"]
+    HOST["The host<br/>routes by Host"]
     APP["Publikace<br/>createPublikace(environment)"]
+    WEB["The magazine's web"]
     DB[("SQLite<br/>on the volume")]
   end
+  SENTRY["Sentry"]
   subgraph Google["Google"]
     OAUTH["Google sign-in"]
     API["Drive, Docs, Sheets"]
@@ -38,10 +41,13 @@ flowchart TB
     MAIL["Mailer and reply check<br/>publikace@"]
     GM["Membership service"]
   end
-  ANON -- "/sign-in only" --> APP
-  LINK -- "/l/{key}/…, no cookie, no CSRF" --> APP
-  USER -- "session cookie, CSRF" --> APP
-  JOBS -- "Google ID token" --> APP
+  ANON -- "/sign-in only" --> HOST
+  LINK -- "/l/{key}/…, no cookie, no CSRF" --> HOST
+  USER -- "session cookie, CSRF" --> HOST
+  JOBS -- "Google ID token" --> HOST
+  HOST -- "publikace.vednemesicnik.cz" --> APP
+  HOST --> WEB
+  HOST -. "uncaught errors, scrubbed" .-> SENTRY
   APP --> DB
   APP -- "code + PKCE, then userinfo" --> OAUTH
   APP -- "access token of publikace.app@" --> API
@@ -149,12 +155,22 @@ that needs a session belongs behind a guard instead.
   origin, the OAuth client, the secrets, the Drive account, the folders, the Mailer, the
   membership service and the job account. It also refuses to start when nobody could ever change
   the access list.
+- **The host never starts it outside production on Fly.** It hands Publikace its own `NODE_ENV`,
+  never a `PUBLIKACE_NODE_ENV`, and refuses to start it when the machine is on Fly and that value
+  is not `production` (`server/publikace-environment.ts`). Any other host still has to set it:
+  the app's own fallbacks are #1097.
 - **The fake app refuses production**, and binds only to `127.0.0.1`.
 - **`.env` is never opened by tools or agents**, and the repository holds only fictional data on
   the `.test` domains ([AGENTS.md](../AGENTS.md#data-rules)).
 
 ## Accepted risks
 
+- **The web's process holds Publikace's secrets.** The host serves both applications from one
+  process (#1082), so every `PUBLIKACE_*` secret and, once read, the token of `publikace.app@`
+  are within reach of anything that compromises the web or one of its dependencies. An uncaught
+  error in either reaches Sentry with its request's address, the query and a link's key cut out
+  (`scrub-sentry-event.ts`). Two processes would close this and cost a second Node runtime on the
+  1 GB machine (log 0084).
 - **A forwarded link works for whoever holds it.** That is the price of no sign-in from a
   messenger's browser (`02a`). It is limited to one action in one place. The newsroom's link and
   an artwork group's link can be renewed by an editor-in-chief (`02d`, `02g`); an article's

@@ -2,7 +2,7 @@
 name: plan-issue
 description: Fetch a GitHub issue and produce a repo-aware implementation plan (plan mode). Use when an issue is about to be worked on and needs a plan before any code is written.
 argument-hint: <issue-number>
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*), Bash(gh api orgs/vednemesicnik/issue-fields)
 ---
 
 ## Requested issue number
@@ -101,6 +101,14 @@ You are the **planning stage** of the issue pipeline:
      untrue and their new wording, and which review finding it resolves. These edits are
      implementation steps like any other, landed in the same PR. When none is touched, say so
      in a line: that is a claim the review in `/ship-issue` checks.
+   - **Release** — whether the change is user-visible work not to be released with the next
+     release, and so goes behind the app's **Release gate** (UI and server alike), and which
+     issue removes the gate; a change that cannot be gated says why, and so does one that
+     ships ungated ([docs/\_branching-model.md](../../../docs/_branching-model.md)
+     § Unreleased work behind a gate). When this issue is the one that removes a gate, say so.
+     A migration only expands; one that drops or narrows what production still reads is split
+     out as a contract issue of its own, filed into the same or the next milestone, to ship in a
+     later release than the turn-on (§ Migrations: expand, then contract).
    - **Implementation steps** — concrete files, referencing existing utilities to reuse.
      Read `docs/work-log/` for the area first. When the plan settles something later work
      should know (see `/log-work`), its last step writes the entry in the same PR; a plan that
@@ -131,7 +139,16 @@ You are the **planning stage** of the issue pipeline:
    `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status=Todo --jq .status.name`. A
    plan redrawn for an issue already _In progress_ or _In review_ never moves it back
    ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and
-   status). The plan file and the status are the only things this skill writes — no repo
+   status).
+
+   **Set the issue's Effort from the plan**: read it with
+   `gh api repos/{owner}/{repo}/issues/<number>/issue-field-values`, and when the plan's size
+   says otherwise (or the issue has none), set it as
+   [docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Priority and effort shows,
+   naming the old and new value in the report. A plan bigger than _High_ is not a value to set:
+   say so before `ExitPlanMode` and propose the split into an epic instead.
+
+   The plan file, the status and the Effort are the only things this skill writes — no repo
    edits, nothing else on GitHub.
 
 10. **Close with what is open, in the order it should be done.** `/implement-issue <number>`

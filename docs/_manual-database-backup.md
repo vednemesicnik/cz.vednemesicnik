@@ -62,6 +62,16 @@ ssh -p 10022 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
   > cz-vednemesicnik-backup-$(date +%Y-%m-%d).db.gz
 ```
 
+Publikace's database is its own file on the same volume, `$PUBLIKACE_DATABASE_PATH`
+(`/data/publikace.sqlite`); the same command with that variable backs it up:
+
+```shell
+ssh -p 10022 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+  root@localhost \
+  "sh -c 'sqlite3 \"\$PUBLIKACE_DATABASE_PATH\" \".backup /tmp/backup.db\" && gzip -c /tmp/backup.db && rm -f /tmp/backup.db'" \
+  > publikace-backup-$(date +%Y-%m-%d).db.gz
+```
+
 The resulting file lands in your current directory, already named with the current
 date. Verify it before trusting it:
 
@@ -118,7 +128,7 @@ gzip -t backup-*.db.gz && echo "OK"
 ### Automated backups
 
 The command above is now automated by `scripts/backup-database.sh`, which runs the
-same steps on the machine (the same `object-store` upload — see
+same steps on the machine for both databases, the web's and Publikace's (the same `object-store` upload — see
 [`apps/web/scripts/object-store-cli.ts`](../apps/web/scripts/object-store-cli.ts)) and adds a
 `gzip -t` integrity check, an upload verification, and retention pruning. Two
 workflows call it:
@@ -127,8 +137,11 @@ workflows call it:
   runs on a cron (1st of Jan/Apr/Jul/Oct) and on `workflow_dispatch`.
 - **Pre-migration** — [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
   backs up (with a `-pre-migration` key suffix) before `flyctl deploy` whenever the
-  push touches `apps/web/prisma/migrations/**`. Migrations apply at machine startup, so this
-  captures the old schema first; a failed backup blocks the deploy.
+  push touches `apps/web/prisma/migrations/**` or `apps/publikace/db/migrations/**`. Both
+  apply their migrations at machine startup, so this captures the old schema first; a failed
+  backup blocks the deploy. A machine with no `PUBLIKACE_DATABASE_PATH`, or whose Publikace
+  never started and so has no file yet, skips Publikace with a line rather than failing, so a
+  Publikace problem never blocks the web's backup.
 
 Both workflows authenticate with a dedicated `FLY_BACKUP_TOKEN` repo secret (an
 app-scoped Fly token, e.g. `fly tokens create deploy -a cz-vednemesicnik`) — not
@@ -142,7 +155,9 @@ Automated keys carry a full timestamp — `db/backup-<YYYY-MM-DD-HHMMSS>.db.gz`,
 a `-pre-migration` suffix for the deploy-time ones (e.g.
 `db/backup-2026-07-16-030112-pre-migration.db.gz`). So when locating a backup, `ls` the
 prefix and copy the exact key rather than assuming the date-only form the manual
-command above produces.
+command above produces. Publikace's sit beside them as
+`db/publikace-backup-<YYYY-MM-DD-HHMMSS>.db.gz`, with the same timestamp as the web's from
+the same run.
 
 **Retention:** the script prunes `db/` backups older than **2 years** after each
 successful upload — a handful of objects at a time, so everything within the window is

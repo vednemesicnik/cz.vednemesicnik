@@ -10,8 +10,8 @@ title: ''
 
      A proposal goes through /review-idea before it gets here, and its answers become this body.
      Check first that no open issue would carry it, and that it is the size of one PR. Give it
-     its type and its app's label (`web`, `publikace`); an app with a project (Publikace: 7) also
-     gets a priority there — docs/_workflow-skills.md § Filing an issue, § Ordering by a project.
+     its type, its app's label (`web`, `publikace`) and the issue fields Priority and Effort —
+     docs/_workflow-skills.md § Filing an issue, § Priority and effort.
      Headings are a skeleton, not a form — rename, merge or drop them when the issue reads
      better without. -->
 

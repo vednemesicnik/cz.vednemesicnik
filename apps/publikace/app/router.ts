@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { constants } from 'node:zlib'
 import type { Database } from 'remix/data-table'
 import { asyncContext } from 'remix/middleware/async-context'
 import { compression } from 'remix/middleware/compression'
@@ -311,7 +312,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *     saw, a static file and a refusal included; a shared link's key and a Google callback's
      *     code stay out of the line,
      *   - `compression()` above the static files, because the stylesheet and the fonts are the
-     *     largest things the app sends,
+     *     largest things the app sends; Brotli at quality 4, as the host compresses the web,
+     *     since Node's default of 11 costs too much per request on one shared CPU,
      *   - the fast exits next — `staticFiles()` and `serveAssets()` — so no file request ever
      *     reaches the session store; `serveAssets()` also leaves the assets in the context,
      *   - `asyncContext()` above `render()`, so every page drawn, an error page included, reaches
@@ -338,7 +340,7 @@ export function createAppRouter(dependencies: AppDependencies) {
     middleware: [
       logRequests(),
       publicLinkHeaders(),
-      compression(),
+      compression({ brotli: { params: { [constants.BROTLI_PARAM_QUALITY]: 4 } } }),
       staticFiles(PUBLIC_DIR, { index: false }),
       serveAssets(dependencies.assets),
       asyncContext(),

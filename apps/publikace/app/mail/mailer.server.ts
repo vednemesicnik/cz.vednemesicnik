@@ -105,4 +105,4 @@ function failed(reason: string): MailResult {
 }
 
 /** The Mailer outside production when it is not configured: nothing is ever sent. */
-export const mailerUnavailable: Mailer = async () => failed('MAIL_SEND_URL is not configured')
+export const mailerUnavailable: Mailer = async () => failed('GAS_MAIL_SEND_URL is not configured')

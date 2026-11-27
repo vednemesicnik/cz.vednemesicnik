@@ -2,7 +2,7 @@
 name: review-idea
 description: Weigh a proposal against product, evidence, design and security before it becomes an issue — and say no when it should be no, or change the written plan when the plan is what is out of date. Use when an idea or a change is proposed and it is not yet settled whether it deserves an issue at all, or when circumstances have changed and an app's product, architecture or security documents may no longer say what is true.
 argument-hint: <what is being proposed>
-allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*), Bash(gh project item-list:*), Bash(gh project field-list:*), Bash(gh project view:*)
+allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*), Bash(gh api orgs/vednemesicnik/issue-fields), Bash(gh api repos/{owner}/{repo}/issues/*)
 ---
 
 ## What is being proposed
@@ -112,10 +112,11 @@ describes, then give the verdict.
   English): 1–2 the motivation, 4 the mechanism, 6 what each surface gets, 7 the design
   citations, 8–9 its security section, plus acceptance-criteria checkboxes. It names its type —
   _Bug_, _Feature_ or _Task_ — and carries its app's label, `web` or `publikace` (both for the
-  host or the repository), in the same `gh issue create`, and, when the app's Issue weighing names a project, it is added
-  there with the priority you decide
+  host or the repository), in the same `gh issue create`; it gets the Priority you weigh by the
+  app's **Issue weighing** and the Effort its size gives, each with its reason in a sentence, the
+  milestone of the version that Priority puts it in, and the board when the weighing names one
   ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and status,
-  § Ordering by a project) — which sections of the written design it changes and in what words,
+  § Priority and effort, § Planning a version) — which sections of the written design it changes and in what words,
   and which review finding it resolves: the documents change in the same PR as the code. Before
   writing, put the three questions of § Filing an issue to it: an open issue that carries the work
   gets a comment instead (its title rewritten if the scope widens); work the size of two PRs is

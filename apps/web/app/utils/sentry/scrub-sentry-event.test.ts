@@ -92,4 +92,28 @@ describe('scrubSentryEvent', () => {
 
     expect(scrubSentryEvent(event)).toEqual({ message: 'probe' })
   })
+
+  test('drops the key of a Publikace shared link from every URL', () => {
+    const link = 'https://publikace.vednemesicnik.test/l/secret-key/article'
+    const { breadcrumbs, request } = scrub({
+      breadcrumbs: [{ data: { url: link } }],
+      request: { headers: { referer: link }, url: link },
+    })
+
+    expect(request?.url).toBe(
+      'https://publikace.vednemesicnik.test/l/…/article',
+    )
+    expect(request?.headers?.referer).toBe(
+      'https://publikace.vednemesicnik.test/l/…/article',
+    )
+    expect(breadcrumbs?.[0].data?.url).toBe(
+      'https://publikace.vednemesicnik.test/l/…/article',
+    )
+  })
+
+  test('drops the key of a Publikace shared link from the transaction name', () => {
+    const { transaction } = scrub({ transaction: 'POST /l/secret-key/article' })
+
+    expect(transaction).toBe('POST /l/…/article')
+  })
 })

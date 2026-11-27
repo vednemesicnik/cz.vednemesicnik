@@ -59,7 +59,7 @@ the articles of the open issues with their authors and how far each was told of,
 e-mails the Mailer confirmed, which _Připomínky ke článkům_ in `/settings/jobs` shows (cz.vednemesicnik.publikace#170), and
 the job itself, which reads each Doc's new comments, replies and suggestions and mails each author
 one digest (cz.vednemesicnik.publikace#186).
-Nothing runs on Fly.io yet, and the background jobs still read the sheets,
+The app runs on `publikace.vednemesicnik.cz`, and the background jobs still read the sheets,
 except the artwork reply check, the article approvals, the print folder, the comment digest and the proofreaders' digest, which go
 through the app's API and whose runs
 `/settings/jobs` shows, with a banner over every screen once two in a row failed (once, for the
@@ -109,12 +109,15 @@ whose hooks never fire had its install scripts skipped: `pnpm lefthook:install` 
 the fix. [publikace.yml](../../.github/workflows/publikace.yml) runs `publikace-lint`,
 `publikace-format`, `publikace-typecheck`, `publikace-test` and `publikace-doctor` on every PR
 that touches Publikace, and the `branch-protection` ruleset requires them. Releases are the
-repository's. See [docs/branching-model.md](docs/branching-model.md).
+repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
+[docs/branching-model.md](docs/branching-model.md).
 
 ## What the app will be
 
-- **Remix 3 on Fly.io, the stack of Fakturace.** Node 26, `node:sqlite`, one machine with a
-  volume, the same patterns for the repository, migrations and backups. Refer to
+- **Remix 3 on Fly.io, the stack of Fakturace.** Node 26, `node:sqlite`, one more host behind
+  the repository's front server in the Fly app `cz-vednemesicnik`, its own SQLite file on that
+  machine's volume, and the same patterns for the repository, migrations and backups
+  ([docs/architecture.md](docs/architecture.md#the-stack-and-where-it-runs)). Refer to
   `./.agents/skills/remix/SKILL.md` (the `remix` skill) once the root's `pnpm claude:skills:link` has copied
   it.
 - **The app's SQLite database is the source of truth** for issues, articles, editorial clauses,
@@ -123,6 +126,11 @@ repository's. See [docs/branching-model.md](docs/branching-model.md).
   scripts could not read, is the app's _Ke kontrole_.
 - **The Registr and each issue's Evidence stay, as a record the app writes and never reads.**
   They are where a licence is looked up, in the same columns for every issue, old or new. The
+  app's Registr is a spreadsheet of its own, `Registr` in the root of the shared drive
+  _Publikace_, outside the issues folder and its link share; the scripts keep theirs for the
+  issues made before the app, so until the cutover a licence is looked up in the Registr of the
+  issue's flow. Each write puts the app's whole list there from one database, so a local app
+  writes the `Registr` in the root of _Publikace (test)_ instead, never this one. The
   app writes the database first and the sheet after it, from a queue that retries, so a sheet
   that does not answer delays the record and blocks nothing; a nightly rewrite from the database
   mends whatever the queue missed. Only `publikace.app@` may edit them, people read them, and
@@ -144,7 +152,8 @@ repository's. See [docs/branching-model.md](docs/branching-model.md).
 - **Two accounts, as `web.app@` in `cz.vednemesicnik`.** `publikace@vednemesicnik.cz` is a mailbox
   and nothing else: it runs the deployments of `SCRIPT__Mail__Send` and `SCRIPT__Mail__Reply_Check`.
   `publikace.app@vednemesicnik.cz` runs everything else and is a Content manager of the shared
-  drive _Publikace_, where every new issue lives, and a member of no other shared drive, because
+  drive _Publikace_, where every new issue lives, and a member of no other shared drive but the
+  test one a local app tries Drive against (_Publikace (test)_, fictional data only), because
   it holds the full `drive` scope. Files on a shared drive belong to the drive, not to an account.
   The article template is the one exception: `TEMPLATE__Publication__Article` lives in
   `publikace.app@`'s own _Můj disk → Templates_, beside _Scripts_ for its standalone projects.
@@ -230,21 +239,44 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   scopes (`agents`, `skills`, `docs`).
 - **Rules** — Publikace's rules (§ Agent Rules below) and the repository's shared rules; the
   `remix` skill and `modern-web-guidance`.
-- **Issue weighing** — the org project **Publikace**,
-  [number 7](https://github.com/orgs/vednemesicnik/projects/7), orders the issues labelled
-  `publikace` by its `Priority`, weighed against `v1.0.0`, the release that first runs on Fly.io
-  and lets the newsroom switch the scripts off:
-  - **P1** — the release needs it now: without it the app cannot do its job for the newsroom,
+- **Issue weighing** — the organisation's **Priority** on every issue labelled `publikace`
+  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Priority and effort), weighed
+  against `publikace-v1.0.0`, the release that first runs on Fly.io and lets the newsroom switch
+  the scripts off:
+  - **Urgent** — production is broken: once the app is served, the newsroom cannot do its work
+    in it or the jobs fail against it, and the fix goes out as a hotfix;
+  - **High** — the release needs it now: without it the app cannot do its job for the newsroom,
     loses or corrupts data, sends a wrong e-mail, leaves a door
     [docs/security.md](docs/security.md) does not guard, or keeps the cutover from happening;
-  - **P2** — needed for `v1.0.0`, not yet blocking;
-  - **P3** — can wait: polish, a departure from the drawing that misleads nobody, a
+  - **Medium** — needed for `publikace-v1.0.0`, not yet blocking;
+  - **Low** — can wait: polish, a departure from the drawing that misleads nobody, a
     convenience, a second way to do something that already works. Would the newsroom switch the
-    scripts off without it? If yes, it is P3.
+    scripts off without it? If yes, it is Low.
 
-  Priority decides, age breaks a tie, and a real blocker still holds
-  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Ordering by a project). The
-  skill filing an issue adds it to the project and decides its priority itself.
+  Priority decides, age breaks a tie, and a real blocker still holds. The skill filing an issue
+  sets its Priority and Effort itself and adds it to the board, the org project **Publikace**
+  ([number 7](https://github.com/orgs/vednemesicnik/projects/7)), which holds no priority: its
+  own `Priority` field (P1–P3) is retired.
+
+  Publikace plans each version as a milestone
+  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Planning a version), and the
+  priority fills it: the current one, **`publikace-v1.0.0`**, holds every issue with High or
+  Medium and none with Low, and moving an issue between Medium and Low moves it in or out in the
+  same step.
+  Once the release naming it closes it, this guide names the next version the priorities are
+  weighed against.
+
+  A version moves ([docs/\_branching-model.md](../../docs/_branching-model.md) § Versions) by
+  what the release does to the newsroom and the Apps Script jobs: a **patch** carries only fixes
+  or only gated work; a **minor** turns at least one new thing on that neither the newsroom nor
+  the jobs must change for; a **major** is something the newsroom has to relearn, an
+  incompatible change to the API the jobs call, or a data migration that needs somebody to act,
+  and is planned as its own milestone (`publikace-v2.0.0`) whose work waits behind the gate.
+
+- **Release gate** — `isUnreleased()`, true unless `NODE_ENV` is `production`, the one call
+  that hides unreleased work in production and makes its route or action answer 404
+  ([docs/\_branching-model.md](../../docs/_branching-model.md) § Unreleased work behind a gate).
+  The first issue that needs it adds it.
 
 - **Traps** — § Things that will bite you below; above all: an applied migration is never
   edited (the journal keeps its checksum and refuses a changed history), and `oxfmt` formats
@@ -286,8 +318,8 @@ Rules and bind Publikace as well, and the web's rules never apply here.
   on `dev`.
 - Before an issue is filed, three questions decide it
   ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Filing an issue): an open issue that
-  would carry it gets a comment instead, it is the size of one PR, and it goes into the project
-  with a priority (§ For the workflow skills, Issue weighing). The agent decides and files; it does not ask the
+  would carry it gets a comment instead, it is the size of one PR, and it gets its Priority and
+  Effort and goes on the board (§ For the workflow skills, Issue weighing). The agent decides and files; it does not ask the
   user to pick follow-ups.
 - An issue is opened with its type in the same command, `gh issue create --type Bug --label publikace` (or
   `Feature`, `Task`), whichever skill or session files it. The types are defined in
@@ -333,10 +365,10 @@ so a run that dies between sending an e-mail and reporting it does not send it t
 **The app's Registr rows are in its own list, _Vydání z aplikace_, never in _Vydání_.** Six
 scripts pick their issues from _Vydání_ by _Aktivní_ and follow its _ID tabulky_ into the Evidence,
 so an issue made in the app there would have `Approval_Send` send its clauses a second time. The
-app renames, writes and protects no list but its own, by name, and puts its protection back
-before every write; `_meta.json` keeps `sheetId: null` so that the scripts' upload never writes
-into the app's Evidence. The lists merge, if they
-do, only at the cutover.
+app's Registr is another spreadsheet than the scripts', and the app still renames, writes and
+protects no list but its own, by name, and puts its protection back before every write;
+`_meta.json` keeps `sheetId: null` so that the scripts' upload never writes into the app's
+Evidence. The two Registrs merge, if they do, only at the cutover.
 
 **SQLite triggers mark the record, not the controllers.** `20261130120000_record_queue` marks an
 issue's Evidence or the Registr in the same transaction as the change, on the columns the record

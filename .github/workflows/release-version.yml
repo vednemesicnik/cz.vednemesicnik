@@ -1,0 +1,45 @@
+name: Release version
+
+# The tag each application would get from a PR into `main`, checked before the merge rather
+# than discovered by release.yml after it: a semver version that does not follow the
+# application's newest tag, or a changed one nobody named, blocks the PR here. A PR into
+# `dev` only checks that every folder in apps/ has a release style. See
+# docs/_branching-model.md § Versions.
+#
+# A workflow of its own, like pr-title.yml, because `edited` is among the types: the body
+# names the versions, so a release edited after its checks ran would otherwise merge on a
+# version nobody checked, and `edited` on the check workflows would re-run all of them.
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-version-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  release-version:
+    runs-on: ubuntu-latest
+    steps:
+      # The history and the tags, read with no token left in .git/config for the script.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ github.base_ref == 'main' && '0' || '1' }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      # The body reaches the script through `env`, never through `${{ }}` in the shell.
+      - env:
+          MODE: ${{ github.base_ref == 'main' && 'check' || 'check-apps' }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/release-version.ts

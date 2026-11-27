@@ -22,7 +22,8 @@ The prompt gives you:
 - **the app** — `apps/web`, `apps/publikace`, or the repository's own files outside `apps/`
   (the host, CI, Docker, the agent setup); a diff across several says which paths are whose;
 - **design notes**, optionally — a path to the text of the designed screens the issue touches.
-  The main session extracts them; never read the design project yourself.
+  The main session extracts them; never read the design project yourself;
+- **gated**, optionally — whether the plan puts the change behind the app's **Release gate**.
 
 ## 1. Read the diff
 
@@ -51,6 +52,15 @@ doing the same thing (add and edit, list and detail), the loader that feeds the 
   _Resolution_. A document the diff made untrue is a finding — `medium` when the issue settled
   the question and the text only has to follow, `high` when the diff decided something the
   issue did not;
+- **a gated change is gated on the server too**
+  (`docs/_branching-model.md` § Unreleased work behind a gate) — every surface the diff adds
+  for gated work calls the helper the app's **Release gate** names, never
+  `process.env.NODE_ENV` directly; its route, loader or action answers 404 in production, not
+  only hidden UI. An ungated route behind gated UI is `high`; a direct `NODE_ENV` check is
+  `medium`;
+- **a migration expands, a contract waits** (§ Migrations: expand, then contract) — a
+  migration that drops or narrows what the code production runs still reads, outside an issue
+  of its own that ships after the turn-on, is `high`;
 - **no applied migration edited** — a new migration is fine; a changed file under a migration
   that already ran on `dev` (`git log dev -- <path>`) is `high`;
 - **no real data** in fixtures, tests and docs — e-mail addresses use `vednemesicnik.test`

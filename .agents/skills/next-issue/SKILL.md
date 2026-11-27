@@ -2,7 +2,7 @@
 name: next-issue
 description: After the PR is merged — land the aftermath, bank what survives the issue, and hand off to a fresh context window with the open work first (design answers, the area's leftovers), a new issue only when nothing is open. Use once a PR is merged and the work moves on.
 argument-hint: [next-issue-number]
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git show:*), Bash(git fetch:*), Bash(ls:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*), Bash(gh project item-list:*), Bash(gh project field-list:*), Bash(gh project view:*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git show:*), Bash(git fetch:*), Bash(ls:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*), Bash(gh api orgs/vednemesicnik/issue-fields)
 ---
 
 ## Requested next issue number
@@ -129,8 +129,9 @@ an open issue that carries it gets a comment; a change too small for a plan wait
 change to that file; only what is left becomes a new issue — opened with its type and
 its app's label in the same command (`gh issue create --type Bug|Feature|Task --label web|publikace`;
 both labels for the host or the repository), titled as a plain sentence, never a Conventional
-Commit, and weighed by the app's **Issue weighing** — when it names a project, the new issue is
-added to it with the priority you decide (§ Ordering by a project). Do not ask the user which to file: you
+Commit, and weighed by the app's **Issue weighing**: it gets the Priority and the Effort you
+decide (§ Priority and effort), the milestone of the version that Priority puts it in
+(§ Planning a version), and the board when the weighing names one. Do not ask the user which to file: you
 hold the context. Ask only when an item turns on something only they know, with your
 recommendation first. Report one line per item: filed as #n, added to #n, or left out and why.
 
@@ -151,11 +152,15 @@ order, and a new issue is recommended only when the first three are empty:
    `/discover-idea` on that area, or a no-issue PR for something small.
 3. **The next item in the focus area** the user set, or the next unfinished item of a list
    given earlier in the session.
-4. **Only then a new issue** of the app being worked in — its label in the "Open issues" list,
-   or `gh issue list --label <app> --limit 60` (the default 20 hides part of the backlog) — weighed by the app's **Issue weighing**:
-   when it names a project, in the project's order (priority, then age, blockers still holding),
-   read with `gh project item-list <n> --owner vednemesicnik --format json`, with the
-   reason in a sentence — unblocked, adjacent to what just shipped, or blocking something else.
+4. **Only then a new issue** of the app being worked in, weighed by the app's **Issue
+   weighing**, in the order of the Priority field (Priority, then age, blockers still holding),
+   read with the ordered list of [docs/\_workflow-skills.md](../../../docs/_workflow-skills.md)
+   § Priority and effort. Show each candidate's Priority and Effort beside it, with the reason
+   in a sentence — unblocked, adjacent to what just shipped, or blocking something else. An
+   open issue without a Priority or an Effort gets one now, and the report says which.
+   When the app plans versions as milestones, say how many of the current one's issues are open
+   and closed (`gh issue list --milestone "<title>" --state all --limit 200 --json state`), and
+   fix an open issue whose weighing and milestone disagree (§ Planning a version).
    Check each candidate's blocker rather than assuming it: a hand step, a decision that is the
    user's, a merged PR waiting on a manual check. Say that 1–3 are empty.
 

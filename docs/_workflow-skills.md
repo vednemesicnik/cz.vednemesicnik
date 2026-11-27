@@ -56,6 +56,9 @@ on in the same command, `gh issue create --type Feature --label publikace`, and 
 without them gets them at once with `gh issue edit <n> --type … --add-label …`. A skill that
 lists or picks issues keeps the ones of the app it works in: `gh issue list --label publikace`.
 
+Every issue carries the organisation's two issue fields as well, **Priority** and **Effort**
+(§ Priority and effort).
+
 Its status on GitHub follows the line of skills, and the _Active_ tab of the issue list shows
 what is _Todo_, _In progress_ or _In review_:
 
@@ -82,8 +85,8 @@ and what it left out, one line each.
 titles (`gh issue list --label <app> --limit 100`, then `gh issue view` on the ones near it). Work the same PR
 would touch anyway — the same screen, the same flow, the same files, the same blocker — goes into
 that issue as a comment saying what it adds and why it belongs there. When it widens what the
-issue is about, the title is rewritten to cover both, and its priority is weighed again
-(§ Ordering by a project). A new issue is for work no open one would carry.
+issue is about, the title is rewritten to cover both, and its Priority and Effort are weighed
+again (§ Priority and effort). A new issue is for work no open one would carry.
 
 **2. Is it the size of one PR?** An issue is one change a reviewer reads in one sitting and the
 application can ship on its own: one behaviour on its surfaces, one job, one fix with its cause.
@@ -97,38 +100,108 @@ application can ship on its own: one behaviour on its surfaces, one job, one fix
 - **A bug no open issue carries is filed however small it is.** The size rule folds work into
   other issues; it never drops it.
 
+The answer is the issue's **Effort** (§ Priority and effort): work bigger than _High_ is split.
+
 **3. How much does it matter?** Each application weighs this its own way, and its `AGENTS.md`
-§ For the workflow skills, **Issue weighing**, says how. An application with a project gives
-every new issue a priority there (§ Ordering by a project); the skill filing it decides the
-priority itself and says why in a sentence.
+§ For the workflow skills, **Issue weighing**, says how. The answer is the issue's **Priority**
+(§ Priority and effort). The skill filing it sets Priority and Effort itself and says why in a
+sentence.
 
-## Ordering by a project
+## Priority and effort
 
-An application may order its issues in an organisation GitHub Project; its **Issue weighing**
-names the project's number (Publikace: 7). The project has a `Priority` field (P1, P2, P3, each
-app's Issue weighing says what they mean) and a `Status` field (Todo, In Progress, Done).
+Every issue of every application carries two fields the organisation defines on its issues,
+**Priority** and **Effort**. They are the one place either is kept: no project, label or title
+holds a priority. Only members of the organisation see them.
 
-- **Order.** Priority decides; among the same priority the older issue goes first; a real
-  blocker still holds, so an issue that waits on another one, on a hand step or on a decision
-  of the user's waits whatever its priority. `/next-issue` reads the order from
-  `gh project item-list <n> --owner vednemesicnik --format json --limit 200` and skips items
-  whose Status is Done.
-- **Filing.** Open the issue with its type and label, then add it and set its Priority:
+**Priority** says how soon the work is needed. Each application's **Issue weighing** says what
+the values mean against its own releases; the shape is shared:
 
-  ```sh
-  gh project item-add <n> --owner vednemesicnik --url <issue-url> --format json --jq .id     # the item id
-  gh project view <n> --owner vednemesicnik --format json --jq .id                         # the project id
-  gh project field-list <n> --owner vednemesicnik --format json                            # field and option ids
-  gh project item-edit --id <item-id> --project-id <project-id> --field-id <priority-field-id> --single-select-option-id <option-id>
-  ```
+| Priority | Means                                                                                                       |
+| -------- | ----------------------------------------------------------------------------------------------------------- |
+| _Urgent_ | production is broken: a hotfix into `main` ([\_branching-model.md](_branching-model.md) § Hotfix procedure) |
+| _High_   | the application's next release needs it now                                                                 |
+| _Medium_ | needed for the planned version, not blocking                                                                |
+| _Low_    | can wait                                                                                                    |
 
-  Look the field and option ids up each time; they are never written into a skill.
-- **Status.** `/implement-issue` sets the item to In Progress when it starts on the branch, the
-  same way, with the Status field; closing the issue moves it to Done through the project's own
-  workflow.
+**Effort** says how big the work is, the size rule of § Filing an issue in one word:
 
-An application without a project (the web, for now) orders by the three questions above and its
-label alone. A new project belongs in its application's `AGENTS.md`, never in a skill.
+| Effort   | Means                                                              |
+| -------- | ------------------------------------------------------------------ |
+| _Low_    | fits one session: planned, built and shipped in one context window |
+| _Medium_ | one issue from plan to merge, along the whole line of skills       |
+| _High_   | a large PR, at the edge of what a reviewer reads in one sitting    |
+
+Work bigger than _High_ is an epic, split into sub-issues. An epic takes the Priority of its most
+pressing open sub-issue and Effort _High_; its sub-issues carry their own sizes.
+
+- **Setting them.** Whoever files an issue sets both (§ Filing an issue). `/plan-issue` corrects
+  Effort once the plan shows the size; a plan bigger than _High_ is a reason to split the issue,
+  not to stretch the value. Whoever widens or narrows what an issue is about weighs both again.
+- **Order.** Priority decides (_Urgent_, _High_, _Medium_, _Low_, then an issue without one);
+  among the same priority the older issue goes first; a real blocker still holds, so an issue
+  that waits on another one, on a hand step or on a decision of the user's waits whatever its
+  priority. Effort does not reorder; it stands beside each candidate, so a short window can take
+  a small one.
+
+The REST API reads and writes the fields by the field's id and the option's name. Look the
+field's id up by its name each time; it is never written into a skill:
+
+```sh
+# Set Priority and Effort on an issue; a field not named keeps its value
+fields=$(gh api orgs/vednemesicnik/issue-fields)
+jq -n --argjson fields "$fields" '{issue_field_values: [
+  {field_id: ($fields[] | select(.name == "Priority") | .id), value: "Medium"},
+  {field_id: ($fields[] | select(.name == "Effort") | .id), value: "Low"}]}' |
+  gh api -X POST repos/{owner}/{repo}/issues/<n>/issue-field-values --input -
+
+# Read an issue's fields
+gh api repos/{owner}/{repo}/issues/<n>/issue-field-values \
+  --jq '.[] | "\(.issue_field_name): \(.single_select_option.name)"'
+
+# Clear one field
+gh api -X DELETE repos/{owner}/{repo}/issues/<n>/issue-field-values/<field-id>
+
+# An application's open issues in order, Effort beside each
+gh api 'repos/{owner}/{repo}/issues?labels=<app>&state=open&per_page=100' --jq '
+  def field($name): [.issue_field_values[]? | select(.issue_field_name == $name)
+    | .single_select_option.name][0] // "—";
+  [.[] | select(.pull_request | not)
+    | {number, title, created_at, priority: field("Priority"), effort: field("Effort")}]
+  | sort_by({"Urgent": 0, "High": 1, "Medium": 2, "Low": 3}[.priority] // 4, .created_at)
+  | .[] | "#\(.number)  \(.priority)  \(.effort)  \(.title)"'
+```
+
+The last one reads one page of a hundred; past a hundred open issues, read every page with
+`gh api --paginate --slurp … | jq 'add | …'` so the sort sees them all. The GraphQL API has the same in `setIssueFieldValue` and
+`deleteIssueFieldValue`, with the node ids of `organization.issueFields`.
+
+**A project is a board, not a priority.** An application may keep a board of its issues in an
+organisation GitHub Project, which its **Issue weighing** names (Publikace: 7). The skill filing
+an issue adds it there (`gh project item-add <n> --owner vednemesicnik --url <issue-url>`); the
+project's own workflows move its Status as PRs link and issues close, and no skill sets a field
+there. Project 7's own `Priority` field (P1, P2, P3) is retired: its values moved to the issue
+field on 27 Nov 2026 (log 0091), and nothing reads it. A new project belongs in its application's
+`AGENTS.md`, never in a skill.
+
+## Planning a version
+
+Every application tagged by semver (its style in `RELEASE_STYLES`, `scripts/release-version.ts`)
+plans each version as a GitHub milestone titled after the tag, `<app>-vX.Y.Z`. The milestone
+holds the issues that version needs, the one that turns its gated work on included
+([\_branching-model.md](_branching-model.md) § Unreleased work behind a gate), and the release
+whose tag matches closes it. An application tagged by date (the web) has no milestones.
+
+- **Filling it.** Priority fills it: every issue of the application with Priority _High_ or
+  _Medium_ is in the current version's milestone, and none with _Low_. An _Urgent_ one goes out
+  as a hotfix, which takes the next patch, and joins no milestone. The application's **Issue
+  weighing** names the current version. Whoever sets or changes the Priority sets the
+  milestone in the same step: `--milestone "<title>"` on `gh issue create`,
+  `gh issue edit <n> --milestone "<title>"`, or `--remove-milestone` when the issue leaves it.
+  Both take the title, so a milestone's number is never written into a skill.
+- **Reading it.** `/next-issue` says how many of its issues are open and closed and fixes an
+  issue whose weighing and milestone disagree.
+- **Closing it.** `/release-pr` names a version only once its milestone has no open issue, and
+  closes the milestone after the merge. The application's guide then names the next one.
 
 ## Where each one stops, and why
 

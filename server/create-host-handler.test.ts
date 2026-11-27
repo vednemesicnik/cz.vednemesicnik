@@ -8,6 +8,7 @@ import { createHostHandler } from './create-host-handler.ts'
 
 const ORIGIN = 'http://web.localhost'
 const UNKNOWN_ORIGIN = 'http://unknown.test'
+const PUBLIKACE_ORIGIN = 'http://publikace.localhost'
 const LARGE_SCRIPT = `export const text = '${'a'.repeat(4096)}'\n`
 
 let clientDirectory: string
@@ -31,10 +32,16 @@ const setUp = () => {
     async () =>
       new Response('web', { headers: { 'Content-Type': 'text/plain' } }),
   )
+  const publikaceHandler = vi.fn(async () => new Response('publikace'))
   const log = vi.fn()
-  const handler = createHostHandler({ clientDirectory, log, webHandler })
+  const handler = createHostHandler({
+    clientDirectory,
+    log,
+    publikaceHandler,
+    webHandler,
+  })
 
-  return { handler, log, webHandler }
+  return { handler, log, publikaceHandler, webHandler }
 }
 
 describe('createHostHandler', () => {
@@ -152,5 +159,30 @@ describe('createHostHandler', () => {
     expect(response.headers.get('Content-Type')).toBe(
       'text/plain; charset=utf-8',
     )
+  })
+
+  test('hands a request for Publikace to Publikace as it came', async () => {
+    const { handler, log, publikaceHandler, webHandler } = setUp()
+    const request = new Request(`${PUBLIKACE_ORIGIN}/assets/entry-abc123.js`, {
+      headers: { 'Accept-Encoding': 'br' },
+    })
+
+    const response = await handler(request)
+
+    expect(await response.text()).toBe('publikace')
+    expect(response.headers.get('Content-Encoding')).toBeNull()
+    expect(publikaceHandler).toHaveBeenCalledWith(request)
+    expect(webHandler).not.toHaveBeenCalled()
+    expect(log).not.toHaveBeenCalled()
+  })
+
+  test('answers 404 to Publikace’s hosts when it is not served', async () => {
+    const webHandler = vi.fn(async () => new Response('web'))
+    const handler = createHostHandler({ clientDirectory, webHandler })
+
+    const response = await handler(new Request(`${PUBLIKACE_ORIGIN}/sign-in`))
+
+    expect(response.status).toBe(404)
+    expect(webHandler).not.toHaveBeenCalled()
   })
 })

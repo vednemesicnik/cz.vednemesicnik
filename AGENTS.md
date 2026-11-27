@@ -20,8 +20,8 @@ A pnpm workspace (`pnpm-workspace.yaml`, `packages: ['apps/*']`), one lockfile:
 - **The web lives in `apps/web`** (package `web`): the React Router app, its Prisma schema and
   migrations, public files, configs and its own docs in `apps/web/docs/`.
 - **Publikace lives in `apps/publikace`** (package `publikace`): a Remix 3 app with its own
-  tools (oxlint, oxfmt, `remix test`, `remix doctor`). It is not served yet
-  (#1082).
+  tools (oxlint, oxfmt, `remix test`, `remix doctor`). The host serves it on
+  `publikace.vednemesicnik.cz` from its sources, with its variables prefixed `PUBLIKACE_`.
 
 Run commands from the root: its scripts forward to the web (`pnpm app:dev` runs
 `pnpm --filter web app:dev`) and to Publikace (`pnpm publikace:test` runs
@@ -69,11 +69,14 @@ what it checks. `.github/workflows/web.yml` checks the web: `web-lint`, `web-typ
 `publikace-lint`, `publikace-format`, `publikace-typecheck`, `publikace-test`,
 `publikace-doctor`. `.github/workflows/repo.yml` checks what belongs to no application:
 `repo-lint` (the lockfile, Biome outside `apps/`), `host-typecheck`, `host-test` and `image`
-(the one Docker image). On a pull request each job runs only when its files change: a
+(the one Docker image). On a pull request each of these jobs runs only when its files change: a
 `dorny/paths-filter` job and a job-level `if:`, never `on.paths`, since a skipped job passes a
 required check and a workflow that never starts leaves it "expected". `deploy.yml` calls every
 workflow, with every job running. A new application gets its own workflow, with jobs named
-`<app>-…`, and its names go into the ruleset.
+`<app>-…`, and its names go into the ruleset. Two checks run on every PR, with no paths filter:
+`pr-title` (`pr-title.yml`) and `release-version` (`release-version.yml`), the tag each changed
+application would get from a PR into `main`; `release.yml` writes those tags after the merge
+(§ Releases).
 
 ### Git Hooks
 
@@ -132,27 +135,41 @@ One repository holds the issues of every application, told apart by labels: `web
 setup). Every issue is opened with its organisation type and its label in one command
 (`gh issue create --type Bug|Feature|Task --label web|publikace`), and work on an app lists its
 own (`gh issue list --label publikace`). A new application gets a label of its own.
-Publikace's issues are also ordered by the org project
-[Publikace (7)](https://github.com/orgs/vednemesicnik/projects/7) — `Priority` decides, age breaks
-a tie — and an application that gets a project names it in its own `AGENTS.md`; the web has
-none yet.
-[docs/\_workflow-skills.md](docs/_workflow-skills.md) § The issue's type and status has the rest.
+Every issue also carries the organisation's issue fields **Priority** (Urgent, High, Medium,
+Low) and **Effort** (Low, Medium, High), set by whoever files it: Priority decides the order, age
+breaks a tie, and each application's **Issue weighing** in its `AGENTS.md` says what its
+priorities mean.
+A project such as [Publikace (7)](https://github.com/orgs/vednemesicnik/projects/7) is a board
+and holds no priority.
+[docs/\_workflow-skills.md](docs/_workflow-skills.md) § The issue's type and status and
+§ Priority and effort have the rest.
 
 ### Releases
 
 One Fly app, one image and one deploy for every application: a release is one `dev → main`
 PR (`/release-pr`), and every push to `main` deploys all of them. The release title is dated
-(`release: 2026-11-26 — …`). **Planned, not built:** a version tag per application
-(`publikace-v…`, the web by date), from a workflow that replaces Publikace's former
-`release.yml`; `apps/publikace/scripts/release-version.ts` is kept for it.
+(`release: 2026-11-26 — …`). Each application still has versions of its own: after every
+merge into `main`, `release.yml` tags the merge commit for each application whose folder
+changed and publishes a GitHub Release with the commits that touched it. Each application
+picks its style in `scripts/release-version.ts`: the web by date (`web-2026-11-27`), Publikace
+by semver (`publikace-v1.1.0`), named under `## Versions` in the release PR's body; a hotfix
+takes the next patch. The `release-version` check shows every tag before the merge. Publikace
+stays untagged until the release that has the host serve it (#1082) names `publikace-v1.0.0`.
+A semver application plans each version as a milestone titled after its tag, which the
+release naming it closes ([docs/\_workflow-skills.md](docs/_workflow-skills.md) § Planning a
+version). A release takes everything on `dev`, so user-visible work not to be released yet
+merges there behind its application's release gate, hidden in production by `NODE_ENV` and
+404 on the server; the PR that removes the gate turns it on
+([docs/\_branching-model.md](docs/_branching-model.md) § Unreleased work behind a gate,
+§ Versions).
 
 ## Documentation
 
 The repository's documents are in `docs/`; each application documents itself in its own
 `docs/`.
 
-- `docs/_branching-model.md` - Branching model, merge methods, stacked PRs, hotfix procedure
-- `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, where each stops, where the skills live
+- `docs/_branching-model.md` - Branching model, unreleased work behind a gate, merge methods, stacked PRs, versions (tags, Releases, the `release-version` gate), hotfix procedure
+- `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, priority and effort, planning a version, where each stops, where the skills live
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures

@@ -10,21 +10,77 @@ do not.
 
 ## Flow
 
-```
-feature/fix ──► dev ──(release)──► main ──► deploy
-                 ▲                   │
-                 └──(back-merge)─────┘
-
-hotfix ──────────────────────────► main ──► deploy
-                                     │
-                 dev ◄──(back-merge)─┘
+```mermaid
+flowchart LR
+  M["Milestone per app version<br/>(semver apps)"] -. plans .-> F
+  F["Feature branch<br/>one per issue"] -->|squash PR| D[dev]
+  I["Integration branch<br/>(rare)"] -.->|one PR| D
+  D -->|"release PR dev → main<br/>names versions, release-version check"| MA[main]
+  MA --> DEP["One deploy<br/>every app"]
+  MA --> T["Tag per changed app<br/>closes its milestone"]
+  H["Hotfix branch"] -->|squash PR| MA
+  MA -->|back-merge| D
 ```
 
 - **Feature / fix:** branch off `dev`, PR back into `dev`. No deploy. A change too large
-  for one diff runs as a chain of [stacked PRs](#stacked-prs).
+  for one diff runs as a chain of [stacked PRs](#stacked-prs). User-visible work that is not
+  to be released yet goes in [behind a gate](#unreleased-work-behind-a-gate).
 - **Release:** PR `dev → main`. This is the only moment a deploy happens.
 - **Hotfix:** branch off `main`, PR directly into `main` (deploys), then back-merge
   into `dev`.
+
+## Unreleased work behind a gate
+
+A release takes everything on `dev`, for every application. So new user-visible work that is
+not to be released yet still merges into `dev`, hidden in production: it shows when
+`NODE_ENV !== 'production'` (local development, tests, the fake app) and is hidden when the app
+runs in production.
+
+- **One helper per application.** Each application's guide names it (its `AGENTS.md` § For the
+  workflow skills, **Release gate**), and it is written by the application's own rules. Every
+  gate calls it, never `process.env.NODE_ENV` directly, so one `git grep` lists every gate. The
+  first issue that needs a gate adds the helper.
+- **The server is gated too.** A gated route or action answers 404 in production, as if it did
+  not exist; hiding the link alone leaves it reachable.
+- **Migrations cannot be gated**, because they run on deploy; they go
+  [expand, then contract](#migrations-expand-then-contract).
+- **Turning it on is its own PR.** The PR that removes the gate is the step that releases the
+  work. For an application tagged by semver it belongs to the version's milestone
+  ([\_workflow-skills.md](_workflow-skills.md) § Planning a version), and the release that
+  carries it names that version. A release carrying only gated work gives such an application
+  the next patch (`publikace-v1.0.1`).
+- **Work that cannot be gated** — a change of the host, a dependency, a shared layout, a
+  schema whose old and new shape cannot coexist — goes to a short-lived integration branch off
+  `dev` as a rare exception: its PRs target that branch, the workflows' `pull_request.branches`
+  list gets it for as long as it lives, and it merges into `dev` in one PR when it is ready to
+  ship.
+
+### Migrations: expand, then contract
+
+A migration runs on the deploy, for every release, so it cannot wait behind a gate. A schema
+change is split so that each release runs on both the old and the new structure:
+
+```mermaid
+flowchart LR
+  E["<b>Expand</b><br/>add new, keep old<br/><i>any release</i>"] --> S["<b>Switch</b><br/>gated code uses new<br/><i>any release</i>"]
+  S --> T["<b>Turn on</b><br/>gate off, old unread<br/><i>names the version</i>"]
+  T --> C["<b>Contract</b><br/>drop old<br/><i>later release, backup</i>"]
+```
+
+1. **Expand.** A migration adds the new structure beside the old one. It can ship in any
+   release; the running code does not notice.
+2. **Switch.** Gated code uses the new structure, writing both or backfilling where it needs
+   to; the code production runs keeps using the old one.
+3. **Turn on.** The PR that removes the gate also stops reading the old structure, and its
+   release names the version.
+4. **Contract.** Dropping the old structure is an issue of its own, in the same milestone or
+   the next, and ships in a later release than the turn-on, never the same one, so rolling back
+   to the previous image still works. It is the one destructive step: the web's deploy takes
+   the pre-migration backup itself, of the web's database and Publikace's alike.
+
+When the old and the new structure cannot coexist — a new constraint the old data breaks, say
+— a gate does not help. That is the integration branch above: data and code land in one
+release, with a backup first.
 
 ## Merge methods
 
@@ -98,6 +154,107 @@ read & write**.
 > automatically while `main`/`dev` survive. #143 folds this deletion rule into the
 > fuller branch-protection ruleset.
 
+## Versions
+
+One deploy ships every application, but each has its own tags and GitHub Releases, so
+`git tag` says which version of which application went out with which merge.
+
+**After every merge into `main`** `.github/workflows/release.yml` looks at each `apps/<app>/`.
+An application whose folder changed since its newest tag (with no tag yet: in the commits the
+PR brings into `main`) gets a tag `<app>-<version>` on the merge commit and a Release of the
+same name, whose notes are the commits that touched its folder. An unchanged application gets
+nothing.
+
+**Each application picks its style** in `RELEASE_STYLES` in `scripts/release-version.ts`; a
+folder in `apps/` without one fails the `release-version` check on every PR.
+
+| Style | Applications | Tag | Who picks the version |
+| --- | --- | --- | --- |
+| `date` | the web | `web-2026-11-27`, a second one that day `web-2026-11-27-2` | the day of the merge in Prague |
+| `semver` | Publikace | `publikace-v1.1.0` | a release names it under `## Versions`; a hotfix is the next patch |
+
+**Why two styles.** An application that plans its versions as milestones needs semver, since a
+milestone needs its name before anyone knows the day it ships. An application that ships
+continuously with no plan per version is tagged by date. What makes releases continuous is the
+one deploy from `dev`, not the numbering, so one repository holds both.
+
+**Which part of a semver version moves**, in the application's own terms (its `AGENTS.md`
+§ For the workflow skills, **Issue weighing**):
+
+- **patch** — the release carries only fixes, or only work still behind a gate. A hotfix takes
+  the patch by itself.
+- **minor** — at least one new thing is turned on, and nobody who uses the application or
+  calls it has to change anything for it.
+- **major** — something its users have to relearn, an incompatible change to an API others
+  call, or a data migration that needs somebody to act. A major is planned as its own
+  milestone (`<app>-v2.0.0`), its work lands on `dev` behind the gate, and the release that
+  removes the gate names it.
+
+A semver version is the next patch, minor or major after the application's newest tag. The
+first one is always `v1.0.0`, and until a release names it the application stays untagged:
+**Publikace has no tag until the release that has the host serve
+`publikace.vednemesicnik.cz` (#1082) names `- publikace-v1.0.0`**, and then it is tagged even
+if only the host changed. A hotfix never gives a first version. The web's Releases carry the
+repository's "Latest" badge; the others do not.
+
+**A semver version is planned as a milestone** titled after its tag, and the release that
+names the version closes it ([\_workflow-skills.md](_workflow-skills.md) § Planning a version).
+A release that changes such an application only with work still
+[behind a gate](#unreleased-work-behind-a-gate) gives it the next patch, once it has a first
+version. An illustration, with Publikace's 1.1 built behind its gate between two releases:
+
+```mermaid
+gitGraph
+  commit id: "release" tag: "publikace-v1.0.0"
+  branch dev
+  checkout dev
+  commit id: "1.1 part 1, gated"
+  commit id: "web fix"
+  commit id: "1.1 part 2, gated"
+  checkout main
+  merge dev id: "release A" tag: "web-YYYY-MM-DD + publikace-v1.0.1"
+  checkout dev
+  merge main id: "back-merge A"
+  commit id: "web page"
+  commit id: "turn 1.1 on"
+  checkout main
+  merge dev id: "release B" tag: "web-YYYY-MM-DD + publikace-v1.1.0"
+  checkout dev
+  merge main id: "back-merge B"
+```
+
+**Checked before the merge.** `.github/workflows/release-version.yml` (job `release-version`)
+runs the same script on every PR into `main`, again when its body is edited, and shows each
+application's tag in the run's summary. The `branch-protection` ruleset requires it. It fails when a changed semver application has no
+version named, when a named version does not follow the newest tag or names an unchanged
+application, and when a date application is given one. On a PR into `dev` it only checks the
+styles.
+
+**No code from the repository runs with a token that can write.** `release.yml` has two jobs:
+`release-decide` checks out the merge commit and runs the script on a read-only token;
+`release-tag` never checks anything out, re-validates each tag it is handed and writes the
+tag and the Release through the API.
+
+**When a run fails or is cancelled**, re-run it from the Actions page: the event is the same,
+a tag already on the merge commit counts as done, and a missing Release is published. Merges
+into `main` queue one run at a time, and GitHub keeps one waiting run: a third merge (or a
+re-run) while one runs and one waits cancels the waiting one, so re-run when nothing waits. A
+re-run after a later merge was tagged skips the application that tag covers, since its notes
+already include those commits.
+
+**When one application fails after the merge** (a hotfix took the patch the release named),
+the others are tagged and the run fails for that one. The body is frozen in the event, so a
+re-run fails again: tag it by hand with the next version after the newest tag (the one the
+hotfix took), with `--latest=false` for every application but the web, and each `@name` in
+backticks so the Release mentions nobody:
+
+```bash
+git log --no-merges --format='- %s (%h)' <previous-tag>..<merge-sha> -- apps/<app>/ |
+  sed -E 's/(^|[^[:alnum:]_`])@([[:alnum:]_][[:alnum:]_./-]*)/\1`@\2`/g' > notes.md
+gh release create <app>-v<version> --target <merge-sha> --title <app>-v<version> \
+  --notes-file notes.md --latest=false
+```
+
 ## Release procedure
 
 1. Create the release PR with the named template and a `release:` title:
@@ -113,7 +270,9 @@ read & write**.
    `release.md` and `hotfix.md` are **named opt-in** templates that override the default
    when passed with `--template`. The template fills the PR body only; set the title
    yourself (e.g. `release: 2026-07-18 — admin tables & lists rollout`).
-2. Fill in Summary / What ships / Deploy expectation.
+2. Fill in Summary / What ships / Versions / Deploy expectation. Under **Versions** name the
+   version of each semver application the release changes (`- publikace-v1.1.0`); the
+   `release-version` check's summary lists what every changed application would get.
 3. Merge with a **merge commit** (never squash — see [Merge methods](#merge-methods)).
 
 ## Hotfix procedure

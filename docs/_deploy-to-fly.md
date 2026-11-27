@@ -245,6 +245,78 @@ If the rule and the secret differ, nothing breaks: limits and logs fall back to 
 address, and the limiter counts an IPv6 edge by its /64. To rotate, change both; requests in
 between count the same way.
 
+## Publikace
+
+The host serves Publikace (`apps/publikace`) on `publikace.vednemesicnik.cz` from the same
+machine and the same process as the web ([apps/publikace/docs/architecture.md](../apps/publikace/docs/architecture.md#the-stack-and-where-it-runs),
+log 0092). Every variable of [apps/publikace/.env.example](../apps/publikace/.env.example) is set
+as `PUBLIKACE_<name>`; the host hands it over without the prefix
+(`server/publikace-environment.ts`) and adds its own `NODE_ENV`. A Publikace that cannot start
+answers 503 on its hosts, and the web keeps serving.
+
+**Not secret, in the image** (`docker/fly/Dockerfile`): `PUBLIKACE_APP_ORIGIN`,
+`PUBLIKACE_AUTHORIZED_DOMAIN`, `PUBLIKACE_DATABASE_PATH` (`/data/publikace.sqlite`),
+`PUBLIKACE_DRIVE_ACCOUNT_EMAIL` and `PUBLIKACE_SCRIPT_JOB_ACCOUNT`.
+
+**Secret, `fly secrets`**: `PUBLIKACE_GOOGLE_CLIENT_ID`, `PUBLIKACE_GOOGLE_CLIENT_SECRET`,
+`PUBLIKACE_SESSION_SECRET`, `PUBLIKACE_INITIAL_ADMIN_EMAIL`, `PUBLIKACE_GAS_GROUP_MEMBERSHIP_URL`,
+`PUBLIKACE_GAS_GROUP_MEMBERSHIP_SECRET`, `PUBLIKACE_DRIVE_TOKEN_KEY`, `PUBLIKACE_ISSUES_FOLDER_ID`,
+`PUBLIKACE_ARTICLE_TEMPLATE_DOCUMENT_ID`, `PUBLIKACE_GAS_MAIL_SEND_URL`, `PUBLIKACE_GAS_MAIL_SEND_SECRET`
+and `PUBLIKACE_SCRIPT_TOKEN_AUDIENCE`, the `aud` of every job that calls the API,
+comma-separated. `PUBLIKACE_REGISTRY_SPREADSHEET_ID` is optional: without it only each issue's
+Evidence is written. `PUBLIKACE_PUBLIC_MAIL_PER_DAY` keeps its default of 300 unless set, and
+`PUBLIKACE_SCRIPT_RUN_SECRET` waits for #1083.
+
+### Going live
+
+Before the release that first carries Publikace:
+
+1. **The shared drive _Publikace_**, new and empty, never the test one: sharing outside the
+   organisation allowed, the issues folder `Vydání` shared once as _Každý, kdo má odkaz ·
+   Přispěvatel_, and the app's own `Registr` in its root, a new spreadsheet apart from the
+   scripts' Registr. Its IDs go into the secrets below. Its members:
+   - the admin account, the only Manager, since a Manager can change the drive's sharing and
+     cut a folder's inherited grant;
+   - `publikace.app@` and `sefredaktorstvo@`, Content managers: the app creates and bins, and
+     the editors-in-chief move what is in a print folder into pages for the graphic designer;
+   - `vedeni@` and `korektura@`, Contributors, who edit but neither move nor bin.
+2. **The OAuth client** of Publikace (its own, with the `drive` scope): add
+   `https://publikace.vednemesicnik.cz/sign-in/google/callback` and
+   `https://publikace.vednemesicnik.cz/settings/account/callback` to its redirect URIs.
+3. **DNS** in Cloudflare: `CNAME publikace → cz-vednemesicnik.fly.dev`, **DNS only**, not
+   proxied. The Apps Script jobs call the API from Google's datacenter addresses, which the
+   zone's bot protection answers with 403, and Publikace reads no client address.
+4. **The certificate**, then wait for _Issued_:
+   ```shell
+   fly certs add publikace.vednemesicnik.cz --app cz-vednemesicnik
+   fly certs show publikace.vednemesicnik.cz --app cz-vednemesicnik
+   ```
+5. **The secrets**, staged so nothing restarts; the release's deploy picks them up. Generate the
+   session secret and the Drive key fresh:
+   ```shell
+   fly secrets set --stage --app cz-vednemesicnik \
+     PUBLIKACE_SESSION_SECRET="$(openssl rand -hex 32)" \
+     PUBLIKACE_DRIVE_TOKEN_KEY="$(openssl rand -base64 32)" \
+     PUBLIKACE_GOOGLE_CLIENT_ID="…" PUBLIKACE_GOOGLE_CLIENT_SECRET="…" …
+   ```
+6. **The database starts empty** at `/data/publikace.sqlite`; the first administrator is
+   `PUBLIKACE_INITIAL_ADMIN_EMAIL`, read while the access list has no named account.
+
+After the deploy, whose second smoke test asks `/sign-in` on Publikace's certificate through the
+Fly origin (`--connect-to`, so it never meets Cloudflare):
+
+1. Sign in, connect `publikace.app@` in Nastavení, and fill Přístup and Korektura.
+2. Run `setupTriggers` as `publikace.app@` in the five jobs that talk to the app:
+   `SCRIPT__Publication__Artwork_Replies`, `…__Article_Approvals`, `…__Print_Handoff`,
+   `…__Proofreading_Digest` and `…__Article_Comments`. The old scripts under `publikace@`
+   (`Approval_Send`, `Artwork_Upload`, `Designer_Handoff`, `Comment_Digest`) keep their triggers
+   for the issues made before the app, until none of them is open. A `publikace@` trigger is
+   deleted the same day only when that same script moves to `publikace.app@`.
+3. A proofreader in the group of Nastavení › Korektura signs in and sees `/proofreading`.
+
+A local Publikace never writes the real Registr: each write puts the app's whole list from one
+database, so a local `.env` names the `Registr` in the root of _Publikace (test)_.
+
 ## Image store
 
 Pre-generated image variants are served as static files from `/data/images` on the

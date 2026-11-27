@@ -15,6 +15,7 @@
     "server.ts",
     "server/**/*",
     "instrument.server.ts",
-    "instrument.server.test.ts"
+    "instrument.server.test.ts",
+    "scripts/**/*.ts"
   ]
 }

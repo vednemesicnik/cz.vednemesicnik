@@ -7,11 +7,11 @@ read. It replaces the web pages of the `SCRIPT__Publication__*` Apps Script proj
 
 The interface is Czech, because the people using it are. The code is English.
 
-**Status: built, not deployed.** The screens are drawn in a design canvas (see
+**Status: served on `publikace.vednemesicnik.cz`, before the cutover.** The screens are drawn in a design canvas (see
 [docs/design-project.md](docs/design-project.md)), and most of them are built: issues and their
 Drive folders, the newsroom's links, artworks and consents, _Ke kontrole_, proofreading, final
-versions and approvals, closing, the record and Settings. Nothing runs on Fly.io yet, and of the
-five background jobs that talk to the app, four wait for their triggers. Issues made before the
+versions and approvals, closing, the record and Settings. Of the five background jobs that talk to the app, four wait
+for their triggers under `publikace.app@`. Issues made before the
 app stay on the scripts until the cutover.
 
 ## How it will work

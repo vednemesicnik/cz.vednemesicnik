@@ -68,7 +68,8 @@ document disagree, the document wins. **Two human gates** exist — respect them
 Run the review exactly as [review-implementation](../review-implementation/SKILL.md)
 describes: the design extracted here in the main session, then the diff read by the
 `implementation-reviewer` agent in a fresh context, given the issue number, the base (`dev`,
-or the parent branch when stacked), the app and the design file. Not the
+or the parent branch when stacked), the app, the design file and whether the change is gated.
+Not the
 `code-review:code-review` plugin (it needs a PR and adds an attribution footer); the built-in
 `/code-review` is user-triggered. Check each finding against the code before acting on it.
 One ranked report, most-severe first.

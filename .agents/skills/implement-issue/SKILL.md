@@ -77,8 +77,8 @@ before pushing and before the PR — that is `/ship-issue`.
    `gh api repos/{owner}/{repo}/issues/<number> --jq .status.name`, and unless it is already
    _In progress_ or _In review_, set it with
    `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status='In progress' --jq .status.name`.
-   When the app's **Issue weighing** names a project, set the item's Status there to In Progress
-   too ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Ordering by a project).
+   A board the app keeps moves its own Status; no skill sets it
+   ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Priority and effort).
 
 6. **Load what governs the files you'll touch** before the first edit: the app's **Rules**
    (its rule files, its guidance skills, the `modern-web-guidance` search for HTML, CSS and
@@ -98,6 +98,13 @@ reading, and only its resolutions move. If the code turns out to change somethin
 said it would not — a state, a limit, an endpoint, a job, a boundary — the documents follow
 the code here, and the deviation is named in the Finish report. A work-log entry the plan
 calls for is written in this branch too (`/log-work`).
+
+**A gated change is gated everywhere.** When the plan's _Release_ puts the change behind the
+app's **Release gate**, every surface it adds calls the gate's helper — the UI hides it and its
+route or action answers 404 in production — and a migration only expands; dropping the old
+structure is a contract issue of its own
+([docs/\_branching-model.md](../../../docs/_branching-model.md) § Unreleased work behind a
+gate, § Migrations: expand, then contract). The first issue that needs the helper adds it, by the app's rules.
 
 When the plan left a fork open, a discovery invalidates its approach, or a schema, migration or
 public-contract change turns up that the plan didn't anticipate, **decide** per
