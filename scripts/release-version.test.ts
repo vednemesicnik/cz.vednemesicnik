@@ -16,6 +16,7 @@ import {
 const semverFacts = (overrides: Partial<AppFacts> = {}): AppFacts => ({
   app: 'publikace',
   changed: true,
+  coveredBy: undefined,
   date: '2026-11-27',
   existing: undefined,
   kind: 'release',
@@ -28,6 +29,7 @@ const semverFacts = (overrides: Partial<AppFacts> = {}): AppFacts => ({
 const dateFacts = (overrides: Partial<AppFacts> = {}): AppFacts => ({
   app: 'web',
   changed: true,
+  coveredBy: undefined,
   date: '2026-11-27',
   existing: undefined,
   kind: 'release',
@@ -222,6 +224,23 @@ describe('decideRelease, semver', () => {
       previous: 'publikace-v1.0.0',
       tag: 'publikace-v1.1.0',
     })
+  })
+})
+
+describe('decideRelease, a late re-run', () => {
+  test('skips an application a later merge has tagged since', () => {
+    expect(
+      decideRelease(dateFacts({ coveredBy: 'web-2026-11-27-2' })),
+    ).toMatchObject({ action: 'skip', reason: 'covered by web-2026-11-27-2' })
+    expect(
+      decideRelease(
+        semverFacts({
+          coveredBy: 'publikace-v1.0.2',
+          kind: 'hotfix',
+          tags: ['publikace-v1.0.0'],
+        }),
+      ).action,
+    ).toBe('skip')
   })
 })
 

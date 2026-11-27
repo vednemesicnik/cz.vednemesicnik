@@ -19,9 +19,11 @@ import { join } from 'node:path'
  * in the commits this PR brings into `main`.
  *
  * Modes (`MODE`): `check-apps` checks the folders against the table (PRs into `dev`), `check`
- * is the gate (PRs into `main`), `release` writes `releases` to `$GITHUB_OUTPUT` for the job
- * that tags. Reads `BASE_REF`, `HEAD_REF`, `HEAD_REPO`, `REPO`, `BODY`, `SHA` and `MERGED_AT`.
- * Runs locally with the same variables: `MODE=check BASE_REF=main HEAD_REF=dev node
+ * is the gate (PRs into `main`), `release` writes `releases` and `failed` to `$GITHUB_OUTPUT`
+ * for the job that tags: the applications that passed are tagged even when another one
+ * fails. Reads `BASE_REF`, `HEAD_REF`, `HEAD_REPO`, `REPO`, `BODY`, `SHA` and `MERGED_AT`.
+ * Runs locally with the same variables against a merge commit into `main`, since the PR's
+ * own commits are `SHA^1..SHA`: `MODE=check BASE_REF=main HEAD_REF=dev SHA=<merge-sha> node
  * scripts/release-version.ts`.
  */
 
@@ -44,6 +46,8 @@ export type NamedVersion = { app: string; version: string }
 /** What is known about one application at the commit being tagged. */
 export type AppFacts = {
   app: string
+  /** This application's newest tag on a later commit: a late re-run that has been overtaken. */
+  coveredBy: string | undefined
   /** Whether apps/<app>/ changed since `previous`, or in this PR when there is none. */
   changed: boolean
   /** The day of the merge in Prague, `YYYY-MM-DD`. */
@@ -202,6 +206,8 @@ export function decideRelease(facts: AppFacts): Decision {
   if (facts.existing) {
     return { action: 'tag', app, previous, tag: facts.existing }
   }
+  // A later merge has been tagged already, and its notes cover this one.
+  if (facts.coveredBy) return skip(app, `covered by ${facts.coveredBy}`)
 
   if (style.style === 'date') {
     if (facts.named.length > 0) {
@@ -438,6 +444,9 @@ function main(): void {
     const tags = lines(
       git(['tag', '--merged', sha, '--list', `${app}-*`]),
     ).filter((tag) => !atSha.includes(tag))
+    const later = lines(
+      git(['tag', '--contains', sha, '--list', `${app}-*`]),
+    ).filter((tag) => !atSha.includes(tag))
     const existing = newestTag(app, style, atSha)
     const previous = newestTag(app, style, tags)
     const from = previous ?? `${sha}^1`
@@ -445,6 +454,7 @@ function main(): void {
     const decision = decideRelease({
       app,
       changed: folderChanged(from, sha, app),
+      coveredBy: newestTag(app, style, later),
       date,
       existing,
       kind,
@@ -472,15 +482,22 @@ function main(): void {
   }
 
   report(kind, decisions)
+  const failed = decisions
+    .filter((decision) => decision.action === 'fail')
+    .map((decision) => decision.app)
 
-  if (decisions.some((decision) => decision.action === 'fail')) process.exit(1)
-
-  if (mode === 'release' && process.env.GITHUB_OUTPUT) {
-    appendFileSync(
-      process.env.GITHUB_OUTPUT,
-      `releases=${JSON.stringify(releases)}\n`,
-    )
+  // After the merge the passing applications are still tagged; `release-tag` fails the run
+  // for the others once it has.
+  if (mode === 'release') {
+    if (process.env.GITHUB_OUTPUT) {
+      appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `releases=${JSON.stringify(releases)}\nfailed=${failed.join(' ')}\n`,
+      )
+    }
+    return
   }
+  if (failed.length > 0) process.exit(1)
 }
 
 function report(kind: string, decisions: Decision[]): void {

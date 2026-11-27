@@ -20,7 +20,8 @@ should be **skipped**.
 
 The push to `main` triggers `sync-dev.yml`, which opens a back-merge PR `main → dev`.
 Merge it (merge commit) to carry the fix into `dev`. `release.yml` tags each application the
-fix changed: a semver application gets its next patch, the web the day's date.
+fix changed: a semver application gets its next patch once it has a tag (a hotfix never
+gives a first version), the web the day's date.
 
 ## Merge method
 

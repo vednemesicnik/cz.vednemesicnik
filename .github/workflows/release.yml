@@ -25,9 +25,10 @@ on:
 permissions: {}
 
 # Two merges into `main` in quick succession would otherwise read the same newest tag and
-# claim the same version.
+# claim the same version. A PR closed unmerged gets a group of its own, so it never takes
+# the place of a merge's waiting run.
 concurrency:
-  group: release
+  group: ${{ github.event.pull_request.merged && 'release' || format('release-unmerged-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:
@@ -38,6 +39,7 @@ jobs:
       contents: read
     outputs:
       releases: ${{ steps.version.outputs.releases }}
+      failed: ${{ steps.version.outputs.failed }}
     steps:
       # The history and the tags, with no token left in .git/config for the script.
       - uses: actions/checkout@v7
@@ -65,18 +67,21 @@ jobs:
     needs: release-decide
     if: >-
       needs.release-decide.outputs.releases != '' &&
-      needs.release-decide.outputs.releases != '[]'
+      (needs.release-decide.outputs.releases != '[]' ||
+      needs.release-decide.outputs.failed != '')
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASES: ${{ needs.release-decide.outputs.releases }}
+      FAILED: ${{ needs.release-decide.outputs.failed }}
       SHA: ${{ github.event.pull_request.merge_commit_sha }}
       NUMBER: ${{ github.event.pull_request.number }}
     steps:
       # What the other job hands over is checked again here, where the token can write: a
-      # tag name is only ever `<app>-<version>`, and the notes only ever reach a file.
+      # tag name is only ever `<app>-<version>`, and the notes only ever reach a file. The
+      # applications that passed are tagged first; one that failed fails the run after them.
       - name: Tag the merge commit and publish each Release
         run: |
           set -euo pipefail
@@ -126,3 +131,10 @@ jobs:
               --title "$tag" --notes-file notes.md --latest="$latest"
             echo "Published the Release $tag."
           done
+
+          if [[ -n "$FAILED" ]]; then
+            [[ "$FAILED" =~ ^[a-z][a-z0-9-]*( [a-z][a-z0-9-]*)*$ ]] || { echo "Not applications: '$FAILED'"; exit 1; }
+            echo "Not tagged: $FAILED. The release-decide job's summary says why;"
+            echo "docs/_branching-model.md § Versions says how to tag it by hand."
+            exit 1
+          fi
