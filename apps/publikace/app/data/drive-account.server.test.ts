@@ -54,14 +54,18 @@ describe('the Drive account store', () => {
     }
   })
 
-  it('takes a token that no longer decrypts for a revoked one', async () => {
+  it('takes a token that no longer decrypts for a revoked one, and reports it', async () => {
     let app = await createTestApp()
     try {
       await app.driveAccount.connect({ ...CONNECTION, at: now() })
 
-      let withAnotherKey = createDriveAccountStore(app.database, Buffer.alloc(32, 9))
+      let areas: string[] = []
+      let withAnotherKey = createDriveAccountStore(app.database, Buffer.alloc(32, 9), (_, area) =>
+        areas.push(area),
+      )
       assert.equal(await withAnotherKey.refreshToken(now()), null)
       assert.equal((await app.driveAccount.state()).status, 'disconnected')
+      assert.deepEqual(areas, ['drive'])
     } finally {
       await app.close()
     }

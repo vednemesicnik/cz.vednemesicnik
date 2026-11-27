@@ -2,6 +2,8 @@ import * as assert from 'remix/assert'
 import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
+import { createJobRunStore } from '../../../data/job-runs.server.ts'
+
 import { appOrigin } from '../../../auth/environment.server.ts'
 import { createArticleStore } from '../../../data/articles.server.ts'
 import { createArtworkStore } from '../../../data/artworks.server.ts'
@@ -247,6 +249,58 @@ describe('the reply check’s API', () => {
       assert.deepEqual(late.body.results, [{ answer: 'superseded', batchId: batch.id }])
       let stored = await store.findBatch(batch.id)
       assert.equal(stored === null ? null : batchState(stored), 'review')
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+/** A start by hand of the job, as `/settings/jobs` records it before the `doPost`. */
+async function requested(app: TestApp, job: string): Promise<string> {
+  let startKey = crypto.randomUUID()
+  let at = Temporal.Now.instant()
+  let by = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  await createJobRunStore(app.database).requestStart({
+    at,
+    by,
+    job,
+    pendingSince: at.subtract({ minutes: 10 }),
+    startKey,
+  })
+  return startKey
+}
+
+describe('a run started by hand (artwork-replies)', () => {
+  it('opens the run of the start its key names, and refuses a key it does not know', async () => {
+    let app = await createTestApp()
+    try {
+      let unknown = await call(app, CLAIM, { intervalMinutes: 30, startKey: 'unknown' })
+      assert.equal(unknown.status, 409)
+      assert.deepEqual(await unknown.json(), { error: 'unknown_start' })
+      let runs = createJobRunStore(app.database)
+      assert.equal(await runs.latest('artwork-replies'), null)
+
+      let startKey = await requested(app, 'artwork-replies')
+      let response = await call(app, CLAIM, { intervalMinutes: 30, startKey })
+      assert.equal(response.status, 200)
+      assert.equal((await runs.latest('artwork-replies'))?.startedBy?.name, 'Marie Horáková')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses a start key used before or of another job, and one that is not text', async () => {
+    let app = await createTestApp()
+    try {
+      let startKey = await requested(app, 'artwork-replies')
+      let other = await requested(app, 'print-handoff')
+      let claimWith = (key: unknown) => call(app, CLAIM, { intervalMinutes: 30, startKey: key })
+      assert.equal((await claimWith(startKey)).status, 200)
+      let reused = await claimWith(startKey)
+      assert.equal(reused.status, 409)
+      assert.deepEqual(await reused.json(), { error: 'unknown_start' })
+      assert.equal((await claimWith(other)).status, 409)
+      assert.equal((await claimWith(42)).status, 400)
     } finally {
       await app.close()
     }

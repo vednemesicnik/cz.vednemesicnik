@@ -2,10 +2,14 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import type { JobRunRecord, JobState } from './job-run.ts'
+import { PROOFREADING_DIGEST_JOB, writeDigestRun } from './proofreading-digest.ts'
 import {
+  canStartFromList,
+  canStartFromPage,
   failedCalloutText,
   failingJobsBanner,
   historyEvent,
+  historyWho,
   historyTime,
   jobByKey,
   jobTag,
@@ -73,11 +77,11 @@ describe('the tag of a job (14d)', () => {
   it('names the day of a last run that was not today', () => {
     let stopped: JobState = { kind: 'stopped', lastStartedAt: LAST }
     assert.deepEqual(spaced(jobTag(stopped, TODAY.add({ hours: 48 }))), {
-      detail: 'Poslední běh 19. 11. v 9:00',
+      detail: 'Poslední běh podle plánu 19. 11. v 9:00',
       label: 'Neběží',
     })
     let nextYear = spaced(jobTag(stopped, Temporal.Instant.from('2027-01-02T08:00:00Z')))
-    assert.equal(nextYear.detail, 'Poslední běh 19. 11. 2026 v 9:00')
+    assert.equal(nextYear.detail, 'Poslední běh podle plánu 19. 11. 2026 v 9:00')
   })
 
   it('draws the other three tags', () => {
@@ -153,20 +157,20 @@ describe('the history of a job (14e)', () => {
     assert.equal(STOPPED_CALLOUT_TITLE, 'Dejte vědět tomu, kdo má úlohu na starosti.')
     assert.equal(
       stoppedCalloutText(stopped, 30, TODAY.add({ hours: 2 })),
-      'Úloha má běžet každých 30 min. Naposledy se ohlásila v\u00a09:00. Příčinu aplikace nezná.',
+      'Úloha má běžet každých 30 min. Z\u00a0běhu podle plánu se naposledy ohlásila v\u00a09:00. Příčinu aplikace nezná.',
     )
     let afternoon: JobState = { kind: 'stopped', lastStartedAt: LAST.add({ hours: 5 }) }
     assert.match(
       stoppedCalloutText(afternoon, 60, TODAY.add({ hours: 7 })) ?? '',
-      /^Úloha má běžet každou hodinu\. Naposledy se ohlásila ve\u00a014:00\./,
+      /^Úloha má běžet každou hodinu\. Z\u00a0běhu podle plánu se naposledy ohlásila ve\u00a014:00\./,
     )
     assert.match(
       stoppedCalloutText(stopped, 30, TODAY.add({ hours: 48 })) ?? '',
-      /Naposledy se ohlásila 19\. 11\. v\u00a09:00\./,
+      /Z\u00a0běhu podle plánu se naposledy ohlásila 19\. 11\. v\u00a09:00\./,
     )
     assert.match(
       stoppedCalloutText(stopped, 30, Temporal.Instant.from('2027-01-02T08:00:00Z')) ?? '',
-      /Naposledy se ohlásila 19\. 11\. 2026 v\u00a09:00\./,
+      /Z\u00a0běhu podle plánu se naposledy ohlásila 19\. 11\. 2026 v\u00a09:00\./,
     )
   })
 
@@ -178,5 +182,64 @@ describe('the history of a job (14e)', () => {
       { kind: 'ok', lastStartedAt: LAST, next: NEXT },
     ]
     for (let state of others) assert.equal(stoppedCalloutText(state, 30, TODAY), null)
+  })
+})
+
+describe('Spustit teď (14d, 14e)', () => {
+  const MARIE = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  const RUN: JobRunRecord = {
+    error: null,
+    finishedAt: LAST.add({ minutes: 2 }),
+    intervalMinutes: 30,
+    outcome: 'ok',
+    startedAt: LAST,
+    summary: null,
+  }
+
+  it('stands in the list only on a job that runs well or never reported, and on its page but while it runs', () => {
+    let states: JobState[] = [
+      { kind: 'never' },
+      { kind: 'ok', lastStartedAt: LAST, next: null },
+      { isUnreported: false, kind: 'failed', lastStartedAt: LAST, next: null },
+      { kind: 'stopped', lastStartedAt: LAST },
+      { kind: 'running', startedAt: LAST },
+    ]
+    assert.deepEqual(states.map(canStartFromList), [true, true, false, false, false])
+    assert.deepEqual(states.map(canStartFromPage), [true, true, true, true, false])
+  })
+
+  it('says a run started by hand so before its result, and names who started it', () => {
+    let byHand = { ...RUN, startedBy: MARIE }
+    assert.equal(historyEvent(JOB, byHand, TODAY), 'Spuštěno ručně. Skončila bez chyby')
+    assert.equal(historyWho(byHand), 'Marie Horáková')
+    assert.equal(historyWho(RUN), 'systém')
+    assert.equal(historyWho({ ...RUN, startedBy: null }), 'systém')
+  })
+
+  it('gives the digest started by hand its own sentence before the result', () => {
+    let digest = JOBS.find((job) => job.key === PROOFREADING_DIGEST_JOB)!
+    let sent = {
+      ...RUN,
+      startedBy: MARIE,
+      summary: writeDigestRun({ cancelled: 0, handedOver: 1, kind: 'sent', waiting: 0 }),
+    }
+    assert.match(historyEvent(digest, sent, TODAY), /^Spuštěno ručně\. Přehled odeslán\./)
+  })
+
+  it('offers Spustit teď in the Callout of an unconfirmed digest only where the page has it', () => {
+    let digest = JOBS.find((job) => job.key === PROOFREADING_DIGEST_JOB)!
+    let failed = {
+      ...RUN,
+      outcome: 'failed' as const,
+      summary: writeDigestRun({ kind: 'unconfirmed' }),
+    }
+    assert.match(
+      digest.failedCalloutOf?.(failed, '', true)?.text ?? '',
+      /^Pro další pokus zvolte Spustit teď nebo počkejte/,
+    )
+    assert.match(
+      digest.failedCalloutOf?.(failed, '', false)?.text ?? '',
+      /^Pro další pokus počkejte/,
+    )
   })
 })

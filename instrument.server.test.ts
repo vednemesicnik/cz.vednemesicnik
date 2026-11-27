@@ -7,19 +7,22 @@ import { afterEach, expect, test } from 'vitest'
 
 const TYPED_PASSWORD = 'typed-password-probe'
 const LINK_TOKEN = 'link-token-probe'
-const EMAIL = 'owner@local.dev'
+const EMAIL = 'owner@vednemesicnik.test'
 const PATH = '/administration/sign-in/password'
 
 // An application under the real instrument, the way `app:start-with-sentry` runs
-// one. It prints the port it listens on, and reports an error for every request.
+// one. It prints the port it listens on, and reports an error for every request,
+// with the tags in PROBE_TAGS when they are set, as Publikace's reporter does.
 const APPLICATION = `
 import { createServer } from 'node:http'
 import * as Sentry from '@sentry/react-router'
 
+const tags = process.env.PROBE_TAGS ? JSON.parse(process.env.PROBE_TAGS) : undefined
+
 const server = createServer((request, response) => {
   request.on('data', () => {})
   request.on('end', async () => {
-    Sentry.captureException(new Error('probe'))
+    Sentry.captureException(new Error('probe'), tags ? { tags } : undefined)
     await Sentry.flush(5000)
     response.end()
   })
@@ -59,7 +62,10 @@ const startIngest = async () => {
   return { firstEvent, port: (ingest.address() as AddressInfo).port }
 }
 
-const startApplication = async (ingestPort: number) => {
+const startApplication = async (
+  ingestPort: number,
+  tags?: Record<string, string>,
+) => {
   const child = spawn(
     process.execPath,
     [
@@ -72,6 +78,7 @@ const startApplication = async (ingestPort: number) => {
     {
       env: {
         PATH: process.env.PATH,
+        PROBE_TAGS: tags ? JSON.stringify(tags) : undefined,
         SENTRY_DSN: `http://public@127.0.0.1:${ingestPort}/1`,
       } as unknown as NodeJS.ProcessEnv,
       stdio: ['ignore', 'pipe', 'inherit'],
@@ -97,6 +104,7 @@ test('an event carries neither the request body nor the query string', async () 
 
   const event = await firstEvent
 
+  expect(event.tags).toMatchObject({ app: 'web' })
   expect(event.request).toMatchObject({
     headers: { referer: `${origin}${PATH}` },
     method: 'POST',
@@ -105,4 +113,19 @@ test('an event carries neither the request body nor the query string', async () 
   expect(JSON.stringify(event)).not.toContain(TYPED_PASSWORD)
   expect(JSON.stringify(event)).not.toContain(LINK_TOKEN)
   expect(JSON.stringify(event)).not.toContain(EMAIL)
+}, 30_000)
+
+test("Publikace's tags take the place of the web's", async () => {
+  const { firstEvent, port: ingestPort } = await startIngest()
+  const port = await startApplication(ingestPort, {
+    app: 'publikace',
+    area: 'request',
+  })
+
+  await fetch(`http://127.0.0.1:${port}/issues`)
+
+  expect((await firstEvent).tags).toMatchObject({
+    app: 'publikace',
+    area: 'request',
+  })
 }, 30_000)

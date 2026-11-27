@@ -31,10 +31,18 @@ export function loadFailingJobs(
     let state = context.get(Auth)
     if (state?.ok === true && (state.identity as Person).isEditor) {
       let at = now()
-      let latest = await Promise.all(JOBS.map((job) => runs.latestRuns(job.key, RUNS_READ)))
+      let read = await Promise.all(
+        JOBS.map(async (job) => ({
+          job,
+          latest: await runs.latestRuns(job.key, RUNS_READ),
+          scheduled: await runs.latestScheduled(job.key),
+        })),
+      )
       context.set(
         FailingJobs,
-        JOBS.filter((job, index) => isJobInBanner(job, latest[index] ?? [], at)),
+        read
+          .filter(({ job, latest, scheduled }) => isJobInBanner(job, latest, at, scheduled))
+          .map(({ job }) => job),
       )
     }
     return next()

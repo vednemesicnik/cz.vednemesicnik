@@ -150,7 +150,7 @@ describe('Připomínky ke článkům among the jobs (14d, 14e, 14i)', () => {
       plain(generic),
       'Úloha skončila s chybou. Některá upozornění na připomínky možná neodešla. Další běh se očekává mezi 12:00 a 13:00. Pokud se to opakuje, obraťte se na toho, kdo má úlohu na starosti.',
     )
-    let own = job.failedCalloutOf?.(failed, generic ?? '')
+    let own = job.failedCalloutOf?.(failed, generic ?? '', true)
     assert.equal(own?.title, null)
     assert.equal(own?.text, generic)
     assert.equal(own?.groups?.length, 1)
@@ -169,7 +169,7 @@ describe('Připomínky ke článkům among the jobs (14d, 14e, 14i)', () => {
     assert.equal(isJobInBanner(job, [ok], past), true)
     assert.equal(
       plain(stoppedCalloutText(state, 180, past, job)),
-      'Úloha má běžet každé 3 hodiny. Naposledy se ohlásila v 9:12. Příčinu aplikace nezná.',
+      'Úloha má běžet každé 3 hodiny. Z běhu podle plánu se naposledy ohlásila v 9:12. Příčinu aplikace nezná.',
     )
   })
 })

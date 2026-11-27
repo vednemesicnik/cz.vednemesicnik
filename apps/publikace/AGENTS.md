@@ -185,7 +185,8 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
   (`SCRIPT__Publication__Proofreading_Digest`, which only calls the app) run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report
   every run to the app with the interval of their trigger, and the app shows the last one and can
-  start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a
+  start one once through the script's `doPost` (_Spustit teď_), signed with that project's secret;
+  a run started by hand is told apart by the start key its claim carries. Apps Script picks the minute a trigger fires, so a
   next run the app shows is an estimate, never a promise. The app reaches Gmail only through the
   Mailer and the reply check, never with a token of its own. A job the app replaces stays on the
   sheets beside the one that talks to the app, each with its own issues, until no issue made
@@ -273,7 +274,8 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   incompatible change to the API the jobs call, or a data migration that needs somebody to act,
   and is planned as its own milestone (`publikace-v2.0.0`) whose work waits behind the gate.
 
-- **Release gate** — `isUnreleased()`, true unless `NODE_ENV` is `production`, the one call
+- **Release gate** — `isUnreleased()`, true only where `isProduction()` is false (`NODE_ENV`
+  `development` or `test`), the one call
   that hides unreleased work in production and makes its route or action answer 404
   ([docs/\_branching-model.md](../../docs/_branching-model.md) § Unreleased work behind a gate).
   The first issue that needs it adds it.
@@ -374,7 +376,9 @@ Evidence. The two Registrs merge, if they do, only at the cutover.
 issue's Evidence or the Registr in the same transaction as the change, on the columns the record
 shows and no others. A column the record starts to show needs its trigger changed in a new
 migration, or it reaches the sheet only with the daily rewrite. A write that keeps failing is a
-`[drive] … was not written` line in the log and nothing on a screen (`00d`).
+`[drive] … was not written` line in the log each time, one Sentry event on its third failure in
+a row, and nothing on a screen (`00d`). A change the record shows and the daily rewrite start a
+new streak, so a record that stays broken reports about once a day.
 
 **A trigger runs as the account that created it.** CI pushes code but never installs triggers.
 Moving a script to `publikace.app@` means running its `setupTriggers()` as `publikace.app@` and
@@ -393,7 +397,9 @@ behind `requireEditor()` or `requireProofreading()` instead.
 rejects with nothing left running, and it never listens, exits or handles a signal: a host that
 serves other sites beside it does that, and `server.ts` is that host for this repository alone. A
 variable is read in `app/auth/environment.server.ts` from the record the app was handed, so the host
-can pass its own names; one that production requires is added to `checkConfiguration` too.
+can pass its own names; one that production requires is added to `checkConfiguration` too. Its
+second argument is what else the host gives: `reportError`, the host's Sentry, which an error no
+retry mends is handed to beside its log line (`app/report.server.ts`).
 
 **`css()` loses to a `vdm-*` class on the same element.** The mixes sit in the cascade layer
 `rmx`, and the design system's classes are unlayered, so on one element the class wins whatever

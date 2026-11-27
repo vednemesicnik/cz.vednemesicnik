@@ -11,7 +11,7 @@ import {
   REPLY_CHECK_JOB,
 } from '../../../domain/reply-check.ts'
 import { routes } from '../../../routes.ts'
-import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
+import { bodyOf, intervalOf, isText, json, openRun, refusal } from '../job-request.ts'
 import { readConsentReport } from '../consent-report.ts'
 
 /**
@@ -19,8 +19,9 @@ import { readConsentReport } from '../consent-report.ts'
  * standalone Apps Script project running as `publikace.app@` on its own trigger. A run makes two
  * calls:
  *
- * 1. `claim` with the trigger's interval opens the run and takes the batches to ask about, each
- *    with what Reply_Check needs to find its thread and what the archived PDF says;
+ * 1. `claim` with the trigger's interval, and the `startKey` of a start by hand, opens the run
+ *    and takes the batches to ask about, each with what Reply_Check needs to find its thread and
+ *    what the archived PDF says;
  * 2. `report` with the run's key gives, per batch, what Reply_Check answered and what the job
  *    archived into the article's `Licence`, and closes the run.
  *
@@ -87,13 +88,14 @@ export default function createArtworkRepliesController(dependencies: ArtworkRepl
         if (interval === null) return json({ error: 'invalid_request' }, 400)
 
         let at = dependencies.now()
-        let runKey = crypto.randomUUID()
-        await dependencies.runs.start({
+        let run = await openRun(dependencies.runs, {
           at,
+          body,
           intervalMinutes: interval,
           job: REPLY_CHECK_JOB,
-          runKey,
         })
+        if ('refused' in run) return run.refused
+        let { runKey } = run
         let batches = await dependencies.artworks.claimForReplyCheck(runKey, at)
         return json({ batches: batches.map(claimedItem), runKey })
       },

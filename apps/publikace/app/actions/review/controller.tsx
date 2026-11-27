@@ -607,7 +607,7 @@ export default function createReviewController(
   let answering = { ...dependencies, now }
 
   async function healthOf(job: string): Promise<JobHealth> {
-    return jobHealth(await dependencies.runs.latest(job), now())
+    return jobHealth(await dependencies.runs.latestScheduled(job), now())
   }
 
   /**
@@ -738,17 +738,17 @@ export default function createReviewController(
         let kind = kindOf(context)
         let whole = context.url.searchParams.get('whole')
         let requested = context.url.searchParams.get('reply')
+        let at = now()
         let [batches, clauses, artworksRun, articlesRun, driveAccount] = await Promise.all([
           dependencies.artworks.reviewQueue(settledIdOf(settled, 'batch')),
           dependencies.articles.reviewQueue(settledIdOf(settled, 'clause')),
-          dependencies.runs.latest(REPLY_CHECK_JOB),
-          dependencies.runs.latest(APPROVAL_SEND_JOB),
+          dependencies.runs.snapshot(REPLY_CHECK_JOB, at),
+          dependencies.runs.snapshot(APPROVAL_SEND_JOB, at),
           driveView(context),
         ])
         /* The cards ask whether a job still runs; the header, how its last read ended (`13i`). */
-        let at = now()
-        let artworksHealth = jobHealth(artworksRun, at)
-        let articlesHealth = jobHealth(articlesRun, at)
+        let artworksHealth = jobHealth(artworksRun.scheduled, at)
+        let articlesHealth = jobHealth(articlesRun.scheduled, at)
         let [batchAnswers, clauseAnswers] = await Promise.all([
           dependencies.answers.answersOf(
             'artworks',
@@ -822,7 +822,10 @@ export default function createReviewController(
             driveAccount={driveAccount}
             person={context.auth.identity}
             readLines={readLines(
-              { articles: jobState(articlesRun, at), artworks: jobState(artworksRun, at) },
+              {
+                articles: jobState(articlesRun.latest, at, undefined, articlesRun),
+                artworks: jobState(artworksRun.latest, at, undefined, artworksRun),
+              },
               kind,
               today,
             )}

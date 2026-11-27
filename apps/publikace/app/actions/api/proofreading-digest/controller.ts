@@ -16,7 +16,7 @@ import type { Lock } from '../../../drive/one-at-a-time.server.ts'
 import { digestEmail } from '../../../mail/proofreading-digest-email.server.ts'
 import type { Mailer } from '../../../mail/mailer.server.ts'
 import { routes } from '../../../routes.ts'
-import { bodyOf, intervalOf, json, refusal } from '../job-request.ts'
+import { bodyOf, intervalOf, json, openRun, refusal } from '../job-request.ts'
 
 /**
  * The API the proofreaders' digest calls (cz.vednemesicnik.publikace#14): `SCRIPT__Publication__Proofreading_Digest`, a
@@ -24,11 +24,11 @@ import { bodyOf, intervalOf, json, refusal } from '../job-request.ts'
  * and 8. The job only calls; the app composes the digest and sends it through the Mailer it
  * already signs for, so the job holds no secret and reads no article.
  *
- * One call, `run`, with the trigger's interval: the app opens the run, builds the digest, sends
- * it when there is something new and an address to send it to, records what a confirmed digest
- * told, and closes the run with what came of it, which `14e` shows. A digest the Mailer did not
- * confirm marks nothing, so the next run sends it again, under the same idempotency key while
- * its content is the same.
+ * One call, `run`, with the trigger's interval and the `startKey` of a start by hand: the app
+ * opens the run, builds the digest, sends it when there is something new and an address to send
+ * it to, records what a confirmed digest told, and closes the run with what came of it, which
+ * `14e` shows. A digest the Mailer did not confirm marks nothing, so the next run sends it again,
+ * under the same idempotency key while its content is the same.
  *
  * The call carries the job's Google identity token as a bearer, and only the account in
  * `SCRIPT_JOB_ACCOUNT` is let in, as for the reply check. No cookie is set. A path or a field is
@@ -119,17 +119,19 @@ export default function createProofreadingDigestController(
       async run(context) {
         let refused = await refusal(context.request, dependencies)
         if (refused !== null) return refused
-        let interval = intervalOf(await bodyOf(context.request))
+        let body = await bodyOf(context.request)
+        let interval = intervalOf(body)
         if (interval === null) return json({ error: 'invalid_request' }, 400)
 
         return dependencies.lock(PROOFREADING_DIGEST_JOB, async () => {
-          let runKey = crypto.randomUUID()
-          await dependencies.runs.start({
+          let run = await openRun(dependencies.runs, {
             at: dependencies.now(),
+            body,
             intervalMinutes: interval,
             job: PROOFREADING_DIGEST_JOB,
-            runKey,
           })
+          if ('refused' in run) return run.refused
+          let { runKey } = run
           let outcome: { error: string | null; run: DigestRun }
           try {
             outcome = await send()

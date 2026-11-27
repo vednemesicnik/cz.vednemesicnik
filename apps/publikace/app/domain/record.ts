@@ -451,6 +451,12 @@ export function retryDelay(attempts: number): Temporal.Duration {
 }
 
 /**
+ * The failure in a row a record is reported at, once: by then it has waited out 2 and 4 minutes,
+ * so a sheet that blinked has had its chance.
+ */
+export const RECORD_FAILURES_TO_REPORT = 3
+
+/**
  * Whether every record is due its daily rewrite from the database (`03` row 11). Measured from
  * the last one rather than at a fixed hour, so a machine that slept through the night rewrites
  * on its next pass.

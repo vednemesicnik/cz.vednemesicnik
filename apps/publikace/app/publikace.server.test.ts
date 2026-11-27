@@ -53,6 +53,18 @@ describe('createPublikace', () => {
     })
   })
 
+  it('starts as production when NODE_ENV is missing, refusing the development fallbacks', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      let path = join(directory, 'publikace.sqlite')
+      let { NODE_ENV: _mode, SESSION_SECRET: _secret, ...environment } = productionEnvironment(path)
+
+      await assert.rejects(createPublikace(environment), {
+        message: 'Chybí povinná proměnná prostředí SESSION_SECRET.',
+      })
+      assert.equal(existsSync(path), false)
+    })
+  })
+
   it('refuses an access list nobody could change, and closes the database it opened', async () => {
     await inTemporaryDirectory(async (directory) => {
       let path = join(directory, 'publikace.sqlite')
@@ -98,6 +110,31 @@ describe('createPublikace', () => {
       assert.equal(existsSync(`${path}-wal`), false)
       assert.equal(intervals.size, 0)
       await publikace.close()
+    })
+  })
+
+  it('answers 500 for an error the router let through, and reports it to the host', async (t) => {
+    t.mock.method(console, 'error', () => {})
+    await inTemporaryDirectory(async (directory) => {
+      let environment: Environment = {
+        DATABASE_PATH: join(directory, 'publikace.sqlite'),
+        NODE_ENV: 'test',
+      }
+      let reported: [unknown, string][] = []
+      let publikace = await createPublikace(environment, {
+        reportError: (error, area) => reported.push([error, area]),
+      })
+      /* A closed database makes a link's page throw past every controller. */
+      await publikace.close()
+
+      let response = await publikace.fetch(
+        new Request('http://localhost:44100/l/FakeLinkKey1/article'),
+      )
+
+      assert.equal(response.status, 500)
+      assert.equal(reported.length, 1)
+      assert.ok(reported[0]?.[0] instanceof Error)
+      assert.equal(reported[0]?.[1], 'request')
     })
   })
 })

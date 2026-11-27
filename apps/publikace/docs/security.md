@@ -17,6 +17,7 @@ The findings of the review that are not fixed yet are in
 | Proof of consent                                                                                                   | the legal record of a licence                                                                               | the archived Gmail conversation in `Licence`; the licence PDF and its SHA-256 quoted in the request |
 | The API                                                                                                            | its claims return authors' addresses, its reports set consent states                                        | `/api/v1/*`                                                                                         |
 | The mail budget                                                                                                    | the Gmail quota of `publikace@`, which the jobs and the answers need too                                    | `public_mail_log`, `PUBLIC_MAIL_PER_DAY`                                                            |
+| `GAS_<JOB>_SECRET`, one per job                                                                                    | start that job once, as `publikace.app@` (_Spustit teď_)                                                    | `.env` and `fly secrets` as above; the same value in that project's Script Properties               |
 
 ## Trust boundaries
 
@@ -47,7 +48,7 @@ flowchart TB
   JOBS -- "Google ID token" --> HOST
   HOST -- "publikace.vednemesicnik.cz" --> APP
   HOST --> WEB
-  HOST -. "uncaught errors, scrubbed" .-> SENTRY
+  HOST -. "errors, scrubbed" .-> SENTRY
   APP --> DB
   APP -- "code + PKCE, then userinfo" --> OAUTH
   APP -- "access token of publikace.app@" --> API
@@ -132,6 +133,9 @@ that needs a session belongs behind a guard instead.
 
 - **The Mailer** gets an envelope signed with HMAC-SHA256 over the timestamp and the payload, and
   refuses one older than 5 minutes. Every message carries an idempotency key.
+- **A job's `doPost`** (_Spustit teď_) gets `{ job, startKey }` in the same signed envelope,
+  under that job's own secret, and refuses one older than 5 minutes. A replayed request within
+  them starts nothing more: its `startKey` opens one run at most, and only of its own job.
 - **The membership service** gets its secret in the body over HTTPS. A replayed request only
   repeats a yes or a no (`03` row 40).
 - **The Drive token** is sealed with AES-256-GCM, with a random IV, and the key must be 32 bytes.
@@ -151,15 +155,18 @@ that needs a session belongs behind a guard instead.
 
 ### Startup and configuration
 
+- **Production is the default.** The development fallbacks apply only when `NODE_ENV` is
+  `development` or `test`; unset or any other value is production (`isProduction()`).
 - **Production never falls back.** `createPublikace` refuses to start without the domain, the
   origin, the OAuth client, the secrets, the Drive account, the folders, the Mailer, the
   membership service and the job account. It also refuses to start when nobody could ever change
   the access list.
 - **The host never starts it outside production on Fly.** It hands Publikace its own `NODE_ENV`,
   never a `PUBLIKACE_NODE_ENV`, and refuses to start it when the machine is on Fly and that value
-  is not `production` (`server/publikace-environment.ts`). Any other host still has to set it:
-  the app's own fallbacks are #1097.
-- **The fake app refuses production**, and binds only to `127.0.0.1`.
+  is not `production` (`server/publikace-environment.ts`). Any other host that forgets it gets
+  production and its refusals.
+- **The fake app never runs as production**, an unset `NODE_ENV` included, and binds only to
+  `127.0.0.1`.
 - **`.env` is never opened by tools or agents**, and the repository holds only fictional data on
   the `.test` domains ([AGENTS.md](../AGENTS.md#data-rules)).
 
@@ -168,8 +175,10 @@ that needs a session belongs behind a guard instead.
 - **The web's process holds Publikace's secrets.** The host serves both applications from one
   process (#1082), so every `PUBLIKACE_*` secret and, once read, the token of `publikace.app@`
   are within reach of anything that compromises the web or one of its dependencies. An uncaught
-  error in either reaches Sentry with its request's address, the query and a link's key cut out
-  (`scrub-sentry-event.ts`). Two processes would close this and cost a second Node runtime on the
+  error in the web, and an error Publikace reports through the host (a 500, a record that keeps
+  failing, a refused start, a misconfiguration), reaches Sentry with its request's address, the
+  query and a link's key cut out (`scrub-sentry-event.ts`), tagged `app: web` or
+  `app: publikace`. Two processes would close this and cost a second Node runtime on the
   1 GB machine (log 0084).
 - **A forwarded link works for whoever holds it.** That is the price of no sign-in from a
   messenger's browser (`02a`). It is limited to one action in one place. The newsroom's link and
@@ -191,6 +200,7 @@ that needs a session belongs behind a guard instead.
 | Names and addresses of providers, author and source of each artwork | outside the newsroom           | the licence and its consent                               | not decided (`S-10`)                                       |
 | Reply texts and answers                                             | both sides of the conversation | the decision in _Ke kontrole_                             | not decided; the proof itself is the archived conversation |
 | Editors' names on steps                                             | the newsroom                   | who verified a consent, took or marked a text             | not decided                                                |
+| Name and address of who started a job by hand (`job_starts`)        | the newsroom                   | _Spustit teď_: the history names who started a run        | not decided                                                |
 | Sessions                                                            | the newsroom                   | sign-in                                                   | deleted after they expire                                  |
 
 Until a retention period is decided, nothing personal is deleted except expired sessions.

@@ -4,9 +4,11 @@ import { describe, it } from 'remix/test'
 import { createJobRunStore } from '../../../data/job-runs.server.ts'
 import { createProofreadersStore } from '../../../data/proofreaders.server.ts'
 import { REPLY_CHECK_JOB } from '../../../domain/reply-check.ts'
+import { createJobStarter } from '../../../jobs/job-starter.server.ts'
 import { createTestApp, type TestApp } from '../../../test-app.server.ts'
 
 const MARIE = 'marie@vednemesicnik.test'
+const PROOFREADER = 'petra@vednemesicnik.test'
 
 async function setup() {
   let app = await createTestApp()
@@ -43,7 +45,7 @@ function textOf(html: string): string {
 }
 
 describe('Úlohy na pozadí (14d)', () => {
-  it('lists the reply check that never reported, with no schedule and no action', async () => {
+  it('lists the reply check that never reported, with no schedule and Spustit teď', async () => {
     let { app, browser } = await setup()
     try {
       let html = await (await browser.get('/settings/jobs')).text()
@@ -53,6 +55,7 @@ describe('Úlohy na pozadí (14d)', () => {
       assert.ok(text.includes('Zatím se neohlásila'))
       assert.doesNotMatch(html, /každých/)
       assert.doesNotMatch(html, />\s*Zobrazit\s*</)
+      assert.match(html, /action="\/settings\/jobs\/artwork-replies\/start"/)
       assert.doesNotMatch(html, /vdm-callout--error/)
       assert.doesNotMatch(textOf(await (await browser.get('/')).text()), /nepromítají do stavu děl/)
     } finally {
@@ -60,7 +63,7 @@ describe('Úlohy na pozadí (14d)', () => {
     }
   })
 
-  it('tags a finished run V pořádku with its schedule and no action', async () => {
+  it('tags a finished run V pořádku with its schedule and Spustit teď', async () => {
     let { app, browser } = await setup()
     try {
       await run(app, 5, { outcome: 'ok' })
@@ -69,6 +72,7 @@ describe('Úlohy na pozadí (14d)', () => {
       assert.match(html, /V\u00a0pořádku/)
       assert.match(html, /Poslední běh ve?\u00a0\d+:\d\d\u00a0· další\u00a0kolem\u00a0\d+:\d\d/)
       assert.doesNotMatch(html, /href="\/settings\/jobs\/artwork-replies"/)
+      assert.match(html, /action="\/settings\/jobs\/artwork-replies\/start"/)
     } finally {
       await app.close()
     }
@@ -81,6 +85,7 @@ describe('Úlohy na pozadí (14d)', () => {
       let running = await (await browser.get('/settings/jobs')).text()
       assert.match(running, /Běží/)
       assert.match(running, /spuštěno ve?\u00a0\d+:\d\d/)
+      assert.doesNotMatch(running, /artwork-replies\/start/)
     } finally {
       await app.close()
     }
@@ -91,6 +96,7 @@ describe('Úlohy na pozadí (14d)', () => {
       let overdue = await (await second.browser.get('/settings/jobs')).text()
       assert.match(overdue, /S\u00a0chybou/)
       assert.match(overdue, /href="\/settings\/jobs\/artwork-replies"/)
+      assert.doesNotMatch(overdue, /artwork-replies\/start/)
     } finally {
       await second.app.close()
     }
@@ -104,6 +110,7 @@ describe('Úlohy na pozadí (14d)', () => {
       assert.match(html, /vdm-status--problem"><span class="vdm-status__tag">Neběží/)
       assert.doesNotMatch(html, /další kolem/)
       assert.match(html, /href="\/settings\/jobs\/artwork-replies"/)
+      assert.doesNotMatch(html, /artwork-replies\/start/)
     } finally {
       await app.close()
     }
@@ -268,13 +275,16 @@ describe('the history of a job (14e)', () => {
       await run(app, 60 * 24 * 35, { outcome: 'ok' })
       let html = await (await browser.get('/settings/jobs/artwork-replies')).text()
       assert.equal(html.match(/vdm-history__item/g)?.length, 1)
-      assert.match(html, /Naposledy se ohlásila \d+\. \d+\.( \d{4})? ve?\u00a0\d+:\d\d\./)
+      assert.match(
+        html,
+        /Z\u00a0běhu podle plánu se naposledy ohlásila \d+\. \d+\.( \d{4})? ve?\u00a0\d+:\d\d\./,
+      )
     } finally {
       await app.close()
     }
   })
 
-  it('tells the editors who to turn to when the job went quiet, with nothing to start', async () => {
+  it('tells the editors who to turn to when the job went quiet, and that the button runs it once', async () => {
     let { app, browser } = await setup()
     try {
       await run(app, 70, { error: 'Reply check failed: <timeout>', outcome: 'failed' })
@@ -286,9 +296,15 @@ describe('the history of a job (14e)', () => {
       )
       assert.match(
         html,
-        /Úloha má běžet každých 30 min\. Naposledy se ohlásila ve?\u00a0\d+:\d\d\. Příčinu aplikace nezná\./,
+        /Úloha má běžet každých 30 min\. Z\u00a0běhu podle plánu se naposledy ohlásila ve?\u00a0\d+:\d\d\. Příčinu aplikace nezná\./,
       )
-      assert.doesNotMatch(html, /Spustit teď/)
+      assert.match(
+        html,
+        /<p id="(start-once-[^"]+)">Jeden běh beze změny plánu\.<\/p><form action="\/settings\/jobs\/artwork-replies\/start" method="post">/,
+      )
+      let describedBy = /<p id="(start-once-[^"]+)">/.exec(html)?.[1]
+      assert.ok(describedBy !== undefined)
+      assert.ok(html.includes(`<button aria-describedby="${describedBy}"`))
       assert.doesNotMatch(html, /Zobrazit podrobnosti/)
       assert.doesNotMatch(text, /Úloha skončila s chybou/)
     } finally {
@@ -432,6 +448,116 @@ describe('Připomínky ke článkům among the jobs (14d, 14e)', () => {
       let kralova = text.indexOf('E-mail pro l.kralova@external.test:')
       assert.ok(novotny !== -1 && novotny < kralova)
       assert.ok(text.indexOf('Rozhovor s varhaníkem') < text.indexOf('Sbor, který zkouší'))
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+describe('Spustit teď (14d, 14e)', () => {
+  const START = '/settings/jobs/artwork-replies/start'
+
+  it('asks the job to run once, and shows it Běží until the run reports', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 5, { outcome: 'ok' })
+      let response = await browser.post(START, {}, '/settings/jobs')
+      assert.equal(response.status, 303)
+      assert.equal(response.headers.get('Location'), '/settings/jobs')
+      assert.deepEqual(
+        app.jobStarts.map((start) => start.job),
+        ['artwork-replies'],
+      )
+      let html = await (await browser.get('/settings/jobs')).text()
+      assert.match(html, /vdm-status--running"><span class="vdm-status__tag">Běží/)
+      assert.doesNotMatch(html, /artwork-replies\/start/)
+
+      /* A second press while it waits sends nothing. */
+      await browser.post(START, {}, '/settings/jobs/artwork-replies')
+      assert.equal(app.jobStarts.length, 1)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('puts the run in the history with the name of who started it', async () => {
+    let { app, browser, runs } = await setup()
+    try {
+      await browser.post(START, { from: 'job' }, '/settings/jobs/artwork-replies')
+      let [start] = app.jobStarts
+      assert.ok(start !== undefined)
+      let at = Temporal.Now.instant()
+      await runs.start({
+        at,
+        intervalMinutes: 30,
+        job: REPLY_CHECK_JOB,
+        runKey: 'r-1',
+        startKey: start.startKey,
+      })
+      await runs.finish(REPLY_CHECK_JOB, 'r-1', { at, error: null, outcome: 'ok' })
+      let text = textOf(await (await browser.get('/settings/jobs/artwork-replies')).text())
+      assert.match(text, /Spuštěno ručně\. Skončila bez chyby · Marie Horáková/)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('says to try again when the script does not take it, and leaves the row as it was', async () => {
+    let { app, browser } = await setup()
+    try {
+      await run(app, 5, { outcome: 'ok' })
+      app.failJobStart(true)
+      let response = await browser.post(START, { from: 'job' }, '/settings/jobs/artwork-replies')
+      assert.equal(response.headers.get('Location'), '/settings/jobs/artwork-replies')
+      let page = await (await browser.get('/settings/jobs/artwork-replies')).text()
+      assert.match(page, /Zkuste úlohu spustit za chvíli znovu\./)
+      assert.match(page, /action="\/settings\/jobs\/artwork-replies\/start"/)
+      let list = await (await browser.get('/settings/jobs')).text()
+      assert.match(list, /V\u00a0pořádku/)
+
+      app.failJobStart(false)
+      await browser.post(START, {}, '/settings/jobs')
+      assert.equal(app.jobStarts.length, 2)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('has no button for a job whose doPost the deployment does not know, nor an action', async () => {
+    let app = await createTestApp({ jobStarter: createJobStarter({}) })
+    try {
+      await app.directory.seedInitialAdmin(MARIE, Temporal.Now.instant())
+      let browser = app.browser()
+      await browser.signInAs(MARIE, 'Marie Horáková')
+      let html = await (await browser.get('/settings/jobs')).text()
+      assert.doesNotMatch(html, /Spustit teď/)
+      assert.doesNotMatch(
+        await (await browser.get('/settings/jobs/artwork-replies')).text(),
+        /Spustit teď/,
+      )
+      assert.equal((await browser.post(START, {}, '/settings/jobs')).status, 404)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('refuses a proofreader, a job it does not know, and a form from elsewhere', async () => {
+    let { app, browser } = await setup()
+    try {
+      assert.equal(
+        (await browser.post('/settings/jobs/comment-digest/start', {}, '/settings/jobs')).status,
+        404,
+      )
+      let refused = await browser.post(START, { _csrf: 'forged' }, '/settings/jobs')
+      assert.equal(refused.status, 403)
+
+      let proofreader = app.browser()
+      await proofreader.signInAs(PROOFREADER, 'Petra Korektorová', undefined, {
+        isEditor: false,
+        isProofreader: true,
+      })
+      assert.equal((await proofreader.post(START, {}, '/proofreading')).status, 403)
+      assert.equal(app.jobStarts.length, 0)
     } finally {
       await app.close()
     }

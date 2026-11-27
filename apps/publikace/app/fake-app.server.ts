@@ -131,6 +131,27 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
   let failingSteps = new Set<FakeStep>()
   let isDriveDown = false
   let isMailFailing = false
+  let isJobStartFailing = false
+
+  /*
+   * A job's `doPost` that took _Spustit teď_ runs the job from a one-off trigger: here, its run
+   * opens with the start key a few seconds later and ends well a few seconds after that, so the
+   * row shows _Běží_ in between. It reads no batch: the run is what the pages show of it.
+   */
+  let startedRuns = createJobRunStore(app.database)
+  app.onJobStart(({ job, startKey }) => {
+    let runKey = crypto.randomUUID()
+    setTimeout(() => {
+      void startedRuns
+        .start({ at: now(), intervalMinutes: 30, job, runKey, startKey })
+        .then((isOpened) => {
+          if (!isOpened) return
+          setTimeout(() => {
+            void startedRuns.finish(job, runKey, { at: now(), error: null, outcome: 'ok' })
+          }, 5_000)
+        })
+    }, 3_000)
+  })
 
   await seedAdmin(app, MARIE.email)
   await connectDriveAccount(app)
@@ -469,6 +490,19 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         says what came of it. With the Mailer failing it is not confirmed, and the banner stands.
       </p>
 
+      <h2>Spustit teď</h2>
+      <p>
+        ${isJobStartFailing ? 'Every doPost refuses.' : 'Every doPost takes the start.'}
+        ${
+          isJobStartFailing
+            ? button('/start/heal', 'Let them take it')
+            : button('/start/fail', 'Make them refuse')
+        }
+        — a start a <code>doPost</code> took opens its run 3 s later and ends it well 5 s after,
+        under the name of who pressed it in
+        <a href="${routes.settings.jobs.index.href()}">Úlohy na pozadí</a>.
+      </p>
+
       <h2>Mailer</h2>
       <p>
         ${isMailFailing ? 'Failing.' : 'Sending.'}
@@ -714,6 +748,11 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
       case '/mail/heal':
         app.failMail(false)
         isMailFailing = false
+        return backToControls()
+      case '/start/fail':
+      case '/start/heal':
+        isJobStartFailing = path === '/start/fail'
+        app.failJobStart(isJobStartFailing)
         return backToControls()
       case '/batch': {
         /* A batch as the artworks page leaves it once the Mailer took the request, without

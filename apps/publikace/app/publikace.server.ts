@@ -31,6 +31,7 @@ import { cleanUpAbandoned } from './drive/article-setup.server.ts'
 import { cleanUpAbandonedArtworks } from './drive/artworks-setup.server.ts'
 import { cleanUpAbandonedGroups, groupSetupOf } from './drive/group-setup.server.ts'
 import { startRecordQueue } from './drive/record-queue.server.ts'
+import { ignoreErrors, type ReportError } from './report.server.ts'
 import {
   createAppRouter,
   createArticleSetup,
@@ -77,8 +78,16 @@ function checkConfiguration(environment: Environment): void {
  * misconfiguration rejects with its Czech message and leaves nothing open, so a host serving other
  * sites beside it can answer this one's hostname with an error and keep serving the rest.
  * `server.ts` is the host for working on this repository alone.
+ *
+ * @param host.reportError The host's error tracking: a 500, a cleanup or a record that keeps
+ *   failing, a misconfiguration. Without it they are only logged.
  */
-export async function createPublikace(environment: Environment): Promise<Publikace> {
+export async function createPublikace(
+  environment: Environment,
+  host: { reportError?: ReportError } = {},
+): Promise<Publikace> {
+  let reportError = host.reportError ?? ignoreErrors
+
   checkConfiguration(environment)
 
   let database: OpenDatabase = openDatabase(databasePath(environment))
@@ -106,7 +115,7 @@ export async function createPublikace(environment: Environment): Promise<Publika
      * its files go to the bin now (`11c`), and so does every upload that waited 24 hours unsent
      * (`21d`). A Drive that does not answer delays it to the next send and does not stop the app.
      */
-    let setup = { database: database.database, environment }
+    let setup = { database: database.database, environment, reportError }
     try {
       let articleSetup = createArticleSetup(setup)
       await cleanUpAbandoned(articleSetup)
@@ -115,6 +124,7 @@ export async function createPublikace(environment: Environment): Promise<Publika
       await cleanUpAbandonedArtworks(artworksSetup)
     } catch (error) {
       console.error('[drive] the cleanup at startup did not run:', error)
+      reportError(error, 'drive')
     }
 
     assets = await createAssets(environment)
@@ -143,6 +153,7 @@ export async function createPublikace(environment: Environment): Promise<Publika
           // A request the browser gave up on rejects with its own abort reason, which is noise.
           if (!(request.signal.aborted && error === request.signal.reason)) {
             console.error(error)
+            reportError(error, 'request')
           }
           return new Response('Internal Server Error', { status: 500 })
         }

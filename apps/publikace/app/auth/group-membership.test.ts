@@ -42,11 +42,12 @@ describe('membership check', () => {
 
   it('tells a group the service does not know from a service that cannot answer', async (t) => {
     t.mock.method(console, 'error', () => {})
+    let reported: string[] = []
     let check = (body: unknown, status?: number) =>
-      createMembershipCheck(ENDPOINT, { fetch: serviceAnswering(body, status).send })(
-        'eva@vednemesicnik.test',
-        'vybor@vednemesicnik.test',
-      )
+      createMembershipCheck(ENDPOINT, {
+        fetch: serviceAnswering(body, status).send,
+        reportError: (error) => reported.push(String(error)),
+      })('eva@vednemesicnik.test', 'vybor@vednemesicnik.test')
 
     assert.deepEqual(await check({ isMember: false, ok: true }), {
       groupName: null,
@@ -56,7 +57,10 @@ describe('membership check', () => {
       status: 'unknown-group',
     })
     assert.deepEqual(await check({ error: 'unauthorized', ok: false }), { status: 'unavailable' })
+    assert.deepEqual(await check({ error: 'server_error', ok: false }), { status: 'unavailable' })
     assert.deepEqual(await check({}, 500), { status: 'unavailable' })
+    /* Only the refusal is the app's own misconfiguration; an outage is not reported. */
+    assert.deepEqual(reported, ['Error: The membership service refused the request: unauthorized'])
   })
 
   it('answers unavailable instead of throwing when the request fails', async () => {
@@ -145,14 +149,20 @@ describe('remembering group names', () => {
     assert.deepEqual(recorded, [])
   })
 
-  it('keeps the answer when the name cannot be recorded', async (t) => {
+  it('keeps the answer when the name cannot be recorded, and reports it', async (t) => {
     t.mock.method(console, 'error', () => {})
     let answer: MembershipAnswer = { displayName: null, groupName: 'Výbor', status: 'member' }
+    let areas: string[] = []
 
-    let checked = await rememberGroupNames(answering(answer), async () => {
-      throw new Error('database is locked')
-    })('eva@vednemesicnik.test', 'vybor@vednemesicnik.test')
+    let checked = await rememberGroupNames(
+      answering(answer),
+      async () => {
+        throw new Error('database is locked')
+      },
+      (_, area) => areas.push(area),
+    )('eva@vednemesicnik.test', 'vybor@vednemesicnik.test')
 
     assert.deepEqual(checked, answer)
+    assert.deepEqual(areas, ['data'])
   })
 })

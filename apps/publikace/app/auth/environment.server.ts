@@ -4,6 +4,9 @@ import type { TokenAudiences } from './identity-token.server.ts'
  * The app's configuration, read from the record `createPublikace` was handed and never from
  * `process.env`, so that a host can give the app values of its own under the names it expects.
  *
+ * **Production is the default.** The development fallbacks apply only when `NODE_ENV` asks
+ * for them by name (`isProduction()`).
+ *
  * **Production never falls back.** A missing variable throws at startup, where somebody will
  * notice, rather than quietly weakening who may sign in. Outside production the app still
  * starts without Google or the membership service, so it can be worked on with no `.env`;
@@ -13,8 +16,17 @@ import type { TokenAudiences } from './identity-token.server.ts'
 /** The variables the app is started with, by the names `.env.example` documents. */
 export type Environment = Readonly<Record<string, string | undefined>>
 
+/**
+ * Whether the app runs as production: always, unless `NODE_ENV` is `development` (`app:dev`,
+ * `app:fake`) or `test` (`remix test`).
+ *
+ * Unset, empty or misspelt means production, because the development fallbacks are a public
+ * session secret, a fixed Drive key, any token audience and cookies without `Secure`: a host
+ * that forgets the value has to meet the refusals, not those.
+ */
 export function isProduction(environment: Environment): boolean {
-  return environment.NODE_ENV === 'production'
+  let mode = environment.NODE_ENV
+  return mode !== 'development' && mode !== 'test'
 }
 
 function required(environment: Environment, name: string): string {
@@ -212,4 +224,35 @@ export function scriptTokenAudiences(environment: Environment): TokenAudiences {
 export function scriptJobAccount(environment: Environment): string {
   if (isProduction(environment)) return required(environment, 'SCRIPT_JOB_ACCOUNT').toLowerCase()
   return optional(environment, 'SCRIPT_JOB_ACCOUNT', driveAccountEmail(environment)).toLowerCase()
+}
+
+export type JobStartEndpoint = { secret: string; url: string }
+
+/*
+ * The variables of each job's `doPost`, by the job's key as `job_runs` names it and the script's
+ * name: `GAS_<NAME>_URL` and `GAS_<NAME>_SECRET`.
+ */
+const JOB_START_VARIABLES: Readonly<Record<string, string>> = {
+  'approval-send': 'GAS_ARTICLE_APPROVALS',
+  'article-comments': 'GAS_ARTICLE_COMMENTS',
+  'artwork-replies': 'GAS_ARTWORK_REPLIES',
+  'print-handoff': 'GAS_PRINT_HANDOFF',
+  'proofreading-digest': 'GAS_PROOFREADING_DIGEST',
+}
+
+/**
+ * The `doPost` of each job that _Spustit teď_ can start (`14d`, `14e`), by the job's key: only
+ * the jobs with both variables set. Optional everywhere, in production too: a job without them
+ * has no button, and a missing convenience does not keep the app from starting.
+ */
+export function jobStartEndpoints(
+  environment: Environment,
+): Readonly<Record<string, JobStartEndpoint>> {
+  let endpoints: Record<string, JobStartEndpoint> = {}
+  for (let [job, name] of Object.entries(JOB_START_VARIABLES)) {
+    let url = optional(environment, `${name}_URL`)
+    let secret = optional(environment, `${name}_SECRET`)
+    if (url !== '' && secret !== '') endpoints[job] = { secret, url }
+  }
+  return endpoints
 }

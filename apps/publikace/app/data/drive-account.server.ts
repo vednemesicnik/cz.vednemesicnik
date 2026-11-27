@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 
 import { decryptToken, encryptToken } from '../auth/token-cipher.server.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
+import { ignoreErrors, type ReportError } from '../report.server.ts'
 
 /**
  * The account the app acts as on Drive, `publikace.app@`, and its refresh token.
@@ -37,7 +38,15 @@ export type DriveAccountStore = {
   state(): Promise<DriveAccountState>
 }
 
-export function createDriveAccountStore(database: Database, key: Buffer): DriveAccountStore {
+/**
+ * @param reportError The host's error tracking: a token that does not decrypt means the
+ *   deployment's `DRIVE_TOKEN_KEY` changed, which no retry mends.
+ */
+export function createDriveAccountStore(
+  database: Database,
+  key: Buffer,
+  reportError: ReportError = ignoreErrors,
+): DriveAccountStore {
   async function row(): Promise<Record<string, unknown> | null> {
     let result = await database.exec(sql`SELECT * FROM drive_account WHERE id = 1`)
     return result.rows?.[0] ?? null
@@ -72,8 +81,9 @@ export function createDriveAccountStore(database: Database, key: Buffer): DriveA
 
       try {
         return decryptToken(String(current['refresh_token']), key)
-      } catch {
+      } catch (error) {
         console.error('[drive] the stored token does not decrypt; marking the account disconnected')
+        reportError(error, 'drive')
         await markDisconnected(when)
         return null
       }

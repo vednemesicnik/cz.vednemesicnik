@@ -16,7 +16,7 @@ import {
   PRINT_HANDOFF_JOB,
 } from '../../../domain/print-handoff.ts'
 import { routes } from '../../../routes.ts'
-import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
+import { bodyOf, intervalOf, isText, json, openRun, refusal } from '../job-request.ts'
 
 /**
  * The API that `SCRIPT__Publication__Print_Handoff` fills the print folders of the issues made in
@@ -240,17 +240,19 @@ export default function createPrintHandoffController(dependencies: PrintHandoffD
       async claim(context) {
         let refused = await refusal(context.request, dependencies)
         if (refused !== null) return refused
-        let interval = intervalOf(await bodyOf(context.request))
+        let body = await bodyOf(context.request)
+        let interval = intervalOf(body)
         if (interval === null) return json({ error: 'invalid_request' }, 400)
 
         let at = dependencies.now()
-        let runKey = crypto.randomUUID()
-        await dependencies.runs.start({
+        let run = await openRun(dependencies.runs, {
           at,
+          body,
           intervalMinutes: interval,
           job: PRINT_HANDOFF_JOB,
-          runKey,
         })
+        if ('refused' in run) return run.refused
+        let { runKey } = run
         let issues = await dependencies.handoffs.claim(runKey, at)
         return json({ copyProperty: COPY_PROPERTY, issues: issues.map(claimedIssue), runKey })
       },

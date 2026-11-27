@@ -22,6 +22,7 @@ import { checkIssueFolders } from './issue-folders.server.ts'
 import { logDriveFailure } from './log.server.ts'
 import { reservePublicMail } from './artworks-setup.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
+import type { ReportError } from '../report.server.ts'
 
 /**
  * Creating an article from the link for the newsroom (`20c`, `20d`).
@@ -50,6 +51,8 @@ export type ArticleSetup = {
   now(): Temporal.Instant
   /** Where the links in the welcome e-mail point: `APP_ORIGIN`. */
   origin: string
+  /** The host's error tracking, for a write that should never fail. */
+  reportError?: ReportError
   /** `ARTICLE_TEMPLATE_DOCUMENT_ID`. */
   templateId: string
   token(): Promise<DriveAccessToken>
