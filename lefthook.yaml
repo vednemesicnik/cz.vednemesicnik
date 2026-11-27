@@ -36,6 +36,13 @@ pre-push:
       root: apps/publikace/
       glob: "apps/publikace/**"
       run: pnpm typecheck
+    # The host's half of its contract with createPublikace, which Publikace's typecheck
+    # holds (app/host-contract.test.ts); `root` above would filter these files out.
+    publikace-host-contract:
+      glob:
+        - "server/start-publikace.ts"
+        - "server/publikace-environment.ts"
+      run: pnpm --filter publikace typecheck
     publikace-test:
       root: apps/publikace/
       glob: "apps/publikace/**"
