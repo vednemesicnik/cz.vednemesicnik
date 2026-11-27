@@ -99,6 +99,13 @@ said it would not — a state, a limit, an endpoint, a job, a boundary — the d
 the code here, and the deviation is named in the Finish report. A work-log entry the plan
 calls for is written in this branch too (`/log-work`).
 
+**A gated change is gated everywhere.** When the plan's _Release_ puts the change behind the
+app's **Release gate**, every surface it adds calls the gate's helper — the UI hides it and its
+route or action answers 404 in production — and a migration only expands; dropping the old
+structure is a contract issue of its own
+([docs/\_branching-model.md](../../../docs/_branching-model.md) § Unreleased work behind a
+gate, § Migrations: expand, then contract). The first issue that needs the helper adds it, by the app's rules.
+
 When the plan left a fork open, a discovery invalidates its approach, or a schema, migration or
 public-contract change turns up that the plan didn't anticipate, **decide** per
 [decide-and-inform](../../rules/decide-and-inform/RULE.md) and name the decision in the Finish

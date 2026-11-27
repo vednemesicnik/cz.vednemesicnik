@@ -113,9 +113,9 @@ describes, then give the verdict.
   citations, 8–9 its security section, plus acceptance-criteria checkboxes. It names its type —
   _Bug_, _Feature_ or _Task_ — and carries its app's label, `web` or `publikace` (both for the
   host or the repository), in the same `gh issue create`, and, when the app's Issue weighing names a project, it is added
-  there with the priority you decide
-  ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and status,
-  § Ordering by a project) — which sections of the written design it changes and in what words,
+  there with the priority you decide, and to the milestone of the version the weighing puts it
+  in ([\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and status,
+  § Ordering by a project, § Planning a version) — which sections of the written design it changes and in what words,
   and which review finding it resolves: the documents change in the same PR as the code. Before
   writing, put the three questions of § Filing an issue to it: an open issue that carries the work
   gets a comment instead (its title rewritten if the scope widens); work the size of two PRs is

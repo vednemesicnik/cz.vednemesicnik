@@ -247,6 +247,25 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Ordering by a project). The
   skill filing an issue adds it to the project and decides its priority itself.
 
+  Publikace plans each version as a milestone
+  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Planning a version), and the
+  priority fills it: the current one, **`publikace-v1.0.0`**, holds every issue with P1 or P2
+  and none with P3, and moving an issue between P2 and P3 moves it in or out in the same step.
+  Once the release naming it closes it, this guide names the next version the priorities are
+  weighed against.
+
+  A version moves ([docs/\_branching-model.md](../../docs/_branching-model.md) § Versions) by
+  what the release does to the newsroom and the Apps Script jobs: a **patch** carries only fixes
+  or only gated work; a **minor** turns at least one new thing on that neither the newsroom nor
+  the jobs must change for; a **major** is something the newsroom has to relearn, an
+  incompatible change to the API the jobs call, or a data migration that needs somebody to act,
+  and is planned as its own milestone (`publikace-v2.0.0`) whose work waits behind the gate.
+
+- **Release gate** — `isUnreleased()`, true unless `NODE_ENV` is `production`, the one call
+  that hides unreleased work in production and makes its route or action answer 404
+  ([docs/\_branching-model.md](../../docs/_branching-model.md) § Unreleased work behind a gate).
+  The first issue that needs it adds it.
+
 - **Traps** — § Things that will bite you below; above all: an applied migration is never
   edited (the journal keeps its checksum and refuses a changed history), and `oxfmt` formats
   Markdown while the pre-commit hook globs only code, so run `pnpm format` after a docs change or

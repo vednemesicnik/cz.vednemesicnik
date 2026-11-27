@@ -43,7 +43,12 @@ What the repository's workflow skills (`/plan-issue`, `/implement-issue`, `/ship
 - **Rules** — the web's rules (§ Agent Rules below) and the repository's shared rules; the
   guidance skills `general-guidance`, `component-authoring`, `react-router`, `prisma-*` and
   `modern-web-guidance` (§ Agent Skills).
-- **Issue weighing** — the repository's three questions alone; the web has no release label.
+- **Issue weighing** — the repository's three questions alone; the web has no release label,
+  and no milestones, since it is tagged by date.
+- **Release gate** — `isUnreleased()` in `app/utils/is-unreleased.ts`, true unless `NODE_ENV`
+  is `production`, the one call that hides unreleased work in production and makes its loader
+  or action answer 404 ([docs/\_branching-model.md](../../docs/_branching-model.md)
+  § Unreleased work behind a gate). The first issue that needs it adds it.
 - **Traps** — Node 26, or the seed and the runtime database fail on better-sqlite3's ABI;
   after an `nvm` switch lefthook can die with `env: node` (reinstall the hooks);
   `prisma migrate dev` and `reset` are consent-guarded for agents, so the user runs them;

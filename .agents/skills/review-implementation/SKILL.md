@@ -49,7 +49,8 @@ the review runs on the local diff. `/ship-issue` runs the same review as its Pha
    every hunk in a fresh context — the session that wrote the code does not grade its own
    work — against the rules, `AGENTS.md`, the work log and the issue's acceptance
    criteria. Give it the issue number, the base (`dev`, or the parent branch when stacked),
-   the app and the design file, if any. On a large diff, spawn one per area in parallel and say which
+   the app, the design file, if any, and whether the plan puts the change behind the app's
+   **Release gate**. On a large diff, spawn one per area in parallel and say which
    paths each one owns.
 
    There is no PR yet, so not the `code-review:code-review` plugin skill — it reads an

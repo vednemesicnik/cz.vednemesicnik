@@ -18,6 +18,12 @@
      serve it (#1082). Date-style applications (the web) are tagged by the merge day and need
      no line. See docs/_branching-model.md § Versions. -->
 
+## Gates
+
+<!-- Unreleased work hidden in production: the gates still on dev, and the ones this release
+     adds or removes, per application. "None" when there are none. See
+     docs/_branching-model.md § Unreleased work behind a gate. -->
+
 ## Deploy expectation
 
 <!-- Does this release include a Prisma migration (apps/web/prisma/migrations/**)?

@@ -130,6 +130,24 @@ app's Issue weighing says what they mean) and a `Status` field (Todo, In Progres
 An application without a project (the web, for now) orders by the three questions above and its
 label alone. A new project belongs in its application's `AGENTS.md`, never in a skill.
 
+## Planning a version
+
+Every application tagged by semver (its style in `RELEASE_STYLES`, `scripts/release-version.ts`)
+plans each version as a GitHub milestone titled after the tag, `<app>-vX.Y.Z`. The milestone
+holds the issues that version needs, the one that turns its gated work on included
+([\_branching-model.md](_branching-model.md) § Unreleased work behind a gate), and the release
+whose tag matches closes it. An application tagged by date (the web) has no milestones.
+
+- **Filling it.** The application's **Issue weighing** says which issues go in (Publikace: every
+  P1 and P2 of its project, no P3). Whoever sets or changes what puts an issue in sets the
+  milestone in the same step: `--milestone "<title>"` on `gh issue create`,
+  `gh issue edit <n> --milestone "<title>"`, or `--remove-milestone` when the issue leaves it.
+  Both take the title, so a milestone's number is never written into a skill.
+- **Reading it.** `/next-issue` says how many of its issues are open and closed and fixes an
+  issue whose weighing and milestone disagree.
+- **Closing it.** `/release-pr` names a version only once its milestone has no open issue, and
+  closes the milestone after the merge. The application's guide then names the next one.
+
 ## Where each one stops, and why
 
 The gates are the point of the sequence. A skill that ran past its gate would be deciding

@@ -130,7 +130,8 @@ change to that file; only what is left becomes a new issue — opened with its t
 its app's label in the same command (`gh issue create --type Bug|Feature|Task --label web|publikace`;
 both labels for the host or the repository), titled as a plain sentence, never a Conventional
 Commit, and weighed by the app's **Issue weighing** — when it names a project, the new issue is
-added to it with the priority you decide (§ Ordering by a project). Do not ask the user which to file: you
+added to it with the priority you decide (§ Ordering by a project), and to the milestone of the
+version the weighing puts it in (§ Planning a version). Do not ask the user which to file: you
 hold the context. Ask only when an item turns on something only they know, with your
 recommendation first. Report one line per item: filed as #n, added to #n, or left out and why.
 
@@ -156,6 +157,9 @@ order, and a new issue is recommended only when the first three are empty:
    when it names a project, in the project's order (priority, then age, blockers still holding),
    read with `gh project item-list <n> --owner vednemesicnik --format json`, with the
    reason in a sentence — unblocked, adjacent to what just shipped, or blocking something else.
+   When the app plans versions as milestones, say how many of the current one's issues are open
+   and closed (`gh issue list --milestone "<title>" --state all --limit 200 --json state`), and
+   fix an open issue whose weighing and milestone disagree (§ Planning a version).
    Check each candidate's blocker rather than assuming it: a hand step, a decision that is the
    user's, a merged PR waiting on a manual check. Say that 1–3 are empty.
 
