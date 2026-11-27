@@ -2,7 +2,7 @@ import type { Handle, RemixNode } from 'remix/component'
 
 export type DialogProps = {
   children?: RemixNode
-  /** `360px` for a question, `460px` for a dialog with a field (`14b`, `11d`). */
+  /** The width the screen's drawing gives it on a computer (`02d` 460, `12z` 480); a phone narrows it. */
   maxWidth: string
 }
 
