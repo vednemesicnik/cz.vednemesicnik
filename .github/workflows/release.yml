@@ -15,7 +15,9 @@ name: Release
 # the API alone.
 #
 # **A failed or cancelled run is re-run** from the Actions page: the event is the same, a tag
-# already on the merge commit counts as done and a missing Release is published.
+# already on the merge commit counts as done and a missing Release is published. An
+# application that failed its decision fails again: it is tagged by hand
+# (docs/_branching-model.md § Versions).
 
 on:
   pull_request:
@@ -89,6 +91,7 @@ jobs:
           [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Not a commit: '$SHA'"; exit 1; }
           [[ "$NUMBER" =~ ^[0-9]+$ ]] || { echo "Not a PR number: '$NUMBER'"; exit 1; }
 
+          stale=''
           count=$(jq 'length' <<<"$RELEASES")
           for ((i = 0; i < count; i++)); do
             app=$(jq -r ".[$i].app" <<<"$RELEASES")
@@ -110,7 +113,8 @@ jobs:
               fi
               if [[ "$target" != "$SHA" ]]; then
                 echo "$tag already tags $target, not $SHA."
-                exit 1
+                stale="$stale $app"
+                continue
               fi
               echo "$tag is already on $SHA."
             else
@@ -134,7 +138,11 @@ jobs:
 
           if [[ -n "$FAILED" ]]; then
             [[ "$FAILED" =~ ^[a-z][a-z0-9-]*( [a-z][a-z0-9-]*)*$ ]] || { echo "Not applications: '$FAILED'"; exit 1; }
-            echo "Not tagged: $FAILED. The release-decide job's summary says why;"
-            echo "docs/_branching-model.md § Versions says how to tag it by hand."
+          fi
+          not_tagged="$FAILED$stale"
+          if [[ -n "${not_tagged// /}" ]]; then
+            echo "Not tagged:$([[ -n "$FAILED" ]] && echo " $FAILED")$stale. The log above and the"
+            echo "release-decide job's summary say why; docs/_branching-model.md § Versions says how"
+            echo "to tag it by hand."
             exit 1
           fi

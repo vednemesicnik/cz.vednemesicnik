@@ -138,17 +138,20 @@ tag and the Release through the API.
 
 **When a run fails or is cancelled**, re-run it from the Actions page: the event is the same,
 a tag already on the merge commit counts as done, and a missing Release is published. Merges
-into `main` queue one run at a time, and GitHub keeps one waiting run: a third merge while one
-runs and one waits cancels the waiting one. Re-run it only when no later merge has been tagged
-since; a later tag covers it (its notes include those commits), and the re-run skips that
-application.
+into `main` queue one run at a time, and GitHub keeps one waiting run: a third merge (or a
+re-run) while one runs and one waits cancels the waiting one, so re-run when nothing waits. A
+re-run after a later merge was tagged skips the application that tag covers, since its notes
+already include those commits.
 
 **When one application fails after the merge** (a hotfix took the patch the release named),
 the others are tagged and the run fails for that one. The body is frozen in the event, so a
-re-run fails again: tag it by hand, with `--latest=false` for every application but the web:
+re-run fails again: tag it by hand with the next version after the newest tag (the one the
+hotfix took), with `--latest=false` for every application but the web, and each `@name` in
+backticks so the Release mentions nobody:
 
 ```bash
-git log --no-merges --format='- %s (%h)' <previous-tag>..<merge-sha> -- apps/<app>/ > notes.md
+git log --no-merges --format='- %s (%h)' <previous-tag>..<merge-sha> -- apps/<app>/ |
+  sed -E 's/(^|[^[:alnum:]_`])@([[:alnum:]_][[:alnum:]_./-]*)/\1`@\2`/g' > notes.md
 gh release create <app>-v<version> --target <merge-sha> --title <app>-v<version> \
   --notes-file notes.md --latest=false
 ```
