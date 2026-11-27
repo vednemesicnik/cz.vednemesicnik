@@ -9,6 +9,15 @@
 <!-- One bullet per shipped PR/change with #refs; group related PRs. -->
 -
 
+## Versions
+
+<!-- One line per semver application this release gives a version, as `- <app>-vX.Y.Z`:
+     the next patch, minor or major after its newest tag. The `release-version` check lists
+     what each changed application would get, and blocks a missing or wrong one. Publikace
+     has no tag yet: its first version is v1.0.0, named only in the release that has the host
+     serve it (#1082). Date-style applications (the web) are tagged by the merge day and need
+     no line. See docs/_branching-model.md § Versions. -->
+
 ## Deploy expectation
 
 <!-- Does this release include a Prisma migration (apps/web/prisma/migrations/**)?

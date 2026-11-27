@@ -19,7 +19,8 @@ should be **skipped**.
 ## After merge
 
 The push to `main` triggers `sync-dev.yml`, which opens a back-merge PR `main → dev`.
-Merge it (merge commit) to carry the fix into `dev`.
+Merge it (merge commit) to carry the fix into `dev`. `release.yml` tags each application the
+fix changed: a semver application gets its next patch, the web the day's date.
 
 ## Merge method
 

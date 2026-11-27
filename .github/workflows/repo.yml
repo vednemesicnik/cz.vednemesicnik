@@ -45,6 +45,7 @@ jobs:
               - 'server/**'
               - 'instrument.server.ts'
               - 'instrument.server.test.ts'
+              - 'scripts/**/*.ts'
               - 'tsconfig.json'
               - 'vitest.config.ts'
               - 'package.json'
