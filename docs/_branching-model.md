@@ -126,7 +126,7 @@ repository's "Latest" badge; the others do not.
 
 **Checked before the merge.** `.github/workflows/release-version.yml` (job `release-version`)
 runs the same script on every PR into `main`, again when its body is edited, and shows each
-application's tag in the run's summary. It fails when a changed semver application has no
+application's tag in the run's summary. The `branch-protection` ruleset requires it. It fails when a changed semver application has no
 version named, when a named version does not follow the newest tag or names an unchanged
 application, and when a date application is given one. On a PR into `dev` it only checks the
 styles.

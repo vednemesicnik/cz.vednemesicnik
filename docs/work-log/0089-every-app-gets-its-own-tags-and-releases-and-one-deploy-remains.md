@@ -44,8 +44,8 @@ on the merge commit counts as done.
   does.
 - Work in progress of one application stays off `dev`. A release takes everything that is on
   `dev`, and with it the other application's next tag.
-- `release-version` is not one of the ruleset's required checks unless Libor adds it. Without
-  it, a red gate does not block the merge.
+- `release-version` is a required check of the `branch-protection` ruleset (added 27 Nov
+  2026), so a red gate blocks the merge into `main` and `dev`.
 - Reasons to revisit:
   - releases so frequent that the one pending run per concurrency group loses tags;
   - an application that needs its version at runtime (Sentry releases, a version shown in the
