@@ -78,7 +78,7 @@ async function renderSettings(
     access.directory.listAccounts(),
     access.directory.listGroups(),
     driveAccount.store.state(),
-    Promise.all(JOBS.map(async (job) => ({ job, latest: await runs.latest(job.key) }))),
+    Promise.all(JOBS.map(async (job) => ({ job, snapshot: await runs.snapshot(job.key, now()) }))),
     proofreaders.find(),
   ])
   let today = now()
@@ -112,8 +112,8 @@ async function renderSettings(
       groups={groups}
       isProofreadersUnknownGroup={isProofreadersUnknownGroup}
       isRoleLost={state.isRoleLost}
-      jobsSummary={jobs.map(({ job, latest }) =>
-        settingsSummary(job, stateOfJob(job, latest, today), today),
+      jobsSummary={jobs.map(({ job, snapshot }) =>
+        settingsSummary(job, stateOfJob(job, snapshot.latest, today, snapshot), today),
       )}
       proofreaders={proofreadersAddress?.email ?? null}
       proofreadersForm={state.proofreadersForm}

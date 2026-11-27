@@ -1,16 +1,24 @@
 import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
 
-import { DETAILS_LABEL, HISTORY_FOOT, JOBS_TITLE, TRIGGER_WHO } from '../../../domain/jobs.ts'
+import {
+  DETAILS_LABEL,
+  HISTORY_FOOT,
+  JOBS_TITLE,
+  START_LABEL,
+  START_ONCE_TEXT,
+} from '../../../domain/jobs.ts'
 import { routes } from '../../../routes.ts'
 import { Callout } from '../../../ui/callout/component.tsx'
+import { CsrfField } from '../../../ui/csrf-field/component.tsx'
 import { Layout } from '../../../ui/layout/component.tsx'
 import type { PanelPerson } from '../../../ui/panel/component.tsx'
 import type { ToastMessage } from '../../../ui/toast/component.tsx'
 import type { DriveStatus } from '../../issues/overview-page.tsx'
 import { Document } from '../../document.tsx'
 
-export type JobHistoryItem = { event: string; time: string }
+/** One run: what came of it, when it started, and who started it (`historyWho`). */
+export type JobHistoryItem = { event: string; time: string; who: string }
 
 /**
  * While the job is _S chybou_: what holds, and the technical text when the job sent one. While
@@ -36,6 +44,11 @@ export type JobPageProps = {
   /** Said instead of the history when there is none (`13c`'s sentence). */
   neverText: string
   person: PanelPerson
+  /**
+   * _Spustit teď_ in the head, where it posts; `isOnce` adds the sentence that it runs the job
+   * once, for a job that is _Neběží_ (`14e`, `fbxo52ix`). `null` while the job runs.
+   */
+  start: { action: string; isOnce: boolean } | null
   toasts?: readonly ToastMessage[]
 }
 
@@ -61,6 +74,29 @@ const detailsStyle = css({
 
 const neverStyle = css({ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 })
 
+/* The title and _Spustit teď_ on one line, which wraps under the title on a phone (`14e`). */
+const headStyle = css({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '12px',
+  justifyContent: 'space-between',
+})
+
+const startStyle = css({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '8px 12px',
+  '& > p': { color: 'var(--text-secondary)', fontSize: '13px', margin: 0 },
+  '& > form': { display: 'contents' },
+})
+
+const START_ONCE_ID = 'start-once'
+
+/** The `from` of _Spustit teď_ on this page, which the browser comes back to. */
+export const START_FROM_JOB = 'job'
+
 /**
  * `/settings/jobs/{job}` (`14e`): what the job reported, one run a line, for the last days the
  * foot names. The technical text is the job's own and waits under a disclosure: the sentence above
@@ -68,7 +104,7 @@ const neverStyle = css({ color: 'var(--text-secondary)', fontSize: '14px', margi
  */
 export function JobPage(handle: Handle<JobPageProps>) {
   return () => {
-    let { callout, driveAccount, history, name, neverText, person, toasts } = handle.props
+    let { callout, driveAccount, history, name, neverText, person, start, toasts } = handle.props
 
     return (
       <Document title={name}>
@@ -84,9 +120,27 @@ export function JobPage(handle: Handle<JobPageProps>) {
               <span aria-hidden="true">‹</span>
               <span>{JOBS_TITLE}</span>
             </a>
-            <h1 class="vdm-page-title" style={{ margin: 0 }}>
-              {name}
-            </h1>
+            <div mix={headStyle}>
+              <h1 class="vdm-page-title" style={{ margin: 0 }}>
+                {name}
+              </h1>
+              {start === null ? null : (
+                <div mix={startStyle}>
+                  {start.isOnce ? <p id={START_ONCE_ID}>{START_ONCE_TEXT}</p> : null}
+                  <form action={start.action} method="post">
+                    <CsrfField />
+                    <input name="from" type="hidden" value={START_FROM_JOB} />
+                    <button
+                      aria-describedby={start.isOnce ? START_ONCE_ID : undefined}
+                      class="vdm-btn vdm-btn--outline vdm-btn--sm"
+                      type="submit"
+                    >
+                      {START_LABEL}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
             {callout === null ? null : (
               <Callout tone={callout.tone}>
                 {/* Inline, as the other Callouts write it: `css()` would lose to the design
@@ -135,7 +189,7 @@ export function JobPage(handle: Handle<JobPageProps>) {
                     <span class="vdm-history__time">{item.time}</span>
                     <span class="vdm-history__event">
                       {item.event}
-                      <span class="vdm-history__who"> · {TRIGGER_WHO}</span>
+                      <span class="vdm-history__who"> · {item.who}</span>
                     </span>
                   </li>
                 ))}

@@ -157,11 +157,14 @@ export function isDigestAlarm(record: JobRunRecord): boolean {
 
 /** The Callout over the history after a digest the Mailer did not confirm (`14e`). */
 export const UNCONFIRMED_CALLOUT_TITLE = tied`Odeslání přehledu se nepodařilo potvrdit.`
-/*
- * The drawing's text starts with _zvolte Spustit teď nebo_; the app has no such button yet, so
- * the sentence names only the way that exists.
+/** Its text, with both ways to another attempt (`14e`, `tlb36tk0`). */
+export const UNCONFIRMED_CALLOUT_TEXT = tied`Pro další pokus zvolte Spustit teď nebo počkejte na další plánovaný běh. Přehled se sestaví podle aktuálního stavu. Pokud první e-mail odešel, některá předání se mohou objevit podruhé.`
+
+/**
+ * Its text where the deployment cannot start the digest, which has no _Spustit teď_: the sentence
+ * names only the way that exists.
  */
-export const UNCONFIRMED_CALLOUT_TEXT = tied`Pro další pokus počkejte na další plánovaný běh. Přehled se sestaví podle aktuálního stavu. Pokud první e-mail odešel, některá předání se mohou objevit podruhé.`
+export const UNCONFIRMED_WAIT_CALLOUT_TEXT = tied`Pro další pokus počkejte na další plánovaný běh. Přehled se sestaví podle aktuálního stavu. Pokud první e-mail odešel, některá předání se mohou objevit podruhé.`
 
 /** The Callout's text while the job is _Neběží_, its window instead of an interval (`14e`). */
 export const STOPPED_DIGEST_TEXT = tied`Úloha má běžet denně mezi 7:00 a 8:00. Dnes se úloha neohlásila.`

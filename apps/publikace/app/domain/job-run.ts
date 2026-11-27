@@ -17,11 +17,16 @@ export type JobHealth =
   /** Running on its trigger. `next` is `null` once the estimate has passed. */
   | { kind: 'running'; lastStartedAt: Temporal.Instant; next: Temporal.Instant | null }
 
+/** Who started a run by hand (`14e`), as they were signed in. */
+export type StartedBy = { email: string; name: string }
+
 /** A run as its job reported it: open until the job says how it ended. */
 export type JobRunRecord = JobRun & {
   error: string | null
   finishedAt: Temporal.Instant | null
   outcome: 'failed' | 'ok' | null
+  /** Who started it by hand; absent or `null` for a run its trigger started. */
+  startedBy?: StartedBy | null
   /** What the run reported beyond its outcome, as JSON in the job's own shape (`14e`). */
   summary: string | null
 }
@@ -84,13 +89,24 @@ export function nextHourlyWindow(
   }
 }
 
+/**
+ * What decides a job's tag beside its latest run. A run started by hand says nothing about the
+ * trigger, so _Neběží_ and the next run come from the latest scheduled run alone; a start that
+ * waits for its run makes the job _Běží_ from the moment it was asked for (`14d`).
+ */
+export type JobStateFacts = {
+  pendingStartAt?: Temporal.Instant | null
+  /** The latest run its trigger started; when absent, `latest` is taken as one. */
+  scheduled?: JobRun | null
+}
+
 /** The tag of a job in `14d`, from its latest run. */
 export type JobState =
   /** _Zatím se neohlásila_. */
   | { kind: 'never' }
   /** _Neběží_: no run reported in two intervals, whatever the last one did. */
   | { kind: 'stopped'; lastStartedAt: Temporal.Instant }
-  /** _Běží_: a run is open and still within its time. */
+  /** _Běží_: a run is open and still within its time, or a start by hand waits for its run. */
   | { kind: 'running'; startedAt: Temporal.Instant }
   /**
    * _S chybou_: the run reported a failure (`isUnreported` false), or stayed open past the time a
@@ -184,29 +200,35 @@ export function isOverdue(run: JobRunRecord, now: Temporal.Instant): boolean {
 }
 
 /**
- * The job's tag (`14d`). _Neběží_ wins over what the last run did, as `jobHealth()` decides it;
- * the estimate of the next run is the same one, and _S chybou_ keeps it for the detail (`14e`).
+ * The job's tag (`14d`). A run under way or a start waiting for its run is _Běží_. Otherwise
+ * _Neběží_ wins over what the last run did, as `jobHealth()` decides it from the latest scheduled
+ * run; the estimate of the next run is the same one, and _S chybou_ keeps it for the detail
+ * (`14e`). A job only ever started by hand has no estimate and is never _Neběží_.
  */
 export function jobState(
   latest: JobRunRecord | null,
   now: Temporal.Instant,
   window?: JobWindow,
+  facts: JobStateFacts = {},
 ): JobState {
-  let health = jobHealth(latest, now, window)
-  if (latest === null || health.kind === 'never') return { kind: 'never' }
-  if (health.kind === 'stopped') return health
-  if (latest.finishedAt === null && !isOverdue(latest, now)) {
+  if (latest !== null && latest.finishedAt === null && !isOverdue(latest, now)) {
     return { kind: 'running', startedAt: latest.startedAt }
   }
+  let pendingStartAt = facts.pendingStartAt ?? null
+  if (pendingStartAt !== null) return { kind: 'running', startedAt: pendingStartAt }
+  if (latest === null) return { kind: 'never' }
+  let health = jobHealth(facts.scheduled === undefined ? latest : facts.scheduled, now, window)
+  if (health.kind === 'stopped') return health
+  let next = health.kind === 'running' ? health.next : null
   if (latest.finishedAt === null || latest.outcome === 'failed') {
     return {
       isUnreported: latest.finishedAt === null,
       kind: 'failed',
       lastStartedAt: latest.startedAt,
-      next: health.next,
+      next,
     }
   }
-  return { kind: 'ok', lastStartedAt: latest.startedAt, next: health.next }
+  return { kind: 'ok', lastStartedAt: latest.startedAt, next }
 }
 
 /** Runs in a row that failed before the banner over the screens shows (`14d`): one is not enough. */
@@ -229,16 +251,25 @@ export function isFailingRepeatedly(runs: readonly JobRunRecord[], now: Temporal
 
 /**
  * Whether the job stands in the banner over every editor screen (`14i`): its latest runs failed
- * twice in a row, or it is _Neběží_. `runs` come newest first, so the first is the latest. A job
- * that never reported stays out: it has no interval to miss, and until its trigger runs as
- * `publikace.app@` the banner would stand from the deployment on (`r1oqllvb`).
+ * twice in a row, or it is _Neběží_. `runs` come newest first. _Neběží_ is read from `scheduled`,
+ * the latest run its trigger started, or else the first such run in `runs`: a run by hand mends no
+ * trigger. A job that never reported stays out: it has no interval to miss, and until its trigger
+ * runs as `publikace.app@` the banner would stand from the deployment on (`r1oqllvb`).
  */
 export function isInJobsBanner(
   runs: readonly JobRunRecord[],
   now: Temporal.Instant,
-  rules: { isAlarm?: (run: JobRunRecord) => boolean; window?: JobWindow } = {},
+  rules: {
+    isAlarm?: (run: JobRunRecord) => boolean
+    scheduled?: JobRun | null
+    window?: JobWindow
+  } = {},
 ): boolean {
-  if (jobHealth(runs[0] ?? null, now, rules.window).kind === 'stopped') return true
+  let scheduled =
+    rules.scheduled === undefined
+      ? (runs.find((run) => (run.startedBy ?? null) === null) ?? null)
+      : rules.scheduled
+  if (jobHealth(scheduled, now, rules.window).kind === 'stopped') return true
   if (rules.isAlarm === undefined) return isFailingRepeatedly(runs, now)
   /* A job with its own rule stands in the banner from the first run that alarms (`14i`). */
   let latest = runs.find((run) => run.finishedAt !== null || isOverdue(run, now))

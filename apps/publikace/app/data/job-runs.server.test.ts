@@ -20,6 +20,7 @@ describe('the job run store', () => {
         intervalMinutes: 30,
         outcome: null,
         startedAt: AT,
+        startedBy: null,
         summary: null,
       })
 
@@ -36,6 +37,7 @@ describe('the job run store', () => {
         intervalMinutes: 30,
         outcome: 'failed',
         startedAt: AT,
+        startedBy: null,
         summary: '{"kind":"unconfirmed"}',
       })
     } finally {
@@ -84,6 +86,98 @@ describe('the job run store', () => {
       assert.deepEqual(
         latest.map((run) => run.startedAt),
         [starts[3], starts[2], starts[1]],
+      )
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('opens one run for a start by hand, of its own job, and names who asked for it', async () => {
+    let app = await createTestApp()
+    try {
+      let runs = createJobRunStore(app.database)
+      let marie = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+      let since = AT.subtract({ minutes: 10 })
+      let request = { at: AT, by: marie, pendingSince: since }
+      await runs.start({
+        at: AT.subtract({ hours: 1 }),
+        intervalMinutes: 30,
+        job: 'artwork-replies',
+        runKey: 'r-0',
+      })
+      assert.equal(
+        await runs.requestStart({ ...request, job: 'artwork-replies', startKey: 's-1' }),
+        true,
+      )
+      /* One start waits at a time. */
+      assert.equal(
+        await runs.requestStart({ ...request, job: 'artwork-replies', startKey: 's-2' }),
+        false,
+      )
+      assert.equal((await runs.pendingStart('artwork-replies', since))?.toString(), AT.toString())
+      assert.equal(await runs.pendingStart('artwork-replies', AT.add({ minutes: 1 })), null)
+
+      let later = AT.add({ minutes: 1 })
+      let opened = { at: later, intervalMinutes: 30, startKey: 's-1' }
+      assert.equal(await runs.start({ ...opened, job: 'print-handoff', runKey: 'r-x' }), false)
+      assert.equal(await runs.start({ ...opened, job: 'artwork-replies', runKey: 'r-1' }), true)
+      assert.equal(await runs.start({ ...opened, job: 'artwork-replies', runKey: 'r-2' }), false)
+      assert.equal(
+        await runs.start({ ...opened, job: 'artwork-replies', runKey: 'r-3', startKey: 'nope' }),
+        false,
+      )
+      assert.equal(await runs.latest('print-handoff'), null)
+
+      assert.deepEqual((await runs.latest('artwork-replies'))?.startedBy, marie)
+      assert.equal(
+        (await runs.latestScheduled('artwork-replies'))?.startedAt.toString(),
+        AT.subtract({ hours: 1 }).toString(),
+      )
+      assert.equal(await runs.pendingStart('artwork-replies', since), null)
+      assert.deepEqual(
+        (await runs.history('artwork-replies', since)).map((run) => run.startedBy?.name ?? null),
+        ['Marie Horáková'],
+      )
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('lets a start the script refused wait no more, and a new one be asked for', async () => {
+    let app = await createTestApp()
+    try {
+      let runs = createJobRunStore(app.database)
+      let by = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+      let since = AT.subtract({ minutes: 10 })
+      await runs.requestStart({
+        at: AT,
+        by,
+        job: 'artwork-replies',
+        pendingSince: since,
+        startKey: 's-1',
+      })
+      await runs.markStartFailed('s-1', AT)
+      assert.equal(await runs.pendingStart('artwork-replies', since), null)
+      assert.equal(
+        await runs.requestStart({
+          at: AT,
+          by,
+          job: 'artwork-replies',
+          pendingSince: since,
+          startKey: 's-2',
+        }),
+        true,
+      )
+      /* A run that came after all still counts as that start's. */
+      assert.equal(
+        await runs.start({
+          at: AT,
+          intervalMinutes: 30,
+          job: 'artwork-replies',
+          runKey: 'r-1',
+          startKey: 's-1',
+        }),
+        true,
       )
     } finally {
       await app.close()

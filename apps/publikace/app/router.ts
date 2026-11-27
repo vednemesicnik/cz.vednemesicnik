@@ -39,6 +39,7 @@ import {
   type GoogleCredentials,
   groupMembershipEndpoint,
   issuesFolderId,
+  jobStartEndpoints,
   mailSendEndpoint,
   publicMailPerDay,
   registrySpreadsheetId,
@@ -84,6 +85,7 @@ import { createIssueFiles } from './drive/issue-files.server.ts'
 import { createLock } from './drive/one-at-a-time.server.ts'
 import type { RecordQueue } from './drive/record-queue.server.ts'
 import { createRecordSheets } from './drive/sheets.server.ts'
+import { createJobStarter, type JobStarter } from './jobs/job-starter.server.ts'
 import { createMailer, type Mailer, mailerUnavailable } from './mail/mailer.server.ts'
 import { loadAccess } from './middleware/access.server.ts'
 import { loadArticles } from './middleware/articles.server.ts'
@@ -169,6 +171,8 @@ export type AppDependencies = {
   jobAccount?: string
   /** Checks a call from a background job. Defaults to Google's keys on `fetch`. */
   verifyJobToken?: IdentityTokenVerifier
+  /** _Spustit teď_. Defaults to the `doPost` of each job in `GAS_<JOB>_URL`/`_SECRET`. */
+  jobStarter?: JobStarter
 }
 
 /** What a setup reads; the assets serve pages only. */
@@ -535,7 +539,12 @@ export function createAppRouter(dependencies: AppDependencies) {
   )
   router.map(
     routes.settings.jobs,
-    createJobsController(signedInUntil, { proofreaders, runs: jobRuns }),
+    createJobsController(signedInUntil, {
+      proofreaders,
+      runs: jobRuns,
+      starter:
+        dependencies.jobStarter ?? createJobStarter(jobStartEndpoints(dependencies.environment)),
+    }),
   )
 
   return router

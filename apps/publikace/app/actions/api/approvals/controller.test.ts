@@ -2,6 +2,8 @@ import * as assert from 'remix/assert'
 import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
+import { createJobRunStore } from '../../../data/job-runs.server.ts'
+
 import { appOrigin } from '../../../auth/environment.server.ts'
 import { createArticleStore } from '../../../data/articles.server.ts'
 import {
@@ -520,6 +522,41 @@ describe('Poslat žádost znovu', () => {
         issueName: 'VDM_2026_7',
         kind: 'closed',
       })
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+/** A start by hand of the job, as `/settings/jobs` records it before the `doPost`. */
+async function requested(app: TestApp, job: string): Promise<string> {
+  let startKey = crypto.randomUUID()
+  let at = Temporal.Now.instant()
+  let by = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  await createJobRunStore(app.database).requestStart({
+    at,
+    by,
+    job,
+    pendingSince: at.subtract({ minutes: 10 }),
+    startKey,
+  })
+  return startKey
+}
+
+describe('a run started by hand (approvals)', () => {
+  it('opens the run of the start its key names, and refuses a key it does not know', async () => {
+    let app = await createTestApp()
+    try {
+      let unknown = await call(app, CLAIM, { intervalMinutes: 30, startKey: 'unknown' })
+      assert.equal(unknown.status, 409)
+      assert.deepEqual(await unknown.json(), { error: 'unknown_start' })
+      let runs = createJobRunStore(app.database)
+      assert.equal(await runs.latest('approval-send'), null)
+
+      let startKey = await requested(app, 'approval-send')
+      let response = await call(app, CLAIM, { intervalMinutes: 30, startKey })
+      assert.equal(response.status, 200)
+      assert.equal((await runs.latest('approval-send'))?.startedBy?.name, 'Marie Horáková')
     } finally {
       await app.close()
     }

@@ -21,6 +21,7 @@ import type { Link } from './domain/link.ts'
 import { now } from './domain/time.ts'
 import { createFakeDrive, type FakeDrive } from './drive/fake-drive.server.ts'
 import type { IdentityTokenVerifier, VerifiedIdentity } from './auth/identity-token.server.ts'
+import type { JobStarter } from './jobs/job-starter.server.ts'
 import type { MailMessage } from './mail/mailer.server.ts'
 import type { RecordQueue } from './drive/record-queue.server.ts'
 import { type AppDependencies, createAppRouter, createRecordQueue } from './router.ts'
@@ -118,6 +119,12 @@ export type TestApp = {
    * given, or with one that may pass on a later try.
    */
   failMail(failure: boolean | string): void
+  /** While set, every job's `doPost` refuses _Spustit teď_ with the error given. */
+  failJobStart(failure: boolean): void
+  /** Every _Spustit teď_ the app sent a job's `doPost`, in order, taken or not. */
+  jobStarts: { job: string; startKey: string }[]
+  /** Called with each start the `doPost` took, as the job's one-off trigger would run it. */
+  onJobStart(handler: ((start: { job: string; startKey: string }) => void) | null): void
   /** The router itself, for a request that is not a browser's: `pnpm app:fake` serves it. */
   fetch(request: Request): Promise<Response>
   /** Every message the app handed the Mailer, in order, sent or not. */
@@ -173,7 +180,7 @@ export type TestBrowser = {
 export async function createTestApp(
   overrides: Pick<
     Partial<AppDependencies>,
-    'environment' | 'googleCredentials' | 'registrySpreadsheetId'
+    'environment' | 'googleCredentials' | 'jobStarter' | 'registrySpreadsheetId'
   > = {},
 ): Promise<TestApp> {
   let environment = overrides.environment ?? TEST_ENVIRONMENT
@@ -193,6 +200,19 @@ export async function createTestApp(
   ])
   let mail: MailMessage[] = []
   let mailFailure: string | null = null
+  let jobStarts: { job: string; startKey: string }[] = []
+  let isJobStartFailing = false
+  let jobStartHandler: ((start: { job: string; startKey: string }) => void) | null = null
+  /* Every job's `doPost` is known, as in a deployment that set them all. */
+  let jobStarter: JobStarter = {
+    canStart: () => true,
+    async start(job, startKey) {
+      jobStarts.push({ job, startKey })
+      if (isJobStartFailing) return { error: 'the fake doPost is failing', ok: false }
+      jobStartHandler?.({ job, startKey })
+      return { ok: true }
+    },
+  }
   let dependencies: AppDependencies = {
     assets: await assets,
     checkMembership,
@@ -210,6 +230,7 @@ export async function createTestApp(
       return { error: mailFailure, ok: false }
     },
     jobAccount: TEST_DRIVE_ACCOUNT,
+    jobStarter,
     registrySpreadsheetId: TEST_REGISTRY,
     templateId: TEST_TEMPLATE,
     verifyJobToken: fakeIdentityVerifier,
@@ -327,6 +348,13 @@ export async function createTestApp(
     failMail(failure) {
       mailFailure =
         failure === false ? null : failure === true ? 'the fake Mailer is failing' : failure
+    },
+    failJobStart(failure) {
+      isJobStartFailing = failure
+    },
+    jobStarts,
+    onJobStart(handler) {
+      jobStartHandler = handler
     },
     fetch: (request) => router.fetch(request),
     mail,

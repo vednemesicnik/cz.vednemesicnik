@@ -163,3 +163,54 @@ describe('isInJobsBanner', () => {
     assert.equal(isInJobsBanner([run(70, 'failed'), run(100, 'failed')], NOW), true)
   })
 })
+
+describe('a start by hand', () => {
+  const MARIE = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+
+  it('makes the job Běží from the moment it was asked for, until its run reports', () => {
+    let asked = NOW.subtract({ minutes: 1 })
+    assert.deepEqual(jobState(run(20, 'ok'), NOW, undefined, { pendingStartAt: asked }), {
+      kind: 'running',
+      startedAt: asked,
+    })
+    assert.deepEqual(jobState(null, NOW, undefined, { pendingStartAt: asked }), {
+      kind: 'running',
+      startedAt: asked,
+    })
+  })
+
+  it('takes its outcome from the run by hand, and Neběží from the trigger alone', () => {
+    let byHand = { ...run(5, 'ok'), startedBy: MARIE }
+    let scheduled = run(90, 'ok')
+    assert.deepEqual(jobState(byHand, NOW, undefined, { scheduled }), {
+      kind: 'stopped',
+      lastStartedAt: scheduled.startedAt,
+    })
+    let recent = run(20, 'failed')
+    assert.deepEqual(
+      jobState({ ...run(5, 'failed'), startedBy: MARIE }, NOW, undefined, { scheduled: recent }),
+      {
+        isUnreported: false,
+        kind: 'failed',
+        lastStartedAt: NOW.subtract({ minutes: 5 }),
+        /* The estimate is the trigger's, from its last run 20 minutes ago. */
+        next: Temporal.Instant.from('2026-11-19T11:10:00Z'),
+      },
+    )
+  })
+
+  it('leaves a job only ever started by hand without an estimate, and never Neběží', () => {
+    let byHand = { ...run(120, 'ok'), startedBy: MARIE }
+    assert.deepEqual(jobState(byHand, NOW, undefined, { scheduled: null }), {
+      kind: 'ok',
+      lastStartedAt: byHand.startedAt,
+      next: null,
+    })
+  })
+
+  it('keeps a job whose trigger went quiet in the banner after a good run by hand', () => {
+    let runs = [{ ...run(5, 'ok'), startedBy: MARIE }, run(90, 'ok')]
+    assert.equal(isInJobsBanner(runs, NOW), true)
+    assert.equal(isInJobsBanner(runs, NOW, { scheduled: run(10, 'ok') }), false)
+  })
+})

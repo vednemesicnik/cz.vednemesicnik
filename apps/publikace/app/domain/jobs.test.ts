@@ -2,10 +2,14 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import type { JobRunRecord, JobState } from './job-run.ts'
+import { PROOFREADING_DIGEST_JOB, writeDigestRun } from './proofreading-digest.ts'
 import {
+  canStartFromList,
+  canStartFromPage,
   failedCalloutText,
   failingJobsBanner,
   historyEvent,
+  historyWho,
   historyTime,
   jobByKey,
   jobTag,
@@ -178,5 +182,64 @@ describe('the history of a job (14e)', () => {
       { kind: 'ok', lastStartedAt: LAST, next: NEXT },
     ]
     for (let state of others) assert.equal(stoppedCalloutText(state, 30, TODAY), null)
+  })
+})
+
+describe('Spustit teď (14d, 14e)', () => {
+  const MARIE = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  const RUN: JobRunRecord = {
+    error: null,
+    finishedAt: LAST.add({ minutes: 2 }),
+    intervalMinutes: 30,
+    outcome: 'ok',
+    startedAt: LAST,
+    summary: null,
+  }
+
+  it('stands in the list only on a job that runs well or never reported, and on its page but while it runs', () => {
+    let states: JobState[] = [
+      { kind: 'never' },
+      { kind: 'ok', lastStartedAt: LAST, next: null },
+      { isUnreported: false, kind: 'failed', lastStartedAt: LAST, next: null },
+      { kind: 'stopped', lastStartedAt: LAST },
+      { kind: 'running', startedAt: LAST },
+    ]
+    assert.deepEqual(states.map(canStartFromList), [true, true, false, false, false])
+    assert.deepEqual(states.map(canStartFromPage), [true, true, true, true, false])
+  })
+
+  it('says a run started by hand so before its result, and names who started it', () => {
+    let byHand = { ...RUN, startedBy: MARIE }
+    assert.equal(historyEvent(JOB, byHand, TODAY), 'Spuštěna ručně, skončila bez chyby')
+    assert.equal(historyWho(byHand), 'Marie Horáková')
+    assert.equal(historyWho(RUN), 'systém')
+    assert.equal(historyWho({ ...RUN, startedBy: null }), 'systém')
+  })
+
+  it('gives the digest started by hand its own sentence before the result', () => {
+    let digest = JOBS.find((job) => job.key === PROOFREADING_DIGEST_JOB)!
+    let sent = {
+      ...RUN,
+      startedBy: MARIE,
+      summary: writeDigestRun({ cancelled: 0, handedOver: 1, kind: 'sent', waiting: 0 }),
+    }
+    assert.match(historyEvent(digest, sent, TODAY), /^Spuštěno ručně\. Přehled odeslán\./)
+  })
+
+  it('offers Spustit teď in the Callout of an unconfirmed digest only where the page has it', () => {
+    let digest = JOBS.find((job) => job.key === PROOFREADING_DIGEST_JOB)!
+    let failed = {
+      ...RUN,
+      outcome: 'failed' as const,
+      summary: writeDigestRun({ kind: 'unconfirmed' }),
+    }
+    assert.match(
+      digest.failedCalloutOf?.(failed, '', true)?.text ?? '',
+      /^Pro další pokus zvolte Spustit teď nebo počkejte/,
+    )
+    assert.match(
+      digest.failedCalloutOf?.(failed, '', false)?.text ?? '',
+      /^Pro další pokus počkejte/,
+    )
   })
 })

@@ -220,3 +220,38 @@ describe('the API of Print_Handoff', () => {
     }
   })
 })
+
+/** A start by hand of the job, as `/settings/jobs` records it before the `doPost`. */
+async function requested(app: TestApp, job: string): Promise<string> {
+  let startKey = crypto.randomUUID()
+  let at = Temporal.Now.instant()
+  let by = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
+  await createJobRunStore(app.database).requestStart({
+    at,
+    by,
+    job,
+    pendingSince: at.subtract({ minutes: 10 }),
+    startKey,
+  })
+  return startKey
+}
+
+describe('a run started by hand (print-handoff)', () => {
+  it('opens the run of the start its key names, and refuses a key it does not know', async () => {
+    let app = await createTestApp()
+    try {
+      let unknown = await call(app, CLAIM, { intervalMinutes: 30, startKey: 'unknown' })
+      assert.equal(unknown.status, 409)
+      assert.deepEqual(await unknown.json(), { error: 'unknown_start' })
+      let runs = createJobRunStore(app.database)
+      assert.equal(await runs.latest('print-handoff'), null)
+
+      let startKey = await requested(app, 'print-handoff')
+      let response = await call(app, CLAIM, { intervalMinutes: 30, startKey })
+      assert.equal(response.status, 200)
+      assert.equal((await runs.latest('print-handoff'))?.startedBy?.name, 'Marie Horáková')
+    } finally {
+      await app.close()
+    }
+  })
+})

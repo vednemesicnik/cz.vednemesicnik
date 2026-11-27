@@ -1,10 +1,11 @@
 import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
 
-import { JOBS_TITLE, type JobTag, SHOW_JOB_LABEL } from '../../../domain/jobs.ts'
+import { JOBS_TITLE, type JobTag, SHOW_JOB_LABEL, START_LABEL } from '../../../domain/jobs.ts'
 import type { JobState } from '../../../domain/job-run.ts'
 import type { DriveStatus } from '../../issues/overview-page.tsx'
 import { routes } from '../../../routes.ts'
+import { CsrfField } from '../../../ui/csrf-field/component.tsx'
 import { Layout } from '../../../ui/layout/component.tsx'
 import type { PanelPerson } from '../../../ui/panel/component.tsx'
 import { StatusTag, type StatusTone } from '../../../ui/status-tag/component.tsx'
@@ -28,6 +29,8 @@ export type JobRowView = {
   name: string
   /** _Zobrazit_ for a job somebody first needs to look at (`14d`). */
   showHref: string | null
+  /** Where _Spustit teď_ posts, for a job that does not run and can be started (`14d`). */
+  startAction: string | null
   /** `null` before the first report: the interval comes with it. */
   schedule: string | null
   state: JobState['kind']
@@ -100,6 +103,15 @@ export function JobsPage(handle: Handle<JobsPageProps>) {
                         {SHOW_JOB_LABEL}
                         <span class="vdm-sr-only"> {row.name}</span>
                       </a>
+                    )}
+                    {row.startAction === null ? null : (
+                      <form action={row.startAction} method="post">
+                        <CsrfField />
+                        <button class="vdm-btn vdm-btn--outline vdm-btn--sm" type="submit">
+                          {START_LABEL}
+                          <span class="vdm-sr-only"> {row.name}</span>
+                        </button>
+                      </form>
                     )}
                   </span>
                 </TableRow>

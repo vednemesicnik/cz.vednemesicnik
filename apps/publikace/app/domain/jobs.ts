@@ -24,8 +24,10 @@ import {
   type HourlyWindows,
   isInJobsBanner,
   isOverdue,
+  type JobRun,
   type JobRunRecord,
   type JobState,
+  type JobStateFacts,
   jobState,
 } from './job-run.ts'
 import {
@@ -41,6 +43,7 @@ import {
   STOPPED_DIGEST_TEXT,
   UNCONFIRMED_CALLOUT_TEXT,
   UNCONFIRMED_CALLOUT_TITLE,
+  UNCONFIRMED_WAIT_CALLOUT_TEXT,
 } from './proofreading-digest.ts'
 import { APPROVAL_SEND_JOB, APPROVAL_SEND_JOB_NAME } from './approvals.ts'
 import {
@@ -82,15 +85,21 @@ export type Job = {
   windows?: HourlyWindows
   /** The job's own words for a run that ended, from what it reported (`14e`). */
   runEvent?(run: JobRunRecord): string | null
+  /**
+   * A run started by hand, from the words a scheduled run would get (`14e`); else
+   * _Spuštěna ručně,_ before them in lower case.
+   */
+  byHandEvent?(event: string): string
   /** What a failed run adds to the tag's line, after the last run (`14d`). */
   failureNote?(run: JobRunRecord): string | null
   /** Whether this one run already puts the job in the banner (`14i`); else two failures do. */
   isAlarm?(run: JobRunRecord): boolean
   /**
    * The Callout over the history after a failed run, when the job says more (`14e`); `generic` is
-   * the one every job gets, for a job that only adds to it. `null` shows none.
+   * the one every job gets, for a job that only adds to it, and `canStart` whether the page offers
+   * _Spustit teď_. `null` shows none.
    */
-  failedCalloutOf?(run: JobRunRecord, generic: string): FailedCallout | null
+  failedCalloutOf?(run: JobRunRecord, generic: string, canStart: boolean): FailedCallout | null
   /** The Callout's text while the job is _Neběží_, for a job with a window (`14e`). */
   stoppedText?: string
 }
@@ -163,11 +172,15 @@ export const JOBS: readonly Job[] = [
     windows: ARTICLE_COMMENTS_WINDOWS,
   },
   {
+    byHandEvent: (event) => `Spuštěno ručně. ${event}`,
     failedCallout: UNCONFIRMED_CALLOUT_TEXT,
-    failedCalloutOf(run) {
+    failedCalloutOf(run, _generic, canStart) {
       let digest = readDigestRun(run.summary)
       if (digest?.kind === 'no-address') return null
-      return { text: UNCONFIRMED_CALLOUT_TEXT, title: UNCONFIRMED_CALLOUT_TITLE }
+      return {
+        text: canStart ? UNCONFIRMED_CALLOUT_TEXT : UNCONFIRMED_WAIT_CALLOUT_TEXT,
+        title: UNCONFIRMED_CALLOUT_TITLE,
+      }
     },
     failedEvent: UNCONFIRMED_CALLOUT_TITLE,
     failingBanner: DIGEST_BANNER,
@@ -210,8 +223,25 @@ export function failingJobsBanner(jobs: readonly Job[]): string {
 export const HISTORY_DAYS = 30
 export const HISTORY_FOOT = `Historie ukazuje posledních ${HISTORY_DAYS} dní.`
 
-/** Who started a run: the trigger, until a job can be started by hand. */
+/** Who started a run its trigger started (`14e`). */
 export const TRIGGER_WHO = 'systém'
+
+/** Who started the run, as the history names them: the person by hand, else the trigger. */
+export function historyWho(run: JobRunRecord): string {
+  return run.startedBy?.name ?? TRIGGER_WHO
+}
+
+/** Starts a job once, by hand (`14d`, `14e`). */
+export const START_LABEL = 'Spustit teď'
+
+/**
+ * By the button while the job is _Neběží_, which it reads as its description: a run by hand mends
+ * no trigger (`14e`, `fbxo52ix`).
+ */
+export const START_ONCE_TEXT = tied`Tlačítko úlohu spustí jen jednou.`
+
+/** The script did not take the start; the row stays as it was (`11c`). */
+export const START_FAILED_TOAST = tied`Zkuste úlohu spustit za chvíli znovu.`
 
 /**
  * The _Kdy_ column, from the interval the job last reported. A rhythm, not a promise: Google picks
@@ -258,9 +288,17 @@ export function lastRunText(startedAt: Temporal.Instant, today: Temporal.Instant
 /** The tone stays with the page, which knows the design system's tones. */
 export type JobTag = { detail?: string; label: string }
 
-/** The tag of the job's latest run, by its own rules: its window, and what its runs report. */
-export function stateOfJob(job: Job, latest: JobRunRecord | null, now: Temporal.Instant): JobState {
-  return jobState(latest, now, job.window ?? job.windows)
+/**
+ * The tag of the job's latest run, by its own rules: its window, and what its runs report. `facts`
+ * carry the latest scheduled run and a start by hand that waits for its run (`JobStateFacts`).
+ */
+export function stateOfJob(
+  job: Job,
+  latest: JobRunRecord | null,
+  now: Temporal.Instant,
+  facts: JobStateFacts = {},
+): JobState {
+  return jobState(latest, now, job.window ?? job.windows, facts)
 }
 
 /** Whether the job stands in the banner over every editor screen (`14i`), by its own rules. */
@@ -268,8 +306,13 @@ export function isJobInBanner(
   job: Job,
   runs: readonly JobRunRecord[],
   now: Temporal.Instant,
+  scheduled?: JobRun | null,
 ): boolean {
-  return isInJobsBanner(runs, now, { isAlarm: job.isAlarm, window: job.window ?? job.windows })
+  return isInJobsBanner(runs, now, {
+    isAlarm: job.isAlarm,
+    scheduled,
+    window: job.window ?? job.windows,
+  })
 }
 
 /**
@@ -329,11 +372,24 @@ export function jobTag(
 }
 
 /**
- * _Zobrazit_ only where somebody first needs to know why: _S chybou_ and _Neběží_ (`14d`). The
- * other tags carry _Spustit teď_ in the drawing, which needs a job that can be started.
+ * _Zobrazit_ only where somebody first needs to know why: _S chybou_ and _Neběží_ (`14d`). Of the
+ * other tags, _V pořádku_ and _Zatím se neohlásila_ carry _Spustit teď_ (`canStartFromList`).
  */
 export function isWorthShowing(state: JobState): boolean {
   return state.kind === 'failed' || state.kind === 'stopped'
+}
+
+/**
+ * _Spustit teď_ in the list: only on a job that does not run and that nobody first needs to look
+ * at (`14d`). _Neběží_ has it on its own page, by the sentence that it runs the job once (`14e`).
+ */
+export function canStartFromList(state: JobState): boolean {
+  return state.kind === 'ok' || state.kind === 'never'
+}
+
+/** _Spustit teď_ on the job's page: in every state but _Běží_ (`14e`). */
+export function canStartFromPage(state: JobState): boolean {
+  return state.kind !== 'running'
 }
 
 /** The line under _Úlohy na pozadí_ in Settings (`14a`), for the one job that reports. */
@@ -341,8 +397,15 @@ export function settingsSummary(job: Job, state: JobState, today: Temporal.Insta
   return `${job.name} · ${jobTag(state, today).label}`
 }
 
-/** A run in the history, newest first (`14e`). */
+/** A run in the history, newest first (`14e`); one started by hand says so first. */
 export function historyEvent(job: Job, run: JobRunRecord, now: Temporal.Instant): string {
+  let event = scheduledEvent(job, run, now)
+  if ((run.startedBy ?? null) === null) return event
+  if (job.byHandEvent !== undefined) return job.byHandEvent(event)
+  return `Spuštěna ručně, ${event.charAt(0).toLocaleLowerCase('cs')}${event.slice(1)}`
+}
+
+function scheduledEvent(job: Job, run: JobRunRecord, now: Temporal.Instant): string {
   if (run.finishedAt === null) return isOverdue(run, now) ? 'Neohlásila výsledek' : 'Právě běží'
   let own = job.runEvent?.(run) ?? null
   if (own !== null) return own
@@ -388,8 +451,8 @@ export const STOPPED_CALLOUT_TITLE = 'Dejte vědět tomu, kdo má úlohu na star
 /**
  * The Callout's text under that title (`14e`, the copywriter's `8ltizgsg`). It says only what the
  * app knows: how often the job should run and when it last reported. Whether the job stopped
- * running or its reports stopped arriving, the app cannot tell, so neither is claimed. The
- * drawing's sentence about _Spustit teď_ waits for that button.
+ * running or its reports stopped arriving, the app cannot tell, so neither is claimed. That
+ * _Spustit teď_ runs the job once stands by the button, not here (`START_ONCE_TEXT`).
  */
 export function stoppedCalloutText(
   state: JobState,
