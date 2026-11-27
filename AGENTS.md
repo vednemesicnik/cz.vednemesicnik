@@ -69,11 +69,14 @@ what it checks. `.github/workflows/web.yml` checks the web: `web-lint`, `web-typ
 `publikace-lint`, `publikace-format`, `publikace-typecheck`, `publikace-test`,
 `publikace-doctor`. `.github/workflows/repo.yml` checks what belongs to no application:
 `repo-lint` (the lockfile, Biome outside `apps/`), `host-typecheck`, `host-test` and `image`
-(the one Docker image). On a pull request each job runs only when its files change: a
+(the one Docker image). On a pull request each of these jobs runs only when its files change: a
 `dorny/paths-filter` job and a job-level `if:`, never `on.paths`, since a skipped job passes a
 required check and a workflow that never starts leaves it "expected". `deploy.yml` calls every
 workflow, with every job running. A new application gets its own workflow, with jobs named
-`<app>-…`, and its names go into the ruleset.
+`<app>-…`, and its names go into the ruleset. Two checks run on every PR, with no paths filter:
+`pr-title` (`pr-title.yml`) and `release-version` (`release-version.yml`), the tag each changed
+application would get from a PR into `main`; `release.yml` writes those tags after the merge
+(§ Releases).
 
 ### Git Hooks
 
@@ -142,16 +145,22 @@ none yet.
 
 One Fly app, one image and one deploy for every application: a release is one `dev → main`
 PR (`/release-pr`), and every push to `main` deploys all of them. The release title is dated
-(`release: 2026-11-26 — …`). **Planned, not built:** a version tag per application
-(`publikace-v…`, the web by date), from a workflow that replaces Publikace's former
-`release.yml`; `apps/publikace/scripts/release-version.ts` is kept for it.
+(`release: 2026-11-26 — …`). Each application still has versions of its own: after every
+merge into `main`, `release.yml` tags the merge commit for each application whose folder
+changed and publishes a GitHub Release with the commits that touched it. Each application
+picks its style in `scripts/release-version.ts`: the web by date (`web-2026-11-27`), Publikace
+by semver (`publikace-v1.1.0`), named under `## Versions` in the release PR's body; a hotfix
+takes the next patch. The `release-version` check shows every tag before the merge. Publikace
+stays untagged until the release that has the host serve it (#1082) names `publikace-v1.0.0`.
+Work in progress of one application stays off `dev`, because a release takes everything on
+it. [docs/\_branching-model.md](docs/_branching-model.md) § Versions has the rest.
 
 ## Documentation
 
 The repository's documents are in `docs/`; each application documents itself in its own
 `docs/`.
 
-- `docs/_branching-model.md` - Branching model, merge methods, stacked PRs, hotfix procedure
+- `docs/_branching-model.md` - Branching model, merge methods, stacked PRs, versions (tags, Releases, the `release-version` gate), hotfix procedure
 - `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, where each stops, where the skills live
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures

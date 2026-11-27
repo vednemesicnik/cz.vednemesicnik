@@ -5,10 +5,12 @@ branching model: [docs/\_branching-model.md](../../../docs/_branching-model.md).
 `dev` by squash, `dev` goes to `main` by a merge commit in a release PR, and every push to `main`
 deploys. One release covers every application in the repository.
 
-**Versions.** Publikace's own `v0.x` tags and `release.yml` ended with the move. A per-app
-version (tags such as `publikace-v…`) is a later change. Until then
-[scripts/release-version.ts](../scripts/release-version.ts) is kept for it, and the old workflow
-can be read back with `git show b50d8787^2:apps/publikace/.github/workflows/release.yml`.
+**Versions.** Publikace keeps semver, as tags `publikace-vX.Y.Z` and GitHub Releases that the
+repository's `release.yml` makes after a merge into `main` that changed `apps/publikace/`
+([docs/\_branching-model.md § Versions](../../../docs/_branching-model.md#versions)). A release
+names the version under `## Versions` in its body; a hotfix gets the next patch. Publikace has
+no tag yet: its first is `publikace-v1.0.0`, named in the release that has the host serve
+`publikace.vednemesicnik.cz` (#1082). Its former `release.yml` ended with the move.
 
 **Checks.** [publikace.yml](../../../.github/workflows/publikace.yml) runs `publikace-lint`,
 `publikace-format`, `publikace-typecheck`, `publikace-test` and `publikace-doctor` on a PR that
