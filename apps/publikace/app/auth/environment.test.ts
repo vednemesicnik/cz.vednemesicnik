@@ -1,7 +1,12 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
-import { isProduction, scriptTokenAudiences, sessionSecrets } from './environment.server.ts'
+import {
+  isProduction,
+  jobStartEndpoints,
+  scriptTokenAudiences,
+  sessionSecrets,
+} from './environment.server.ts'
 
 describe('isProduction', () => {
   it('is production unless NODE_ENV names development or test', () => {
@@ -27,5 +32,22 @@ describe('isProduction', () => {
       'development-only-session-secret',
     ])
     assert.equal(scriptTokenAudiences({ NODE_ENV: 'test' }), 'any')
+  })
+})
+
+describe('jobStartEndpoints', () => {
+  it('knows only the jobs with both variables, in production too', () => {
+    assert.deepEqual(
+      jobStartEndpoints({
+        GAS_ARTWORK_REPLIES_SECRET: 's-1',
+        GAS_ARTWORK_REPLIES_URL: 'https://script.test/replies/exec',
+        GAS_PRINT_HANDOFF_URL: 'https://script.test/print/exec',
+        GAS_PROOFREADING_DIGEST_SECRET: '',
+        GAS_PROOFREADING_DIGEST_URL: 'https://script.test/digest/exec',
+        NODE_ENV: 'production',
+      }),
+      { 'artwork-replies': { secret: 's-1', url: 'https://script.test/replies/exec' } },
+    )
+    assert.deepEqual(jobStartEndpoints({ NODE_ENV: 'production' }), {})
   })
 })

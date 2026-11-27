@@ -17,6 +17,7 @@ The findings of the review that are not fixed yet are in
 | Proof of consent                                                                                                   | the legal record of a licence                                                                               | the archived Gmail conversation in `Licence`; the licence PDF and its SHA-256 quoted in the request |
 | The API                                                                                                            | its claims return authors' addresses, its reports set consent states                                        | `/api/v1/*`                                                                                         |
 | The mail budget                                                                                                    | the Gmail quota of `publikace@`, which the jobs and the answers need too                                    | `public_mail_log`, `PUBLIC_MAIL_PER_DAY`                                                            |
+| `GAS_<JOB>_SECRET`, one per job                                                                                    | start that job once, as `publikace.app@` (_Spustit teď_)                                                    | `.env` and `fly secrets` as above; the same value in that project's Script Properties               |
 
 ## Trust boundaries
 
@@ -132,6 +133,9 @@ that needs a session belongs behind a guard instead.
 
 - **The Mailer** gets an envelope signed with HMAC-SHA256 over the timestamp and the payload, and
   refuses one older than 5 minutes. Every message carries an idempotency key.
+- **A job's `doPost`** (_Spustit teď_) gets `{ job, startKey }` in the same signed envelope,
+  under that job's own secret, and refuses one older than 5 minutes. A replayed request within
+  them starts nothing more: its `startKey` opens one run at most, and only of its own job.
 - **The membership service** gets its secret in the body over HTTPS. A replayed request only
   repeats a yes or a no (`03` row 40).
 - **The Drive token** is sealed with AES-256-GCM, with a random IV, and the key must be 32 bytes.
@@ -196,6 +200,7 @@ that needs a session belongs behind a guard instead.
 | Names and addresses of providers, author and source of each artwork | outside the newsroom           | the licence and its consent                               | not decided (`S-10`)                                       |
 | Reply texts and answers                                             | both sides of the conversation | the decision in _Ke kontrole_                             | not decided; the proof itself is the archived conversation |
 | Editors' names on steps                                             | the newsroom                   | who verified a consent, took or marked a text             | not decided                                                |
+| Name and address of who started a job by hand (`job_starts`)        | the newsroom                   | _Spustit teď_: the history names who started a run        | not decided                                                |
 | Sessions                                                            | the newsroom                   | sign-in                                                   | deleted after they expire                                  |
 
 Until a retention period is decided, nothing personal is deleted except expired sessions.

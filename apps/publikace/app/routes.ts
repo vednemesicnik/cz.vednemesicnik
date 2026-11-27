@@ -208,11 +208,12 @@ export const routes = route({
       connect: post('/settings/account/connect'),
       callback: get('/settings/account/callback'),
     },
-    /* _Úlohy na pozadí_: every job with its last run (`14d`), and one job's history (`14e`),
-       by the job's key as `job_runs` names it. */
+    /* _Úlohy na pozadí_: every job with its last run (`14d`), one job's history (`14e`), by the
+       job's key as `job_runs` names it, and _Spustit teď_ from either. */
     jobs: {
       index: get('/settings/jobs'),
       show: get('/settings/jobs/:job'),
+      start: post('/settings/jobs/:job/start'),
     },
   },
 })

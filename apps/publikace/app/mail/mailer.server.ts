@@ -1,14 +1,12 @@
-import { createHmac } from 'node:crypto'
-
 import type { MailSendEndpoint } from '../auth/environment.server.ts'
+import { signEnvelope } from '../auth/signed-envelope.server.ts'
 
 /**
  * The Mailer of the `publikace@` mailbox, `SCRIPT__Mail__Send`: one message per request, sent
  * natively as that account. The app reaches Gmail through it and never with a token of its own.
  *
- * The message travels in a signed envelope: `payload` is the message serialised once and signed
- * as that exact string, `signature` is HMAC-SHA256 of `${timestamp}.${payload}` under the secret,
- * which itself never leaves the app. The Mailer refuses a request older than five minutes.
+ * The message travels in a signed envelope (`signEnvelope`), which the Mailer refuses once it is
+ * older than five minutes.
  */
 
 /** A file attached as the Mailer's schema takes it: at most 20, 25 MB decoded in all. */
@@ -53,15 +51,6 @@ const PERMANENT_REFUSALS = new Set([
 
 export function isPermanentRefusal(result: MailResult): boolean {
   return !result.ok && PERMANENT_REFUSALS.has(result.error)
-}
-
-export function signEnvelope(
-  secret: string,
-  payload: string,
-  timestamp: number,
-): { payload: string; signature: string; timestamp: number } {
-  let signature = createHmac('sha256', secret).update(`${timestamp}.${payload}`).digest('hex')
-  return { payload, signature, timestamp }
 }
 
 /**

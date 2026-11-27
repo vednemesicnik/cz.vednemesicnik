@@ -225,3 +225,34 @@ export function scriptJobAccount(environment: Environment): string {
   if (isProduction(environment)) return required(environment, 'SCRIPT_JOB_ACCOUNT').toLowerCase()
   return optional(environment, 'SCRIPT_JOB_ACCOUNT', driveAccountEmail(environment)).toLowerCase()
 }
+
+export type JobStartEndpoint = { secret: string; url: string }
+
+/*
+ * The variables of each job's `doPost`, by the job's key as `job_runs` names it and the script's
+ * name: `GAS_<NAME>_URL` and `GAS_<NAME>_SECRET`.
+ */
+const JOB_START_VARIABLES: Readonly<Record<string, string>> = {
+  'approval-send': 'GAS_ARTICLE_APPROVALS',
+  'article-comments': 'GAS_ARTICLE_COMMENTS',
+  'artwork-replies': 'GAS_ARTWORK_REPLIES',
+  'print-handoff': 'GAS_PRINT_HANDOFF',
+  'proofreading-digest': 'GAS_PROOFREADING_DIGEST',
+}
+
+/**
+ * The `doPost` of each job that _Spustit teď_ can start (`14d`, `14e`), by the job's key: only
+ * the jobs with both variables set. Optional everywhere, in production too: a job without them
+ * has no button, and a missing convenience does not keep the app from starting.
+ */
+export function jobStartEndpoints(
+  environment: Environment,
+): Readonly<Record<string, JobStartEndpoint>> {
+  let endpoints: Record<string, JobStartEndpoint> = {}
+  for (let [job, name] of Object.entries(JOB_START_VARIABLES)) {
+    let url = optional(environment, `${name}_URL`)
+    let secret = optional(environment, `${name}_SECRET`)
+    if (url !== '' && secret !== '') endpoints[job] = { secret, url }
+  }
+  return endpoints
+}

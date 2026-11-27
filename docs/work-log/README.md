@@ -125,3 +125,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0092](0092-the-host-serves-publikace-from-its-prefixed-variables-and-only-its-start-fails-alone.md) | The host serves Publikace from its prefixed variables, and only its start fails alone | 2026-11-27 |  |
 | [0093](0093-the-host-reports-publikaces-errors-to-the-webs-sentry-and-only-those-no-retry-mends.md) | The host reports Publikace's errors to the web's Sentry, and only those no retry mends | 2026-11-27 |  |
 | [0094](0094-publikace-is-production-unless-node-env-names-development-or-test.md) | Publikace is production unless NODE_ENV names development or test | 2026-11-27 |  |
+| [0095](0095-a-job-started-by-hand-is-a-request-its-claim-redeems-and-says-nothing-about-its-trigger.md) | A job started by hand is a request its claim redeems, and says nothing about its trigger | 2026-11-27 |  |

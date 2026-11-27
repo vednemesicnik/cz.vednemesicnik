@@ -14,7 +14,7 @@ import {
 } from '../../../domain/approvals.ts'
 import { type BatchReport, EXPECTED_REPLY } from '../../../domain/reply-check.ts'
 import { routes } from '../../../routes.ts'
-import { bodyOf, intervalOf, isText, json, refusal } from '../job-request.ts'
+import { bodyOf, intervalOf, isText, json, openRun, refusal } from '../job-request.ts'
 import { readConsentReport } from '../consent-report.ts'
 
 /**
@@ -123,13 +123,14 @@ export default function createApprovalsController(dependencies: ApprovalsDepende
         if (interval === null) return json({ error: 'invalid_request' }, 400)
 
         let at = dependencies.now()
-        let runKey = crypto.randomUUID()
-        await dependencies.runs.start({
+        let run = await openRun(dependencies.runs, {
           at,
+          body,
           intervalMinutes: interval,
           job: APPROVAL_SEND_JOB,
-          runKey,
         })
+        if ('refused' in run) return run.refused
+        let { runKey } = run
         /* Disjoint: a clause is asked about only once it left _K odeslání_. */
         let replies = await dependencies.articles.claimForReplies(runKey, at)
         let clauses = await dependencies.articles.claimForSending(runKey, at)

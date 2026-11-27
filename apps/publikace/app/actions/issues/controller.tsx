@@ -700,7 +700,7 @@ async function linkAndArticles(
   let batches = await artworks.artworks.listByIssue(issue.id)
   let filter = filterOf(context)
   let openId = Number(context.url.searchParams.get('article'))
-  let health = jobHealth(await articlesOf(context).runs.latest(APPROVAL_SEND_JOB), today)
+  let health = jobHealth(await articlesOf(context).runs.latestScheduled(APPROVAL_SEND_JOB), today)
   /* Only the open row shows the replaced versions, so only its are read. */
   let replaced = Number.isSafeInteger(openId) ? await articles.replacedVersions(openId) : []
   let rows = created.map((article) => {
@@ -1072,7 +1072,8 @@ async function printOf(context: PageContext, issue: Issue): Promise<PrintSection
   if (issueState(issue) !== 'active' || folderId === null) return undefined
   let { printHandoffs, runs } = articlesOf(context)
   let today = now()
-  let state = jobState(await runs.latest(PRINT_HANDOFF_JOB), today)
+  let snapshot = await runs.snapshot(PRINT_HANDOFF_JOB, today)
+  let state = jobState(snapshot.latest, today, undefined, snapshot)
   return {
     folderHref: folderUrl(folderId),
     jobHref: routes.settings.jobs.show.href({ job: PRINT_HANDOFF_JOB }),
@@ -2613,7 +2614,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
               flashToast(context, AUTHORS_SAVED_TOAST)
             } else {
               let health = jobHealth(
-                await articlesOf(context).runs.latest(APPROVAL_SEND_JOB),
+                await articlesOf(context).runs.latestScheduled(APPROVAL_SEND_JOB),
                 now(),
               )
               let detail =

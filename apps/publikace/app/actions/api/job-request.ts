@@ -1,4 +1,5 @@
 import type { IdentityTokenVerifier } from '../../auth/identity-token.server.ts'
+import type { JobRunStore } from '../../data/job-runs.server.ts'
 
 /**
  * What every call of a background job to the app's API goes through: the job's Google identity
@@ -105,4 +106,37 @@ export function intervalOf(body: Record<string, unknown> | null): number | null 
     interval <= MAX_INTERVAL_MINUTES
     ? interval
     : null
+}
+
+const MAX_START_KEY_LENGTH = 200
+
+/**
+ * Opens the run a claim starts, under a new key, and answers with that key. A run started by hand
+ * carries the `startKey` the app gave its `doPost` (`14e`), which makes it that start's run: one
+ * that is not text is refused with 400, and one that is not an unredeemed start of this job with
+ * 409 `unknown_start`, with nothing opened. Without a key the run is the trigger's.
+ */
+export async function openRun(
+  runs: JobRunStore,
+  run: {
+    at: Temporal.Instant
+    body: Record<string, unknown> | null
+    intervalMinutes: number
+    job: string
+  },
+): Promise<{ runKey: string } | { refused: Response }> {
+  let startKey = run.body?.['startKey']
+  if (startKey !== undefined && !isText(startKey, MAX_START_KEY_LENGTH)) {
+    return { refused: json({ error: 'invalid_request' }, 400) }
+  }
+  let runKey = crypto.randomUUID()
+  let isOpened = await runs.start({
+    at: run.at,
+    intervalMinutes: run.intervalMinutes,
+    job: run.job,
+    runKey,
+    ...(startKey === undefined ? {} : { startKey }),
+  })
+  if (!isOpened) return { refused: json({ error: 'unknown_start' }, 409) }
+  return { runKey }
 }
