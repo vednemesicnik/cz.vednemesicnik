@@ -272,9 +272,14 @@ Evidence is written. `PUBLIKACE_PUBLIC_MAIL_PER_DAY` keeps its default of 300 un
 Before the release that first carries Publikace:
 
 1. **The shared drive _Publikace_**, new and empty, never the test one: sharing outside the
-   organisation allowed, `publikace.app@` a Content manager, the issues folder shared once as
-   _Každý, kdo má odkaz · Přispěvatel_, and the app's own `Registr` in its root, a new
-   spreadsheet apart from the scripts' Registr. Its IDs go into the secrets below.
+   organisation allowed, the issues folder `Vydání` shared once as _Každý, kdo má odkaz ·
+   Přispěvatel_, and the app's own `Registr` in its root, a new spreadsheet apart from the
+   scripts' Registr. Its IDs go into the secrets below. Its members:
+   - the admin account, the only Manager, since a Manager can change the drive's sharing and
+     cut a folder's inherited grant;
+   - `publikace.app@` and `sefredaktorstvo@`, Content managers: the app creates and bins, and
+     the editors-in-chief move what is in a print folder into pages for the graphic designer;
+   - `vedeni@` and `korektura@`, Contributors, who edit but neither move nor bin.
 2. **The OAuth client** of Publikace (its own, with the `drive` scope): add
    `https://publikace.vednemesicnik.cz/sign-in/google/callback` and
    `https://publikace.vednemesicnik.cz/settings/account/callback` to its redirect URIs.
