@@ -75,7 +75,7 @@ errors still reach only the Fly log (#1098).
 _Publikace_ with the app's own `Registr` in its root, a new spreadsheet, while the scripts keep
 theirs for the issues made before the app. The test drive _Publikace (test)_ stays for the local
 round trip, and `publikace.app@` belongs to these two drives and no other. A local app writes
-`Registr (test)` in the root of the test drive, never the real Registr. Each write puts the app's
+the `Registr` in the root of the test drive, never the real one. Each write puts the app's
 whole list there from one database, so two databases would replace each other's rows.
 
 ## What follows

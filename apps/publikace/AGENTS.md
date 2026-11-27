@@ -130,7 +130,7 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
   _Publikace_, outside the issues folder and its link share; the scripts keep theirs for the
   issues made before the app, so until the cutover a licence is looked up in the Registr of the
   issue's flow. Each write puts the app's whole list there from one database, so a local app
-  writes `Registr (test)` on the test drive instead, never this one. The
+  writes the `Registr` in the root of _Publikace (test)_ instead, never this one. The
   app writes the database first and the sheet after it, from a queue that retries, so a sheet
   that does not answer delays the record and blocks nothing; a nightly rewrite from the database
   mends whatever the queue missed. Only `publikace.app@` may edit them, people read them, and

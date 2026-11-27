@@ -310,7 +310,7 @@ Fly origin (`--connect-to`, so it never meets Cloudflare):
 3. A proofreader in the group of Nastavení › Korektura signs in and sees `/proofreading`.
 
 A local Publikace never writes the real Registr: each write puts the app's whole list from one
-database, so a local `.env` names `Registr (test)` in the root of _Publikace (test)_.
+database, so a local `.env` names the `Registr` in the root of _Publikace (test)_.
 
 ## Image store
 

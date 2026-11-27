@@ -31,7 +31,7 @@ Nothing here is real data in the repository: the IDs, the URLs and the testers' 
 from one database, so a local run against the real Registr would replace production's rows with
 its own:
 
-- [ ] a spreadsheet named `Registr (test)` in the root of the test shared drive, with a list
+- [ ] a spreadsheet named `Registr` in the root of the test shared drive, with a list
       `Vydání` holding a header row and one made-up issue, as the scripts' list looks;
 - [ ] `publikace.app@` edits it as a Content manager of the test drive, with nothing shared by
       hand;
