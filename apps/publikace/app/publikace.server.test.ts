@@ -53,6 +53,18 @@ describe('createPublikace', () => {
     })
   })
 
+  it('starts as production when NODE_ENV is missing, refusing the development fallbacks', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      let path = join(directory, 'publikace.sqlite')
+      let { NODE_ENV: _mode, SESSION_SECRET: _secret, ...environment } = productionEnvironment(path)
+
+      await assert.rejects(createPublikace(environment), {
+        message: 'Chybí povinná proměnná prostředí SESSION_SECRET.',
+      })
+      assert.equal(existsSync(path), false)
+    })
+  })
+
   it('refuses an access list nobody could change, and closes the database it opened', async () => {
     await inTemporaryDirectory(async (directory) => {
       let path = join(directory, 'publikace.sqlite')

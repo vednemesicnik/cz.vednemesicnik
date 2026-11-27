@@ -45,6 +45,7 @@ export function Document(handle: Handle<DocumentProps>) {
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <link rel="alternate icon" href="/favicon.ico" />
           <title>{title === undefined ? APP_NAME : `${title} · ${APP_NAME}`}</title>
           <link rel="stylesheet" href={stylesheetHref} />
           {head}

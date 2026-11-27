@@ -151,15 +151,18 @@ that needs a session belongs behind a guard instead.
 
 ### Startup and configuration
 
+- **Production is the default.** The development fallbacks apply only when `NODE_ENV` is
+  `development` or `test`; unset or any other value is production (`isProduction()`).
 - **Production never falls back.** `createPublikace` refuses to start without the domain, the
   origin, the OAuth client, the secrets, the Drive account, the folders, the Mailer, the
   membership service and the job account. It also refuses to start when nobody could ever change
   the access list.
 - **The host never starts it outside production on Fly.** It hands Publikace its own `NODE_ENV`,
   never a `PUBLIKACE_NODE_ENV`, and refuses to start it when the machine is on Fly and that value
-  is not `production` (`server/publikace-environment.ts`). Any other host still has to set it:
-  the app's own fallbacks are #1097.
-- **The fake app refuses production**, and binds only to `127.0.0.1`.
+  is not `production` (`server/publikace-environment.ts`). Any other host that forgets it gets
+  production and its refusals.
+- **The fake app never runs as production**, an unset `NODE_ENV` included, and binds only to
+  `127.0.0.1`.
 - **`.env` is never opened by tools or agents**, and the repository holds only fictional data on
   the `.test` domains ([AGENTS.md](../AGENTS.md#data-rules)).
 

@@ -273,7 +273,8 @@ Their map is the repository's [docs/\_workflow-skills.md](../../docs/_workflow-s
   incompatible change to the API the jobs call, or a data migration that needs somebody to act,
   and is planned as its own milestone (`publikace-v2.0.0`) whose work waits behind the gate.
 
-- **Release gate** — `isUnreleased()`, true unless `NODE_ENV` is `production`, the one call
+- **Release gate** — `isUnreleased()`, true only where `isProduction()` is false (`NODE_ENV`
+  `development` or `test`), the one call
   that hides unreleased work in production and makes its route or action answer 404
   ([docs/\_branching-model.md](../../docs/_branching-model.md) § Unreleased work behind a gate).
   The first issue that needs it adds it.

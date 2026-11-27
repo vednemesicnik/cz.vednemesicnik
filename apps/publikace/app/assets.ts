@@ -4,7 +4,7 @@ import { componentHmr } from 'remix/component-hmr/assets'
 import { getContext } from 'remix/middleware/async-context'
 import { createContextKey } from 'remix/router'
 
-import type { Environment } from './auth/environment.server.ts'
+import { type Environment, isProduction } from './auth/environment.server.ts'
 
 /*
  * The repository, whichever directory the process was started in: a host that runs the app beside
@@ -49,9 +49,7 @@ export function requestAssets(): Assets {
  * running app; `close()` stops the watcher it keeps outside production and tests.
  */
 export async function createAssets(environment: Environment): Promise<Assets> {
-  let nodeEnv = environment.NODE_ENV ?? 'development'
-  let isDevelopment = nodeEnv === 'development'
-  let isProduction = nodeEnv === 'production'
+  let isDevelopment = environment.NODE_ENV === 'development'
   let isHmr = Boolean(isDevelopment && environment.REMIX_NODE_HMR)
 
   let server = createAssetServer({
@@ -75,7 +73,7 @@ export async function createAssets(environment: Environment): Promise<Assets> {
     files: { extensions: ['.woff2', '.jpg'] },
     sourceMaps: isDevelopment ? 'external' : undefined,
     minify: !isDevelopment,
-    fingerprint: isProduction,
+    fingerprint: isProduction(environment),
     /*
      * Production serves files that never move, and `remix test` runs with `NODE_ENV=test`, which
      * is what keeps the suite from leaving a watcher behind.
