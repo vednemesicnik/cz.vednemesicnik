@@ -520,10 +520,11 @@ const linkBodyStyle = css({
 
 const linkLabelStyle = css({ fontSize: '15px', fontWeight: 600 })
 
-/* The Doc's title takes most of what is left and the artworks the rest; the tag and the actions
-   keep their width, the longest button, _Označit novou verzi…_, and `⋯` together 240 px
-   (`12a`, `12k`, `12q`). */
-const ARTICLE_COLUMNS = 'minmax(180px, 3fr) 160px minmax(110px, 1fr) 240px'
+/* The Doc's title takes most of what is left and the artworks the rest; the tag keeps the width
+   of _Upraveno po schválení_ and the actions that of the longest button, _Označit novou verzi…_,
+   and `⋯`, 218 px in 224 (`12a`, nk55z29s). Their minimums, three gaps of 12 px and the row's
+   2 × 8 px come to 706 px, within the 719 px from which the table no longer scrolls (`11a`). */
+const ARTICLE_COLUMNS = 'minmax(160px, 3fr) 160px minmax(110px, 1fr) 224px'
 
 /* A row without the button has only `⋯`, at the far end (`12k`). */
 const actionsCellStyle = css({
@@ -546,7 +547,8 @@ const artworksCellStyle = css({
   flexDirection: 'column',
   fontSize: '14px',
   gap: '2px',
-  '& small': { color: 'var(--text-secondary)', fontSize: '13px' },
+  /* 12 px, so _všechna schválená_ keeps one line in the column's 110 px (`12a`). */
+  '& small': { color: 'var(--text-secondary)', fontSize: '12px' },
 })
 
 /* The tag of a row with a final version opens it (`12b`): a link that looks like the tag. */
@@ -686,8 +688,14 @@ const folderLinkStyle = css({ whiteSpace: 'nowrap' })
 /* What waits on the editors, in the ink of _Čeká na vás_ (`12a`, `11a`). */
 const waitingLineStyle = css({ color: 'var(--state-attention-text)', fontWeight: 600 })
 
-/* The file and its article take most of the row; the tag and `⋯` keep their width (`12a`). */
+/* The file and its article take most of the row; the tag and `⋯` keep their width (`12a`). Their
+   minimums, four gaps of 12 px and the row's 2 × 8 px come to 718 px, within the 719 px from
+   which the table no longer scrolls (`11a`). */
 const ARTWORK_COLUMNS = 'minmax(160px, 2fr) minmax(150px, 1.5fr) minmax(130px, 1.2fr) 170px 44px'
+
+/* A shortened source has no space to break at; it wraps anywhere, as the provider's e-mail does,
+   rather than run over the tag beside it (`12a`). */
+const sourceLinkStyle = css({ overflowWrap: 'anywhere' })
 
 const providerStyle = css({
   display: 'flex',
@@ -1286,7 +1294,12 @@ function ArtworkRow(
           {artwork.source === null ? (
             'neuveden'
           ) : (
-            <a href={artwork.source.href} rel="noopener noreferrer" target="_blank">
+            <a
+              href={artwork.source.href}
+              mix={sourceLinkStyle}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
               {artwork.source.shown}
             </a>
           )}
