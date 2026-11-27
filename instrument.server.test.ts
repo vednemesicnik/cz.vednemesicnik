@@ -97,6 +97,7 @@ test('an event carries neither the request body nor the query string', async () 
 
   const event = await firstEvent
 
+  expect(event.tags).toMatchObject({ app: 'web' })
   expect(event.request).toMatchObject({
     headers: { referer: `${origin}${PATH}` },
     method: 'POST',

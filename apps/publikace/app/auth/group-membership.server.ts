@@ -1,3 +1,4 @@
+import { ignoreErrors, type ReportError } from '../report.server.ts'
 import type { GroupMembershipEndpoint } from './environment.server.ts'
 
 /**
@@ -35,9 +36,10 @@ type ServiceResponse =
  */
 export function createMembershipCheck(
   endpoint: GroupMembershipEndpoint,
-  options: { fetch?: typeof fetch; timeoutMs?: number } = {},
+  options: { fetch?: typeof fetch; reportError?: ReportError; timeoutMs?: number } = {},
 ): MembershipCheck {
   let send = options.fetch ?? fetch
+  let reportError = options.reportError ?? ignoreErrors
 
   return async (email, group) => {
     try {
@@ -62,8 +64,9 @@ export function createMembershipCheck(
         let error = typeof payload.error === 'string' ? payload.error : 'unknown'
         if (error === 'unknown_group') return { status: 'unknown-group' }
         /* `unauthorized` is this app's misconfiguration and does not fix itself, so it is
-           logged; it still answers "don't know" like every other failure. */
+           logged and reported; it still answers "don't know" like every other failure. */
         console.error(`[auth] membership service refused the request: ${error}`)
+        reportError(new Error(`The membership service refused the request: ${error}`), 'auth')
         return { status: 'unavailable' }
       }
 
@@ -91,11 +94,12 @@ export const membershipUnavailable: MembershipCheck = async () => ({ status: 'un
  * Wrapping the check keeps a listed group's name current wherever the service is asked — at
  * sign-in, at the ten-minute re-check and when a group is added — without any
  * of them knowing about names. A name decides nothing, so a name that could not be recorded is
- * logged and the answer stands.
+ * logged and reported, and the answer stands.
  */
 export function rememberGroupNames(
   check: MembershipCheck,
   record: (group: string, name: string) => Promise<void>,
+  reportError: ReportError = ignoreErrors,
 ): MembershipCheck {
   return async (email, group) => {
     let answer = await check(email, group)
@@ -107,6 +111,7 @@ export function rememberGroupNames(
         await record(group, answer.groupName)
       } catch (error) {
         console.error('[auth] could not record a group name', error)
+        reportError(error, 'data')
       }
     }
     return answer

@@ -65,6 +65,13 @@ flowchart LR
   - **Only its start fails alone.** A refused configuration, or `NODE_ENV` other than
     `production` on Fly, leaves Publikace's hosts answering 503 while the web serves on. Once
     started it shares one event loop with the web: an uncaught exception ends both.
+  - **Its errors reach the web's Sentry through the host.** `createPublikace`'s second argument
+    carries the host's `reportError` (`server/report-publikace-error.ts`), and Publikace calls it
+    beside the log line for what no retry or person mends: a 500, a record that failed three
+    times in a row, the startup cleanup, a refused membership request, a Drive token that does
+    not decrypt, a database write that should not fail. An outage of Drive, Google or the Mailer
+    stays in the log; the screens and the jobs' history already say it. Without the host, as in
+    `pnpm app:dev`, there is only the log.
   - **Its database is `/data/publikace.sqlite`** on the machine's volume, beside the web's, and
     the host's backup copies both (`scripts/backup-database.sh`, before every deploy that ships a
     migration of either).

@@ -374,7 +374,8 @@ Evidence. The two Registrs merge, if they do, only at the cutover.
 issue's Evidence or the Registr in the same transaction as the change, on the columns the record
 shows and no others. A column the record starts to show needs its trigger changed in a new
 migration, or it reaches the sheet only with the daily rewrite. A write that keeps failing is a
-`[drive] … was not written` line in the log and nothing on a screen (`00d`).
+`[drive] … was not written` line in the log each time, one Sentry event on its third failure in
+a row, and nothing on a screen (`00d`).
 
 **A trigger runs as the account that created it.** CI pushes code but never installs triggers.
 Moving a script to `publikace.app@` means running its `setupTriggers()` as `publikace.app@` and
@@ -393,7 +394,9 @@ behind `requireEditor()` or `requireProofreading()` instead.
 rejects with nothing left running, and it never listens, exits or handles a signal: a host that
 serves other sites beside it does that, and `server.ts` is that host for this repository alone. A
 variable is read in `app/auth/environment.server.ts` from the record the app was handed, so the host
-can pass its own names; one that production requires is added to `checkConfiguration` too.
+can pass its own names; one that production requires is added to `checkConfiguration` too. Its
+second argument is what else the host gives: `reportError`, the host's Sentry, which an error no
+retry mends is handed to beside its log line (`app/report.server.ts`).
 
 **`css()` loses to a `vdm-*` class on the same element.** The mixes sit in the cascade layer
 `rmx`, and the design system's classes are unlayered, so on one element the class wins whatever

@@ -37,6 +37,7 @@ import type { DriveFolders } from './folders.server.ts'
 import { licenceDocName, licenceHtml, PREVIEW_SIZE } from './licence.server.ts'
 import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
+import type { ReportError } from '../report.server.ts'
 
 /**
  * The artworks sent through an article's or an artwork group's link (`21a`–`21d`), and what the
@@ -71,6 +72,8 @@ export type ArtworksSetup = {
   mailPerDay: number
   mailer: Mailer
   now(): Temporal.Instant
+  /** The host's error tracking, for a write that should never fail. */
+  reportError?: ReportError
   token(): Promise<DriveAccessToken>
 }
 

@@ -13,6 +13,8 @@ if (process.env.SENTRY_DSN) {
   Sentry.init({
     beforeSend: scrubSentryEvent,
     dsn: process.env.SENTRY_DSN,
+    // Publikace shares the process and the project; its reporter tags `app: publikace`.
+    initialScope: { tags: { app: 'web' } },
     // The SDK keeps incoming bodies for its events by default, whatever
     // sendDefaultPii says; a sign-in POST carries the typed password.
     integrations: [

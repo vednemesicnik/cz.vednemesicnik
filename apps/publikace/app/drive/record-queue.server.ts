@@ -10,10 +10,12 @@ import {
   CLAUSES_LIST,
   clauseRows,
   EVIDENCE_LISTS,
+  RECORD_FAILURES_TO_REPORT,
   RECORDS_PER_PASS,
   REGISTRY_LIST,
   registryRows,
 } from '../domain/record.ts'
+import type { ReportError } from '../report.server.ts'
 import type { DriveAccessToken } from './access-token.server.ts'
 import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
@@ -37,6 +39,8 @@ export type RecordQueue = {
   origin: string
   /** The Registr spreadsheet; empty skips it, as a laptop without a test Registr does. */
   registryId: string
+  /** The host's error tracking: a pass that threw, a record that keeps failing. */
+  reportError?: ReportError
   sheets: (accessToken: string) => RecordSheets
   token: () => Promise<DriveAccessToken>
 }
@@ -159,6 +163,13 @@ export async function drainRecordQueue(queue: RecordQueue): Promise<void> {
         await queue.marks.markWritten(mark)
       } else {
         logDriveFailure(`${describeMark(mark)} was not written`, result.error)
+        /* One report a streak: the retries that follow are the same failure. */
+        if (mark.attempts + 1 === RECORD_FAILURES_TO_REPORT) {
+          queue.reportError?.(
+            new Error(`${describeMark(mark)} was not written: ${result.error.slice(0, 200)}`),
+            'record',
+          )
+        }
         await queue.marks.markFailed(mark, queue.now(), result.error)
       }
     }
@@ -178,6 +189,7 @@ export function startRecordQueue(
   let run = () => {
     running = drainRecordQueue(queue).catch((error: unknown) => {
       console.error('[record] a pass of the record queue failed:', error)
+      queue.reportError?.(error, 'record')
     })
   }
   run()
