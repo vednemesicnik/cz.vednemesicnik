@@ -8,10 +8,11 @@
 [0090](0090-semver-versions-are-milestones-and-unreleased-work-reaches-dev-behind-a-gate.md)
 planned every semver version as a milestone, and
 [0091](0091-priority-and-effort-are-the-organisations-issue-fields-for-every-app.md) had the
-Priority fill it: every _High_ and _Medium_ in, no _Low_. Its first milestone, `publikace-v1.0.0`, was closed by the release
-of 27 Nov 2026, and `publikace-v1.1.0` was tagged the same day with no milestone at all. The
-guide still weighed every issue against the shipped `v1.0.0`, and every open Publikace issue was
-_Low_, so the next milestone would have been empty (#1111). On 27 Nov 2026 Libor decided:
+Priority fill it: every _High_ and _Medium_ in, no _Low_. Publikace's first milestone,
+`publikace-v1.0.0`, was closed by the release of 27 Nov 2026, and `publikace-v1.1.0` was
+tagged the same day with no milestone at all. The guide still weighed every issue against the
+shipped `v1.0.0`, and every open Publikace issue was _Low_, so the next milestone would have
+been empty (#1111). On 27 Nov 2026 Libor decided:
 "Milník dává smysl u major verzí u nás" (a milestone makes sense for our major versions).
 
 `v1.0.0` was described as the release that "lets the newsroom switch the scripts off". That was

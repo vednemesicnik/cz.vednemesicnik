@@ -120,7 +120,7 @@ there; the shape is shared:
 | Priority | Means                                                                                                       |
 | -------- | ----------------------------------------------------------------------------------------------------------- |
 | _Urgent_ | production is broken: a hotfix into `main` ([\_branching-model.md](_branching-model.md) § Hotfix procedure) |
-| _High_   | what the application's **Issue weighing** weighs against needs it now                                      |
+| _High_   | what the application's **Issue weighing** weighs against needs it now                                       |
 | _Medium_ | needed for that, not blocking                                                                               |
 | _Low_    | can wait                                                                                                    |
 

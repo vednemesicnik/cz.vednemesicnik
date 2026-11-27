@@ -193,8 +193,9 @@ one deploy from `dev`, not the numbering, so one repository holds both.
 
 A semver version is the next patch, minor or major after the application's newest tag. The
 first one is always `v1.0.0`, and until a release names it the application stays untagged; a
-release that names the first version tags it even when only the host changed. A hotfix never gives a first version. The web's
-Releases carry the repository's "Latest" badge; the others do not.
+release that names the first version tags it even when only the host changed. A hotfix never
+gives a first version. The web's Releases carry the repository's "Latest" badge; the others do
+not.
 
 **Only a major is planned as a milestone**, titled after its tag, and the release that names
 the major closes it ([\_workflow-skills.md](_workflow-skills.md) § Planning a version). A
