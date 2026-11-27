@@ -375,8 +375,8 @@ issue's Evidence or the Registr in the same transaction as the change, on the co
 shows and no others. A column the record starts to show needs its trigger changed in a new
 migration, or it reaches the sheet only with the daily rewrite. A write that keeps failing is a
 `[drive] … was not written` line in the log each time, one Sentry event on its third failure in
-a row, and nothing on a screen (`00d`). A change to its issue and the daily rewrite start a new
-streak, so a record that stays broken reports about once a day.
+a row, and nothing on a screen (`00d`). A change the record shows and the daily rewrite start a
+new streak, so a record that stays broken reports about once a day.
 
 **A trigger runs as the account that created it.** CI pushes code but never installs triggers.
 Moving a script to `publikace.app@` means running its `setupTriggers()` as `publikace.app@` and
