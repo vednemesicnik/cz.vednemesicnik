@@ -161,7 +161,8 @@ that needs a session belongs behind a guard instead.
   never a `PUBLIKACE_NODE_ENV`, and refuses to start it when the machine is on Fly and that value
   is not `production` (`server/publikace-environment.ts`). Any other host that forgets it gets
   production and its refusals.
-- **The fake app runs only in development**, and binds only to `127.0.0.1`.
+- **The fake app never runs as production**, an unset `NODE_ENV` included, and binds only to
+  `127.0.0.1`.
 - **`.env` is never opened by tools or agents**, and the repository holds only fictional data on
   the `.test` domains ([AGENTS.md](../AGENTS.md#data-rules)).
 

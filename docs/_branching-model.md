@@ -32,9 +32,9 @@ flowchart LR
 ## Unreleased work behind a gate
 
 A release takes everything on `dev`, for every application. So new user-visible work that is
-not to be released yet still merges into `dev`, hidden in production: it shows when
-`NODE_ENV !== 'production'` (local development, tests, the fake app) and is hidden when the app
-runs in production.
+not to be released yet still merges into `dev`, hidden in production: it shows where the app's
+own rule says it is not production (local development, tests, the fake app; each app's
+**Release gate** names the rule) and is hidden when the app runs in production.
 
 - **One helper per application.** Each application's guide names it (its `AGENTS.md` § For the
   workflow skills, **Release gate**), and it is written by the application's own rules. Every

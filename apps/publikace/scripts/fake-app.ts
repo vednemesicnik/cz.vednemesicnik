@@ -17,7 +17,7 @@ import { createFakeApp } from '../app/fake-app.server.ts'
 
 /* An unset `NODE_ENV` is production too, so the guard asks the app's own rule. */
 if (isProduction({ NODE_ENV: process.env.NODE_ENV })) {
-  console.error('pnpm app:fake runs only with NODE_ENV=development.')
+  console.error('pnpm app:fake never runs as production: set NODE_ENV=development.')
   process.exit(1)
 }
 
