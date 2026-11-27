@@ -139,7 +139,7 @@ describe('closing an issue (12g)', () => {
       let text = textOf(await (await editor.get(CLOSE)).text())
       assert.ok(
         text.includes(
-          'U 2 článků a 3 děl zatím chybí souhlas. Dokud je vydání uzavřené, aplikace neodesílá žádosti o souhlas ani nečte odpovědi.',
+          'U 2 článků a 3 děl zatím chybí souhlas. Dokud je vydání uzavřené, aplikace neodesílá žádosti o souhlas, nečte odpovědi a nedoplňuje podklady pro tisk.',
         ),
       )
       assert.ok(text.includes('Přesto uzavřít'))
