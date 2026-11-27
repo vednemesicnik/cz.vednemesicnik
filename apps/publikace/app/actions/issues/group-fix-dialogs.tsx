@@ -184,7 +184,7 @@ function RenewGroupLinkDialog(handle: Handle<{ view: RenewGroupLinkView }>) {
     let { action, cancelHref, shownKey, title } = handle.props.view
     let [first, second] = RENEW_GROUP_LINK_TEXT
     return (
-      <Dialog maxWidth="360px">
+      <Dialog maxWidth="460px">
         <DialogTitle>{title}</DialogTitle>
         <div class="vdm-dialog__body">
           <p class="vdm-dialog__text">{first}</p>

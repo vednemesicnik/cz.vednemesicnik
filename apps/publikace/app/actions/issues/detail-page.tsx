@@ -1548,7 +1548,7 @@ function DiscardDialog(handle: Handle<{ discarding: DiscardView }>) {
   return () => {
     let { discarding } = handle.props
     return (
-      <Dialog maxWidth="360px">
+      <Dialog maxWidth="480px">
         <DialogTitle>{discardDialogTitle(discarding.count)}</DialogTitle>
         <div class="vdm-dialog__body">
           {discarding.folderGone === undefined ? null : (
@@ -1635,7 +1635,7 @@ function RenewDialog(handle: Handle<{ issue: Issue; shownKey: string }>) {
   return () => {
     let { issue, shownKey } = handle.props
     return (
-      <Dialog maxWidth="360px">
+      <Dialog maxWidth="460px">
         <DialogTitle>{RENEW_DIALOG_TITLE}</DialogTitle>
         <div class="vdm-dialog__body">
           <p class="vdm-dialog__text">{RENEW_DIALOG_TEXT}</p>
