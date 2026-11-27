@@ -27,7 +27,7 @@ _Běží_ from the moment it was asked for.
 **Health comes from scheduled runs only.** _Neběží_, the next-run estimate and the banner's
 _stopped_ read the latest run that has no start. A run by hand decides only the outcome tag, so
 one click on a job whose trigger is gone does not clear _Neběží_ or the banner. That is what the
-drawn sentence by the button, „Tlačítko úlohu spustí jen jednou.“, warns about.
+sentence by the button, „Jeden běh beze změny plánu.“, warns about.
 
 **One pair of variables per job, `GAS_<JOB>_URL` and `GAS_<JOB>_SECRET`, optional in
 production.** A job without both has no button and keeps the texts that do not offer it, so the

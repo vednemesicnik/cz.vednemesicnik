@@ -85,11 +85,6 @@ export type Job = {
   windows?: HourlyWindows
   /** The job's own words for a run that ended, from what it reported (`14e`). */
   runEvent?(run: JobRunRecord): string | null
-  /**
-   * A run started by hand, from the words a scheduled run would get (`14e`); else
-   * _Spuštěna ručně,_ before them in lower case.
-   */
-  byHandEvent?(event: string): string
   /** What a failed run adds to the tag's line, after the last run (`14d`). */
   failureNote?(run: JobRunRecord): string | null
   /** Whether this one run already puts the job in the banner (`14i`); else two failures do. */
@@ -172,7 +167,6 @@ export const JOBS: readonly Job[] = [
     windows: ARTICLE_COMMENTS_WINDOWS,
   },
   {
-    byHandEvent: (event) => `Spuštěno ručně. ${event}`,
     failedCallout: UNCONFIRMED_CALLOUT_TEXT,
     failedCalloutOf(run, _generic, canStart) {
       let digest = readDigestRun(run.summary)
@@ -236,9 +230,9 @@ export const START_LABEL = 'Spustit teď'
 
 /**
  * By the button while the job is _Neběží_, which it reads as its description: a run by hand mends
- * no trigger (`14e`, `fbxo52ix`).
+ * no trigger (`14e`, `fbxo52ix`, the copywriter's `u2498dj6`).
  */
-export const START_ONCE_TEXT = tied`Tlačítko úlohu spustí jen jednou.`
+export const START_ONCE_TEXT = tied`Jeden běh beze změny plánu.`
 
 /** The script did not take the start; the row stays as it was (`11c`). */
 export const START_FAILED_TOAST = tied`Zkuste úlohu spustit za chvíli znovu.`
@@ -405,12 +399,14 @@ export function settingsSummary(job: Job, state: JobState, today: Temporal.Insta
   return `${job.name} · ${jobTag(state, today).label}`
 }
 
-/** A run in the history, newest first (`14e`); one started by hand says so first. */
+/**
+ * A run in the history, newest first (`14e`). One started by hand says so first, with the words
+ * a scheduled run would get after it as they are: some have no verb or another subject, so one
+ * full stop fits every job (`u2498dj6`).
+ */
 export function historyEvent(job: Job, run: JobRunRecord, now: Temporal.Instant): string {
   let event = scheduledEvent(job, run, now)
-  if ((run.startedBy ?? null) === null) return event
-  if (job.byHandEvent !== undefined) return job.byHandEvent(event)
-  return `Spuštěna ručně, ${event.charAt(0).toLocaleLowerCase('cs')}${event.slice(1)}`
+  return (run.startedBy ?? null) === null ? event : `Spuštěno ručně. ${event}`
 }
 
 function scheduledEvent(job: Job, run: JobRunRecord, now: Temporal.Instant): string {

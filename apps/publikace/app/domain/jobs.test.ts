@@ -210,7 +210,7 @@ describe('Spustit teď (14d, 14e)', () => {
 
   it('says a run started by hand so before its result, and names who started it', () => {
     let byHand = { ...RUN, startedBy: MARIE }
-    assert.equal(historyEvent(JOB, byHand, TODAY), 'Spuštěna ručně, skončila bez chyby')
+    assert.equal(historyEvent(JOB, byHand, TODAY), 'Spuštěno ručně. Skončila bez chyby')
     assert.equal(historyWho(byHand), 'Marie Horáková')
     assert.equal(historyWho(RUN), 'systém')
     assert.equal(historyWho({ ...RUN, startedBy: null }), 'systém')

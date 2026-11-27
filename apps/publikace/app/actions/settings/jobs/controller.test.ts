@@ -300,7 +300,7 @@ describe('the history of a job (14e)', () => {
       )
       assert.match(
         html,
-        /<p id="(start-once-[^"]+)">Tlačítko úlohu spustí jen jednou\.<\/p><form action="\/settings\/jobs\/artwork-replies\/start" method="post">/,
+        /<p id="(start-once-[^"]+)">Jeden běh beze změny plánu\.<\/p><form action="\/settings\/jobs\/artwork-replies\/start" method="post">/,
       )
       let describedBy = /<p id="(start-once-[^"]+)">/.exec(html)?.[1]
       assert.ok(describedBy !== undefined)
@@ -496,7 +496,7 @@ describe('Spustit teď (14d, 14e)', () => {
       })
       await runs.finish(REPLY_CHECK_JOB, 'r-1', { at, error: null, outcome: 'ok' })
       let text = textOf(await (await browser.get('/settings/jobs/artwork-replies')).text())
-      assert.match(text, /Spuštěna ručně, skončila bez chyby · Marie Horáková/)
+      assert.match(text, /Spuštěno ručně\. Skončila bez chyby · Marie Horáková/)
     } finally {
       await app.close()
     }
