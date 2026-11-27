@@ -1,6 +1,7 @@
 import * as http from 'node:http'
 import { createRequestListener } from 'remix/node-fetch-server'
 
+import { isProduction } from '../app/auth/environment.server.ts'
 import { startRecordQueue } from '../app/drive/record-queue.server.ts'
 import { createFakeApp } from '../app/fake-app.server.ts'
 
@@ -14,8 +15,9 @@ import { createFakeApp } from '../app/fake-app.server.ts'
  * differs from `app:dev`'s so both can run at once.
  */
 
-if (process.env.NODE_ENV === 'production') {
-  console.error('pnpm app:fake does not run with NODE_ENV=production.')
+/* An unset `NODE_ENV` is production too, so the guard asks the app's own rule. */
+if (isProduction({ NODE_ENV: process.env.NODE_ENV })) {
+  console.error('pnpm app:fake runs only with NODE_ENV=development.')
   process.exit(1)
 }
 
