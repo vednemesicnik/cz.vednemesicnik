@@ -119,7 +119,7 @@ export type TestApp = {
    * given, or with one that may pass on a later try.
    */
   failMail(failure: boolean | string): void
-  /** While set, every job's `doPost` refuses _Spustit teď_ with the error given. */
+  /** While `true`, every job's `doPost` refuses _Spustit teď_. */
   failJobStart(failure: boolean): void
   /** Every _Spustit teď_ the app sent a job's `doPost`, in order, taken or not. */
   jobStarts: { job: string; startKey: string }[]

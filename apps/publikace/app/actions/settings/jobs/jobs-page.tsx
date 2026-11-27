@@ -97,7 +97,7 @@ export function JobsPage(handle: Handle<JobsPageProps>) {
                       {row.tag.label}
                     </StatusTag>
                   </span>
-                  <span role="cell">
+                  <div role="cell">
                     {row.showHref === null ? null : (
                       <a class="vdm-btn vdm-btn--outline vdm-btn--sm" href={row.showHref}>
                         {SHOW_JOB_LABEL}
@@ -113,7 +113,7 @@ export function JobsPage(handle: Handle<JobsPageProps>) {
                         </button>
                       </form>
                     )}
-                  </span>
+                  </div>
                 </TableRow>
               ))}
             </div>

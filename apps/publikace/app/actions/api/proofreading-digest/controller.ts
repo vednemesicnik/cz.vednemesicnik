@@ -25,9 +25,9 @@ import { bodyOf, intervalOf, json, openRun, refusal } from '../job-request.ts'
  * already signs for, so the job holds no secret and reads no article.
  *
  * One call, `run`, with the trigger's interval and the `startKey` of a start by hand: the app
- * opens the run, builds the digest, sends
- * it when there is something new and an address to send it to, records what a confirmed digest
- * told, and closes the run with what came of it, which `14e` shows. A digest the Mailer did not
+ * opens the run, builds the digest, sends it when there is something new and an address to send
+ * it to, records what a confirmed digest told, and closes the run with what came of it, which
+ * `14e` shows. A digest the Mailer did not
  * confirm marks nothing, so the next run sends it again, under the same idempotency key while
  * its content is the same.
  *

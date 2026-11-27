@@ -373,7 +373,7 @@ Evidence, binned with its folder, is no longer written.
 | `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until #1082 |
 | `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes, no trigger until #1082 |
 
-Every claim opens a run in `job_runs` and leases what it returns for 10 minutes. A claim leaves out
+Every claim opens a run in `job_runs`, unless its `startKey` is refused (below), and leases what it returns for 10 minutes. A claim leaves out
 a removed article or group, its clauses and its batches, discarded ones included (`12z`, `12f`). A report must
 carry the run's key. Every e-mail carries a Mailer idempotency key, so a run that dies between
 sending and reporting does not send twice. The comment digest claims every article of an open

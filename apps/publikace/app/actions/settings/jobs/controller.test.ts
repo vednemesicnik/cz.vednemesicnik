@@ -297,9 +297,11 @@ describe('the history of a job (14e)', () => {
       )
       assert.match(
         html,
-        /<p id="start-once">Tlačítko úlohu spustí jen jednou\.<\/p><form action="\/settings\/jobs\/artwork-replies\/start" method="post">/,
+        /<p id="(start-once-[^"]+)">Tlačítko úlohu spustí jen jednou\.<\/p><form action="\/settings\/jobs\/artwork-replies\/start" method="post">/,
       )
-      assert.match(html, /<button aria-describedby="start-once"[^>]*>Spustit teď<\/button>/)
+      let describedBy = /<p id="(start-once-[^"]+)">/.exec(html)?.[1]
+      assert.ok(describedBy !== undefined)
+      assert.ok(html.includes(`<button aria-describedby="${describedBy}"`))
       assert.doesNotMatch(html, /Zobrazit podrobnosti/)
       assert.doesNotMatch(text, /Úloha skončila s chybou/)
     } finally {

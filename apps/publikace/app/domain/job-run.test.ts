@@ -182,9 +182,10 @@ describe('a start by hand', () => {
   it('takes its outcome from the run by hand, and Neběží from the trigger alone', () => {
     let byHand = { ...run(5, 'ok'), startedBy: MARIE }
     let scheduled = run(90, 'ok')
+    /* Neběží by the trigger, with the time of the job's last report, the run by hand. */
     assert.deepEqual(jobState(byHand, NOW, undefined, { scheduled }), {
       kind: 'stopped',
-      lastStartedAt: scheduled.startedAt,
+      lastStartedAt: byHand.startedAt,
     })
     let recent = run(20, 'failed')
     assert.deepEqual(

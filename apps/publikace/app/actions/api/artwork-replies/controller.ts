@@ -19,8 +19,9 @@ import { readConsentReport } from '../consent-report.ts'
  * standalone Apps Script project running as `publikace.app@` on its own trigger. A run makes two
  * calls:
  *
- * 1. `claim` with the trigger's interval, and the `startKey` of a start by hand, opens the run and takes the batches to ask about, each
- *    with what Reply_Check needs to find its thread and what the archived PDF says;
+ * 1. `claim` with the trigger's interval, and the `startKey` of a start by hand, opens the run
+ *    and takes the batches to ask about, each with what Reply_Check needs to find its thread and
+ *    what the archived PDF says;
  * 2. `report` with the run's key gives, per batch, what Reply_Check answered and what the job
  *    archived into the article's `Licence`, and closes the run.
  *

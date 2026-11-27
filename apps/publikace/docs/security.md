@@ -200,6 +200,7 @@ that needs a session belongs behind a guard instead.
 | Names and addresses of providers, author and source of each artwork | outside the newsroom           | the licence and its consent                               | not decided (`S-10`)                                       |
 | Reply texts and answers                                             | both sides of the conversation | the decision in _Ke kontrole_                             | not decided; the proof itself is the archived conversation |
 | Editors' names on steps                                             | the newsroom                   | who verified a consent, took or marked a text             | not decided                                                |
+| Name and address of who started a job by hand (`job_starts`)        | the newsroom                   | _Spustit teď_: the history names who started a run        | not decided                                                |
 | Sessions                                                            | the newsroom                   | sign-in                                                   | deleted after they expire                                  |
 
 Until a retention period is decided, nothing personal is deleted except expired sessions.

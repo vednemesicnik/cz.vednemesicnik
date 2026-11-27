@@ -41,6 +41,13 @@ additive: an optional `startKey` on every claim. `apps/publikace/docs/architectu
   it reads and writes nothing else.
 - A job only ever started by hand has no estimate and is never _Neběží_: no trigger, no interval
   to miss.
+- A start the `doPost` took but whose run never claims (a one-off trigger Apps Script refused, a
+  run that threw before its claim) leaves no trace: the job is _Běží_ for 10 minutes and then
+  shows its earlier tag. Accepted, because the job's own log in Apps Script has it and a second
+  press tries again; a reason to revisit is a start that goes missing more than once.
+- _Neběží_ stays the trigger's, but the time it shows is the job's last report, a run by hand
+  included. The digest's fixed sentence „Dnes se úloha neohlásila.“ is then untrue on a day a
+  run by hand reported, which waits for its own wording.
 - A reason to revisit: Apps Script refuses one-off triggers (its quota, or a project at its
   trigger limit), or a job needs to know at once that it was started, for instance to answer the
   click with its result. Then the `doPost` would run the job in the request.

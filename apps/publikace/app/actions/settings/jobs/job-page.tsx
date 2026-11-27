@@ -92,8 +92,6 @@ const startStyle = css({
   '& > form': { display: 'contents' },
 })
 
-const START_ONCE_ID = 'start-once'
-
 /** The `from` of _Spustit teď_ on this page, which the browser comes back to. */
 export const START_FROM_JOB = 'job'
 
@@ -105,6 +103,7 @@ export const START_FROM_JOB = 'job'
 export function JobPage(handle: Handle<JobPageProps>) {
   return () => {
     let { callout, driveAccount, history, name, neverText, person, start, toasts } = handle.props
+    let startOnceId = `start-once-${handle.id}`
 
     return (
       <Document title={name}>
@@ -126,12 +125,12 @@ export function JobPage(handle: Handle<JobPageProps>) {
               </h1>
               {start === null ? null : (
                 <div mix={startStyle}>
-                  {start.isOnce ? <p id={START_ONCE_ID}>{START_ONCE_TEXT}</p> : null}
+                  {start.isOnce ? <p id={startOnceId}>{START_ONCE_TEXT}</p> : null}
                   <form action={start.action} method="post">
                     <CsrfField />
                     <input name="from" type="hidden" value={START_FROM_JOB} />
                     <button
-                      aria-describedby={start.isOnce ? START_ONCE_ID : undefined}
+                      aria-describedby={start.isOnce ? startOnceId : undefined}
                       class="vdm-btn vdm-btn--outline vdm-btn--sm"
                       type="submit"
                     >
