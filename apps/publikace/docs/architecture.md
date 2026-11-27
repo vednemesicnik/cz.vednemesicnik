@@ -96,7 +96,7 @@ blocks every action that creates files, and a banner over every screen says so (
 States are not stored as enums. They are derived from timestamps such as `handed_over_at`,
 `consent_verified_at` and `closed_at` (see [Lifecycles](#lifecycles)). The diagram shows the
 tables that carry the product. Sessions, the access list, the proofreaders' address, the Drive
-account, `job_runs`, the record queue's own tables and what the jobs leave between their runs (the
+account, `job_runs` and `job_starts`, the record queue's own tables and what the jobs leave between their runs (the
 print folder's copies, each article's last comment digest) stand beside them.
 
 ```mermaid
@@ -383,6 +383,20 @@ is told again with the next run. `/settings/jobs` shows each job's last run (`14
 Once two runs in a row fail or overdue, a banner appears over every editor's screen; for the
 digest, one run is enough (`14i`).
 
+**Starting a job by hand.** _Spustit teď_ on a job's row (`14d`, _V pořádku_ and _Zatím se
+neohlásila_) and on its page (`14e`, every state but _Běží_) records a request in `job_starts`
+with who asked and a one-time `startKey`, then posts `{ job, startKey }` to the job's `doPost` in
+an envelope signed with that project's secret (`GAS_<JOB>_URL`, `GAS_<JOB>_SECRET`). The `doPost`
+checks the signature, keeps the key, answers at once and runs the job from a one-off trigger a
+second later, so the run is `publikace.app@`'s as on its schedule. The job's claim carries
+`startKey` back: the app opens the run only for an unredeemed start of that job (else 409
+`unknown_start`), and the run is then the starter's, shown in the history with their name. From
+the request on the job is _Běží_, for at most the 10 minutes a run can last; a `doPost` that does
+not take it marks the request failed and the row stays as it was (`11c`). A run by hand says
+nothing about the trigger: _Neběží_, the next run and the banner's _stopped_ read the latest
+scheduled run only, so one click does not clear a job whose trigger is gone. A job without its two
+variables has no button.
+
 **The API is a contract with the scripts.** It is versioned (`/api/v1`), and a field is never
 renamed in place. A change to what an endpoint takes or returns is a change in the script too.
 Artwork groups were added that way (cz.vednemesicnik.publikace#133): `artwork-replies/claim` gives each batch a `kind`
@@ -404,7 +418,7 @@ Evidence.
 | Group membership | `GAS_GROUP_MEMBERSHIP_URL`, `GAS_GROUP_MEMBERSHIP_SECRET`                                                               |
 | Drive            | `DRIVE_ACCOUNT_EMAIL`, `DRIVE_TOKEN_KEY`, `ISSUES_FOLDER_ID`, `ARTICLE_TEMPLATE_DOCUMENT_ID`, `REGISTRY_SPREADSHEET_ID` |
 | Mail             | `GAS_MAIL_SEND_URL`, `GAS_MAIL_SEND_SECRET`, `PUBLIC_MAIL_PER_DAY`                                                      |
-| Jobs             | `SCRIPT_TOKEN_AUDIENCE`, `SCRIPT_JOB_ACCOUNT`, `SCRIPT_RUN_SECRET` (not read yet, see the review)                       |
+| Jobs             | `SCRIPT_TOKEN_AUDIENCE`, `SCRIPT_JOB_ACCOUNT`; per job, optional, `GAS_<JOB>_URL`, `GAS_<JOB>_SECRET` (_Spustit teď_)   |
 | Storage          | `DATABASE_PATH`                                                                                                         |
 
 ## Testing without Google

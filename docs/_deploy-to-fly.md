@@ -264,8 +264,11 @@ answers 503 on its hosts, and the web keeps serving.
 `PUBLIKACE_ARTICLE_TEMPLATE_DOCUMENT_ID`, `PUBLIKACE_GAS_MAIL_SEND_URL`, `PUBLIKACE_GAS_MAIL_SEND_SECRET`
 and `PUBLIKACE_SCRIPT_TOKEN_AUDIENCE`, the `aud` of every job that calls the API,
 comma-separated. `PUBLIKACE_REGISTRY_SPREADSHEET_ID` is optional: without it only each issue's
-Evidence is written. `PUBLIKACE_PUBLIC_MAIL_PER_DAY` keeps its default of 300 unless set, and
-`PUBLIKACE_SCRIPT_RUN_SECRET` waits for #1083.
+Evidence is written. `PUBLIKACE_PUBLIC_MAIL_PER_DAY` keeps its default of 300 unless set.
+_Spustit teď_ (#1083) takes one optional pair per job, `PUBLIKACE_GAS_<JOB>_URL` and
+`PUBLIKACE_GAS_<JOB>_SECRET`, with `<JOB>` one of `ARTICLE_APPROVALS`, `ARTICLE_COMMENTS`,
+`ARTWORK_REPLIES`, `PRINT_HANDOFF` and `PROOFREADING_DIGEST`: the job's `doPost` web app and the
+`RUN_SECRET` in its Script Properties. A job without its pair has no button.
 
 ### Going live
 

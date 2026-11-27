@@ -185,7 +185,8 @@ repository's; Publikace's versions are its tags `publikace-vX.Y.Z`. See
   (`SCRIPT__Publication__Proofreading_Digest`, which only calls the app) run as `publikace.app@`
   on their triggers and read and write through the app's API instead of the sheets. They report
   every run to the app with the interval of their trigger, and the app shows the last one and can
-  start a job through the script's `doPost`. Apps Script picks the minute a trigger fires, so a
+  start one once through the script's `doPost` (_Spustit teď_), signed with that project's secret;
+  a run started by hand is told apart by the start key its claim carries. Apps Script picks the minute a trigger fires, so a
   next run the app shows is an estimate, never a promise. The app reaches Gmail only through the
   Mailer and the reply check, never with a token of its own. A job the app replaces stays on the
   sheets beside the one that talks to the app, each with its own issues, until no issue made
