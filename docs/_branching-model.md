@@ -10,14 +10,16 @@ do not.
 
 ## Flow
 
-```
-feature/fix ──► dev ──(release)──► main ──► deploy
-                 ▲                   │
-                 └──(back-merge)─────┘
-
-hotfix ──────────────────────────► main ──► deploy
-                                     │
-                 dev ◄──(back-merge)─┘
+```mermaid
+flowchart LR
+  M["Milestone per app version<br/>(semver apps)"] -. plans .-> F
+  F["Feature branch<br/>one per issue"] -->|squash PR| D[dev]
+  I["Integration branch<br/>(rare)"] -.->|one PR| D
+  D -->|"release PR dev → main<br/>names versions, release-version check"| MA[main]
+  MA --> DEP["One deploy<br/>every app"]
+  MA --> T["Tag per changed app<br/>closes its milestone"]
+  H["Hotfix branch"] -->|squash PR| MA
+  MA -->|back-merge| D
 ```
 
 - **Feature / fix:** branch off `dev`, PR back into `dev`. No deploy. A change too large
@@ -40,18 +42,45 @@ runs in production.
   first issue that needs a gate adds the helper.
 - **The server is gated too.** A gated route or action answers 404 in production, as if it did
   not exist; hiding the link alone leaves it reachable.
-- **Migrations cannot be gated**, because they run on deploy. A gated change only adds to the
-  schema (a new table, a nullable or defaulted column) and removes nothing that production
-  still reads; what the feature makes obsolete is removed after it is turned on.
+- **Migrations cannot be gated**, because they run on deploy; they go
+  [expand, then contract](#migrations-expand-then-contract).
 - **Turning it on is its own PR.** The PR that removes the gate is the step that releases the
   work. For an application tagged by semver it belongs to the version's milestone
   ([\_workflow-skills.md](_workflow-skills.md) § Planning a version), and the release that
   carries it names that version. A release carrying only gated work gives such an application
   the next patch (`publikace-v1.0.1`).
-- **Work that cannot be gated** — a change of the host, a dependency, a shared layout — goes to
-  a short-lived integration branch off `dev` as a rare exception: its PRs target that branch,
-  the workflows' `pull_request.branches` list gets it for as long as it lives, and it merges
-  into `dev` in one PR when it is ready to ship.
+- **Work that cannot be gated** — a change of the host, a dependency, a shared layout, a
+  schema whose old and new shape cannot coexist — goes to a short-lived integration branch off
+  `dev` as a rare exception: its PRs target that branch, the workflows' `pull_request.branches`
+  list gets it for as long as it lives, and it merges into `dev` in one PR when it is ready to
+  ship.
+
+### Migrations: expand, then contract
+
+A migration runs on the deploy, for every release, so it cannot wait behind a gate. A schema
+change is split so that each release runs on both the old and the new structure:
+
+```mermaid
+flowchart LR
+  E["Expand<br/>add new, keep old<br/>any release"] --> S["Switch code<br/>gated code uses new<br/>any release"]
+  S --> T["Turn on<br/>remove the gate, stop reading old<br/>names the version"]
+  T --> C["Contract<br/>drop old<br/>a later release, backup first"]
+```
+
+1. **Expand.** A migration adds the new structure beside the old one. It can ship in any
+   release; the running code does not notice.
+2. **Switch.** Gated code uses the new structure, writing both or backfilling where it needs
+   to; the code production runs keeps using the old one.
+3. **Turn on.** The PR that removes the gate also stops reading the old structure, and its
+   release names the version.
+4. **Contract.** Dropping the old structure is an issue of its own, in the same milestone or
+   the next, and ships in a later release than the turn-on, never the same one, so rolling back
+   to the previous image still works. It is the one destructive step: the web's deploy takes
+   the pre-migration backup itself; Publikace's backup arrives with #1082.
+
+When the old and the new structure cannot coexist — a new constraint the old data breaks, say
+— a gate does not help. That is the integration branch above: data and code land in one
+release, with a backup first.
 
 ## Merge methods
 
@@ -144,6 +173,23 @@ folder in `apps/` without one fails the `release-version` check on every PR.
 | `date` | the web | `web-2026-11-27`, a second one that day `web-2026-11-27-2` | the day of the merge in Prague |
 | `semver` | Publikace | `publikace-v1.1.0` | a release names it under `## Versions`; a hotfix is the next patch |
 
+**Why two styles.** An application that plans its versions as milestones needs semver, since a
+milestone needs its name before anyone knows the day it ships. An application that ships
+continuously with no plan per version is tagged by date. What makes releases continuous is the
+one deploy from `dev`, not the numbering, so one repository holds both.
+
+**Which part of a semver version moves**, in the application's own terms (its `AGENTS.md`
+§ For the workflow skills, **Issue weighing**):
+
+- **patch** — the release carries only fixes, or only work still behind a gate. A hotfix takes
+  the patch by itself.
+- **minor** — at least one new thing is turned on, and nobody who uses the application or
+  calls it has to change anything for it.
+- **major** — something its users have to relearn, an incompatible change to an API others
+  call, or a data migration that needs somebody to act. A major is planned as its own
+  milestone (`<app>-v2.0.0`), its work lands on `dev` behind the gate, and the release that
+  removes the gate names it.
+
 A semver version is the next patch, minor or major after the application's newest tag. The
 first one is always `v1.0.0`, and until a release names it the application stays untagged:
 **Publikace has no tag until the release that has the host serve
@@ -155,7 +201,27 @@ repository's "Latest" badge; the others do not.
 names the version closes it ([\_workflow-skills.md](_workflow-skills.md) § Planning a version).
 A release that changes such an application only with work still
 [behind a gate](#unreleased-work-behind-a-gate) gives it the next patch, once it has a first
-version.
+version. An illustration, with Publikace's 1.1 built behind its gate between two releases:
+
+```mermaid
+gitGraph
+  commit id: "release" tag: "publikace-v1.0.0"
+  branch dev
+  checkout dev
+  commit id: "publikace: 1.1 part 1 (gated)"
+  commit id: "web: fix"
+  commit id: "publikace: 1.1 part 2 (gated)"
+  checkout main
+  merge dev id: "release A" tag: "web-YYYY-MM-DD + publikace-v1.0.1"
+  checkout dev
+  merge main id: "back-merge A"
+  commit id: "web: new page"
+  commit id: "publikace: turn 1.1 on"
+  checkout main
+  merge dev id: "release B" tag: "web-YYYY-MM-DD + publikace-v1.1.0"
+  checkout dev
+  merge main id: "back-merge B"
+```
 
 **Checked before the merge.** `.github/workflows/release-version.yml` (job `release-version`)
 runs the same script on every PR into `main`, again when its body is edited, and shows each

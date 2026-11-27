@@ -56,8 +56,11 @@ doing the same thing (add and edit, list and detail), the loader that feeds the 
   (`docs/_branching-model.md` § Unreleased work behind a gate) — every surface the diff adds
   for gated work calls the helper the app's **Release gate** names, never
   `process.env.NODE_ENV` directly; its route, loader or action answers 404 in production, not
-  only hidden UI; its migration only adds. An ungated route behind gated UI is `high`; a
-  direct `NODE_ENV` check is `medium`;
+  only hidden UI. An ungated route behind gated UI is `high`; a direct `NODE_ENV` check is
+  `medium`;
+- **a migration expands, a contract waits** (§ Migrations: expand, then contract) — a
+  migration that drops or narrows what the code production runs still reads, outside an issue
+  of its own that ships after the turn-on, is `high`;
 - **no applied migration edited** — a new migration is fine; a changed file under a migration
   that already ran on `dev` (`git log dev -- <path>`) is `high`;
 - **no real data** in fixtures, tests and docs — e-mail addresses use `vednemesicnik.test`
