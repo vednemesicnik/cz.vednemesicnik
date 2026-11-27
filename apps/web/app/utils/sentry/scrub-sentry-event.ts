@@ -8,12 +8,18 @@ const REFERER_HEADER = 'referer'
 const BREADCRUMB_URL_FIELDS = ['url', 'from', 'to']
 const BREADCRUMB_QUERY_FIELDS = ['http.query', 'http.fragment']
 
-const removeQueryAndFragment = (url: string) => url.split(/[?#]/, 1)[0]
+// Publikace's shared links carry their key in the path (`/l/{key}/article`), and its
+// requests pass through the same process.
+const SHARED_LINK_KEY = /\/l\/[^/]+/
+
+const removeQueryAndFragment = (url: string) =>
+  url.split(/[?#]/, 1)[0].replace(SHARED_LINK_KEY, '/l/…')
 
 /**
  * Removes what must not reach Sentry from an event: request bodies (typed
- * passwords, application data), cookies and secret headers, and every query
- * string, because sign-in links and OAuth callbacks carry live tokens in theirs.
+ * passwords, application data), cookies and secret headers, every query string,
+ * because sign-in links and OAuth callbacks carry live tokens in theirs, and the
+ * key of a Publikace shared link.
  */
 export const scrubSentryEvent = (event: ErrorEvent): ErrorEvent => {
   const { breadcrumbs, request } = event
