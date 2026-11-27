@@ -43,8 +43,21 @@ What the repository's workflow skills (`/plan-issue`, `/implement-issue`, `/ship
 - **Rules** — the web's rules (§ Agent Rules below) and the repository's shared rules; the
   guidance skills `general-guidance`, `component-authoring`, `react-router`, `prisma-*` and
   `modern-web-guidance` (§ Agent Skills).
-- **Issue weighing** — the repository's three questions alone; the web has no release label,
-  and no milestones, since it is tagged by date.
+- **Issue weighing** — the organisation's **Priority** on every issue labelled `web`
+  ([docs/\_workflow-skills.md](../../docs/_workflow-skills.md) § Priority and effort), weighed
+  against the next release, since every release takes what is on `dev`:
+  - **Urgent** — the live site is broken: a page, a form or a sign-in fails for its readers or
+    editors, and the fix goes out as a hotfix;
+  - **High** — the next release needs it now: work already in review, or something the live
+    site promises and does not keep;
+  - **Medium** — planned next, with a reason it comes before the rest (a date the newsroom set,
+    work that follows what is in review), but nothing waits on it yet;
+  - **Low** — can wait: polish, an idea parked until it is asked for, a placeholder, structured
+    data or SEO with no visible payoff.
+
+  Priority decides, age breaks a tie, and a real blocker still holds. The skill filing an issue
+  sets its Priority and Effort itself. The web has no project and no milestones, since it is
+  tagged by date.
 - **Release gate** — `isUnreleased()` in `app/utils/is-unreleased.ts`, true unless `NODE_ENV`
   is `production`, the one call that hides unreleased work in production and makes its loader
   or action answer 404 ([docs/\_branching-model.md](../../docs/_branching-model.md)

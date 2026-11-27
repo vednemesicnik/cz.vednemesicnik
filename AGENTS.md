@@ -135,11 +135,14 @@ One repository holds the issues of every application, told apart by labels: `web
 setup). Every issue is opened with its organisation type and its label in one command
 (`gh issue create --type Bug|Feature|Task --label web|publikace`), and work on an app lists its
 own (`gh issue list --label publikace`). A new application gets a label of its own.
-Publikace's issues are also ordered by the org project
-[Publikace (7)](https://github.com/orgs/vednemesicnik/projects/7) — `Priority` decides, age breaks
-a tie — and an application that gets a project names it in its own `AGENTS.md`; the web has
-none yet.
-[docs/\_workflow-skills.md](docs/_workflow-skills.md) § The issue's type and status has the rest.
+Every issue also carries the organisation's issue fields **Priority** (Urgent, High, Medium,
+Low) and **Effort** (Low, Medium, High), set by whoever files it: Priority decides the order, age
+breaks a tie, and each application's **Issue weighing** in its `AGENTS.md` says what its
+priorities mean.
+A project such as [Publikace (7)](https://github.com/orgs/vednemesicnik/projects/7) is a board
+and holds no priority.
+[docs/\_workflow-skills.md](docs/_workflow-skills.md) § The issue's type and status and
+§ Priority and effort have the rest.
 
 ### Releases
 
@@ -166,7 +169,7 @@ The repository's documents are in `docs/`; each application documents itself in 
 `docs/`.
 
 - `docs/_branching-model.md` - Branching model, unreleased work behind a gate, merge methods, stacked PRs, versions (tags, Releases, the `release-version` gate), hotfix procedure
-- `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, ordering by a project, planning a version, where each stops, where the skills live
+- `docs/_workflow-skills.md` - The map of the workflow skills: what each takes and ends with, issue type and status, filing an issue, priority and effort, planning a version, where each stops, where the skills live
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures

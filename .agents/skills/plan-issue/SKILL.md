@@ -2,7 +2,7 @@
 name: plan-issue
 description: Fetch a GitHub issue and produce a repo-aware implementation plan (plan mode). Use when an issue is about to be worked on and needs a plan before any code is written.
 argument-hint: <issue-number>
-allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*)
+allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api repos/{owner}/{repo}/issues/*), Bash(gh api -X PATCH repos/{owner}/{repo}/issues/*), Bash(gh api orgs/vednemesicnik/issue-fields)
 ---
 
 ## Requested issue number
@@ -139,7 +139,16 @@ You are the **planning stage** of the issue pipeline:
    `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status=Todo --jq .status.name`. A
    plan redrawn for an issue already _In progress_ or _In review_ never moves it back
    ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § The issue's type and
-   status). The plan file and the status are the only things this skill writes — no repo
+   status).
+
+   **Set the issue's Effort from the plan**: read it with
+   `gh api repos/{owner}/{repo}/issues/<number>/issue-field-values`, and when the plan's size
+   says otherwise (or the issue has none), set it as
+   [docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Priority and effort shows,
+   naming the old and new value in the report. A plan bigger than _High_ is not a value to set:
+   say so before `ExitPlanMode` and propose the split into an epic instead.
+
+   The plan file, the status and the Effort are the only things this skill writes — no repo
    edits, nothing else on GitHub.
 
 10. **Close with what is open, in the order it should be done.** `/implement-issue <number>`

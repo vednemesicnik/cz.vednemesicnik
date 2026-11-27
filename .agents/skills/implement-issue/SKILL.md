@@ -77,8 +77,8 @@ before pushing and before the PR — that is `/ship-issue`.
    `gh api repos/{owner}/{repo}/issues/<number> --jq .status.name`, and unless it is already
    _In progress_ or _In review_, set it with
    `gh api -X PATCH repos/{owner}/{repo}/issues/<number> -f status='In progress' --jq .status.name`.
-   When the app's **Issue weighing** names a project, set the item's Status there to In Progress
-   too ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Ordering by a project).
+   A board the app keeps moves its own Status; no skill sets it
+   ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Priority and effort).
 
 6. **Load what governs the files you'll touch** before the first edit: the app's **Rules**
    (its rule files, its guidance skills, the `modern-web-guidance` search for HTML, CSS and
