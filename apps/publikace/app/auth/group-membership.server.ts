@@ -63,10 +63,12 @@ export function createMembershipCheck(
       if (payload.ok !== true) {
         let error = typeof payload.error === 'string' ? payload.error : 'unknown'
         if (error === 'unknown_group') return { status: 'unknown-group' }
-        /* `unauthorized` is this app's misconfiguration and does not fix itself, so it is
-           logged and reported; it still answers "don't know" like every other failure. */
+        /* A refusal is logged and answers "don't know" like every other failure; `unauthorized`
+           is this app's own misconfiguration and does not fix itself, so it is reported too. */
         console.error(`[auth] membership service refused the request: ${error}`)
-        reportError(new Error(`The membership service refused the request: ${error}`), 'auth')
+        if (error === 'unauthorized') {
+          reportError(new Error(`The membership service refused the request: ${error}`), 'auth')
+        }
         return { status: 'unavailable' }
       }
 

@@ -26,7 +26,7 @@ import type { RecordSheets, SheetsResult } from './sheets.server.ts'
  * follow it, written by `publikace.app@` from the marks the database's triggers left. A sheet
  * that does not answer only delays the record, and no action waits for it or fails with it: the
  * record has no failure state on any screen (`00d`), so a write that keeps failing is a line in
- * the log and nothing else.
+ * the log each time and one report to the host on its third failure in a row.
  */
 
 export type RecordQueue = {

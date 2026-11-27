@@ -57,6 +57,7 @@ describe('membership check', () => {
       status: 'unknown-group',
     })
     assert.deepEqual(await check({ error: 'unauthorized', ok: false }), { status: 'unavailable' })
+    assert.deepEqual(await check({ error: 'server_error', ok: false }), { status: 'unavailable' })
     assert.deepEqual(await check({}, 500), { status: 'unavailable' })
     /* Only the refusal is the app's own misconfiguration; an outage is not reported. */
     assert.deepEqual(reported, ['Error: The membership service refused the request: unauthorized'])
