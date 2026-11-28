@@ -120,6 +120,8 @@ describe('home, the shell', () => {
       assert.ok(form.includes('name="_csrf"'), 'the form carries the CSRF token')
       assert.ok(/<button [^>]*type="submit"[^>]*>Odhlásit se<\/button>/.test(form))
       assert.ok(!/<a [^>]*>Odhlásit se<\/a>/.test(html), 'no link signs out')
+      // Outside production the foot's last line says so, and links nothing (`31a`).
+      assert.match(html, /<span class="vdm-sidebar__version">Vývojové prostředí<\/span>/)
     } finally {
       await app.close()
     }
@@ -266,6 +268,22 @@ describe('the dialog Nové vydání (11d, 14g)', () => {
 
       let detail = textOf(await (await browser.get(`/issues/VDM_${YEAR}_6`)).text())
       assert.ok(detail.includes(`Vydání VDM_${YEAR}_6 je založené. Použijte Odkaz pro redakci.`))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('asks Google for one access token for two issues created in its life', async () => {
+    let { app, browser } = await newsroom()
+    try {
+      await create(browser, `VDM_${YEAR}_6`)
+      await create(browser, `VDM_${YEAR}_7`)
+
+      assert.equal(app.drive.folders().length, 6)
+      assert.deepEqual(
+        app.drive.calls.filter((call) => call === 'POST /token'),
+        ['POST /token'],
+      )
     } finally {
       await app.close()
     }
@@ -489,6 +507,11 @@ describe('finishing an issue (12i)', () => {
 
       let html = await (await browser.get(`/issues/VDM_${YEAR}_6`)).text()
       assert.equal(alertText(html), 'Zkuste dokončit vydání za chvíli znovu.')
+      assert.match(
+        html,
+        /<span class="vdm-toast__text">Zkuste dokončit vydání za chvíli znovu\.<\/span><!-- rmx:h:\w+ --><button aria-label="Zavřít hlášku" type="button" class="vdm-toast__close">/,
+        'an error toast ends with its close (11g)',
+      )
       assert.ok(textOf(html).includes(`Vydání VDM_${YEAR}_6 není dokončené`))
     } finally {
       await app.close()

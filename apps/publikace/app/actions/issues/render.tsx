@@ -24,6 +24,7 @@ import { type OverviewDialog, OverviewPage } from './overview-page.tsx'
 export type PageContext = {
   get(key: unknown): unknown
   render: AppContext['render']
+  request: Request
   url: URL
 }
 

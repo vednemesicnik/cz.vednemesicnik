@@ -3,6 +3,7 @@ import { createController } from 'remix/router'
 
 import type { SignedInUntilCookie } from '../../../auth/session.server.ts'
 import type { JobRunStore } from '../../../data/job-runs.server.ts'
+import { newKey } from '../../../data/key.server.ts'
 import { RUN_LIMIT_MINUTES } from '../../../domain/job-run.ts'
 import type { ProofreadersStore } from '../../../data/proofreaders.server.ts'
 import {
@@ -205,7 +206,7 @@ export default function createJobsController(
         let { state } = await stateNow(job, today)
         if (state.kind === 'running') return back
         let person = context.auth.identity
-        let startKey = crypto.randomUUID()
+        let startKey = newKey()
         let isRequested = await dependencies.runs.requestStart({
           at: today,
           by: { email: person.email, name: person.displayName },

@@ -1,6 +1,7 @@
 import { createController } from 'remix/router'
 
 import { requestAssets } from '../../assets.ts'
+import { isFormKey, newKey } from '../../data/key.server.ts'
 import {
   type AuthorInput,
   checkArticle,
@@ -65,7 +66,7 @@ type FormState = {
 
 /** What an answer to a send carries for the island to focus: something new every time. */
 function answered(state: FormState): FormState {
-  return { ...state, messageKey: crypto.randomUUID() }
+  return { ...state, messageKey: newKey() }
 }
 
 function articlesOf(context: LinkContext): ArticlesContext {
@@ -111,7 +112,8 @@ function goneResponse(
 /**
  * What the page says under the lead when it opens (`20a`): the account first, because without it
  * nothing can be checked on Drive; then whether the issue's _Články_ is still there, which the
- * check records on the issue for its detail (`12j`).
+ * check records on the issue for its detail (`12j`). A folder found standing a few minutes ago is
+ * taken on the trust's word; creating the article asks Drive again.
  */
 async function warningOnOpen(context: LinkContext, issue: Issue): Promise<PageWarning | undefined> {
   let driveAccount = context.get(DriveAccount) as DriveAccountContext
@@ -124,7 +126,11 @@ async function warningOnOpen(context: LinkContext, issue: Issue): Promise<PageWa
   let token = await setup.token()
   if (!token.ok) return token.reason === 'unavailable' ? undefined : 'disconnected'
   let check = await checkIssueFolders(
-    { folders: setup.folders(token.accessToken), issues: setup.issues, now: () => setup.now() },
+    {
+      folders: setup.trust.trusting(setup.folders(token.accessToken)),
+      issues: setup.issues,
+      now: () => setup.now(),
+    },
     issue,
   )
   return check !== 'unavailable' && check.missing.length > 0 ? 'folder-gone' : undefined
@@ -188,7 +194,7 @@ function formOf(context: LinkContext): {
   return {
     authors: authors.length === 0 ? [{ email: '', name: '' }] : authors,
     /* A send without its key, from a page drawn before this one, gets a key of its own. */
-    formKey: /^[0-9a-f-]{36}$/.test(formKey) ? formKey : crypto.randomUUID(),
+    formKey: isFormKey(formKey) ? formKey : newKey(),
     intent: text(data.get('intent')),
     name: text(data.get('name')),
   }
@@ -204,7 +210,7 @@ export default function createLinksController() {
 
         return renderForm(context, resolved.issue, {
           authors: [{ email: '', name: '' }],
-          formKey: crypto.randomUUID(),
+          formKey: newKey(),
           name: '',
           warning: await warningOnOpen(context, resolved.issue),
         })

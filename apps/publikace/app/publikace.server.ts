@@ -36,6 +36,7 @@ import {
   createAppRouter,
   createArticleSetup,
   createArtworksSetup,
+  createDefaultDriveToken,
   createRecordQueue,
 } from './router.ts'
 
@@ -115,7 +116,9 @@ export async function createPublikace(
      * its files go to the bin now (`11c`), and so does every upload that waited 24 hours unsent
      * (`21d`). A Drive that does not answer delays it to the next send and does not stop the app.
      */
-    let setup = { database: database.database, environment, reportError }
+    let base = { database: database.database, environment, reportError }
+    /* One Drive access token for the process: the cleanup, the router and the record queue. */
+    let setup = { ...base, driveToken: createDefaultDriveToken(base) }
     try {
       let articleSetup = createArticleSetup(setup)
       await cleanUpAbandoned(articleSetup)

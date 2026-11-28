@@ -60,7 +60,10 @@ const loadCreatePublikace = async () => {
 const publikace = startPublikace({
   environment: publikaceEnvironment(process.env),
   load: loadCreatePublikace,
-  reportError: createPublikaceErrorReporter(),
+  reportError: createPublikaceErrorReporter({
+    commit: process.env.PUBLIKACE_COMMIT,
+    version: process.env.PUBLIKACE_VERSION,
+  }),
 })
 
 const handler = createHostHandler({

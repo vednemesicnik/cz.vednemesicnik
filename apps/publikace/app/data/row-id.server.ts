@@ -1,14 +1,8 @@
-import { createId, isCuid } from '@paralleldrive/cuid2'
-
-/**
- * The length of every row ID: `createId()`'s default, and the length
- * `20261211120000_cuid_row_ids` gives the rows that were there before it.
- */
-const ROW_ID_LENGTH = 24
+import { isKey, newKey } from './key.server.ts'
 
 /** A new row's ID, a CUID the app makes and passes in the `INSERT` (`docs/migrations.md`). */
 export function newRowId(): string {
-  return createId()
+  return newKey()
 }
 
 /**
@@ -17,8 +11,5 @@ export function newRowId(): string {
  * refused like a malformed ID.
  */
 export function isRowId(value: unknown): value is string {
-  return (
-    typeof value === 'string' &&
-    isCuid(value, { minLength: ROW_ID_LENGTH, maxLength: ROW_ID_LENGTH })
-  )
+  return isKey(value)
 }

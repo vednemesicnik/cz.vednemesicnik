@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash } from 'node:crypto'
 
 import type { ArticleStore } from '../data/articles.server.ts'
 import type { GroupStore } from '../data/artwork-groups.server.ts'
@@ -10,6 +10,7 @@ import {
   HolderRemovedError,
 } from '../data/artworks.server.ts'
 import type { IssueStore } from '../data/issues.server.ts'
+import { newKey } from '../data/key.server.ts'
 import type { LinkStore } from '../data/links.server.ts'
 import type { PublicMailLog } from '../data/public-mail.server.ts'
 import {
@@ -33,6 +34,7 @@ import { isPermanentRefusal, type MailAttachment, type Mailer } from '../mail/ma
 import type { DriveAccessToken } from './access-token.server.ts'
 import { type ArticleFoldersDeps, checkArticleFolders } from './article-folders.server.ts'
 import type { ArtworkFiles, Bytes } from './artwork-files.server.ts'
+import type { DriveTrust } from './drive-trust.server.ts'
 import type { DriveFolders } from './folders.server.ts'
 import { licenceDocName, licenceHtml, PREVIEW_SIZE } from './licence.server.ts'
 import { logDriveFailure } from './log.server.ts'
@@ -75,6 +77,8 @@ export type ArtworksSetup = {
   /** The host's error tracking, for a write that should never fail. */
   reportError?: ReportError
   token(): Promise<DriveAccessToken>
+  /** What Drive said a moment ago, which an upload, the link's page and the detail may lean on. */
+  trust: DriveTrust
 }
 
 /**
@@ -139,14 +143,20 @@ function folderDeps(setup: ArtworksSetup, accessToken: string): ArticleFoldersDe
   }
 }
 
-/** `folder-gone` when any of the three is missing, which the check records on the holder. */
+/**
+ * `folder-gone` when any of the three is missing, which the check records on the holder. An
+ * upload takes the trust's word for a folder found standing a few minutes ago; a send asks Drive,
+ * so a batch never goes into a folder that went meanwhile (#1122).
+ */
 async function foldersOf(
   setup: ArtworksSetup,
   accessToken: string,
   holder: ArtworksHolder,
-  which?: readonly ArticleFolderKind[],
+  asking: 'drive' | 'trust',
 ): Promise<'folder-gone' | 'present' | 'unavailable'> {
-  let check = await checkArticleFolders(folderDeps(setup, accessToken), holder, which)
+  let deps = folderDeps(setup, accessToken)
+  let folders = asking === 'trust' ? setup.trust.trusting(deps.folders) : deps.folders
+  let check = await checkArticleFolders({ ...deps, folders }, holder)
   if (check === 'unavailable') return 'unavailable'
   return check.missing.length > 0 ? 'folder-gone' : 'present'
 }
@@ -255,7 +265,7 @@ export async function uploadArtwork(
   let files = setup.files(token.accessToken)
   await sweepExpired(setup, files)
 
-  let folders = await foldersOf(setup, token.accessToken, holder)
+  let folders = await foldersOf(setup, token.accessToken, holder, 'trust')
   if (folders !== 'present') return { kind: folders }
 
   /* The count and the reservation in one step per link, before the body is read, so uploads in
@@ -297,7 +307,7 @@ async function store(
   let mimeType = type ?? claimed ?? 'application/octet-stream'
   let extension = ARTWORK_TYPES[mimeType] ?? '.bin'
   let storedName = `${createHash('sha256').update(bytes).digest('hex')}${extension}`
-  let uploadKey = randomUUID()
+  let uploadKey = newKey()
 
   let stored = await files.upload(holder.artworksFolderId, storedName, mimeType, bytes, uploadKey)
   if (!stored.ok) {
@@ -460,7 +470,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
   )
   if (!input.artworks.every((artwork) => unsent.has(artwork.id))) return { kind: 'stale' }
 
-  let folders = await foldersOf(setup, token.accessToken, holder)
+  let folders = await foldersOf(setup, token.accessToken, holder, 'drive')
   if (folders !== 'present') return { kind: folders }
 
   /* The limits and the row in one step per link, so sends in parallel cannot all pass them. */
@@ -516,7 +526,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
   }
   if (committed === null || pdfs === null) {
     await cleanUp(setup, files, started.batch, holder.licencesFolderId)
-    let after = await foldersOf(setup, token.accessToken, holder)
+    let after = await foldersOf(setup, token.accessToken, holder, 'drive')
     return { kind: after === 'folder-gone' ? 'folder-gone' : 'unavailable' }
   }
 

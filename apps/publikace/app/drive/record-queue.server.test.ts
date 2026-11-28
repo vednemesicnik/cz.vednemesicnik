@@ -49,6 +49,31 @@ describe('the record queue', () => {
     }
   })
 
+  it('asks Google nothing in a pass that finds nothing due', async () => {
+    let app = await createTestApp()
+    try {
+      await connectDriveAccount(app)
+      await seedIssue(app)
+      await drain(app)
+      assert.equal(await pendingMarks(app), 0)
+
+      /* Counted at the queue: the token kept from the passes above would answer without a call. */
+      let asked = 0
+      let calls = app.drive.calls.length
+      await drainRecordQueue({
+        ...app.record,
+        token: () => {
+          asked += 1
+          return app.record.token()
+        },
+      })
+      assert.equal(asked, 0)
+      assert.deepEqual(app.drive.calls.slice(calls), [])
+    } finally {
+      await app.close()
+    }
+  })
+
   it('creates the Evidence in the issue folder and writes the issue into the app’s own list', async () => {
     let app = await createTestApp()
     try {

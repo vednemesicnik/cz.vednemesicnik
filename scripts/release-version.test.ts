@@ -4,6 +4,7 @@ import {
   type AppFacts,
   allowedSemvers,
   decideRelease,
+  deployedTag,
   formatNotes,
   newestTag,
   nextDateTag,
@@ -263,6 +264,37 @@ describe('decideRelease, date', () => {
 
   test('refuses a named version', () => {
     expect(decideRelease(dateFacts({ named: ['1.0.0'] })).action).toBe('fail')
+  })
+})
+
+describe('deployedTag', () => {
+  test('is the tag the merge gets', () => {
+    expect(
+      deployedTag(
+        semverFacts({ named: ['1.1.1'], tags: ['publikace-v1.1.0'] }),
+      ),
+    ).toBe('publikace-v1.1.1')
+  })
+
+  test('is the newest tag when the release left the application unchanged', () => {
+    expect(
+      deployedTag(
+        semverFacts({
+          changed: false,
+          tags: ['publikace-v1.0.0', 'publikace-v1.1.0'],
+        }),
+      ),
+    ).toBe('publikace-v1.1.0')
+  })
+
+  test('is none before the first version', () => {
+    expect(deployedTag(semverFacts({ changed: false }))).toBeUndefined()
+  })
+
+  test('is none for changed code no version names', () => {
+    expect(
+      deployedTag(semverFacts({ tags: ['publikace-v1.1.0'] })),
+    ).toBeUndefined()
   })
 })
 

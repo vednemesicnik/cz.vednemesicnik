@@ -90,6 +90,10 @@ The manual path still works if you ever need it (token expired, CI down):
 fly deploy --app cz-vednemesicnik
 ```
 
+It ships without Publikace's version: the panel then shows no version line. To keep it, pass
+the tag and the short commit the CI deploy would
+(`--build-arg PUBLIKACE_VERSION=publikace-vX.Y.Z --build-arg PUBLIKACE_COMMIT=<7 characters>`).
+
 ## Sign-in secrets
 
 The primary sign-in methods (Google OAuth, magic link, passkeys) are **required
@@ -285,7 +289,10 @@ Before the release that first carries Publikace:
    - `vedeni@` and `korektura@`, Contributors, who edit but neither move nor bin.
 2. **The OAuth client** of Publikace (its own, with the `drive` scope): add
    `https://publikace.vednemesicnik.cz/sign-in/google/callback` and
-   `https://publikace.vednemesicnik.cz/settings/account/callback` to its redirect URIs.
+   `https://publikace.vednemesicnik.cz/settings/account/callback` to its redirect URIs, and
+   enable the **Google Drive API**, the **Google Docs API** and the **Google Sheets API** in its
+   Cloud project. The Docs API writes a new article's name into its Doc, the Sheets API the
+   Registr and each Evidence; a missing one answers 403.
 3. **DNS** in Cloudflare: `CNAME publikace → cz-vednemesicnik.fly.dev`, **DNS only**, not
    proxied. The Apps Script jobs call the API from Google's datacenter addresses, which the
    zone's bot protection answers with 403, and Publikace reads no client address.

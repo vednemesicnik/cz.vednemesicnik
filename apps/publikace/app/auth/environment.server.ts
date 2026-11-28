@@ -256,3 +256,27 @@ export function jobStartEndpoints(
   }
   return endpoints
 }
+
+/** Which build of the app runs, as the panel's foot says it (`31a`). */
+export type RunningVersion =
+  | { kind: 'release'; tag: string; version: string }
+  | { kind: 'commit'; commit: string }
+  | { kind: 'development' }
+
+const RELEASE_TAG = /^publikace-v(\d+\.\d+\.\d+)$/
+const COMMIT = /^[0-9a-f]{7,40}$/
+
+/**
+ * The tag and commit the deploy baked into the image (`VERSION`, `COMMIT`), or a development
+ * build outside production. A value of another shape counts as missing, and production without
+ * either has no version to show.
+ */
+export function runningVersion(environment: Environment): RunningVersion | null {
+  if (!isProduction(environment)) return { kind: 'development' }
+  let tag = optional(environment, 'VERSION')
+  let release = RELEASE_TAG.exec(tag)
+  if (release) return { kind: 'release', tag, version: release[1] }
+  let commit = optional(environment, 'COMMIT')
+  if (COMMIT.test(commit)) return { kind: 'commit', commit }
+  return null
+}

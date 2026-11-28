@@ -136,18 +136,22 @@ function describeMark(mark: RecordMark): string {
 }
 
 /**
- * One pass: the daily rewrite when it is due, then the marks whose time has come. Nothing is
- * tried while the account is not connected (`14g`): the marks wait, and the pass after it is
- * connected again writes them. One pass at a time, whoever starts it.
+ * One pass: the daily rewrite when it is due, then the marks whose time has come. A pass that
+ * finds nothing due asks Google nothing. Nothing is tried while the account is not connected
+ * (`14g`): the marks wait, and the pass after it is connected again writes them. One pass at a
+ * time, whoever starts it.
  */
 export async function drainRecordQueue(queue: RecordQueue): Promise<void> {
   await stateOf(queue).lock.ifFree('record', async () => {
+    await queue.marks.markAllIfDue(queue.now())
+    let due = await queue.marks.takeDue(queue.now(), RECORDS_PER_PASS)
+    if (due.length === 0) return
+
     let token = await queue.token()
     if (!token.ok) return
     let sheets = queue.sheets(token.accessToken)
 
-    await queue.marks.markAllIfDue(queue.now())
-    for (let mark of await queue.marks.takeDue(queue.now(), RECORDS_PER_PASS)) {
+    for (let mark of due) {
       /* A throw is a failure of this record alone: it is put off like any other, rather than
          stopping the pass and coming first again in the next one. */
       let result: SheetsResult

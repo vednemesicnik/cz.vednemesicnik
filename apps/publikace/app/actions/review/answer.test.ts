@@ -7,6 +7,7 @@ import { createArticleStore } from '../../data/articles.server.ts'
 import { createArtworkStore } from '../../data/artworks.server.ts'
 import type { BatchRow } from '../../data/artworks.server.ts'
 import { createJobRunStore } from '../../data/job-runs.server.ts'
+import { newKey } from '../../data/key.server.ts'
 import { newRowId } from '../../data/row-id.server.ts'
 import { APPROVAL_SEND_JOB } from '../../domain/approvals.ts'
 import { REPLY_CHECK_JOB, type ReportedArchive } from '../../domain/reply-check.ts'
@@ -31,7 +32,7 @@ async function replyTo(
   options: { archive?: ReportedArchive; isExact?: boolean } = {},
 ) {
   let store = createArtworkStore(app.database)
-  let runKey = crypto.randomUUID()
+  let runKey = newKey()
   let at = Temporal.Now.instant()
   await createJobRunStore(app.database).start({
     at,
@@ -46,7 +47,7 @@ async function replyTo(
     batch.id,
     {
       archive: options.archive ?? null,
-      reply: { messageId: `m-${crypto.randomUUID()}`, receivedAt: RECEIVED, text, threadId: 't-1' },
+      reply: { messageId: `m-${newKey()}`, receivedAt: RECEIVED, text, threadId: 't-1' },
       state: options.isExact === true ? 'reply_matches' : 'other_reply',
     },
     at,
@@ -72,11 +73,11 @@ async function articleReply(app: TestApp, articleId: string, text: string): Prom
     },
     takenAt: at,
   })
-  let sending = crypto.randomUUID()
+  let sending = newKey()
   await runs.start({ at, intervalMinutes: 30, job: APPROVAL_SEND_JOB, runKey: sending })
   let [clause] = await articles.claimForSending(sending, at)
   await articles.recordSending(sending, clause?.clauseKey ?? '', { kind: 'sent' }, at)
-  let reading = crypto.randomUUID()
+  let reading = newKey()
   await articles.claimForReplies(reading, at)
   await articles.recordReply(
     reading,

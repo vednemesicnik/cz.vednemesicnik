@@ -5,6 +5,7 @@ import { describe, it } from 'remix/test'
 import { createArticleStore } from '../../data/articles.server.ts'
 import { createGroupStore } from '../../data/artwork-groups.server.ts'
 import { createIssueStore } from '../../data/issues.server.ts'
+import { newKey } from '../../data/key.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
 import { createPrintHandoffStore } from '../../data/print-handoff.server.ts'
 import { drainRecordQueue } from '../../drive/record-queue.server.ts'
@@ -242,7 +243,7 @@ describe('removing an issue (12w)', () => {
         await createArticleStore(context.app.database).startAttempt({
           at: now(),
           authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
-          formKey: crypto.randomUUID(),
+          formKey: newKey(),
           issueId: context.issueId,
           linkId: link?.id ?? '',
           name: 'Školní jídelna po roce',
@@ -258,7 +259,7 @@ describe('removing an issue (12w)', () => {
 
       let group = await createGroupStore(context.app.database).startAttempt({
         at: now(),
-        formKey: crypto.randomUUID(),
+        formKey: newKey(),
         issueId: context.issueId,
         name: 'Mapa obce k rozhovoru i reportáži',
         nameKey: 'mapa obce k rozhovoru i reportáži',
@@ -291,7 +292,7 @@ describe('removing an issue (12w)', () => {
       let refused = await createArticleStore(context.app.database).startAttempt({
         at: now(),
         authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
-        formKey: crypto.randomUUID(),
+        formKey: newKey(),
         issueId: context.issueId,
         linkId: link?.id ?? '',
         name: 'Školní jídelna po roce',

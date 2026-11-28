@@ -13,12 +13,14 @@ import { createArticleStore } from './data/articles.server.ts'
 import { type BatchRow, createArtworkStore } from './data/artworks.server.ts'
 import { createDriveAccountStore, type DriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
+import { newKey } from './data/key.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { migrateDatabase, type OpenDatabase, openDatabase } from './data/database.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
 import { ARTWORKS_FOLDER_NAME, LICENCES_FOLDER_NAME } from './domain/article-folders.ts'
 import type { Link } from './domain/link.ts'
 import { now } from './domain/time.ts'
+import { createDriveTrust, type DriveTrust } from './drive/drive-trust.server.ts'
 import { createFakeDrive, type FakeDrive } from './drive/fake-drive.server.ts'
 import type { IdentityTokenVerifier, VerifiedIdentity } from './auth/identity-token.server.ts'
 import type { JobStarter } from './jobs/job-starter.server.ts'
@@ -169,6 +171,38 @@ export type TestBrowser = {
 }
 
 /**
+ * The fake Drive, where every change a test or `/_fake` makes behind the app's back first empties
+ * the trust: the app would learn of it only once five minutes passed (#1122), and the next check
+ * is meant to see it.
+ */
+export function forgettingDrive(drive: FakeDrive, trust: DriveTrust): FakeDrive {
+  let forgetting =
+    <A extends unknown[]>(change: (...args: A) => void) =>
+    (...args: A) => {
+      trust.forget()
+      change(...args)
+    }
+  return {
+    ...drive,
+    failCreate: forgetting(drive.failCreate),
+    failRestore: forgetting(drive.failRestore),
+    failRewriteOf: forgetting(drive.failRewriteOf),
+    failStep: forgetting(drive.failStep),
+    failTrashOf: forgetting(drive.failTrashOf),
+    goDown: forgetting(drive.goDown),
+    heal: forgetting(drive.heal),
+    loseReplyOnCreate: forgetting(drive.loseReplyOnCreate),
+    loseReplyOnStep: forgetting(drive.loseReplyOnStep),
+    move: forgetting(drive.move),
+    remove: forgetting(drive.remove),
+    restore: forgetting(drive.restore),
+    reviseDoc: forgetting(drive.reviseDoc),
+    touch: forgetting(drive.touch),
+    trash: forgetting(drive.trash),
+  }
+}
+
+/**
  * The whole app on an empty `:memory:` database and a fake membership service, with a
  * browser that keeps cookies. Nothing leaves the process.
  *
@@ -193,7 +227,8 @@ export async function createTestApp(
   let checkMembership: MembershipCheck = async (email, group) =>
     answers.get(group)?.(email) ?? { status: 'unknown-group' }
 
-  let drive = createFakeDrive()
+  let driveTrust = createDriveTrust({ now })
+  let drive = forgettingDrive(createFakeDrive(), driveTrust)
   drive.seedTemplate(TEST_TEMPLATE, 'TEMPLATE__Publication__Article')
   drive.seedSpreadsheet(TEST_REGISTRY, 'Registr', [
     { cells: TEST_REGISTRY_OLD_ROWS, title: 'Vydání' },
@@ -220,6 +255,7 @@ export async function createTestApp(
     domain: TEST_DOMAIN,
     driveAccountEmail: TEST_DRIVE_ACCOUNT,
     driveTokenKey: TEST_DRIVE_TOKEN_KEY,
+    driveTrust,
     environment,
     fetch: drive.fetch,
     googleCredentials: { clientId: 'test-client', clientSecret: 'test-secret' },
@@ -428,7 +464,7 @@ export async function seedArticle(
     await articles.startAttempt({
       at: SEEDED_AT,
       authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
-      formKey: `seeded-${issueId}-${crypto.randomUUID()}`,
+      formKey: `seeded-${issueId}-${newKey()}`,
       issueId,
       linkId: articleLink.id,
       name,
@@ -473,7 +509,7 @@ export async function seedBatch(
 ): Promise<BatchRow> {
   let artworks = createArtworkStore(app.database)
   let at = options.at ?? SEEDED_AT
-  let formKey = `seeded-batch-${crypto.randomUUID()}`
+  let formKey = `seeded-batch-${newKey()}`
   let ids: string[] = []
   for (let index = 0; index < (options.count ?? 2); index += 1) {
     let upload = await artworks.addUpload({

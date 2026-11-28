@@ -10,7 +10,13 @@ import { createLinkStore } from '../data/links.server.ts'
 import { createPublicMailLog } from '../data/public-mail.server.ts'
 import { UPLOADS_PER_HOUR_PER_LINK } from '../domain/artwork.ts'
 import type { MailMessage, MailResult } from '../mail/mailer.server.ts'
-import { createTestApp, seedArticle, seedIssue, type TestApp } from '../test-app.server.ts'
+import {
+  createTestApp,
+  forgettingDrive,
+  seedArticle,
+  seedIssue,
+  type TestApp,
+} from '../test-app.server.ts'
 import { testRowId } from '../test-row-id.ts'
 import type { DriveAccessToken } from './access-token.server.ts'
 import { createArtworkFiles } from './artwork-files.server.ts'
@@ -25,6 +31,7 @@ import {
   submitArtworks,
   uploadArtwork,
 } from './artworks-setup.server.ts'
+import { createDriveTrust } from './drive-trust.server.ts'
 import type { FakeDrive } from './fake-drive.server.ts'
 import { createDriveFolders } from './folders.server.ts'
 
@@ -60,11 +67,13 @@ async function withHarness(
     let clock = { at: START }
     let mail: MailMessage[] = []
     let mailer = { isFailing: options.isMailFailing ?? false }
+    let trust = createDriveTrust({ now: () => clock.at })
     let setup: ArtworksSetup = {
       articles: createArticleStore(app.database),
       artworks: createArtworkStore(app.database),
       files: (accessToken) => createArtworkFiles({ accessToken, fetch: app.drive.fetch }),
-      folders: (accessToken) => createDriveFolders({ accessToken, fetch: app.drive.fetch }),
+      folders: (accessToken) =>
+        trust.recording(createDriveFolders({ accessToken, fetch: app.drive.fetch })),
       groups: createGroupStore(app.database),
       issues: createIssueStore(app.database),
       links: createLinkStore(app.database),
@@ -77,6 +86,7 @@ async function withHarness(
       },
       now: () => clock.at,
       token: async () => TOKEN,
+      trust,
     }
     let upload = (formKey: string, bytes: Uint8Array = JPEG, name = 'jidelna-1.jpg') =>
       uploadArtwork(setup, {
@@ -90,7 +100,7 @@ async function withHarness(
       app,
       artworksFolderId,
       clock,
-      drive: app.drive,
+      drive: forgettingDrive(app.drive, trust),
       folderId,
       licencesFolderId,
       linkKey: link.key,
@@ -633,6 +643,57 @@ describe('the cleanup at startup', () => {
         0,
       )
       assert.equal((await harness.setup.artworks.unsentByForm(FORM)).length, 1)
+    }))
+})
+
+describe('what an upload asks Drive about the folders (#1122)', () => {
+  /** How many times the three folders were asked about, from the fake's own record. */
+  function folderAsks(
+    harness: Harness,
+    ids = [harness.folderId, harness.artworksFolderId, harness.licencesFolderId],
+  ): number {
+    let paths = ids.map((id) => `GET /drive/v3/files/${id}`)
+    return harness.drive.calls.filter((call) => paths.includes(call)).length
+  }
+
+  it('asks once for a batch of uploads, and again five minutes later', () =>
+    withHarness(async (harness) => {
+      await uploaded(harness)
+      assert.equal(folderAsks(harness), 3)
+      await uploaded(harness, FORM, 'jidelna-2.jpg')
+      harness.clock.at = START.add({ minutes: 4 })
+      await uploaded(harness, FORM, 'jidelna-3.jpg')
+      assert.equal(folderAsks(harness), 3)
+
+      harness.clock.at = START.add({ minutes: 5 })
+      await uploaded(harness, FORM, 'jidelna-4.jpg')
+      assert.equal(folderAsks(harness), 6)
+    }))
+
+  it('asks about a missing folder on every upload, and lets one through as soon as it is back', () =>
+    withHarness(async (harness) => {
+      harness.drive.trash(harness.artworksFolderId)
+      assert.equal((await harness.upload(FORM)).kind, 'folder-gone')
+      assert.equal((await harness.upload(FORM)).kind, 'folder-gone')
+      assert.equal(folderAsks(harness, [harness.artworksFolderId]), 2)
+      assert.equal(folderAsks(harness), 4)
+
+      harness.drive.restore(harness.artworksFolderId)
+      assert.equal((await harness.upload(FORM)).kind, 'uploaded')
+    }))
+
+  it('asks again for a send, which refuses a folder that went since the last upload', () =>
+    withHarness(async (harness) => {
+      let id = await uploaded(harness)
+      /* Behind the trust's back, as a person binning it on Drive would. */
+      harness.app.drive.trash(harness.licencesFolderId)
+      await uploaded(harness, FORM, 'jidelna-2.jpg')
+      assert.equal(folderAsks(harness), 3)
+
+      let outcome = await submitArtworks(harness.setup, batch(harness.linkKey, [id]))
+      assert.equal(outcome.kind, 'folder-gone')
+      assert.equal(folderAsks(harness), 6)
+      assert.equal((await harness.upload(FORM, JPEG, 'jidelna-3.jpg')).kind, 'folder-gone')
     }))
 })
 

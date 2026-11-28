@@ -72,6 +72,13 @@ flowchart LR
     not decrypt, a database write that should not fail. An outage of Drive, Google or the Mailer
     stays in the log; the screens and the jobs' history already say it. Without the host, as in
     `pnpm app:dev`, there is only the log.
+  - **The image knows which version it runs.** `release.yml` tags the merge beside the deploy,
+    so the deploy cannot count on the tag existing yet and works out the same tag itself
+    (`scripts/release-version.ts`, `MODE=version`): the tag the merge gets, or the newest one
+    when the release left Publikace unchanged. It goes into the image as `PUBLIKACE_VERSION`,
+    beside the short commit as `PUBLIKACE_COMMIT`. The panel's foot shows the version, or the
+    commit when no tag stands for it (`31a`), and both tag every error sent to Sentry. A deploy
+    that cannot work out the version ships with the commit alone.
   - **Its database is `/data/publikace.sqlite`** on the machine's volume, beside the web's, and
     the host's backup copies both (`scripts/backup-database.sh`, before every deploy that ships a
     migration of either).
@@ -318,6 +325,7 @@ sequenceDiagram
   A-->>E: the detail at once, from the database
   E->>A: once it stands: POST …/doc-revisions/check
   A->>D: a revision of the Doc after the PDF?
+  Note over A,D: a Doc asked about within five minutes is not asked again
   A->>A: yes: Upraveno po schválení, Označit novou verzi (12q)
 ```
 
@@ -333,7 +341,8 @@ flowchart LR
 ```
 
 The app writes the record after the database, never inside an action. A sheet that does not
-answer delays the record and blocks nothing. The app writes only its own list, puts its
+answer delays the record and blocks nothing, and a pass that finds nothing due asks Google
+nothing. The app writes only its own list, puts its
 protection back before every write, and never reads a sheet. A column the record begins to
 show needs its trigger changed in a new migration. A group's artworks are rows of _Obrazová díla_
 with the group's name in _Název článku_ and its folder in _ID složky_, as the scripts write them,
@@ -365,13 +374,13 @@ Evidence, binned with its folder, is no longer written.
 
 **Apps Script jobs that talk to the app**, all as `publikace.app@` on their own triggers:
 
-| Job                                        | Interval            | API                                  | Exists                      |
-| ------------------------------------------ | ------------------- | ------------------------------------ | --------------------------- |
-| `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes                         |
-| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes                         |
-| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes                         |
-| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until #1082 |
-| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes                         |
+| Job                                        | Interval            | API                                  | Exists |
+| ------------------------------------------ | ------------------- | ------------------------------------ | ------ |
+| `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes    |
+| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes    |
+| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes    |
+| `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes    |
+| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes    |
 
 Every claim opens a run in `job_runs`, unless its `startKey` is refused (below), and leases what it
 returns for 10 minutes. A claim leaves out a removed article or group, its clauses and its batches,
@@ -421,6 +430,7 @@ Evidence.
 | Mail             | `GAS_MAIL_SEND_URL`, `GAS_MAIL_SEND_SECRET`, `PUBLIC_MAIL_PER_DAY`                                                      |
 | Jobs             | `SCRIPT_TOKEN_AUDIENCE`, `SCRIPT_JOB_ACCOUNT`; per job, optional, `GAS_<JOB>_URL`, `GAS_<JOB>_SECRET` (_Spustit teď_)   |
 | Storage          | `DATABASE_PATH`                                                                                                         |
+| Build            | `VERSION`, `COMMIT`, optional, set by the image from the deploy, never in `.env`                                        |
 
 ## Testing without Google
 

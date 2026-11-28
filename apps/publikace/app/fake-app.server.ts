@@ -5,6 +5,7 @@ import { appOrigin, type Environment } from './auth/environment.server.ts'
 import { createSessionCookie } from './auth/session.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
 import { createJobRunStore } from './data/job-runs.server.ts'
+import { newKey } from './data/key.server.ts'
 import { clauseState } from './domain/approvals.ts'
 import { batchState } from './domain/artwork.ts'
 import { createGroupStore } from './data/artwork-groups.server.ts'
@@ -140,7 +141,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
    */
   let startedRuns = createJobRunStore(app.database)
   app.onJobStart(({ job, startKey }) => {
-    let runKey = crypto.randomUUID()
+    let runKey = newKey()
     setTimeout(() => {
       void startedRuns
         .start({ at: now(), intervalMinutes: 30, job, runKey, startKey })
@@ -166,7 +167,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
   let articleLink = await links.articleLinkOf(issueId)
   if (articleLink === null) throw new Error('The fake issue has no link for articles.')
   let form = new URLSearchParams({
-    formKey: crypto.randomUUID(),
+    formKey: newKey(),
     intent: 'create',
     name: ARTICLE_NAME,
   })
@@ -548,8 +549,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
     let text =
       kind === 'other' ? 'ok, souhlas' : kind === 'archive' ? (batch.replyText ?? '') : 'Souhlasím'
     let reply = {
-      messageId:
-        kind === 'archive' ? 'fake-message-decided' : `fake-message-${crypto.randomUUID()}`,
+      messageId: kind === 'archive' ? 'fake-message-decided' : `fake-message-${newKey()}`,
       receivedAt: now().toString(),
       text,
       threadId: `fake-thread-${batch.id}`,
@@ -602,7 +602,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
       messageId:
         kind === 'archive'
           ? String(row['reply_message_id'] ?? 'fake-message-decided')
-          : `fake-message-${crypto.randomUUID()}`,
+          : `fake-message-${newKey()}`,
       receivedAt: now().toString(),
       text,
       threadId: `fake-thread-clause-${id}`,
@@ -662,7 +662,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
     let rows = result.rows ?? []
     if (rows.length === 0) {
       let runs = createJobRunStore(app.database)
-      let runKey = crypto.randomUUID()
+      let runKey = newKey()
       let at = now().subtract({ hours: 2 })
       await runs.start({ at, intervalMinutes: 30, job: REPLY_CHECK_JOB, runKey })
       await runs.finish(REPLY_CHECK_JOB, runKey, { at, error: null, outcome: 'ok' })

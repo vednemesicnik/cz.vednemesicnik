@@ -5,6 +5,7 @@ import { appOrigin } from './auth/environment.server.ts'
 import { createArticleStore } from './data/articles.server.ts'
 import { createArtworkStore } from './data/artworks.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
+import { newKey } from './data/key.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { createFakeApp, type FakeApp } from './fake-app.server.ts'
 import { seedBatch, TEST_ENVIRONMENT } from './test-app.server.ts'
@@ -40,7 +41,7 @@ function control(fake: FakeApp, path: string, fields: Record<string, string> = {
 }
 
 function articleForm(name: string): URLSearchParams {
-  let body = new URLSearchParams({ formKey: crypto.randomUUID(), intent: 'create', name })
+  let body = new URLSearchParams({ formKey: newKey(), intent: 'create', name })
   body.append('author-name', 'Ondřej Beneš')
   body.append('author-email', 'ondrej.benes@external.test')
   return body

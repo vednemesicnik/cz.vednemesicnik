@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 import {
   isProduction,
   jobStartEndpoints,
+  runningVersion,
   scriptTokenAudiences,
   sessionSecrets,
 } from './environment.server.ts'
@@ -49,5 +50,34 @@ describe('jobStartEndpoints', () => {
       { 'artwork-replies': { secret: 's-1', url: 'https://script.test/replies/exec' } },
     )
     assert.deepEqual(jobStartEndpoints({ NODE_ENV: 'production' }), {})
+  })
+})
+
+describe('runningVersion', () => {
+  it('is a development build outside production', () => {
+    assert.deepEqual(runningVersion({ NODE_ENV: 'development', VERSION: 'publikace-v1.1.1' }), {
+      kind: 'development',
+    })
+  })
+
+  it('is the release the deploy named', () => {
+    assert.deepEqual(
+      runningVersion({ COMMIT: '7a62267', NODE_ENV: 'production', VERSION: 'publikace-v1.1.1' }),
+      { kind: 'release', tag: 'publikace-v1.1.1', version: '1.1.1' },
+    )
+  })
+
+  it('is the commit alone when no tag stands for it', () => {
+    assert.deepEqual(runningVersion({ COMMIT: '7a62267', NODE_ENV: 'production', VERSION: '' }), {
+      commit: '7a62267',
+      kind: 'commit',
+    })
+  })
+
+  it('takes a value of another shape for missing', () => {
+    assert.equal(
+      runningVersion({ COMMIT: 'main', NODE_ENV: 'production', VERSION: 'v1.1.1' }),
+      null,
+    )
   })
 })

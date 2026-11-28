@@ -1,4 +1,5 @@
 import { redirect } from 'remix/response/redirect'
+import { isFormKey, isKey, newKey } from '../../data/key.server.ts'
 import {
   AGREED_AUTHOR_TAG,
   agreedMeanwhileToast,
@@ -299,10 +300,12 @@ import { GROUP_CREATED_TOAST, groupCountText, groupNoteLine } from '../../domain
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { type Person, requireEditor } from '../../middleware/auth.server.ts'
 import { DriveAccount } from '../../middleware/drive-account.server.ts'
-import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
+import { flashToast, keepToasts, keptToasts, Toasts } from '../../middleware/toasts.server.ts'
 import { routes } from '../../routes.ts'
+import { CHECK_RELOAD_COOKIE, TOAST_CLOSED_COOKIE } from '../../ui/public/detail-checks.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import {
+  type ArrivalCheckView,
   type ArticleRowView,
   type ArtworkRowView,
   type ArtworksView,
@@ -406,27 +409,72 @@ function flashSettled(context: PageContext, settled: SettledArticle): void {
 }
 
 /*
- * What the detail's own revision check just found, for the reload it starts (`12q`): the issue,
- * so it shows on that detail only, and the articles that turned _Upraveno po schválení_, which
- * that one load keeps in place, tinted, with the sentence for a screen reader. Taken once; its
- * presence also tells the reload not to ask Drive again.
+ * What the detail's own checks just changed, for the reload they start (`12q`, `12j`): the load
+ * that asked, the issue, so it counts on that detail only, and the articles that turned
+ * _Upraveno po schválení_, which that one reload keeps in place, tinted, with the sentence for a
+ * screen reader. A plain value rather than a flash: a flash is gone after the next request that
+ * reads the session, and the other check of the same load is one. The page asks its checks in turn
+ * (`app/ui/public/detail-checks.ts`), so the second adds to what the first wrote.
  */
-const DOC_CHECKED_SESSION_KEY = 'docRevisionsChecked'
+const DETAIL_CHECKED_SESSION_KEY = 'issueDetailChecked'
 
-type DocChecked = { name: string; revised: readonly string[] }
+type DetailChecked = { load: string; name: string; revised: readonly string[] }
 
-function flashDocChecked(session: Session | undefined, checked: DocChecked): void {
-  session?.flash(DOC_CHECKED_SESSION_KEY, checked)
+function readDetailChecked(session: Session | undefined, name: string): DetailChecked | null {
+  let value = session?.get(DETAIL_CHECKED_SESSION_KEY)
+  if (typeof value !== 'object' || value === null) return null
+  let { load, name: checkedName, revised } = value as Record<string, unknown>
+  if (checkedName !== name || typeof load !== 'string' || !Array.isArray(revised)) return null
+  return { load, name, revised: revised.filter((id): id is string => isRowId(id)) }
 }
 
-function takeDocChecked(session: Session | undefined, name: string): DocChecked | null {
-  let value = session?.get(DOC_CHECKED_SESSION_KEY)
-  if (value === undefined) return null
-  session?.unset(DOC_CHECKED_SESSION_KEY)
-  if (typeof value !== 'object' || value === null) return null
-  let { name: checkedName, revised } = value as Record<string, unknown>
-  if (checkedName !== name || !Array.isArray(revised)) return null
-  return { name, revised: revised.filter((id): id is string => isRowId(id)) }
+/** Records a change one of the checks of `load` found, beside what another one found before. */
+function recordDetailChecked(context: PageContext, name: string, revised: readonly string[]): void {
+  let session = context.get(Session) as Session | undefined
+  let load = formText(context, 'load')
+  if (session === undefined || !isKey(load)) return
+  let earlier = readDetailChecked(session, name)
+  let kept = earlier?.load === load ? earlier.revised : []
+  session.set(DETAIL_CHECKED_SESSION_KEY, { load, name, revised: [...kept, ...revised] })
+}
+
+/**
+ * The load a cookie the page set just before this request names: `CHECK_RELOAD_COOKIE`, the one
+ * this request reloads, or `TOAST_CLOSED_COOKIE`, the one whose toast the person closed.
+ */
+function loadInCookie(request: Request, cookie: string): string | null {
+  for (let pair of (request.headers.get('Cookie') ?? '').split(';')) {
+    let [name, value] = pair.trim().split('=')
+    if (name === cookie && value !== undefined && isKey(value)) return value
+  }
+  return null
+}
+
+/**
+ * Whether this load of the detail is the reload its own checks started, and what they found: only
+ * when the page names the load whose checks recorded it, so a record whose reload never came,
+ * left by a check that answered while the person acted or went elsewhere, counts for nothing. It
+ * draws the toasts that load kept (`keepToasts`), or none when another load of the detail has
+ * kept its own since, and draws them closed when the page says the person closed them (`11g`).
+ * Read once either way.
+ */
+function takeCheckReload(
+  named: string | null,
+  closed: string | null,
+  session: Session | undefined,
+  name: string,
+): { revised: readonly string[]; toasts: readonly ToastMessage[] } | null {
+  let checked = readDetailChecked(session, name)
+  if (session?.get(DETAIL_CHECKED_SESSION_KEY) !== undefined) {
+    session.unset(DETAIL_CHECKED_SESSION_KEY)
+  }
+  if (checked === null || named !== checked.load) return null
+  let toasts = keptToasts(session, checked.load) ?? []
+  return {
+    revised: checked.revised,
+    toasts:
+      closed === checked.load ? toasts.map((toast) => ({ ...toast, isClosed: true })) : toasts,
+  }
 }
 
 function takeSettled(session: Session | undefined): SettledArticle | null {
@@ -480,6 +528,7 @@ function missingView(
   issue: Issue,
   holder: FoldersHolder,
   batches: readonly BatchRow[],
+  arrival: ArrivalCheckView | null,
 ): MissingFoldersView | null {
   /* With the issue folder in the bin, its one Callout stands for every folder in it (`12j`). */
   if (issue.missing.issue !== null) return null
@@ -497,7 +546,7 @@ function missingView(
   let hasBatchAwaitingConsent = issue.closedAt === null && ofHolder.some(isAwaitingConsent)
   let ids = { id: String(holder.id), name: issue.name }
   return {
-    arrivalCheck: routes.issues.checkMarkedFolders.href({ name: issue.name }),
+    arrivalCheck: arrival,
     /* A closed issue's detail is for reading (`12h`); its records stand as they are. */
     checkAction:
       issue.closedAt !== null
@@ -524,10 +573,10 @@ function missingView(
  * whole issue folder is in the bin, and the bin shows only that one, which the detail then names
  * instead. Without an account or an answer from Drive, the records stand as they are.
  */
-async function recheckMissing(context: PageContext, issue: Issue): Promise<void> {
+async function recheckMissing(context: PageContext, issue: Issue): Promise<boolean> {
   let { articles, artworks } = articlesOf(context)
   let isMarked = (holder: Pick<FoldersHolder, 'missing'>) => recordedMissing(holder).length > 0
-  let marked: ArticleFolderIds[] = [
+  let marked: (ArticleFolderIds & Pick<FoldersHolder, 'missing'>)[] = [
     ...(await articles.listCreated(issue.id))
       .filter(isMarked)
       .map((article) => ({ ...article, kind: 'article' as const })),
@@ -535,14 +584,25 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<void>
       .filter(isMarked)
       .map((group) => ({ ...group, kind: 'group' as const })),
   ]
-  let isIssueMarked = recordedIssueMissing(issue).length > 0
-  if (marked.length === 0 && !isIssueMarked) return
+  let issueMarks = recordedIssueMissing(issue)
+  if (marked.length === 0 && issueMarks.length === 0) return false
   let token = await artworks.token()
-  if (!token.ok) return
+  if (!token.ok) return false
   let folders = artworks.folders(token.accessToken)
-  await checkIssueFolders({ folders, issues: issuesOf(context).store, now }, issue)
+  let issueCheck = await checkIssueFolders({ folders, issues: issuesOf(context).store, now }, issue)
+  let isChanged = issueCheck !== 'unavailable' && !isSameKinds(issueMarks, issueCheck.missing)
   let deps = { articles, folders, groups: artworks.groups, now }
-  for (let holder of marked) await checkArticleFolders(deps, holder)
+  for (let holder of marked) {
+    let check = await checkArticleFolders(deps, holder)
+    if (check !== 'unavailable' && !isSameKinds(recordedMissing(holder), check.missing)) {
+      isChanged = true
+    }
+  }
+  return isChanged
+}
+
+function isSameKinds(recorded: readonly string[], found: readonly string[]): boolean {
+  return recorded.length === found.length && recorded.every((kind) => found.includes(kind))
 }
 
 /**
@@ -562,11 +622,11 @@ function flashTokenFailure(
 }
 
 /** The Callout under the header while the issue's `Články` or its own folder is missing. */
-function issueMissingView(issue: Issue): IssueMissingView | null {
+function issueMissingView(issue: Issue, arrival: ArrivalCheckView | null): IssueMissingView | null {
   let mark = shownIssueMark(issue)
   if (mark === null) return null
   return {
-    arrivalCheck: routes.issues.checkMarkedFolders.href({ name: issue.name }),
+    arrivalCheck: arrival,
     checkAction:
       issue.closedAt === null ? routes.issues.checkIssueFolders.href({ name: issue.name }) : null,
     heading: issueFolderHeading(mark.kind, issue.name),
@@ -577,17 +637,28 @@ function issueMissingView(issue: Issue): IssueMissingView | null {
 /**
  * The Docs of the issue's approved articles, asked whether they were edited after their PDF
  * (cz.vednemesicnik.publikace#101, `01a`), once the detail stands (`12q`): what Drive said is recorded and the rows read it.
- * Only an open issue, and without an account or an answer the records stand as they are.
+ * Only an open issue, and only the Docs not asked about a few minutes ago (#1122); without an
+ * account or an answer the records stand as they are.
  */
 async function recheckDocRevisions(context: PageContext, issue: Issue): Promise<DocChecks> {
   let nothing: DocChecks = { moved: [], revised: [] }
   if (issue.closedAt !== null) return nothing
   let { articles, artworks } = articlesOf(context)
-  let targets = await articles.listDocCheckTargets(issue.id)
+  let { trust } = artworks
+  let targets = (await articles.listDocCheckTargets(issue.id)).filter(
+    (target) => !trust.isDocFresh(target.articleId, target.markedAt),
+  )
   if (targets.length === 0) return nothing
   let token = await artworks.token()
   if (!token.ok) return nothing
-  return checkAllDocRevisions({ articles, files: artworks.files(token.accessToken) }, targets)
+  return checkAllDocRevisions(
+    {
+      articles,
+      asked: (target) => trust.askedDoc(target.articleId, target.markedAt),
+      files: artworks.files(token.accessToken),
+    },
+    targets,
+  )
 }
 
 /** The block for the link and the rows of _Články_, from what the database has (`12a`). */
@@ -690,6 +761,7 @@ async function linkAndArticles(
   isChanged: boolean,
   settled: SettledArticle | null,
   justRevised: ReadonlySet<string>,
+  arrival: ArrivalCheckView | null,
 ): Promise<{ articles: ArticleRowView[]; link: LinkBlockView | undefined }> {
   let { articles, artworks, links, origin } = articlesOf(context)
   let isOpen = issue.closedAt === null
@@ -783,7 +855,7 @@ async function linkAndArticles(
       authors: authorsLine(article.authors),
       documentUrl: documentUrl(article.docId),
       id: article.id,
-      missing: missingView(issue, { ...article, kind: 'article' }, batches),
+      missing: missingView(issue, { ...article, kind: 'article' }, batches, arrival),
       name: article.name,
       pdfUrl: finalVersion === null ? null : driveFileUrl(finalVersion.pdfFileId),
       state: articleStateTag(article),
@@ -925,6 +997,7 @@ async function groupsOf(
   context: PageContext,
   issue: Issue,
   changed: { id: string | null; isHeadingFocused: boolean },
+  arrival: ArrivalCheckView | null,
 ): Promise<GroupsView | undefined> {
   let state = issueState(issue)
   if (state === 'unfinished') return undefined
@@ -963,7 +1036,7 @@ async function groupsOf(
         isChanged: group.id === changed.id,
         isClosed: state === 'closed',
         isCopyFocused: group.id === changed.id && !changed.isHeadingFocused,
-        missing: missingView(issue, { ...group, kind: 'group' }, batches),
+        missing: missingView(issue, { ...group, kind: 'group' }, batches, arrival),
         name: group.name,
         noteLine: group.note === '' ? null : groupNoteLine(group.note),
         shown: url === null ? null : shownUrl(url),
@@ -983,7 +1056,10 @@ async function renderDetail(
     isFolderGone?: boolean
     /** `02d` over the detail, with the key of the link it shows. */
     renewing?: { shownKey: string }
-    /** The detail itself, which asks Drive about approved texts once it stands (`12q`). */
+    /**
+     * The detail itself, which asks Drive about approved texts (`12q`) and the folders on record
+     * as missing (`12j`) once it stands.
+     */
     isShown?: boolean
     newGroup?: NewGroupDialogView
     replacing?: FinalVersionDialogProps
@@ -993,73 +1069,96 @@ async function renderDetail(
 ): Promise<Response> {
   let session = context.get(Session) as Session | undefined
   let fixed = takeIssueFixed(context)
-  let checked = takeDocChecked(session, issue.name)
+  /* The reload a check started asks nothing again, and draws again the toasts of the load that
+     asked: the flash was used up by that load, and the same toast drawn where it stands neither
+     fades in again nor is announced twice. */
+  let named = loadInCookie(context.request, CHECK_RELOAD_COOKIE)
+  let closed = loadInCookie(context.request, TOAST_CLOSED_COOKIE)
+  let reload = takeCheckReload(named, closed, session, issue.name)
+  let load = options.isShown === true && reload === null ? newKey() : null
+  let arrival =
+    load === null
+      ? null
+      : { href: routes.issues.checkMarkedFolders.href({ name: issue.name }), load }
+  let toasts = reload?.toasts ?? (context.get(Toasts) as readonly ToastMessage[])
+  if (load !== null) keepToasts(session, load, toasts)
   let { articles, link } = await linkAndArticles(
     context,
     issue,
     takeLinkChanged(session, issue.name),
     takeSettled(session),
-    new Set(checked?.revised ?? []),
+    new Set(reload?.revised ?? []),
+    arrival,
   )
-  return context.render(
+  let response = await context.render(
     <DetailPage
       articles={articles}
       missingAddress={await missingAddressOf(context, articles)}
       artworks={await artworksOf(context, issue, filterOf(context))}
       discarding={options.discarding}
-      docCheck={await docCheckOf(context, issue, articles, checked, options.isShown ?? false)}
+      docCheck={await docCheckOf(context, issue, articles, load)}
       fixing={options.fixing}
       driveAccount={await driveView(context)}
       groupFixing={options.groupFixing}
-      groups={await groupsOf(context, issue, {
-        id: takeGroupChanged(session),
-        isHeadingFocused: fixed?.focus === 'groups' && fixed.issueId === issue.id,
-      })}
+      groups={await groupsOf(
+        context,
+        issue,
+        {
+          id: takeGroupChanged(session),
+          isHeadingFocused: fixed?.focus === 'groups' && fixed.issueId === issue.id,
+        },
+        arrival,
+      )}
       isFolderGone={options.isFolderGone}
       renewing={options.renewing}
       isTitleFocused={fixed?.focus === 'title' && fixed.issueId === issue.id}
       isArticlesFocused={fixed?.focus === 'articles' && fixed.issueId === issue.id}
       issue={issue}
-      issueMissing={issueMissingView(issue)}
+      issueMissing={issueMissingView(issue, arrival)}
       link={link}
       newGroup={options.newGroup}
       person={context.auth.identity}
       print={await printOf(context, issue)}
       replacing={options.replacing}
       step={options.step}
-      toasts={context.get(Toasts) as readonly ToastMessage[]}
+      toasts={toasts}
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
+  /* The answer clears the cookies, so a load after it is an ordinary one even when the page never
+     got to clear them; that the record is read once is what makes the reload count once. */
+  for (let [cookie, value] of [
+    [CHECK_RELOAD_COOKIE, named],
+    [TOAST_CLOSED_COOKIE, closed],
+  ] as const) {
+    if (value !== null) {
+      response.headers.append('Set-Cookie', `${cookie}=; Path=/issues; Max-Age=0; SameSite=Strict`)
+    }
+  }
+  return response
 }
 
 /**
  * The detail's own revision check (`12q`) on an open issue: the sentence for a screen reader on
- * the load that shows what it found, and the check itself only on the detail as opened. A
- * dialog's page and the check's own reload ask nothing, nor an issue with no approved text. Its
- * key is new on every render, so a later load of the detail asks again.
+ * the load that shows what it found, and the check itself on a load that asks (`load`), never
+ * with no approved text. A dialog's page and a check's own reload ask nothing.
  */
 async function docCheckOf(
   context: PageContext,
   issue: Issue,
   rows: readonly ArticleRowView[],
-  checked: DocChecked | null,
-  isShown: boolean,
+  load: string | null,
 ): Promise<DocCheckView | null> {
   if (issue.closedAt !== null) return null
   let revised = rows.filter((row) => row.isChanged).length
-  let canCheck =
-    isShown &&
-    checked === null &&
-    (await articlesOf(context).articles.listDocCheckTargets(issue.id)).length > 0
+  let hasTargets =
+    load !== null && (await articlesOf(context).articles.listDocCheckTargets(issue.id)).length > 0
   return {
     announcement: revised === 0 ? null : revisedAnnouncement(revised),
-    check: canCheck
-      ? {
-          href: routes.issues.checkDocRevisions.href({ name: issue.name }),
-          key: crypto.randomUUID(),
-        }
-      : null,
+    check:
+      load === null || !hasTargets
+        ? null
+        : { href: routes.issues.checkDocRevisions.href({ name: issue.name }), load },
   }
 }
 
@@ -1613,33 +1712,29 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         })
       },
 
-      /* `12q`: what the detail asks once it stands. What changed is recorded and flashed for
-         the reload the page's island starts, and the answer lists the articles whose rows
-         change, so the island knows what to wait for. No toast and no redirect, as
-         `checkMarkedFolders`. */
+      /* `12q`: what the detail asks once it stands. What changed is recorded, and kept for the
+         reload the page's island starts, and the answer lists the articles whose rows change, so
+         the island knows what to wait for. No toast and no redirect, as `checkMarkedFolders`. */
       async checkDocRevisions(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
         let found = await recheckDocRevisions(context, issue)
         let changed = [...found.revised, ...found.moved]
-        if (changed.length > 0) {
-          flashDocChecked(context.get(Session) as Session | undefined, {
-            name: issue.name,
-            revised: found.revised,
-          })
-        }
+        if (changed.length > 0) recordDetailChecked(context, issue.name, found.revised)
         return Response.json({ changed })
       },
 
       /* `12j`: what the detail's Callouts ask once the page stands. The records change and the
-         Callouts read them on the page's next render, so this says nothing: no toast, whether
-         Drive answered or not, and never a redirect, because the page's island fetches it and
-         reloads the page itself. */
+         Callouts read them on the page's next render, so this says only whether a record
+         changed, which is when the page's island reloads it: no toast, whether Drive answered or
+         not, and never a redirect. That a record changed is kept for that reload, which asks
+         nothing again. */
       async checkMarkedFolders(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
-        await recheckMissing(context, issue)
-        return new Response(null, { status: 204 })
+        let changed = await recheckMissing(context, issue)
+        if (changed) recordDetailChecked(context, issue.name, [])
+        return Response.json({ changed })
       },
 
       /* `12j`: every folder of the article asked again, then back to the detail with what came
@@ -1962,7 +2057,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           issue,
           newGroupDialog(issue, askedFrom(context), {
             errors: { name: null, note: null },
-            formKey: crypto.randomUUID(),
+            formKey: newKey(),
             refusal: null,
             values: { name: '', note: '' },
           }),
@@ -1975,7 +2070,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let editor = context.auth.identity
         let values = { name: formText(context, 'name'), note: formText(context, 'note') }
         let typedKey = formText(context, 'formKey')
-        let formKey = /^[0-9a-f-]{36}$/.test(typedKey) ? typedKey : crypto.randomUUID()
+        let formKey = isFormKey(typedKey) ? typedKey : newKey()
         let from = answeredFrom(context)
         let again = (
           errors: NewGroupDialogView['errors'],

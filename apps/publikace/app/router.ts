@@ -43,6 +43,7 @@ import {
   mailSendEndpoint,
   publicMailPerDay,
   registrySpreadsheetId,
+  runningVersion,
   scriptJobAccount,
   scriptTokenAudiences,
 } from './auth/environment.server.ts'
@@ -74,12 +75,13 @@ import { createPublicMailLog } from './data/public-mail.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
 import { DEFAULT_PUBLIC_MAIL_PER_DAY } from './domain/artwork.ts'
 import { now } from './domain/time.ts'
-import { driveAccessToken } from './drive/access-token.server.ts'
+import { createDriveToken, type DriveToken } from './drive/access-token.server.ts'
 import { createArticleFiles } from './drive/article-files.server.ts'
 import type { ArticleSetup } from './drive/article-setup.server.ts'
 import { createArtworkFiles } from './drive/artwork-files.server.ts'
 import type { ArtworksSetup } from './drive/artworks-setup.server.ts'
-import { createDriveFolders } from './drive/folders.server.ts'
+import { createDriveTrust, type DriveTrust } from './drive/drive-trust.server.ts'
+import { createDriveFolders, type DriveFolders } from './drive/folders.server.ts'
 import type { IssueFixSetup } from './drive/issue-setup.server.ts'
 import { createIssueFiles } from './drive/issue-files.server.ts'
 import { createLock } from './drive/one-at-a-time.server.ts'
@@ -99,6 +101,7 @@ import { loadReviewCount } from './middleware/review-count.server.ts'
 import { publicLinkHeaders, skipWithoutSession } from './middleware/public-link.server.ts'
 import { render } from './middleware/render.tsx'
 import { logRequests } from './middleware/request-log.server.ts'
+import { provideRunningVersion } from './middleware/running-version.server.ts'
 import { takeToasts } from './middleware/toasts.server.ts'
 import { ignoreErrors, type ReportError } from './report.server.ts'
 import { routes } from './routes.ts'
@@ -147,6 +150,16 @@ export type AppDependencies = {
   domain?: string
   /** The only account accepted as the app's account on Drive. Defaults to `DRIVE_ACCOUNT_EMAIL`. */
   driveAccountEmail?: string
+  /**
+   * The Drive access token every setup shares, one for the process: `createPublikace` hands the
+   * same one to the startup, the router and the record queue. Defaults to one of its own.
+   */
+  driveToken?: DriveToken
+  /**
+   * What Drive said a moment ago, which every setup built from one record shares. Defaults to one
+   * of its own; the fake app hands in one it can empty.
+   */
+  driveTrust?: DriveTrust
   /** Encrypts the Drive token. Defaults to `DRIVE_TOKEN_KEY`. */
   driveTokenKey?: Buffer
   /** The variables the app was started with; every default below is read from it. */
@@ -183,26 +196,73 @@ function defaultMailer(environment: Environment): Mailer {
   return endpoint === null ? mailerUnavailable : createMailer(endpoint)
 }
 
+const driveTokens = new WeakMap<SetupDependencies, DriveToken>()
+
+/**
+ * The Drive access token `driveToken` names, or else one per dependencies record, so the setups
+ * built from one record share it and the `fetch` that drops it on a `401` belongs to the token
+ * their calls carry.
+ */
+function driveTokenOf(dependencies: SetupDependencies): DriveToken {
+  if (dependencies.driveToken !== undefined) return dependencies.driveToken
+  let drive = driveTokens.get(dependencies)
+  if (drive === undefined) {
+    drive = createDefaultDriveToken(dependencies)
+    driveTokens.set(dependencies, drive)
+  }
+  return drive
+}
+
+const driveTrusts = new WeakMap<SetupDependencies, DriveTrust>()
+
+/** The trust `driveTrust` names, or else one per dependencies record, as the token is. */
+function driveTrustOf(dependencies: SetupDependencies): DriveTrust {
+  if (dependencies.driveTrust !== undefined) return dependencies.driveTrust
+  let trust = driveTrusts.get(dependencies)
+  if (trust === undefined) {
+    trust = createDriveTrust({ now })
+    driveTrusts.set(dependencies, trust)
+  }
+  return trust
+}
+
+/** Folders on Drive whose every answer about a folder reaches the trust. */
+function recordedFolders(
+  dependencies: SetupDependencies,
+  accessToken: string,
+  fetch: typeof globalThis.fetch,
+): DriveFolders {
+  return driveTrustOf(dependencies).recording(createDriveFolders({ accessToken, fetch }))
+}
+
+/** A Drive access token on the dependencies' database, OAuth client and `fetch`. */
+export function createDefaultDriveToken(dependencies: SetupDependencies): DriveToken {
+  let reportError = dependencies.reportError ?? ignoreErrors
+  return createDriveToken({
+    credentials:
+      dependencies.googleCredentials === undefined
+        ? googleCredentials(dependencies.environment)
+        : dependencies.googleCredentials,
+    fetch: dependencies.fetch ?? globalThis.fetch,
+    store: createDriveAccountStore(
+      dependencies.database,
+      dependencies.driveTokenKey ?? driveTokenKey(dependencies.environment),
+      reportError,
+    ),
+  })
+}
+
 /**
  * How an article is made, on the app's database. `createPublikace` builds one too, for the
  * cleanup it runs before the first request.
  */
 export function createArticleSetup(dependencies: SetupDependencies): ArticleSetup {
-  let fetch = dependencies.fetch ?? globalThis.fetch
-  let credentials =
-    dependencies.googleCredentials === undefined
-      ? googleCredentials(dependencies.environment)
-      : dependencies.googleCredentials
+  let drive = driveTokenOf(dependencies)
   let reportError = dependencies.reportError ?? ignoreErrors
-  let driveAccountStore = createDriveAccountStore(
-    dependencies.database,
-    dependencies.driveTokenKey ?? driveTokenKey(dependencies.environment),
-    reportError,
-  )
   return {
     articles: createArticleStore(dependencies.database),
-    files: (accessToken) => createArticleFiles({ accessToken, fetch }),
-    folders: (accessToken) => createDriveFolders({ accessToken, fetch }),
+    files: (accessToken) => createArticleFiles({ accessToken, fetch: drive.fetch }),
+    folders: (accessToken) => recordedFolders(dependencies, accessToken, drive.fetch),
     issues: createIssueStore(dependencies.database),
     links: createLinkStore(dependencies.database),
     mailLog: createPublicMailLog(dependencies.database),
@@ -214,7 +274,8 @@ export function createArticleSetup(dependencies: SetupDependencies): ArticleSetu
     origin: appOrigin(dependencies.environment),
     reportError,
     templateId: dependencies.templateId ?? articleTemplateDocumentId(dependencies.environment),
-    token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
+    token: drive.token,
+    trust: driveTrustOf(dependencies),
   }
 }
 
@@ -227,12 +288,12 @@ export function createArtworksSetup(
   dependencies: SetupDependencies,
   articleSetup: ArticleSetup = createArticleSetup(dependencies),
 ): ArtworksSetup {
-  let fetch = dependencies.fetch ?? globalThis.fetch
+  let drive = driveTokenOf(dependencies)
   return {
     articles: articleSetup.articles,
     artworks: createArtworkStore(dependencies.database),
-    files: (accessToken) => createArtworkFiles({ accessToken, fetch }),
-    folders: articleSetup.folders,
+    files: (accessToken) => createArtworkFiles({ accessToken, fetch: drive.fetch }),
+    folders: (accessToken) => recordedFolders(dependencies, accessToken, drive.fetch),
     groups: createGroupStore(dependencies.database),
     issues: articleSetup.issues,
     links: articleSetup.links,
@@ -241,7 +302,8 @@ export function createArtworksSetup(
     mailer: articleSetup.mailer,
     now,
     reportError: articleSetup.reportError,
-    token: articleSetup.token,
+    token: drive.token,
+    trust: articleSetup.trust,
   }
 }
 
@@ -253,7 +315,7 @@ export function createRecordQueue(
   dependencies: SetupDependencies,
   articleSetup: ArticleSetup = createArticleSetup(dependencies),
 ): RecordQueue {
-  let fetch = dependencies.fetch ?? globalThis.fetch
+  let drive = driveTokenOf(dependencies)
   let editor = dependencies.driveAccountEmail ?? driveAccountEmail(dependencies.environment)
   return {
     articles: articleSetup.articles,
@@ -265,8 +327,8 @@ export function createRecordQueue(
     registryId:
       dependencies.registrySpreadsheetId ?? registrySpreadsheetId(dependencies.environment),
     reportError: dependencies.reportError ?? ignoreErrors,
-    sheets: (accessToken) => createRecordSheets({ accessToken, editor, fetch }),
-    token: articleSetup.token,
+    sheets: (accessToken) => createRecordSheets({ accessToken, editor, fetch: drive.fetch }),
+    token: drive.token,
   }
 }
 
@@ -303,17 +365,18 @@ export function createAppRouter(dependencies: AppDependencies) {
   /* Read once, so the dialog and Nastavení follow the same Registr (`11d`, `14j`). */
   let registryId =
     dependencies.registrySpreadsheetId ?? registrySpreadsheetId(dependencies.environment)
+  let drive = driveTokenOf(dependencies)
   let articleSetup = createArticleSetup(dependencies)
   let artworksSetup = createArtworksSetup(dependencies, articleSetup)
   let issueSetup: IssueFixSetup = {
     articles: articleSetup.articles,
-    files: (accessToken) => createIssueFiles({ accessToken, fetch }),
-    folders: (accessToken) => createDriveFolders({ accessToken, fetch }),
+    files: (accessToken) => createIssueFiles({ accessToken, fetch: drive.fetch }),
+    folders: (accessToken) => recordedFolders(dependencies, accessToken, drive.fetch),
     groups: artworksSetup.groups,
     issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(dependencies.environment),
     now,
     store: issueStore,
-    token: () => driveAccessToken({ credentials, fetch, store: driveAccountStore }),
+    token: drive.token,
   }
   let checkMembership = rememberGroupNames(
     dependencies.checkMembership ?? defaultMembershipCheck(dependencies.environment, reportError),
@@ -339,7 +402,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `asyncContext()` above `render()`, so every page drawn, an error page included, reaches
      *     its stylesheet and script entry, and before `csrf()`, so `<CsrfField />` can reach the
      *     token while the page is drawn,
-     *   - `render()` above everything a controller uses, so every one has `context.render`,
+     *   - `render()` above everything a controller uses, so every one has `context.render`, and
+     *     `provideRunningVersion()` beside it, for the version line in the panel's foot,
      *   - `formData()` before `csrf()`, which reads the token from the submitted body,
      *   - `session()` before `csrf()`, whose token lives in it, and before `loadAuth()`, which
      *     reads the person out of it,
@@ -365,6 +429,7 @@ export function createAppRouter(dependencies: AppDependencies) {
       serveAssets(dependencies.assets),
       asyncContext(),
       render(dependencies.assets),
+      provideRunningVersion(runningVersion(dependencies.environment)),
       formData(),
       skipWithoutSession(session(sessionCookie, createSqliteSessionStorage(dependencies.database))),
       loadAccess({

@@ -2,6 +2,7 @@ import { createController } from 'remix/router'
 
 import { requestAssets } from '../../../assets.ts'
 import type { ArtworkRow } from '../../../data/artworks.server.ts'
+import { isFormKey, newKey } from '../../../data/key.server.ts'
 import { isRowId } from '../../../data/row-id.server.ts'
 import {
   ARTWORKS_LINK_GONE_NOTE,
@@ -81,7 +82,7 @@ type FormState = {
 
 /** What an answer to a send carries for the island to focus: something new every time. */
 function answered(state: FormState): FormState {
-  return { ...state, messageKey: crypto.randomUUID() }
+  return { ...state, messageKey: newKey() }
 }
 
 function articlesOf(context: LinkContext): ArticlesContext {
@@ -125,7 +126,8 @@ async function targetOf(context: LinkContext): Promise<ArtworksTarget | null> {
 /**
  * What the page says under the lead when it opens (`21a`): the account first, because without it
  * nothing can be checked on Drive; then whether the article's three folders are still there
- * (`1jv85zum`, `2kig3d8m`), which also records what is missing for the issue detail.
+ * (`1jv85zum`, `2kig3d8m`), which also records what is missing for the issue detail. A folder
+ * found standing a few minutes ago is taken on the trust's word; one found missing is asked again.
  */
 async function warningOnOpen(
   context: LinkContext,
@@ -140,7 +142,7 @@ async function warningOnOpen(
   let check = await checkArticleFolders(
     {
       articles: artworks.articles,
-      folders: artworks.folders(token.accessToken),
+      folders: artworks.trust.trusting(artworks.folders(token.accessToken)),
       groups: artworks.groups,
       now: artworks.now,
     },
@@ -216,7 +218,7 @@ function formOf(context: LinkContext) {
   return {
     artworks,
     /* A send without its key, from a page drawn before this one, gets a key of its own. */
-    formKey: /^[0-9a-f-]{36}$/.test(formKey) ? formKey : crypto.randomUUID(),
+    formKey: isFormKey(formKey) ? formKey : newKey(),
     intent: text(data.get('intent')),
     provider: {
       email: text(data.get(PROVIDER_EMAIL_FIELD)),
@@ -312,7 +314,7 @@ export default function createArtworksController() {
         if (target === null) return goneResponse(context)
         return renderForm(context, target.holder, {
           cards: [],
-          formKey: crypto.randomUUID(),
+          formKey: newKey(),
           provider: { email: '', name: '' },
           warning: await warningOnOpen(context, target),
         })
@@ -326,7 +328,7 @@ export default function createArtworksController() {
        */
       async upload(context) {
         let formKey = context.headers.get(FORM_KEY_HEADER) ?? ''
-        if (!/^[0-9a-f-]{36}$/.test(formKey)) return reply({ outcome: 'refused' }, REFUSED)
+        if (!isFormKey(formKey)) return reply({ outcome: 'refused' }, REFUSED)
         let length = Number(context.headers.get('Content-Length') ?? '')
         if (Number.isFinite(length) && length > MAX_FILE_BYTES) {
           return reply({ outcome: 'too-large' }, 413)
@@ -372,7 +374,7 @@ export default function createArtworksController() {
         let data = context.get(FormData) as FormData
         let formKey = text(data.get('formKey'))
         let id = context.params.id
-        if (!/^[0-9a-f-]{36}$/.test(formKey) || !isRowId(id)) {
+        if (!isFormKey(formKey) || !isRowId(id)) {
           return Response.json({ outcome: 'refused' }, { status: REFUSED })
         }
         let outcome = await removeArtwork(articlesOf(context).artworks, {
@@ -394,7 +396,7 @@ export default function createArtworksController() {
           if (target === null) return goneResponse(context)
           return renderForm(context, target.holder, {
             cards: [],
-            formKey: crypto.randomUUID(),
+            formKey: newKey(),
             provider: form.provider,
             warning: await warningOnOpen(context, target),
           })
@@ -471,7 +473,7 @@ export default function createArtworksController() {
               answered({
                 ...kept,
                 cards: [],
-                formKey: crypto.randomUUID(),
+                formKey: newKey(),
                 message: DISCARDED_ON_SEND,
               }),
               { status: IN_THE_WAY },

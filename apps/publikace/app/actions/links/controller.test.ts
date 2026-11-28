@@ -3,6 +3,7 @@ import { describe, it } from 'remix/test'
 
 import { createArticleStore } from '../../data/articles.server.ts'
 import { createIssueStore } from '../../data/issues.server.ts'
+import { newKey } from '../../data/key.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
 import { now } from '../../domain/time.ts'
 import {
@@ -125,6 +126,23 @@ describe('the page behind the link (20a)', () => {
       let html = await (await visitor.get(`/l/${key}/article`)).text()
       assert.ok(textOf(html).includes('Z tohoto odkazu teď nejde založit článek.'))
     }))
+
+  it('takes Články found a moment ago on its word, and asks again to create an article (#1122)', () =>
+    withLink(async ({ app, key, visitor }) => {
+      let articles = app.drive.folders().find((folder) => folder.name === 'Články')
+      let asks = () =>
+        app.drive.calls.filter((call) => call === `GET /drive/v3/files/${articles?.id}`).length
+
+      await visitor.get(`/l/${key}/article`)
+      let formKey = formKeyOf(await (await visitor.get(`/l/${key}/article`)).text())
+      assert.equal(asks(), 1)
+
+      await visitor.send(
+        `/l/${key}/article`,
+        articleForm(formKey, 'Školní jídelna po roce', [TEREZA]),
+      )
+      assert.ok(asks() > 1)
+    }))
 })
 
 describe('one page for every link that does not work (02e)', () => {
@@ -197,7 +215,7 @@ describe('creating an article from the link (20b–20d)', () => {
 
   it('answers a second send of the same form with the same page and no second article', () =>
     withLink(async ({ app, key, visitor }) => {
-      let body = articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA])
+      let body = articleForm(newKey(), 'Školní jídelna po roce', [TEREZA])
       await visitor.send(`/l/${key}/article`, body)
       let again = await visitor.send(`/l/${key}/article`, body)
 
@@ -211,13 +229,28 @@ describe('creating an article from the link (20b–20d)', () => {
       assert.equal(app.mail.length, 1)
     }))
 
+  it('keeps the UUID form key of a page drawn before every key was a CUID (#1140)', () =>
+    withLink(async ({ app, key, visitor }) => {
+      let drawnBefore = '0b7e3c1a-5d2f-4a8e-9c6b-1f2e3d4c5b6a'
+      let body = articleForm(drawnBefore, 'Školní jídelna po roce', [TEREZA])
+      await visitor.send(`/l/${key}/article`, body)
+      let again = await visitor.send(`/l/${key}/article`, body)
+
+      assert.equal(again.status, 200)
+      let link = await createLinkStore(app.database).findByKey(key)
+      let articles = await createArticleStore(app.database).listCreated(link?.issueId ?? '')
+      assert.deepEqual(
+        articles.map((article) => article.formKey),
+        [drawnBefore],
+      )
+      assert.equal(app.mail.length, 1)
+    }))
+
   it('refuses the fields with a summary and the sentence at each field, keeping what was typed', () =>
     withLink(async ({ key, visitor }) => {
       let response = await visitor.send(
         `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), '', [
-          { email: 'tereza.external.test', name: 'Tereza Vlková' },
-        ]),
+        articleForm(newKey(), '', [{ email: 'tereza.external.test', name: 'Tereza Vlková' }]),
       )
       let html = await response.text()
 
@@ -232,7 +265,7 @@ describe('creating an article from the link (20b–20d)', () => {
     withLink(async ({ key, visitor }) => {
       let response = await visitor.send(
         `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), 'Článek', [TEREZA], 'add-author'),
+        articleForm(newKey(), 'Článek', [TEREZA], 'add-author'),
       )
       let html = await response.text()
       assert.equal(response.status, 200)
@@ -243,7 +276,7 @@ describe('creating an article from the link (20b–20d)', () => {
     withLink(async ({ key, visitor }) => {
       let response = await visitor.send(
         `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), 'Článek', [TEREZA, ONDREJ], 'remove-2'),
+        articleForm(newKey(), 'Článek', [TEREZA, ONDREJ], 'remove-2'),
       )
       let html = await response.text()
       assert.equal(response.status, 200)
@@ -257,16 +290,13 @@ describe('creating an article from the link (20b–20d)', () => {
         email: `autor${index + 1}@external.test`,
         name: `Autor ${index + 1}`,
       }))
-      let many = await visitor.send(
-        `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), 'Článek', eleven),
-      )
+      let many = await visitor.send(`/l/${key}/article`, articleForm(newKey(), 'Článek', eleven))
       assert.equal(many.status, 400)
       assert.ok(textOf(await many.text()).includes('Článek může mít nejvýš 10 autorů.'))
 
       let long = await visitor.send(
         `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), 'Článek', [{ ...TEREZA, name: 'T'.repeat(201) }]),
+        articleForm(newKey(), 'Článek', [{ ...TEREZA, name: 'T'.repeat(201) }]),
       )
       assert.equal(long.status, 400)
       assert.ok(textOf(await long.text()).includes('Zkraťte jméno na nejvýš 200 znaků.'))
@@ -278,7 +308,7 @@ describe('creating an article from the link (20b–20d)', () => {
       app.drive.failStep('copy')
       let response = await visitor.send(
         `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA]),
+        articleForm(newKey(), 'Školní jídelna po roce', [TEREZA]),
       )
       let html = await response.text()
 
@@ -304,7 +334,7 @@ describe('creating an article from the link (20b–20d)', () => {
       )
       let response = await visitor.send(
         `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA]),
+        articleForm(newKey(), 'Školní jídelna po roce', [TEREZA]),
       )
       let html = await response.text()
 
@@ -316,7 +346,7 @@ describe('creating an article from the link (20b–20d)', () => {
 
   it('answers a resend of a created form with its page, also after the link was replaced', () =>
     withLink(async ({ app, editor, key, visitor }) => {
-      let body = articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA])
+      let body = articleForm(newKey(), 'Školní jídelna po roce', [TEREZA])
       await visitor.send(`/l/${key}/article`, body)
       await editor.post(
         '/issues/VDM_2026_5/link/renew',
@@ -342,7 +372,7 @@ describe('the link and the articles in the detail (12a, 12c, 02d)', () => {
 
       await visitor.send(
         `/l/${key}/article`,
-        articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA, ONDREJ]),
+        articleForm(newKey(), 'Školní jídelna po roce', [TEREZA, ONDREJ]),
       )
       let detail = await (await editor.get('/issues/VDM_2026_5')).text()
       assert.ok(!detail.includes('vdm-changed'))
@@ -439,7 +469,7 @@ describe('the link and the articles in the detail (12a, 12c, 02d)', () => {
 describe('where focus goes after a send (20c, 20d)', () => {
   it('draws the done page’s heading focusable, also for a resend', () =>
     withLink(async ({ key, visitor }) => {
-      let body = articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA])
+      let body = articleForm(newKey(), 'Školní jídelna po roce', [TEREZA])
       let created = await (await visitor.send(`/l/${key}/article`, body)).text()
       assert.equal(focusableHeadingOf(created), 'Článek je založený')
 
@@ -450,7 +480,7 @@ describe('where focus goes after a send (20c, 20d)', () => {
   it('marks the refusal above the form, with a new key for every answer', () =>
     withLink(async ({ app, key, visitor }) => {
       app.drive.failStep('copy')
-      let body = articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA])
+      let body = articleForm(newKey(), 'Školní jídelna po roce', [TEREZA])
       let first = await (await visitor.send(`/l/${key}/article`, body)).text()
       let second = await (await visitor.send(`/l/${key}/article`, body)).text()
 
@@ -470,7 +500,7 @@ describe('where focus goes after a send (20c, 20d)', () => {
       let html = await (
         await visitor.send(
           `/l/${key}/article`,
-          articleForm(crypto.randomUUID(), 'Školní jídelna po roce', [TEREZA]),
+          articleForm(newKey(), 'Školní jídelna po roce', [TEREZA]),
         )
       ).text()
       assert.ok(messageOf(html)?.includes('Napište šéfredakci o aktuální odkaz.'))
@@ -498,7 +528,7 @@ describe('where focus goes after a send (20c, 20d)', () => {
   it('marks nothing above the form for field errors, which the summary takes', () =>
     withLink(async ({ key, visitor }) => {
       let html = await (
-        await visitor.send(`/l/${key}/article`, articleForm(crypto.randomUUID(), '', [TEREZA]))
+        await visitor.send(`/l/${key}/article`, articleForm(newKey(), '', [TEREZA]))
       ).text()
       assert.equal(messageOf(html), null)
     }))
