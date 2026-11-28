@@ -499,12 +499,22 @@ button.vdm-sidebar__row { appearance: none; border: 0; background: transparent; 
 .vdm-sidebar__row + .vdm-sidebar__form > .vdm-sidebar__row { margin-top: -8px; }
 /* Nastavení is a page, so it has an active state like an item (u6432mlm); Odhlásit se is an action and has none. */
 .vdm-sidebar__account--active, .vdm-sidebar__account--active:hover { background: var(--primary-light); color: var(--link-strong); font-weight: var(--font-weight-semibold); }
+/* App version (2h61bu5l, from Publikace): the last line of the foot, under Odhlásit se, in the column and in the menu, for
+   every signed-in role. Read a few times a month, so it is quieter than the rows above it: 12px in --text-tertiary, and the
+   foot's 10px gap parts it from the account rows. A link to the version's release notes opens in a new tab with the
+   external-link icon at the text's size and the hidden new-tab note, the shape of __site; with nothing to link to
+   (a development build) it is plain text in the same box, without hover. */
+.vdm-sidebar__version { box-sizing: border-box; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin: 0 -8px; padding: 7px 8px; border-radius: var(--radius-lg); font-size: 12px; line-height: 1.5; color: var(--text-tertiary); text-decoration: none; }
+a.vdm-sidebar__version { transition: background-color var(--transition-fast), color var(--transition-fast); }
+a.vdm-sidebar__version:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.vdm-sidebar__version svg { flex: none; }
 /* Below 768px: whole screen from Menu in AdminTopBar (tbi5qpq9). */
 .vdm-sidebar--menu { width: 100%; min-height: 100dvh; padding: 0 12px 20px; gap: 16px; border-right: 0; }
 .vdm-sidebar--menu .vdm-sidebar__brand { margin: 0 -12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .vdm-sidebar__close { margin-left: auto; }
 .vdm-sidebar--menu .vdm-sidebar__item, .vdm-sidebar--menu .vdm-sidebar__row { box-sizing: border-box; min-height: 44px; display: flex; align-items: center; }
 .vdm-sidebar--menu .vdm-sidebar__site { box-sizing: border-box; min-height: 44px; align-self: stretch; }
+.vdm-sidebar--menu .vdm-sidebar__version { min-height: 44px; align-self: stretch; }
 .vdm-topbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 1px solid var(--border); }
 .vdm-topbar__title { min-width: 0; font-size: 15px; font-weight: var(--font-weight-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vdm-topbar__menu { margin-left: auto; }

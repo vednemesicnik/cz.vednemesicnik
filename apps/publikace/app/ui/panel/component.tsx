@@ -1,13 +1,18 @@
 import type { Handle } from 'remix/component'
+import { css } from 'remix/component'
 import { getContext } from 'remix/middleware/async-context'
 
 import { ProofreadingCount } from '../../middleware/proofreading-count.server.ts'
 import { ReviewCount } from '../../middleware/review-count.server.ts'
+import { RunningVersionKey } from '../../middleware/running-version.server.ts'
 import { routes } from '../../routes.ts'
+import { tied } from '../../domain/public/typography.ts'
 import { Avatar } from '../avatar/component.tsx'
 import { CsrfField } from '../csrf-field/component.tsx'
+import { NewTabMark } from '../public/new-tab-mark/component.tsx'
 import { VdmLogo } from '../vdm-logo/component.tsx'
 import { Wordmark } from '../wordmark/component.tsx'
+import { versionLink } from './version-link.ts'
 
 /** `null` on a page that belongs to no section: the refusal of `10d`. */
 export type PanelSection = 'issues' | 'proofreading' | 'review' | 'settings' | null
@@ -45,13 +50,18 @@ const COUNT_STYLE = {
   fontWeight: 600,
 } as const
 
+/* The line's own gap spaces the icon, as `Panel.dc.html` draws it, so the mark's margin goes. */
+const versionStyle = css({ '& svg': { marginLeft: 0 } })
+
 function itemClass(isActive: boolean): string {
   return isActive ? 'vdm-sidebar__item vdm-sidebar__item--active' : 'vdm-sidebar__item'
 }
 
 /**
  * The sidebar, as `Panel.dc.html` draws it: the magazine's mark and name over _Publikace_, the
- * sections of the app, and in the foot the signed-in person with _Odhlásit se_.
+ * sections of the app, and in the foot the signed-in person with _Odhlásit se_ and, last, the
+ * version that runs (`31a`): _Verze ‹1.1.1›_ or _Verze ‹commit›_ linking to GitHub in a new tab,
+ * or _Vývojové prostředí_ outside production.
  *
  * A proofreader who is not an editor-in-chief has one section, _Korektura_, and none of the others,
  * not even greyed out: they never open them (`10d`). An editor-in-chief has _Korektura_ after _Ke
@@ -69,6 +79,8 @@ export function Panel(handle: Handle<PanelProps>) {
     let { active, isMenu = false, person } = handle.props
     let reviewCount = getContext().get(ReviewCount)
     let proofreadingCount = getContext().get(ProofreadingCount)
+    let version = getContext().get(RunningVersionKey)
+    let link = version === null ? null : versionLink(version)
     let proofreading = (
       <a
         aria-current={active === 'proofreading' ? 'page' : undefined}
@@ -153,6 +165,20 @@ export function Panel(handle: Handle<PanelProps>) {
               Odhlásit se
             </button>
           </form>
+          {link !== null ? (
+            <a
+              class="vdm-sidebar__version"
+              href={link.href}
+              mix={versionStyle}
+              rel="noopener"
+              target="_blank"
+            >
+              {tied`Verze ${link.value}`}
+              <NewTabMark />
+            </a>
+          ) : version?.kind === 'development' ? (
+            <span class="vdm-sidebar__version">{tied`Vývojové prostředí`}</span>
+          ) : null}
         </div>
       </aside>
     )
