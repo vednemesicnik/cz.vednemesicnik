@@ -102,7 +102,7 @@ async function detailText(context: Context): Promise<string> {
  * the marked folders, and the page again (`12j`).
  */
 async function checkedDetailText(context: Context): Promise<string> {
-  assert.equal((await context.editor.post(CHECK_MARKED, {}, DETAIL)).status, 204)
+  assert.equal((await context.editor.post(CHECK_MARKED, {}, DETAIL)).status, 200)
   return detailText(context)
 }
 

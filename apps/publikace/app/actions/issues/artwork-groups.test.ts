@@ -21,6 +21,7 @@ import {
   type TestApp,
   type TestBrowser,
 } from '../../test-app.server.ts'
+import { CHECK_RELOAD_COOKIE } from '../../ui/public/detail-checks.ts'
 
 /**
  * Artwork groups end to end (cz.vednemesicnik.publikace#133): the dialog of `12e` over the detail, the group on Drive, its
@@ -745,16 +746,65 @@ describe('a group’s missing folder in the detail (12j, cz.vednemesicnik.publik
 
       let check = () => context.editor.post(`${DETAIL}/folders/check-marked`, {}, DETAIL)
       context.app.drive.goDown()
-      assert.equal((await check()).status, 204)
+      assert.deepEqual(await (await check()).json(), { changed: false })
       assert.ok(textOf(await (await context.editor.get(DETAIL)).text()).includes(GROUP_STEP))
       context.app.drive.heal()
 
-      assert.equal((await check()).status, 204)
+      assert.deepEqual(await (await check()).json(), { changed: true })
       let text = textOf(await (await context.editor.get(DETAIL)).text())
       assert.ok(!text.includes(GROUP_STEP))
       assert.ok(!text.includes('Složka je zpátky'))
       let overview = textOf(await (await context.editor.get('/')).text())
       assert.ok(!overview.includes('čeká na vás'))
+    }))
+
+  it('asks again on every load that is not the reload its own change started (#1124)', () =>
+    withIssue(async (context) => {
+      for (let name of ['Mapa obce k rozhovoru i reportáži', 'Zadní strana']) {
+        await createGroup(context, { name })
+        let group = await groupOf(context, name)
+        context.app.drive.trash(group.folderId)
+        await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+      }
+      let detail = async () => (await context.editor.get(DETAIL)).text()
+      /* As the island asks: with the load of the page that stands. */
+      let check = async (html: string) => {
+        let load = /&quot;load&quot;:&quot;([0-9a-z]+)&quot;|"load":"([0-9a-z]+)"/
+          .exec(html)
+          ?.slice(1)
+          .find(Boolean)
+        assert.ok(load !== undefined, 'the page asks')
+        /* The page's own token, so the post loads no page of its own first. */
+        let _csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(html)?.[1] ?? ''
+        let response = await context.editor.post(
+          `${DETAIL}/folders/check-marked`,
+          { _csrf, load },
+          DETAIL,
+        )
+        return response.json()
+      }
+      let asks = (html: string) => html.includes(`${DETAIL}/folders/check-marked`)
+      let back = await groupOf(context, 'Zadní strana')
+
+      assert.deepEqual(await check(await detail()), { changed: false })
+      let again = await detail()
+      assert.ok(asks(again), 'nothing changed, so the next load asks')
+
+      context.app.drive.restore(back.folderId)
+      assert.deepEqual(await check(again), { changed: true })
+      let load = /&quot;load&quot;:&quot;([0-9a-z]+)&quot;|"load":"([0-9a-z]+)"/
+        .exec(again)
+        ?.slice(1)
+        .find(Boolean)
+      /* As the island reloads: naming the load whose check found it. */
+      context.editor.setCookie(`${CHECK_RELOAD_COOKIE}=${load}; Path=/issues`)
+      let reload = await detail()
+      assert.equal(context.editor.cookie(CHECK_RELOAD_COOKIE), undefined, 'honoured once')
+      assert.ok(textOf(reload).includes(GROUP_STEP), 'the other group is still missing')
+      assert.ok(!asks(reload), 'the reload asks nothing again')
+      assert.ok(asks(await detail()))
+      let dialog = await (await context.editor.get(`${DETAIL}/artwork-groups/new`)).text()
+      assert.ok(!asks(dialog), 'a question over the detail asks nothing')
     }))
 
   it('hides under a binned issue folder, which is counted once', () =>

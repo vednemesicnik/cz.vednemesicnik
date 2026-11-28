@@ -1,14 +1,22 @@
 import type { Handle } from 'remix/component'
 import { clientEntry, ref } from 'remix/component'
 
+import { checkInTurn } from '../detail-checks.ts'
+
 export type FolderCheckProps = {
   /**
    * _Zkontrolovat znovu_: where it posts, its label and `Kontroluje se…` while Drive is asked.
    * `null` in a closed issue, whose Callout has no action.
    */
   action: { href: string; label: string; pendingLabel: string } | null
-  /** Where the page's own check of every folder on record as missing posts once it stands. */
-  arrivalCheck: string
+  /**
+   * The page's own check of every folder on record as missing, once it stands: where it posts, and
+   * `load`, new on every load of the detail that asks. A client entry's `key` never reaches the
+   * browser, and a load the runtime reconciles into this document only updates the island's
+   * props, so `load` is how the island tells a new load from a render of the same one. `null` on
+   * a load that asks nothing: a check's own reload, or a question over the detail.
+   */
+  arrivalCheck: { href: string; load: string } | null
   csrfToken: string
 }
 
@@ -27,34 +35,29 @@ const WAITLINE_CLIP = {
   position: 'absolute',
 } as const
 
-/**
- * One check per page however many Callouts start it, so a detail with three marked folders asks
- * Drive once and reloads once. The entry goes when the check settles rather than staying for the
- * document's life, because the runtime keeps the document across navigations, and the detail
- * opened again later has to ask again.
- */
-const runs = new Map<string, Promise<void>>()
+function isChangedOf(body: unknown): boolean {
+  if (typeof body !== 'object' || body === null) return false
+  return (body as Record<string, unknown>).changed === true
+}
 
-function checkOnce(href: string, csrfToken: string, reload: () => Promise<unknown>): Promise<void> {
-  let run = runs.get(href)
-  if (run !== undefined) return run
+/**
+ * Whether a record changed: only then does the page reload, and the reload asks nothing again, so a
+ * folder that stays missing never reloads the page in a loop. A check that failed changes nothing:
+ * the records stand, and so do the Callouts.
+ */
+async function ask(check: { href: string; load: string }, csrfToken: string): Promise<boolean> {
   let body = new FormData()
   body.set('_csrf', csrfToken)
-  /* A check that failed reloads nothing: the records stand, and so do the Callouts. */
-  run = fetch(href, { body, method: 'POST' })
-    .then(async (response) => {
-      if (response.ok) await reload()
-    })
-    .catch(() => undefined)
-    .finally(() => runs.delete(href))
-  runs.set(href, run)
-  return run
+  body.set('load', check.load)
+  let response = await fetch(check.href, { body, method: 'POST' })
+  return response.ok && isChangedOf(await response.json())
 }
 
 /**
  * The action row of a missing folder's Callout and the waitline along its top edge (`12j`). The
- * detail stands from the database first; then this asks Drive about the folders on record as
- * missing and reloads the page, which drops a Callout whose folder is back without a toast.
+ * detail stands from the database first; then, on every load of the detail that asks, this asks
+ * Drive about the folders on record as missing and, when a record changed, reloads the page, which
+ * drops a Callout whose folder is back without a toast and keeps the one the detail opened with.
  * _Zkontrolovat znovu_ waits the same way, and its answer comes as the page it redirects to.
  *
  * The waitline is a bar along the top edge, inside the Callout's border, and not the class on a
@@ -99,24 +102,34 @@ export const FolderCheck = clientEntry(
       { signal: handle.signal },
     )
 
-    /* The check starts after the first render, which matches the server's ordinary form and so
-       hydrates without a mismatch; without the runtime, that form is all there is. */
-    if (typeof document !== 'undefined') {
-      handle.queueTask(() => {
-        isChecking = true
-        handle.update()
-        wait()
-        let { arrivalCheck, csrfToken } = handle.props
-        checkOnce(arrivalCheck, csrfToken, () => handle.frames.top.reload()).then(() => {
-          if (handle.signal.aborted) return
-          isChecking = false
-          settle()
-        })
+    let asked: string | null = null
+    let arrive = (check: { href: string; load: string }, csrfToken: string) => {
+      isChecking = true
+      handle.update()
+      wait()
+      /* One check per load however many Callouts start it, so a detail with three marked
+         folders asks Drive once and reloads once. */
+      checkInTurn(check.load, 'marked-folders', () => ask(check, csrfToken), {
+        isCurrent: () => !handle.signal.aborted && handle.props.arrivalCheck?.load === check.load,
+        reload: () => handle.frames.top.reload(),
+      }).then(() => {
+        /* A later load's check owns the waitline once it started. */
+        if (handle.signal.aborted || asked !== check.load) return
+        isChecking = false
+        settle()
       })
     }
 
     return () => {
-      let { action, csrfToken } = handle.props
+      let { action, arrivalCheck, csrfToken } = handle.props
+      /* The check starts after the render, which matches the server's ordinary form and so
+         hydrates without a mismatch; without the runtime, that form is all there is. */
+      if (typeof document !== 'undefined' && arrivalCheck !== null && arrivalCheck.load !== asked) {
+        asked = arrivalCheck.load
+        /* A copy: the runtime updates `handle.props` in place for the next load. */
+        let check = { ...arrivalCheck }
+        handle.queueTask(() => arrive(check, csrfToken))
+      }
       let isPending = isChecking || isSubmitted
 
       return (
