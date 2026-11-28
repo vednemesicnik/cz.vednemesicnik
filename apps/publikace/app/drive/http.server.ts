@@ -4,10 +4,10 @@ import { logDriveFailure } from './log.server.ts'
  * What every call to Google's file APIs shares: the bearer token, a network failure or a call
  * that does not answer within the timeout turned into a logged `null`, and an answer that is not
  * JSON read as an empty object. The timeout matters because a form's lock and the startup are both
- * held while a call waits.
+ * held while a call waits; the access token's request (`access-token.server.ts`) has the same.
  */
 
-const TIMEOUT_MS = 30_000
+export const DRIVE_TIMEOUT_MS = 30_000
 
 export const FILES_ENDPOINT = 'https://www.googleapis.com/drive/v3/files'
 export const UPLOAD_ENDPOINT = 'https://www.googleapis.com/upload/drive/v3/files'
@@ -23,7 +23,7 @@ export function createDriveCall(accessToken: string, fetch: typeof globalThis.fe
   return async (what, url, init = {}) => {
     try {
       return await fetch(url, {
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+        signal: AbortSignal.timeout(DRIVE_TIMEOUT_MS),
         ...init,
         headers: { ...headers, ...init.headers },
       })
