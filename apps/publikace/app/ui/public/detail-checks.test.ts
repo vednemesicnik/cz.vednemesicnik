@@ -98,6 +98,7 @@ describe('checkInTurn', () => {
     let cookies: string[] = []
     let page = globalThis as { document?: unknown }
     page.document = {
+      querySelector: () => null,
       set cookie(value: string) {
         cookies.push(value)
       },
@@ -114,6 +115,35 @@ describe('checkInTurn', () => {
       assert.equal(reloads, 1)
       assert.ok(cookies[0]?.startsWith('issueDetailReload=l5;'))
       assert.ok(cookies[1]?.startsWith('issueDetailReload=;'), 'cleared after the reload')
+    } finally {
+      delete page.document
+    }
+  })
+
+  it('names the load whose toast was closed beside the reload, and clears both after it (#1137)', async () => {
+    let current = { isCurrent: () => true, reload: () => Promise.resolve() }
+    let cookies: string[] = []
+    let page = globalThis as { document?: unknown }
+    page.document = {
+      querySelector: (selector: string) => (selector === '.vdm-toast[data-closed]' ? {} : null),
+      set cookie(value: string) {
+        cookies.push(value)
+      },
+    }
+    try {
+      let check = pending()
+      let asked = checkInTurn('l6', 'doc', check.check, current)
+      check.answer(true)
+      await asked
+      assert.deepEqual(
+        cookies.map((cookie) => cookie.split(';')[0]),
+        [
+          'issueDetailReload=l6',
+          'issueDetailToastClosed=l6',
+          'issueDetailReload=',
+          'issueDetailToastClosed=',
+        ],
+      )
     } finally {
       delete page.document
     }

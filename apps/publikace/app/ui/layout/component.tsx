@@ -115,7 +115,7 @@ const mainWithToastStyle = css({
  * then stands at its bottom. The inline margins pull it from the page's padding to the toast's own
  * offset, and give it as much width as `fixed` did, the window less the panel and 18 px on each
  * side. `alignSelf: start` keeps it as wide as its toast. It lets taps through; a toast with an
- * action takes them back (`zulb5phd`).
+ * action or a close button takes them back (`zulb5phd`, `11g`).
  */
 const toastSlotStyle = css({
   alignSelf: 'start',

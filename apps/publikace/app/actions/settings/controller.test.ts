@@ -150,6 +150,10 @@ describe('settings, Přístup', () => {
       let html = await (await browser.get('/settings')).text()
       assert.ok(/<div[^>]*role="status"[^>]*>.*jan@vednemesicnik\.test má přístup\./s.test(html))
       assert.ok(
+        !html.includes('vdm-toast__close'),
+        'a toast that leaves by itself has no close (11g)',
+      )
+      assert.ok(
         !(await (await browser.get('/settings')).text()).includes('má přístup.</span>'),
         'said once',
       )

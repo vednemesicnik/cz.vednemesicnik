@@ -207,6 +207,11 @@ describe('Ke kontrole', () => {
           `<form action="/review/batches/${batch.id}/consent/undo" method="post"[^>]*><input name="_csrf" type="hidden" value="[^"]+" /><button type="submit" class="vdm-toast__action"`,
         ),
       )
+      assert.match(
+        settled,
+        /class="vdm-toast__action">Vrátit<\/button><\/form><!-- rmx:h:\w+ --><button aria-label="Zavřít hlášku" type="button" class="vdm-toast__close">/,
+        'the close follows the action (11g)',
+      )
       assert.match(settled, /vdm-btn--ghost vdm-btn--sm">Vrátit</)
       assert.doesNotMatch(settled, />Ke kontrole<span/)
 
