@@ -88,11 +88,6 @@ export type SettingsPageProps = {
   driveFiles: { intro: string; rows: readonly DriveFileRow[] }
   editor: Person
   groups: readonly AccessGroup[]
-  /**
-   * `14f`: the membership service does not know the proofreaders' address as a group, as the
-   * page's own check found on the load it then reloaded into.
-   */
-  isProofreadersUnknownGroup: boolean
   /** `14b`: a change was sent from a page opened before the role was taken away. */
   isRoleLost?: boolean
   /** The sentence under _Úlohy na pozadí_, its job names apart (`14a`). */
@@ -100,9 +95,9 @@ export type SettingsPageProps = {
   /** The proofreaders' address, `null` until it is first set (`14a`, `14f`). */
   proofreaders: string | null
   /**
-   * `14f`: the check Nastavení asks the membership service once it stands, with a key new on
-   * every load, so each load asks again. `null` without an address, on a page with a dialog over
-   * it, and on the load that already shows the warning.
+   * `14f`: the check Nastavení asks the membership service once it stands, whose answer shows the
+   * warning drawn hidden under the address. Its key is new on every load, so each load asks
+   * again. `null` without an address and on a page with a dialog over it.
    */
   proofreadersCheck: { href: string; key: string } | null
   proofreadersForm?: ProofreadersForm
@@ -756,6 +751,8 @@ const addressTextStyle = css({
 
 const addressLabelStyle = css({ color: 'var(--text-secondary)' })
 
+const UNKNOWN_GROUP_WARNING_ID = 'proofreaders-unknown-group'
+
 /**
  * `14a`, `14f`: the proofreaders' address and where it can be changed. Only an administrator
  * sets or changes it; everybody else sees it with the sentence that says so.
@@ -766,11 +763,10 @@ function ProofreadersPart(
     check: { href: string; key: string } | null
     domain: string
     isAdmin: boolean
-    isUnknownGroup: boolean
   }>,
 ) {
   return () => {
-    let { address, check, domain, isAdmin, isUnknownGroup } = handle.props
+    let { address, check, domain, isAdmin } = handle.props
     return (
       <section aria-labelledby="proofreading-title" id="proofreading" mix={partStyle}>
         <h2 id="proofreading-title">{PROOFREADERS_TITLE}</h2>
@@ -795,19 +791,24 @@ function ProofreadersPart(
             </a>
           ) : null}
         </div>
-        {address !== null && isUnknownGroup ? (
-          <Callout tone="warning">
-            {/* Inline, as the other Callouts write it: `css()` would lose to the design system's
-                own rules for a paragraph in the body. */}
-            <p style={{ margin: 0 }}>{proofreadersUnknownGroupMessage(address)}</p>
-          </Callout>
-        ) : null}
-        {check === null ? null : (
-          <ProofreadersCheck
-            csrfToken={getCsrfToken(getContext())}
-            href={check.href}
-            key={check.key}
-          />
+        {address === null || check === null ? null : (
+          <>
+            {/* Drawn hidden and shown by the check's answer, so the page never reloads for it
+                and keeps whatever toast it opened with. */}
+            <div hidden id={UNKNOWN_GROUP_WARNING_ID}>
+              <Callout tone="warning">
+                {/* Inline, as the other Callouts write it: `css()` would lose to the design
+                    system's own rules for a paragraph in the body. */}
+                <p style={{ margin: 0 }}>{proofreadersUnknownGroupMessage(address)}</p>
+              </Callout>
+            </div>
+            <ProofreadersCheck
+              csrfToken={getCsrfToken(getContext())}
+              href={check.href}
+              key={check.key}
+              warningId={UNKNOWN_GROUP_WARNING_ID}
+            />
+          </>
         )}
       </section>
     )
@@ -956,7 +957,6 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
       driveFiles,
       editor,
       groups,
-      isProofreadersUnknownGroup,
       isRoleLost = false,
       jobsSummary,
       proofreaders,
@@ -1043,7 +1043,6 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
               check={proofreadersCheck}
               domain={domain}
               isAdmin={editor.isAdmin}
-              isUnknownGroup={isProofreadersUnknownGroup}
             />
 
             <section aria-labelledby="jobs-title" mix={partStyle}>

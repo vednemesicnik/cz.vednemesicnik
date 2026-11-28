@@ -43,7 +43,6 @@ import {
  */
 type PageContext = {
   get(key: unknown): unknown
-  method: string
   render: AppContext['render']
 }
 
@@ -61,31 +60,6 @@ type PageState = {
   isShown?: boolean
   proofreadersForm?: ProofreadersForm
   question?: RemovalQuestion
-}
-
-/*
- * The proofreaders' address the membership service just did not know (`14f`), for the page that
- * follows: the reload the page's own check starts, or the page a save redirects to. Taken once;
- * its presence also tells that page not to ask again. An address changed since does not match,
- * so the page asks about the new one.
- */
-const UNKNOWN_GROUP_SESSION_KEY = 'proofreadersUnknownGroup'
-
-/** Asks the membership service about the address, and flashes it when the service does not know it. */
-async function checkProofreadersGroup(context: PageContext, editor: Person, email: string) {
-  let answer = await accessOf(context).checkMembership(editor.email, email)
-  let isUnknownGroup = answer.status === 'unknown-group'
-  if (isUnknownGroup) {
-    ;(context.get(Session) as Session | undefined)?.flash(UNKNOWN_GROUP_SESSION_KEY, email)
-  }
-  return isUnknownGroup
-}
-
-function takeUnknownGroup(session: Session | undefined): string | null {
-  let value = session?.get(UNKNOWN_GROUP_SESSION_KEY)
-  if (value === undefined) return null
-  session?.unset(UNKNOWN_GROUP_SESSION_KEY)
-  return typeof value === 'string' ? value : null
 }
 
 type Stores = {
@@ -116,12 +90,8 @@ async function renderSettings(
   /* No call to the membership service before the page: `checkProofreaders` asks once it stands,
      on every visit, so the warning stands while the service does not know the address and goes
      by itself once it does. */
-  let session = context.get(Session) as Session | undefined
-  let unknownGroup = state.isShown === true ? takeUnknownGroup(session) : null
-  let isProofreadersUnknownGroup =
-    proofreadersAddress !== null && unknownGroup === proofreadersAddress.email
   let proofreadersCheck =
-    state.isShown === true && proofreadersAddress !== null && !isProofreadersUnknownGroup
+    state.isShown === true && proofreadersAddress !== null
       ? { href: routes.settings.checkProofreaders.href(), key: crypto.randomUUID() }
       : null
 
@@ -137,12 +107,11 @@ async function renderSettings(
       driveAccount={{
         expectedEmail: driveAccount.expectedEmail,
         hasRegistry,
-        refusal: takeConnectRefusal(session),
+        refusal: takeConnectRefusal(context.get(Session) as Session | undefined),
         state: driveState,
       }}
       editor={editor}
       groups={groups}
-      isProofreadersUnknownGroup={isProofreadersUnknownGroup}
       isRoleLost={state.isRoleLost}
       jobsSummary={settingsSummary(
         jobs.map(({ job, snapshot }) => ({
@@ -206,19 +175,16 @@ export default function createSettingsController(
       },
 
       /* `14f`: what Nastavení asks once it stands, as when a group is added to Přístup (`03`,
-         row 27). An unknown address is flashed for the reload the page's island starts, which
-         draws the warning. A service that does not answer says nothing about the address, so
-         it shows nothing. No toast and no redirect, as the issue detail's `checkDocRevisions`. */
+         row 27). The answer only shows or hides the warning the page drew hidden, so nothing
+         reloads and no toast on the page is lost. A service that does not answer says nothing
+         about the address, so it shows nothing. No toast and no redirect. */
       async checkProofreaders(context) {
         let address = await stores.proofreaders.find()
         if (address === null) return Response.json({ isUnknownGroup: false })
-        return Response.json({
-          isUnknownGroup: await checkProofreadersGroup(
-            context,
-            context.auth.identity,
-            address.email,
-          ),
-        })
+        let answer = await context
+          .get(Access)
+          .checkMembership(context.auth.identity.email, address.email)
+        return Response.json({ isUnknownGroup: answer.status === 'unknown-group' })
       },
 
       async addAccess(context) {
@@ -350,10 +316,6 @@ export default function createSettingsController(
           )
         }
         await dependencies.proofreaders.save(address.email, editor.email, now())
-        /* Asked at the save (`14f`), so the page it lands on shows the warning beside the toast
-           at once, rather than after a reload that would take the toast away. The address is
-           saved either way: one account is answered as a group the service does not know. */
-        await checkProofreadersGroup(context, editor, address.email)
         flashToast(context, PROOFREADERS_SAVED)
         return backToSettings()
       },
