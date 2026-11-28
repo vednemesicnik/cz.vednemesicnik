@@ -112,8 +112,13 @@ async function renderSettings(
       groups={groups}
       isProofreadersUnknownGroup={isProofreadersUnknownGroup}
       isRoleLost={state.isRoleLost}
-      jobsSummary={jobs.map(({ job, snapshot }) =>
-        settingsSummary(job, stateOfJob(job, snapshot.latest, today, snapshot), today),
+      jobsSummary={settingsSummary(
+        jobs.map(({ job, snapshot }) => ({
+          job,
+          latest: snapshot.latest,
+          state: stateOfJob(job, snapshot.latest, today, snapshot),
+        })),
+        today,
       )}
       proofreaders={proofreadersAddress?.email ?? null}
       proofreadersForm={state.proofreadersForm}

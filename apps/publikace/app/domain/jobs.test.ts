@@ -1,8 +1,10 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { writeCommentDigestRun } from './article-comments.ts'
 import type { JobRunRecord, JobState } from './job-run.ts'
 import { PROOFREADING_DIGEST_JOB, writeDigestRun } from './proofreading-digest.ts'
+import { NBSP } from './public/typography.ts'
 import {
   canStartFromList,
   canStartFromPage,
@@ -19,6 +21,7 @@ import {
   settingsSummary,
   STOPPED_CALLOUT_TITLE,
   stoppedCalloutText,
+  type SummaryPart,
 } from './jobs.ts'
 
 /* 9:00 and 9:13 in Prague. */
@@ -96,11 +99,165 @@ describe('the tag of a job (14d)', () => {
     })
     assert.deepEqual(jobTag({ kind: 'never' }, TODAY), { label: 'Zatím se neohlásila' })
   })
+})
 
-  it('sums the one job up in Settings by its name and tag', () => {
+describe('the summary in Settings (14a)', () => {
+  const OK: JobState = { kind: 'ok', lastStartedAt: LAST, next: null }
+  const FAILED: JobState = { isUnreported: false, kind: 'failed', lastStartedAt: LAST, next: null }
+  const STOPPED: JobState = { kind: 'stopped', lastStartedAt: LAST }
+  const NEVER: JobState = { kind: 'never' }
+  const RUNNING: JobState = { kind: 'running', startedAt: TODAY }
+  const RUN: JobRunRecord = {
+    error: null,
+    finishedAt: LAST.add({ minutes: 2 }),
+    intervalMinutes: 180,
+    outcome: 'failed',
+    startedAt: LAST,
+    summary: null,
+  }
+  const NO_ADDRESS: JobRunRecord = { ...RUN, summary: writeDigestRun({ kind: 'no-address' }) }
+
+  /** The sentence as a reader sees it: names in underscores, the no-break characters plain. */
+  function read(parts: readonly SummaryPart[]): string {
+    return parts
+      .map((part) => (part.isName ? `_${part.text}_` : part.text))
+      .join('')
+      .replaceAll(NBSP, ' ')
+      .replaceAll(String.fromCodePoint(0x2060), '')
+  }
+
+  /** The five jobs in the order of `14d`, each in the state its key is given, else _V pořádku_. */
+  function summary(
+    states: Readonly<Record<string, JobState>>,
+    latest: Readonly<Record<string, JobRunRecord>> = {},
+  ): string {
+    let rows = JOBS.map((job) => ({
+      job,
+      latest: latest[job.key] ?? null,
+      state: states[job.key] ?? OK,
+    }))
+    return read(settingsSummary(rows, TODAY))
+  }
+
+  /** A comment digest run that left this many authors' e-mails unconfirmed. */
+  function unconfirmed(count: number): JobRunRecord {
+    let emails = Array.from({ length: count }, (_, index) => ({
+      articleName: `Článek ${index + 1}`,
+      email: `autor${index + 1}@external.test`,
+    }))
+    return {
+      ...RUN,
+      summary: writeCommentDigestRun({ hasFailed: false, sent: 0, unconfirmed: emails }),
+    }
+  }
+
+  it('says all is well in one word', () => {
+    assert.equal(summary({}), '5 úloh · všechny v pořádku.')
+  })
+
+  it('names the one job that is not, by its tag or its note', () => {
     assert.equal(
-      settingsSummary(JOB, { kind: 'never' }, TODAY),
-      'Odpovědi k\u00a0obrazovým dílům · Zatím se neohlásila',
+      summary({ 'print-handoff': FAILED }),
+      '5 úloh · _Podklady pro tisk_: S chybou · ostatní v pořádku.',
+    )
+    assert.equal(
+      summary({ 'artwork-replies': STOPPED }),
+      '5 úloh · _Odpovědi k obrazovým dílům_: Neběží · ostatní v pořádku.',
+    )
+    assert.equal(
+      summary({ 'artwork-replies': NEVER }),
+      '5 úloh · _Odpovědi k obrazovým dílům_: Zatím se neohlásila · ostatní v pořádku.',
+    )
+    assert.equal(
+      summary({ 'artwork-replies': RUNNING }),
+      '5 úloh · _Odpovědi k obrazovým dílům_: Běží · ostatní v pořádku.',
+    )
+    for (let [count, note] of [
+      [1, '1 e-mail'],
+      [2, '2 e-maily'],
+      [5, '5 e-mailů'],
+    ] as const) {
+      assert.equal(
+        summary({ 'article-comments': FAILED }, { 'article-comments': unconfirmed(count) }),
+        `5 úloh · _Připomínky ke článkům_: ${note} bez potvrzení · ostatní v pořádku.`,
+      )
+    }
+    assert.equal(
+      summary({ [PROOFREADING_DIGEST_JOB]: FAILED }, { [PROOFREADING_DIGEST_JOB]: NO_ADDRESS }),
+      '5 úloh · _Přehled pro korektory_: chybí adresa korektorů · ostatní v pořádku.',
+    )
+  })
+
+  it('says a shared state once, the names joined by commas, the groups in the order of 14d', () => {
+    assert.equal(
+      summary({ 'approval-send': FAILED, 'print-handoff': FAILED }),
+      '5 úloh · _Žádosti a odpovědi u článků_, _Podklady pro tisk_: S chybou · ostatní v pořádku.',
+    )
+    assert.equal(
+      summary(
+        { 'article-comments': FAILED, 'artwork-replies': STOPPED },
+        { 'article-comments': unconfirmed(2) },
+      ),
+      '5 úloh · _Odpovědi k obrazovým dílům_: Neběží · _Připomínky ke článkům_: 2 e-maily bez potvrzení · ostatní v pořádku.',
+    )
+  })
+
+  it('lists every job when none is well, without the ending', () => {
+    assert.equal(
+      summary(
+        {
+          'approval-send': FAILED,
+          'article-comments': FAILED,
+          'artwork-replies': STOPPED,
+          'print-handoff': NEVER,
+          [PROOFREADING_DIGEST_JOB]: FAILED,
+        },
+        { 'article-comments': unconfirmed(5), [PROOFREADING_DIGEST_JOB]: NO_ADDRESS },
+      ),
+      '5 úloh · _Žádosti a odpovědi u článků_: S chybou · _Odpovědi k obrazovým dílům_: Neběží · _Podklady pro tisk_: Zatím se neohlásila · _Připomínky ke článkům_: 5 e-mailů bez potvrzení · _Přehled pro korektory_: chybí adresa korektorů.',
+    )
+  })
+
+  it('gives a state all the jobs share as společný stav', () => {
+    let every = (state: JobState) => Object.fromEntries(JOBS.map((job) => [job.key, state]))
+    assert.equal(summary(every(NEVER)), '5 úloh · společný stav: Zatím se neohlásila.')
+    assert.equal(summary(every(FAILED)), '5 úloh · společný stav: S chybou.')
+  })
+
+  it('counts one and two jobs in their own forms', () => {
+    let first = (count: number, state: JobState) =>
+      read(
+        settingsSummary(
+          JOBS.slice(0, count).map((job) => ({ job, latest: null, state })),
+          TODAY,
+        ),
+      )
+    assert.equal(first(1, OK), '1 úloha · v pořádku.')
+    assert.equal(first(1, FAILED), '1 úloha · _Žádosti a odpovědi u článků_: S chybou.')
+    assert.equal(first(2, OK), '2 úlohy · obě v pořádku.')
+    assert.equal(first(2, STOPPED), '2 úlohy · společný stav: Neběží.')
+  })
+
+  it('keeps the one-letter words, the dot and the state on their lines', () => {
+    let one = settingsSummary([{ job: JOBS[0]!, latest: null, state: OK }], TODAY)
+    assert.equal(one[0]?.text, `1 úloha${NBSP}· v${NBSP}pořádku.`)
+    let parts = settingsSummary(
+      JOBS.map((job) => ({ job, latest: null, state: job.key === 'print-handoff' ? NEVER : OK })),
+      TODAY,
+    )
+    assert.ok(parts.some((part) => part.text === `: Zatím${NBSP}se${NBSP}neohlásila`))
+    assert.equal(parts.at(-1)?.text, `${NBSP}· ostatní v${NBSP}pořádku.`)
+    let comments = settingsSummary(
+      JOBS.map((job) => ({
+        job,
+        latest: job.key === 'article-comments' ? unconfirmed(1) : null,
+        state: job.key === 'article-comments' ? FAILED : OK,
+      })),
+      TODAY,
+    )
+    let joiner = String.fromCodePoint(0x2060)
+    assert.ok(
+      comments.some((part) => part.text === `: 1${NBSP}e-${joiner}mail${NBSP}bez${NBSP}potvrzení`),
     )
   })
 })
