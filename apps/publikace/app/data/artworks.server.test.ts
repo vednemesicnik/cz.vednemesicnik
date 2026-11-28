@@ -35,7 +35,7 @@ async function setup(app: TestApp) {
       ...extra,
     })
   }
-  function batch(formKey: string, ids: number[], at = AT) {
+  function batch(formKey: string, ids: string[], at = AT) {
     return artworks.startBatch({
       articleId: article.articleId,
       artworks: ids.map((id) => ({ author: id === ids[0] ? 'Ondřej Beneš' : '', id, source: '' })),

@@ -52,7 +52,7 @@ export type ProofreadingCardView = {
   /** Where _Zrušit finální verzi_ posts, in „⋯“, while it may still be cancelled (`15g`). */
   cancelFinalAction: string | null
   documentUrl: string
-  id: number
+  id: string
   isSettled: boolean
   /** `Vydání VDM_2026_5`, as plain text: the issue's detail is not a proofreader's. */
   kind: string

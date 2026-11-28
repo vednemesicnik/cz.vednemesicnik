@@ -51,8 +51,8 @@ async function run(app: TestApp, outcome: 'failed' | 'ok'): Promise<void> {
     await call(app, '/api/v1/print-handoff/claim', { intervalMinutes: 360 })
   ).json()) as {
     issues: {
-      articles: { articleId: number; artworks: { artworkId: number }[] }[]
-      issueId: number
+      articles: { articleId: string; artworks: { artworkId: string }[] }[]
+      issueId: string
     }[]
     runKey: string
   }
@@ -83,7 +83,7 @@ async function run(app: TestApp, outcome: 'failed' | 'ok'): Promise<void> {
   assert.equal(response.status, 200)
 }
 
-async function issueApp(): Promise<{ app: TestApp; editor: TestBrowser; issueId: number }> {
+async function issueApp(): Promise<{ app: TestApp; editor: TestBrowser; issueId: string }> {
   let app = await createTestApp()
   await seedAdmin(app, MARIE)
   let issueId = await seedIssue(app, ISSUE)

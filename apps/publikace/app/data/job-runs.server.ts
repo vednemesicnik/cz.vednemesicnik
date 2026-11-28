@@ -8,6 +8,7 @@ import {
   type StartedBy,
 } from '../domain/job-run.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * The runs the background jobs report (`14d`). A run opens with the interval of the job's trigger
@@ -107,8 +108,9 @@ export function createJobRunStore(database: Database): JobRunStore {
           if ((redeemed.affectedRows ?? 0) !== 1) return false
         }
         await db.exec(
-          sql`INSERT INTO job_runs (job, run_key, started_at, interval_minutes)
-              VALUES (${run.job}, ${run.runKey}, ${stamp(run.at)}, ${run.intervalMinutes})`,
+          sql`INSERT INTO job_runs (id, job, run_key, started_at, interval_minutes)
+              VALUES (${newRowId()}, ${run.job}, ${run.runKey}, ${stamp(run.at)},
+                ${run.intervalMinutes})`,
         )
         return true
       })
@@ -116,8 +118,10 @@ export function createJobRunStore(database: Database): JobRunStore {
 
     async requestStart(start) {
       let inserted = await database.exec(
-        sql`INSERT INTO job_starts (job, start_key, requested_by_email, requested_by_name, requested_at)
-            SELECT ${start.job}, ${start.startKey}, ${start.by.email}, ${start.by.name}, ${stamp(start.at)}
+        sql`INSERT INTO job_starts (id, job, start_key, requested_by_email, requested_by_name,
+              requested_at)
+            SELECT ${newRowId()}, ${start.job}, ${start.startKey}, ${start.by.email},
+              ${start.by.name}, ${stamp(start.at)}
             WHERE NOT EXISTS (
               SELECT 1 FROM job_starts
               WHERE job = ${start.job} AND run_key IS NULL AND failed_at IS NULL
@@ -139,7 +143,7 @@ export function createJobRunStore(database: Database): JobRunStore {
         sql`SELECT requested_at FROM job_starts
             WHERE job = ${job} AND run_key IS NULL AND failed_at IS NULL
               AND requested_at >= ${stamp(since)}
-            ORDER BY requested_at DESC, id DESC LIMIT 1`,
+            ORDER BY requested_at DESC, rowid DESC LIMIT 1`,
       )
       return parseStamp(result.rows?.[0]?.['requested_at'])
     },
@@ -156,7 +160,7 @@ export function createJobRunStore(database: Database): JobRunStore {
     async latestScheduled(job) {
       let result = await database.exec(
         sql`${RUN_COLUMNS} WHERE r.job = ${job} AND s.id IS NULL
-            ORDER BY r.started_at DESC, r.id DESC LIMIT 1`,
+            ORDER BY r.started_at DESC, r.rowid DESC LIMIT 1`,
       )
       return recordOf(result.rows?.[0])
     },
@@ -181,7 +185,7 @@ export function createJobRunStore(database: Database): JobRunStore {
 
     async latest(job) {
       let result = await database.exec(
-        sql`${RUN_COLUMNS} WHERE r.job = ${job} ORDER BY r.started_at DESC, r.id DESC LIMIT 1`,
+        sql`${RUN_COLUMNS} WHERE r.job = ${job} ORDER BY r.started_at DESC, r.rowid DESC LIMIT 1`,
       )
       return recordOf(result.rows?.[0])
     },
@@ -189,7 +193,7 @@ export function createJobRunStore(database: Database): JobRunStore {
     async latestRuns(job, limit) {
       let result = await database.exec(
         sql`${RUN_COLUMNS} WHERE r.job = ${job}
-            ORDER BY r.started_at DESC, r.id DESC LIMIT ${limit}`,
+            ORDER BY r.started_at DESC, r.rowid DESC LIMIT ${limit}`,
       )
       return (result.rows ?? []).flatMap((row) => recordOf(row) ?? [])
     },
@@ -197,7 +201,7 @@ export function createJobRunStore(database: Database): JobRunStore {
     async history(job, since) {
       let result = await database.exec(
         sql`${RUN_COLUMNS} WHERE r.job = ${job} AND r.started_at >= ${stamp(since)}
-            ORDER BY r.started_at DESC, r.id DESC`,
+            ORDER BY r.started_at DESC, r.rowid DESC`,
       )
       return (result.rows ?? []).flatMap((row) => recordOf(row) ?? [])
     },

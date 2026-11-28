@@ -205,7 +205,7 @@ export async function replayedArticle(
 async function replayOf(
   setup: ArticleSetup,
   formKey: string,
-  linkId: number | null,
+  linkId: string | null,
 ): Promise<CreateArticleOutcome | null> {
   let existing = await setup.articles.findByFormKey(formKey)
   if (existing === null || existing.createdAt === null || existing.linkId !== linkId) return null

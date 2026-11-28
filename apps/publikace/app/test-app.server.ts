@@ -386,7 +386,7 @@ export async function seedIssue(
   app: TestApp,
   name = 'VDM_2026_6',
   options: { isComplete?: boolean } = {},
-): Promise<number> {
+): Promise<string> {
   let issues = createIssueStore(app.database)
   let inserted = await issues.insert({
     at: SEEDED_AT,
@@ -409,10 +409,10 @@ export async function seedIssue(
  */
 export async function seedArticle(
   app: TestApp,
-  issueId: number,
+  issueId: string,
   name = 'Školní jídelna po roce',
 ): Promise<{
-  articleId: number
+  articleId: string
   artworksFolderId: string
   docId: string
   folderId: string
@@ -462,8 +462,8 @@ export const JOB_TOKEN = fakeIdentityToken({ email: TEST_DRIVE_ACCOUNT, name: nu
  */
 export async function seedBatch(
   app: TestApp,
-  article: { articleId: number; link: Link },
-  issueId: number,
+  article: { articleId: string; link: Link },
+  issueId: string,
   options: {
     at?: Temporal.Instant
     count?: number
@@ -474,7 +474,7 @@ export async function seedBatch(
   let artworks = createArtworkStore(app.database)
   let at = options.at ?? SEEDED_AT
   let formKey = `seeded-batch-${crypto.randomUUID()}`
-  let ids: number[] = []
+  let ids: string[] = []
   for (let index = 0; index < (options.count ?? 2); index += 1) {
     let upload = await artworks.addUpload({
       articleId: article.articleId,

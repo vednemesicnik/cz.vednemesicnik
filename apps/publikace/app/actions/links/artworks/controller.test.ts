@@ -1,4 +1,5 @@
 import * as assert from 'remix/assert'
+import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { createArticleStore } from '../../../data/articles.server.ts'
@@ -28,10 +29,37 @@ function textOf(html: string): string {
 
 type Context = {
   app: TestApp
+  articleId: string
   editor: TestBrowser
   issueKey: string
   key: string
   visitor: TestBrowser
+}
+
+/** The ID of the one row a table holds in a test. */
+async function onlyId(
+  app: TestApp,
+  table: 'artwork_batches' | 'articles' | 'issues',
+): Promise<string> {
+  let result = await app.database.exec(
+    table === 'articles'
+      ? sql`SELECT id FROM articles`
+      : table === 'issues'
+        ? sql`SELECT id FROM issues`
+        : sql`SELECT id FROM artwork_batches`,
+  )
+  assert.equal(result.rows?.length, 1)
+  return String(result.rows?.[0]?.['id'])
+}
+
+/** The ID of the batch the test sent. */
+function batchIdOf(context: Context): Promise<string> {
+  return onlyId(context.app, 'artwork_batches')
+}
+
+/** The path of the batch the test sent, under its issue. */
+async function batchPath(context: Context): Promise<string> {
+  return `/issues/VDM_2026_5/artworks/batches/${await batchIdOf(context)}`
 }
 
 /** An issue, an article created through its page, and that article's link for artworks. */
@@ -47,7 +75,8 @@ async function withArtworksLink(
     await editor.signInAs(MARIE, 'Marie Horáková')
     await editor.post('/issues/new', { name: 'VDM_2026_5' }, '/issues/new')
     let links = createLinkStore(app.database)
-    let articleLink = await links.articleLinkOf(1)
+    let issueId = await onlyId(app, 'issues')
+    let articleLink = await links.articleLinkOf(issueId)
     assert.ok(articleLink !== null)
     let visitor = app.browser()
     let body = new URLSearchParams({
@@ -58,10 +87,11 @@ async function withArtworksLink(
     body.append('author-name', TEREZA.name)
     body.append('author-email', TEREZA.email)
     assert.equal((await visitor.send(`/l/${articleLink.key}/article`, body)).status, 200)
-    let [link] = [...(await links.artworksLinksOf(1)).values()]
+    let [link] = [...(await links.artworksLinksOf(issueId)).values()]
     assert.ok(link !== undefined)
+    let articleId = await onlyId(app, 'articles')
     if (options.isConnected === false) await app.driveAccount.markDisconnected(now())
-    await run({ app, editor, issueKey: articleLink.key, key: link.key, visitor })
+    await run({ app, articleId, editor, issueKey: articleLink.key, key: link.key, visitor })
   } finally {
     await app.close()
   }
@@ -75,16 +105,16 @@ function upload(context: Context, name = 'jidelna-1.jpg', formKey = FORM): Promi
   })
 }
 
-async function uploadedId(context: Context, name?: string): Promise<number> {
+async function uploadedId(context: Context, name?: string): Promise<string> {
   let response = await upload(context, name)
   assert.equal(response.status, 201)
-  let body = (await response.json()) as { artwork: { id: number }; outcome: string }
+  let body = (await response.json()) as { artwork: { id: string }; outcome: string }
   assert.equal(body.outcome, 'uploaded')
   return body.artwork.id
 }
 
 function sendForm(
-  ids: readonly number[],
+  ids: readonly string[],
   provider = ONDREJ,
   extra: Record<string, string> = {},
 ): URLSearchParams {
@@ -242,14 +272,14 @@ describe('the artworks in the issue detail', () => {
       assert.ok(detail.includes('chybí potvrzení o odeslání žádosti'))
 
       let dialog = textOf(
-        await (await context.editor.get('/issues/VDM_2026_5/artworks/batches/1/discard')).text(),
+        await (await context.editor.get(`${await batchPath(context)}/discard`)).text(),
       )
       assert.ok(dialog.includes('Zahodit dávku 1 díla?'))
 
       let discarded = await context.editor.post(
-        '/issues/VDM_2026_5/artworks/batches/1/discard',
+        `${await batchPath(context)}/discard`,
         {},
-        '/issues/VDM_2026_5/artworks/batches/1/discard',
+        `${await batchPath(context)}/discard`,
       )
       assert.equal(discarded.status, 303)
       let after = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
@@ -261,10 +291,10 @@ describe('the artworks in the issue detail', () => {
     withArtworksLink(async (context) => {
       let id = await uploadedId(context)
       await context.visitor.send(`/l/${context.key}/artworks`, sendForm([id]))
-      let path = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      let path = `${await batchPath(context)}/discard`
       let detail = await (await context.editor.get('/issues/VDM_2026_5')).text()
       assert.ok(detail.includes(path))
-      assert.ok(!detail.includes('/issues/VDM_2026_5/artworks/batches/1/resend'))
+      assert.ok(!detail.includes(`${await batchPath(context)}/resend`))
 
       let dialog = textOf(await (await context.editor.get(path)).text())
       assert.ok(
@@ -283,7 +313,7 @@ describe('the artworks in the issue detail', () => {
     withArtworksLink(async (context) => {
       let id = await uploadedId(context)
       await context.visitor.send(`/l/${context.key}/artworks`, sendForm([id]))
-      let path = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      let path = `${await batchPath(context)}/discard`
       await context.app.database.exec({
         text: 'UPDATE artwork_batches SET mail_sent_at = NULL',
         values: [],
@@ -325,10 +355,10 @@ describe('the artworks in the issue detail', () => {
       let detail = await (await context.editor.get('/issues/VDM_2026_5?artworks=error')).text()
       let token = /csrfToken(?:"|&quot;|\\")\s*:\s*(?:"|&quot;|\\")([^"&\\]+)/.exec(detail)?.[1]
       assert.ok(token !== undefined && token !== '')
-      assert.ok(detail.includes('/issues/VDM_2026_5/artworks/batches/1/resend?artworks=error'))
+      assert.ok(detail.includes(`${await batchPath(context)}/resend?artworks=error`))
 
       let refused = await context.editor.post(
-        '/issues/VDM_2026_5/artworks/batches/1/resend',
+        `${await batchPath(context)}/resend`,
         { _csrf: 'not-the-token' },
         '/issues/VDM_2026_5',
       )
@@ -342,7 +372,7 @@ describe('the artworks in the issue detail', () => {
       assert.equal(context.app.mail.length, sentBefore)
 
       let resent = await context.editor.post(
-        '/issues/VDM_2026_5/artworks/batches/1/resend?artworks=error',
+        `${await batchPath(context)}/resend?artworks=error`,
         { _csrf: token },
         '/issues/VDM_2026_5',
       )
@@ -356,7 +386,7 @@ describe('the artworks in the issue detail', () => {
 
 describe('a missing folder of the article (12j, 21a, 12o)', () => {
   async function foldersOf(context: Context) {
-    let article = await createArticleStore(context.app.database).findById(1)
+    let article = await createArticleStore(context.app.database).findById(context.articleId)
     assert.ok(article?.artworksFolderId != null && article.licencesFolderId != null)
     return { artworks: article.artworksFolderId, licences: article.licencesFolderId }
   }
@@ -398,7 +428,7 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
       assert.ok(!text.includes('Žádost o souhlas nejde poslat znovu.'))
       assert.ok(!text.includes('Souhlasy se dál zaznamenávají.'))
       assert.ok(html.includes(`href="https://drive.google.com/drive/folders/${folders.licences}"`))
-      assert.ok(html.includes('/issues/VDM_2026_5/articles/1/folders/check'))
+      assert.ok(html.includes(`/issues/VDM_2026_5/articles/${context.articleId}/folders/check`))
 
       let overview = textOf(await (await context.editor.get('/')).text())
       assert.match(overview, /Aktivní 1 0 schválených 0 1/)
@@ -446,7 +476,12 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
       await context.visitor.get(`/l/${context.key}/artworks`)
       /* The token from the overview: a click comes from a detail loaded before the folders came
          back, and loading the detail again would find them itself. */
-      let check = () => context.editor.post('/issues/VDM_2026_5/articles/1/folders/check', {}, '/')
+      let check = () =>
+        context.editor.post(
+          `/issues/VDM_2026_5/articles/${context.articleId}/folders/check`,
+          {},
+          '/',
+        )
 
       let detail = textOf(await (await context.editor.get('/issues/VDM_2026_5')).text())
       assert.ok(
@@ -492,16 +527,16 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
       context.app.drive.trash(folders.artworks)
       await context.visitor.get(`/l/${context.key}/artworks`)
       let html = await (await context.editor.get('/issues/VDM_2026_5')).text()
-      assert.ok(html.includes('/issues/VDM_2026_5/artworks/batches/1/resend'))
-      assert.ok(!html.includes('/issues/VDM_2026_5/artworks/batches/1/discard'))
+      assert.ok(html.includes(`${await batchPath(context)}/resend`))
+      assert.ok(!html.includes(`${await batchPath(context)}/discard`))
       assert.ok(!textOf(html).includes('Žádost o souhlas nejde poslat znovu.'))
 
       context.app.drive.restore(folders.artworks)
       context.app.drive.trash(folders.licences)
       await context.visitor.get(`/l/${context.key}/artworks`)
       let stopped = await (await context.editor.get('/issues/VDM_2026_5')).text()
-      assert.ok(!stopped.includes('/issues/VDM_2026_5/artworks/batches/1/resend'))
-      assert.ok(!stopped.includes('/issues/VDM_2026_5/artworks/batches/1/discard'))
+      assert.ok(!stopped.includes(`${await batchPath(context)}/resend`))
+      assert.ok(!stopped.includes(`${await batchPath(context)}/discard`))
       assert.ok(
         textOf(stopped).includes(
           'Z odkazu na nahrání děl teď nejde díla nahrát ani odeslat. Žádost o souhlas nejde poslat znovu.',
@@ -514,7 +549,7 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
     withArtworksLink(async (context) => {
       await batchInError(context)
       let folders = await foldersOf(context)
-      let dialog = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      let dialog = `${await batchPath(context)}/discard`
       await context.editor.get(dialog)
       context.app.drive.trash(folders.artworks)
 
@@ -526,14 +561,14 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
           'Obnovte složku Obrazová díla (otevře se v nové záložce) z koše, nebo ji vraťte na sdílený disk Publikace. Dávka zůstala, jak byla.',
         ),
       )
-      let batch = await createArtworkStore(context.app.database).findBatch(1)
+      let batch = await createArtworkStore(context.app.database).findBatch(await batchIdOf(context))
       assert.equal(batch?.discardedAt, null)
     }))
 
   it('keeps the dialog Zahodit dávku open with the error when Drive stops midway', () =>
     withArtworksLink(async (context) => {
       await batchInError(context)
-      let dialog = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      let dialog = `${await batchPath(context)}/discard`
       await context.editor.get(dialog)
       context.app.drive.failTrashOf(await artworkFileOf(context))
 
@@ -551,14 +586,14 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
       assert.ok(
         partly.includes('Zkuste dávku zahodit za chvíli znovu. Část souborů už může být v koši.'),
       )
-      let batch = await createArtworkStore(context.app.database).findBatch(1)
+      let batch = await createArtworkStore(context.app.database).findBatch(await batchIdOf(context))
       assert.equal(batch?.discardedAt, null)
     }))
 
   it('keeps the dialog Zahodit dávku open with the step while the account is disconnected', () =>
     withArtworksLink(async (context) => {
       await batchInError(context)
-      let dialog = '/issues/VDM_2026_5/artworks/batches/1/discard'
+      let dialog = `${await batchPath(context)}/discard`
       await context.editor.get(dialog)
       await context.app.driveAccount.markDisconnected(now())
 
@@ -576,7 +611,7 @@ describe('a missing folder of the article (12j, 21a, 12o)', () => {
 
 /** The Drive file of the batch's artwork, for failing its move to the bin alone. */
 async function artworkFileOf(context: Context): Promise<string> {
-  let batch = await createArtworkStore(context.app.database).findBatch(1)
+  let batch = await createArtworkStore(context.app.database).findBatch(await batchIdOf(context))
   let file = batch?.artworks.at(-1)?.driveFileId
   if (file === undefined) throw new Error('No artwork')
   return file

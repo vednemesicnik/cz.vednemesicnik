@@ -21,12 +21,12 @@ import { ALL_CLAUSES_APPROVED_F } from './articles.server.ts'
 
 /** What an article's folder inside the print folder holds, as the job reported it. */
 export type ArticleCopy = {
-  artworks: { artworkId: number; fileId: string; name: string }[]
+  artworks: { artworkId: string; fileId: string; name: string }[]
   folderId: string
   isTextChanged: boolean
   lastImageNumber: number
   textFileId: string | null
-  textFinalVersionId: number | null
+  textFinalVersionId: string | null
 }
 
 /**
@@ -35,9 +35,9 @@ export type ArticleCopy = {
  * copy, and the job bins what is no longer wanted.
  */
 export type ClaimedArticle = {
-  articleId: number
+  articleId: string
   artworks: {
-    artworkId: number
+    artworkId: string
     author: string
     copyTag: string
     fileId: string
@@ -56,7 +56,7 @@ export type ClaimedArticle = {
    */
   text: {
     copyTag: string
-    finalVersionId: number
+    finalVersionId: string
     isStanding: boolean
     revisedAfter: Temporal.Instant
   } | null
@@ -64,7 +64,7 @@ export type ClaimedArticle = {
 
 /** What an artwork group's folder inside the print folder holds, as the job reported it (cz.vednemesicnik.publikace#133). */
 export type GroupCopy = {
-  artworks: { artworkId: number; fileId: string; name: string }[]
+  artworks: { artworkId: string; fileId: string; name: string }[]
   folderId: string
   lastImageNumber: number
 }
@@ -78,7 +78,7 @@ export type ClaimedGroup = {
   artworks: ClaimedArticle['artworks']
   copy: GroupCopy | null
   folderTag: string
-  groupId: number
+  groupId: string
   name: string
   note: string
   sourceFolderId: string
@@ -87,7 +87,7 @@ export type ClaimedGroup = {
 export type ClaimedIssue = {
   articles: ClaimedArticle[]
   groups: ClaimedGroup[]
-  issueId: number
+  issueId: string
   issueName: string
   printFolderId: string
   sheetId: string | null
@@ -95,11 +95,11 @@ export type ClaimedIssue = {
 
 /** What a run did with one issue. An article left out was not reached and stays as it was. */
 export type IssueReport = {
-  articles: { articleId: number; copy: ArticleCopy | null }[]
+  articles: { articleId: string; copy: ArticleCopy | null }[]
   /** Left out by a job written before groups (cz.vednemesicnik.publikace#133), which leaves every group as it was. */
-  groups?: { copy: GroupCopy | null; groupId: number }[]
+  groups?: { copy: GroupCopy | null; groupId: string }[]
   isComplete: boolean
-  issueId: number
+  issueId: string
   sheetId: string | null
 }
 
@@ -117,7 +117,7 @@ export type PrintHandoffStore = {
    */
   record(runKey: string, report: IssueReport): Promise<IssueAnswer>
   /** What the issue's folder holds, once a run got through the whole issue (`12t`). */
-  summaryOf(issueId: number): Promise<PrintSummary | null>
+  summaryOf(issueId: string): Promise<PrintSummary | null>
 }
 
 type Row = Record<string, unknown>
@@ -126,11 +126,11 @@ function text(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
-function idsJson(ids: readonly number[]): string {
+function idsJson(ids: readonly string[]): string {
   return JSON.stringify(ids)
 }
 
-async function copiesOf(db: Database, issueIds: string): Promise<Map<number, ArticleCopy>> {
+async function copiesOf(db: Database, issueIds: string): Promise<Map<string, ArticleCopy>> {
   let articles = await db.exec(
     sql`SELECT * FROM print_articles WHERE issue_id IN (SELECT value FROM json_each(${issueIds}))`,
   )
@@ -139,21 +139,21 @@ async function copiesOf(db: Database, issueIds: string): Promise<Map<number, Art
         WHERE p.issue_id IN (SELECT value FROM json_each(${issueIds}))
         ORDER BY w.name`,
   )
-  let copies = new Map<number, ArticleCopy>()
+  let copies = new Map<string, ArticleCopy>()
   for (let row of articles.rows ?? []) {
     let versionId = row['text_final_version_id']
-    copies.set(Number(row['article_id']), {
+    copies.set(String(row['article_id']), {
       artworks: [],
       folderId: String(row['folder_id']),
       isTextChanged: Number(row['is_text_changed']) === 1,
       lastImageNumber: Number(row['last_image_number']),
       textFileId: text(row['text_file_id']),
-      textFinalVersionId: versionId === null ? null : Number(versionId),
+      textFinalVersionId: versionId === null ? null : String(versionId),
     })
   }
   for (let row of artworks.rows ?? []) {
-    copies.get(Number(row['article_id']))?.artworks.push({
-      artworkId: Number(row['artwork_id']),
+    copies.get(String(row['article_id']))?.artworks.push({
+      artworkId: String(row['artwork_id']),
       fileId: String(row['copy_file_id']),
       name: String(row['name']),
     })
@@ -168,20 +168,20 @@ async function copiesOf(db: Database, issueIds: string): Promise<Map<number, Art
 async function approvedTexts(
   db: Database,
   issueIds: string,
-): Promise<Map<number, NonNullable<ClaimedArticle['text']>>> {
+): Promise<Map<string, NonNullable<ClaimedArticle['text']>>> {
   let result = await db.exec(
     sql`SELECT f.id, f.article_id, f.replaced_at, coalesce(f.doc_modified_at, f.marked_at) AS since
         FROM final_versions f JOIN articles a ON a.id = f.article_id
         WHERE a.issue_id IN (SELECT value FROM json_each(${issueIds}))
           AND f.cancelled_at IS NULL AND ${ALL_CLAUSES_APPROVED_F}
-        ORDER BY f.marked_at DESC, f.id DESC`,
+        ORDER BY f.marked_at DESC, f.rowid DESC`,
   )
-  let texts = new Map<number, NonNullable<ClaimedArticle['text']>>()
+  let texts = new Map<string, NonNullable<ClaimedArticle['text']>>()
   for (let row of result.rows ?? []) {
-    let articleId = Number(row['article_id'])
+    let articleId = String(row['article_id'])
     let since = parseStamp(row['since'])
     if (texts.has(articleId) || since === null) continue
-    let finalVersionId = Number(row['id'])
+    let finalVersionId = String(row['id'])
     texts.set(articleId, {
       copyTag: textCopyTag(articleId, finalVersionId),
       finalVersionId,
@@ -206,15 +206,15 @@ async function consentedArtworks(
         WHERE b.issue_id IN (SELECT value FROM json_each(${issueIds}))
           AND b.created_at IS NOT NULL AND b.discarded_at IS NULL AND b.approved_at IS NOT NULL
           AND a.removed_at IS NULL
-        ORDER BY b.created_at, b.id, a.position, a.id`,
+        ORDER BY b.created_at, b.rowid, a.position, a.rowid`,
   )
   let byHolder = new Map<string, ClaimedArticle['artworks']>()
   for (let row of result.rows ?? []) {
     let holder =
       row['group_id'] == null
-        ? `article:${Number(row['article_id'])}`
-        : `group:${Number(row['group_id'])}`
-    let artworkId = Number(row['id'])
+        ? `article:${String(row['article_id'])}`
+        : `group:${String(row['group_id'])}`
+    let artworkId = String(row['id'])
     let list = byHolder.get(holder) ?? []
     list.push({
       artworkId,
@@ -229,7 +229,7 @@ async function consentedArtworks(
   return byHolder
 }
 
-async function groupCopiesOf(db: Database, issueIds: string): Promise<Map<number, GroupCopy>> {
+async function groupCopiesOf(db: Database, issueIds: string): Promise<Map<string, GroupCopy>> {
   let groups = await db.exec(
     sql`SELECT * FROM print_groups WHERE issue_id IN (SELECT value FROM json_each(${issueIds}))`,
   )
@@ -238,17 +238,17 @@ async function groupCopiesOf(db: Database, issueIds: string): Promise<Map<number
         WHERE p.issue_id IN (SELECT value FROM json_each(${issueIds}))
         ORDER BY w.name`,
   )
-  let copies = new Map<number, GroupCopy>()
+  let copies = new Map<string, GroupCopy>()
   for (let row of groups.rows ?? []) {
-    copies.set(Number(row['group_id']), {
+    copies.set(String(row['group_id']), {
       artworks: [],
       folderId: String(row['folder_id']),
       lastImageNumber: Number(row['last_image_number']),
     })
   }
   for (let row of artworks.rows ?? []) {
-    copies.get(Number(row['group_id']))?.artworks.push({
-      artworkId: Number(row['artwork_id']),
+    copies.get(String(row['group_id']))?.artworks.push({
+      artworkId: String(row['artwork_id']),
       fileId: String(row['copy_file_id']),
       name: String(row['name']),
     })
@@ -259,7 +259,7 @@ async function groupCopiesOf(db: Database, issueIds: string): Promise<Map<number
 /** What the job reported of a group of the issue it holds; a group of another issue is ignored. */
 async function recordGroup(
   db: Database,
-  issueId: number,
+  issueId: string,
   group: NonNullable<IssueReport['groups']>[number],
 ): Promise<void> {
   let found = await db.exec(
@@ -297,7 +297,7 @@ async function recordGroup(
 
 async function recordArticle(
   db: Database,
-  issueId: number,
+  issueId: string,
   article: IssueReport['articles'][number],
 ): Promise<void> {
   let found = await db.exec(
@@ -359,10 +359,10 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
               WHERE i.completed_at IS NOT NULL AND i.closed_at IS NULL
                 AND i.removed_at IS NULL AND i.print_folder_id IS NOT NULL
                 AND (h.claimed_at IS NULL OR h.claimed_at < ${lease})
-              ORDER BY i.started_at, i.id
+              ORDER BY i.started_at, i.rowid
               LIMIT ${ISSUE_CLAIM_LIMIT}`,
         )
-        let ids = idsJson((open.rows ?? []).map((row) => Number(row['id'])))
+        let ids = idsJson((open.rows ?? []).map((row) => String(row['id'])))
         await db.exec(
           sql`INSERT INTO print_handoffs (issue_id)
               SELECT value FROM json_each(${ids}) WHERE true
@@ -376,21 +376,21 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
           sql`SELECT i.id, i.name, i.print_folder_id, h.sheet_id
               FROM issues i JOIN print_handoffs h ON h.issue_id = i.id
               WHERE i.id IN (SELECT value FROM json_each(${ids}))
-              ORDER BY i.started_at, i.id`,
+              ORDER BY i.started_at, i.rowid`,
         )
         let articles = await db.exec(
           sql`SELECT id, issue_id, name, doc_id, folder_id FROM articles
               WHERE issue_id IN (SELECT value FROM json_each(${ids})) AND created_at IS NOT NULL
                 AND removed_at IS NULL
-              ORDER BY started_at, id`,
+              ORDER BY started_at, rowid`,
         )
         let texts = await approvedTexts(db, ids)
         let artworks = await consentedArtworks(db, ids)
         let copies = await copiesOf(db, ids)
 
-        let byIssue = new Map<number, ClaimedArticle[]>()
+        let byIssue = new Map<string, ClaimedArticle[]>()
         for (let row of articles.rows ?? []) {
-          let articleId = Number(row['id'])
+          let articleId = String(row['id'])
           let claimed: ClaimedArticle = {
             articleId,
             artworks: artworks.get(`article:${articleId}`) ?? [],
@@ -404,19 +404,19 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
           if (claimed.text === null && claimed.artworks.length === 0 && claimed.copy === null) {
             continue
           }
-          let issueId = Number(row['issue_id'])
+          let issueId = String(row['issue_id'])
           byIssue.set(issueId, [...(byIssue.get(issueId) ?? []), claimed])
         }
         let groups = await db.exec(
           sql`SELECT id, issue_id, name, note, folder_id FROM artwork_groups
               WHERE issue_id IN (SELECT value FROM json_each(${ids})) AND created_at IS NOT NULL
                 AND removed_at IS NULL
-              ORDER BY created_at, id`,
+              ORDER BY created_at, rowid`,
         )
         let groupCopies = await groupCopiesOf(db, ids)
-        let groupsByIssue = new Map<number, ClaimedGroup[]>()
+        let groupsByIssue = new Map<string, ClaimedGroup[]>()
         for (let row of groups.rows ?? []) {
-          let groupId = Number(row['id'])
+          let groupId = String(row['id'])
           let claimed: ClaimedGroup = {
             artworks: artworks.get(`group:${groupId}`) ?? [],
             copy: groupCopies.get(groupId) ?? null,
@@ -427,13 +427,13 @@ export function createPrintHandoffStore(database: Database): PrintHandoffStore {
             sourceFolderId: String(row['folder_id']),
           }
           if (claimed.artworks.length === 0 && claimed.copy === null) continue
-          let issueId = Number(row['issue_id'])
+          let issueId = String(row['issue_id'])
           groupsByIssue.set(issueId, [...(groupsByIssue.get(issueId) ?? []), claimed])
         }
         return (issues.rows ?? []).map((row: Row) => ({
-          articles: byIssue.get(Number(row['id'])) ?? [],
-          groups: groupsByIssue.get(Number(row['id'])) ?? [],
-          issueId: Number(row['id']),
+          articles: byIssue.get(String(row['id'])) ?? [],
+          groups: groupsByIssue.get(String(row['id'])) ?? [],
+          issueId: String(row['id']),
           issueName: String(row['name']),
           printFolderId: String(row['print_folder_id']),
           sheetId: text(row['sheet_id']),

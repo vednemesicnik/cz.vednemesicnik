@@ -70,8 +70,8 @@ export type EditAuthorsFixOutcome =
 
 /** The authors before the final version, or the corrections after the one marked at `markedAt`. */
 export type AuthorsEdit =
-  | { authors: readonly Author[]; id: number; markedAt: null }
-  | { corrections: readonly ClauseCorrection[]; id: number; markedAt: Temporal.Instant }
+  | { authors: readonly Author[]; id: string; markedAt: null }
+  | { corrections: readonly ClauseCorrection[]; id: string; markedAt: Temporal.Instant }
 
 const RETRY = Symbol('retry')
 
@@ -82,7 +82,7 @@ const RETRY = Symbol('retry')
  */
 export async function underIssue<T>(
   setup: { issues: Pick<IssueStore, 'findById'> },
-  issueId: number,
+  issueId: string,
   run: (issue: Issue) => Promise<T>,
 ): Promise<T | { kind: 'gone' } | { kind: 'unavailable' }> {
   for (let tries = 0; tries < 2; tries += 1) {
@@ -99,7 +99,7 @@ export async function underIssue<T>(
   return { kind: 'unavailable' }
 }
 
-async function createdArticle(setup: ArticleFixSetup, id: number): Promise<Article | null> {
+async function createdArticle(setup: ArticleFixSetup, id: string): Promise<Article | null> {
   let row = await setup.articles.findById(id)
   if (row === null || row.createdAt === null || row.docId === null || row.folderId === null) {
     return null
@@ -187,7 +187,7 @@ function isRefusal(value: MetaWrite | DriveRefusal): value is DriveRefusal {
  */
 export async function renameArticle(
   setup: ArticleFixSetup,
-  input: { id: number; name: string; shownName: string },
+  input: { id: string; name: string; shownName: string },
 ): Promise<RenameArticleFixOutcome> {
   let found = await createdArticle(setup, input.id)
   if (found === null) return { kind: 'gone' }
@@ -389,7 +389,7 @@ export type RemoveArticleFixOutcome =
  */
 export async function removeArticle(
   setup: ArticleFixSetup,
-  input: { id: number },
+  input: { id: string },
 ): Promise<RemoveArticleFixOutcome> {
   let found = await setup.articles.findById(input.id)
   if (found === null || found.createdAt === null || found.removedAt !== null) {

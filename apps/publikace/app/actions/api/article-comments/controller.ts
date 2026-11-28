@@ -7,6 +7,7 @@ import type {
   CommentDigestReport,
 } from '../../../data/article-comments.server.ts'
 import type { JobRunStore } from '../../../data/job-runs.server.ts'
+import { isRowId } from '../../../data/row-id.server.ts'
 import {
   ARTICLE_CLAIM_LIMIT,
   ARTICLE_COMMENTS_JOB,
@@ -74,10 +75,6 @@ const MAX_UNCONFIRMED = ARTICLE_CLAIM_LIMIT * 10
 /* Far more e-mails than one run of a few issues sends. */
 const MAX_SENT = 10_000
 
-function isId(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value > 0
-}
-
 function readArticles(value: unknown): CommentDigestReport['articles'] | null {
   if (!Array.isArray(value) || value.length > ARTICLE_CLAIM_LIMIT) return null
   let read: CommentDigestReport['articles'] = []
@@ -85,7 +82,7 @@ function readArticles(value: unknown): CommentDigestReport['articles'] | null {
     if (typeof article !== 'object' || article === null) return null
     let { articleId, suggestionHashes } = article as Record<string, unknown>
     if (
-      !isId(articleId) ||
+      !isRowId(articleId) ||
       !Array.isArray(suggestionHashes) ||
       suggestionHashes.length > MAX_SUGGESTION_HASHES ||
       !suggestionHashes.every((hash) => isText(hash, MAX_SUGGESTION_HASH_LENGTH))
@@ -103,7 +100,7 @@ function readUnconfirmed(value: unknown): CommentDigestReport['unconfirmed'] | n
   for (let each of value as unknown[]) {
     if (typeof each !== 'object' || each === null) return null
     let { articleId, email } = each as Record<string, unknown>
-    if (!isId(articleId) || !isText(email, MAX_EMAIL_LENGTH)) return null
+    if (!isRowId(articleId) || !isText(email, MAX_EMAIL_LENGTH)) return null
     read.push({ articleId, email })
   }
   return read

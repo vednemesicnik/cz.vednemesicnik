@@ -143,7 +143,7 @@ describe('the record queue', () => {
         ...app.record,
         issues: {
           ...issues,
-          findById: async (id: number) => {
+          findById: async (id: string) => {
             if (id === broken) throw new Error('the database refused')
             return issues.findById(id)
           },

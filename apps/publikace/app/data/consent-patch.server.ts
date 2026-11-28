@@ -36,7 +36,7 @@ export function answeredAtOf(row: Record<string, unknown>): Temporal.Instant | n
 export async function applyConsentPatch(
   db: Database,
   table: ConsentTable,
-  id: number,
+  id: string,
   patch: BatchPatch,
 ): Promise<void> {
   let name = CONSENT_TABLES[table]

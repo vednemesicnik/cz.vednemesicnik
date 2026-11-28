@@ -109,7 +109,7 @@ export async function sendAnswer(
 export async function retryAnswer(
   dependencies: AnswerDependencies,
   target: AnswerTarget,
-  answerId: number,
+  answerId: string,
 ): Promise<SendAnswerOutcome> {
   let resumed = await dependencies.answers.resume(target, answerId, dependencies.now())
   if (resumed.kind !== 'started') return resumed

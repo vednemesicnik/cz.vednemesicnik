@@ -2,6 +2,7 @@ import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
 import { stamp } from '../domain/time.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * The e-mails public pages started and the editors resent, one row per recipient, for the cap of
@@ -49,7 +50,8 @@ export function createPublicMailLog(database: Database): PublicMailLog {
   async function record(kind: PublicMailKind, count: number, at: Temporal.Instant): Promise<void> {
     for (let index = 0; index < count; index += 1) {
       await database.exec(
-        sql`INSERT INTO public_mail_log (kind, sent_at) VALUES (${kind}, ${stamp(at)})`,
+        sql`INSERT INTO public_mail_log (id, kind, sent_at)
+            VALUES (${newRowId()}, ${kind}, ${stamp(at)})`,
       )
     }
   }

@@ -8,6 +8,7 @@ import { createIssueStore } from './data/issues.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { createFakeApp, type FakeApp } from './fake-app.server.ts'
 import { seedBatch, TEST_ENVIRONMENT } from './test-app.server.ts'
+import { testRowId } from './test-row-id.ts'
 
 function textOf(html: string): string {
   return html
@@ -131,10 +132,11 @@ describe('the fake app (pnpm app:fake)', () => {
 
   it('plays a run of the reply check through the API, one batch at a time', () =>
     withFakeApp(async (fake) => {
-      let issueId = (await createIssueStore(fake.app.database).findByName('VDM_2026_6'))?.id ?? 0
+      let issueId =
+        (await createIssueStore(fake.app.database).findByName('VDM_2026_6'))?.id ?? testRowId(0)
       let [created] = await createArticleStore(fake.app.database).listCreated(issueId)
       let link = (await createLinkStore(fake.app.database).artworksLinksOf(issueId)).get(
-        created?.id ?? 0,
+        created?.id ?? testRowId(0),
       )
       if (created === undefined || link === undefined) throw new Error('No seeded article.')
       let batch = await seedBatch(fake.app, { articleId: created.id, link }, issueId)

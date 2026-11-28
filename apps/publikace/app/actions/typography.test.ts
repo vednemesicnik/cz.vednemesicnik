@@ -60,7 +60,7 @@ describe('one-letter words on the screens', () => {
       /* Through the app, so the issue's folders exist on the fake Drive and an article can be
          created in it. */
       await editor.post('/issues/new', { name: ISSUE }, '/issues/new')
-      let issueId = (await createIssueStore(app.database).findByName(ISSUE))?.id ?? 0
+      let issueId = (await createIssueStore(app.database).findByName(ISSUE))?.id ?? ''
       let article = await seedArticle(app, issueId, SEEDED_ARTICLE)
       let batch = await seedBatch(app, article, issueId, {
         provider: { email: 'eva@external.test', name: PROVIDER },

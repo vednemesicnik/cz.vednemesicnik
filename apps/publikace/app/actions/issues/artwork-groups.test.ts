@@ -7,6 +7,7 @@ import { createGroupStore } from '../../data/artwork-groups.server.ts'
 import { createArtworkStore } from '../../data/artworks.server.ts'
 import { createIssueStore } from '../../data/issues.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
+import { newRowId } from '../../data/row-id.server.ts'
 import { NBSP } from '../../domain/public/typography.ts'
 import { drainRecordQueue } from '../../drive/record-queue.server.ts'
 import {
@@ -55,7 +56,7 @@ function groupsSection(html: string): string | null {
   return found === null ? null : textOf(found[1] ?? '').trim()
 }
 
-type Context = { app: TestApp; editor: TestBrowser; issueId: number }
+type Context = { app: TestApp; editor: TestBrowser; issueId: string }
 
 /** An issue made through the app, and Marie signed in with the Drive account connected. */
 async function withIssue(run: (context: Context) => Promise<void>): Promise<void> {
@@ -102,7 +103,7 @@ async function sendBatch(context: Context, key: string): Promise<Response> {
     'X-Form-Key': PAGE_KEY,
   })
   assert.equal(uploaded.status, 201)
-  let { artwork } = (await uploaded.json()) as { artwork: { id: number } }
+  let { artwork } = (await uploaded.json()) as { artwork: { id: string } }
   let body = new URLSearchParams({
     formKey: PAGE_KEY,
     'provider-email': KLARA.email,
@@ -485,7 +486,7 @@ describe('a group’s link and its batches', () => {
       let claimed = (await (
         await callJob(context.app, '/api/v1/artwork-replies/claim', { intervalMinutes: 30 })
       ).json()) as {
-        batches: { articleName: string; batchId: number; kind: string; licencesFolderId: string }[]
+        batches: { articleName: string; batchId: string; kind: string; licencesFolderId: string }[]
         runKey: string
       }
       let [batch] = claimed.batches
@@ -531,13 +532,13 @@ describe('a group’s link and its batches', () => {
       ).json()) as {
         issues: {
           groups: {
-            artworks: { artworkId: number }[]
+            artworks: { artworkId: string }[]
             folderTag: string
-            groupId: number
+            groupId: string
             name: string
             note: string
           }[]
-          issueId: number
+          issueId: string
         }[]
         runKey: string
       }
@@ -615,8 +616,8 @@ describe('the group store', () => {
       assert.equal(link?.articleId, null)
       await assert.rejects(
         context.app.database.exec(
-          sql`INSERT INTO links (key, kind, issue_id, group_id, created_at)
-              VALUES ('AAAAAAAAAAAA', 'artworks', ${context.issueId}, ${group?.id ?? 0},
+          sql`INSERT INTO links (id, key, kind, issue_id, group_id, created_at)
+              VALUES (${newRowId()}, 'AAAAAAAAAAAA', 'artworks', ${context.issueId}, ${group?.id ?? ''},
                 '2026-11-24T10:00:00.000Z')`,
         ),
       )

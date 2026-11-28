@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import { ARTICLES_LIST, EVIDENCE_LISTS, REGISTRY_LIST } from '../domain/record.ts'
+import { testRowId } from '../test-row-id.ts'
 import { createFakeDrive, FAKE_SPREADSHEET_OWNER } from './fake-drive.server.ts'
 import { createRecordSheets } from './sheets.server.ts'
 
@@ -17,20 +18,20 @@ function setup() {
 describe('the record’s spreadsheets', () => {
   it('create the Evidence once in the issue folder and find the same file again', async () => {
     let { drive, sheets } = setup()
-    let created = await sheets.findOrCreateEvidence('issue-folder', 7)
-    let again = await sheets.findOrCreateEvidence('issue-folder', 7)
+    let created = await sheets.findOrCreateEvidence('issue-folder', testRowId(7))
+    let again = await sheets.findOrCreateEvidence('issue-folder', testRowId(7))
 
     assert.equal(created.ok, true)
     assert.deepEqual(again, created)
     let evidence = drive.files().filter((file) => file.name === 'Evidence')
     assert.equal(evidence.length, 1)
     assert.equal(evidence[0]?.parentId, 'issue-folder')
-    assert.deepEqual(evidence[0]?.appProperties, { publikaceEvidence: '7' })
+    assert.deepEqual(evidence[0]?.appProperties, { publikaceEvidence: testRowId(7) })
   })
 
   it('lay the Evidence out in the scripts’ lists, protected for the app alone', async () => {
     let { drive, sheets } = setup()
-    let created = await sheets.findOrCreateEvidence('issue-folder', 7)
+    let created = await sheets.findOrCreateEvidence('issue-folder', testRowId(7))
     if (!created.ok) throw new Error(created.error)
 
     assert.deepEqual(await sheets.layOut(created.id, EVIDENCE_LISTS, { isOwn: true }), { ok: true })
@@ -54,7 +55,7 @@ describe('the record’s spreadsheets', () => {
 
   it('lay out only what is missing, so a second time costs two looks', async () => {
     let { drive, sheets } = setup()
-    let created = await sheets.findOrCreateEvidence('issue-folder', 7)
+    let created = await sheets.findOrCreateEvidence('issue-folder', testRowId(7))
     if (!created.ok) throw new Error(created.error)
     await sheets.layOut(created.id, EVIDENCE_LISTS, { isOwn: true })
     let before = drive.calls.length
@@ -91,7 +92,7 @@ describe('the record’s spreadsheets', () => {
 
   it('write a list whole, as typed, and clear the rows a shorter record no longer has', async () => {
     let { drive, sheets } = setup()
-    let created = await sheets.findOrCreateEvidence('issue-folder', 7)
+    let created = await sheets.findOrCreateEvidence('issue-folder', testRowId(7))
     if (!created.ok) throw new Error(created.error)
     await sheets.layOut(created.id, EVIDENCE_LISTS, { isOwn: true })
 
@@ -107,7 +108,7 @@ describe('the record’s spreadsheets', () => {
   it('answer a failure without throwing, so the queue can try again later', async () => {
     let { drive, sheets } = setup()
     drive.failStep('sheets')
-    let created = await sheets.findOrCreateEvidence('issue-folder', 7)
+    let created = await sheets.findOrCreateEvidence('issue-folder', testRowId(7))
     assert.equal(created.ok, false)
 
     drive.heal()

@@ -57,7 +57,7 @@ export function markFinalVersion(
   setup: FinalVersionSetup,
   input: {
     by: { email: string; name: string | null }
-    id: number
+    id: string
     owner?: string
     takenAt: Temporal.Instant
   },
@@ -85,7 +85,7 @@ export function markFinalVersion(
  */
 export function replaceFinalVersion(
   setup: FinalVersionSetup,
-  input: { by: { email: string; name: string | null }; id: number; markedAt: Temporal.Instant },
+  input: { by: { email: string; name: string | null }; id: string; markedAt: Temporal.Instant },
 ): Promise<ReplaceFinalStepOutcome> {
   return lock(`final-version:${input.id}`, () =>
     storeFinalVersion(setup, input.id, {
@@ -109,7 +109,7 @@ export function replaceFinalVersion(
  */
 async function storeFinalVersion<Refusal extends { kind: string }>(
   setup: FinalVersionSetup,
-  id: number,
+  id: string,
   steps: {
     check: () => Promise<Refusal | null>
     /** What an article that is no longer there answers. */
@@ -219,7 +219,7 @@ async function binAttempt(
  */
 export function cancelFinalVersion(
   setup: FinalVersionSetup,
-  input: { id: number; markedAt: Temporal.Instant; owner?: string },
+  input: { id: string; markedAt: Temporal.Instant; owner?: string },
 ): Promise<CancelFinalStepOutcome> {
   return lock(`final-version:${input.id}`, () => cancel(setup, input))
 }

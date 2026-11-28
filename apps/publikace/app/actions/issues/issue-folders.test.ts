@@ -33,9 +33,11 @@ function textOf(html: string): string {
 
 type Context = {
   app: TestApp
+  articleId: string
   artworksKey: string
   editor: TestBrowser
   folders: { article: string; articles: string; issue: string }
+  issueId: string
   newsroomKey: string
   visitor: TestBrowser
 }
@@ -50,7 +52,10 @@ async function withIssue(run: (context: Context) => Promise<void>): Promise<void
     await editor.signInAs(MARIE, 'Marie Horáková')
     await editor.post('/issues/new', { name: 'VDM_2026_5' }, '/issues/new')
     let links = createLinkStore(app.database)
-    let newsroom = await links.articleLinkOf(1)
+    let created = await createIssueStore(app.database).findByName('VDM_2026_5')
+    assert.ok(created !== null)
+    let issueId = created.id
+    let newsroom = await links.articleLinkOf(issueId)
     assert.ok(newsroom !== null)
     let visitor = app.browser()
     let body = new URLSearchParams({
@@ -61,14 +66,17 @@ async function withIssue(run: (context: Context) => Promise<void>): Promise<void
     body.append('author-name', TEREZA.name)
     body.append('author-email', TEREZA.email)
     assert.equal((await visitor.send(`/l/${newsroom.key}/article`, body)).status, 200)
-    let [artworks] = [...(await links.artworksLinksOf(1)).values()]
+    let [artworks] = [...(await links.artworksLinksOf(issueId)).values()]
     assert.ok(artworks !== undefined)
-    let issue = await createIssueStore(app.database).findById(1)
-    let article = await createArticleStore(app.database).findById(1)
+    let issue = await createIssueStore(app.database).findById(issueId)
+    let [firstArticle] = await createArticleStore(app.database).listCreated(issueId)
+    assert.ok(firstArticle !== undefined)
+    let article = await createArticleStore(app.database).findById(firstArticle.id)
     assert.ok(issue?.folderIds.issue != null && issue.folderIds.articles != null)
     assert.ok(article?.folderId != null)
     await run({
       app,
+      articleId: firstArticle.id,
       artworksKey: artworks.key,
       editor,
       folders: {
@@ -76,6 +84,7 @@ async function withIssue(run: (context: Context) => Promise<void>): Promise<void
         articles: issue.folderIds.articles,
         issue: issue.folderIds.issue,
       },
+      issueId,
       newsroomKey: newsroom.key,
       visitor,
     })
@@ -132,7 +141,7 @@ describe('a missing folder of the issue itself (12j, cz.vednemesicnik.publikace#
       body.append('author-email', TEREZA.email)
       await context.visitor.send(`/l/${context.newsroomKey}/article`, body)
 
-      let issue = await createIssueStore(context.app.database).findById(1)
+      let issue = await createIssueStore(context.app.database).findById(context.issueId)
       assert.ok(issue?.missing.articles != null)
       assert.equal(issue.missing.issue, null)
     }))
@@ -142,7 +151,7 @@ describe('a missing folder of the issue itself (12j, cz.vednemesicnik.publikace#
       context.app.drive.trash(context.folders.issue)
       /* The artworks link marks the article's folder, which is in the bin with the issue's. */
       await context.visitor.get(`/l/${context.artworksKey}/artworks`)
-      let article = await createArticleStore(context.app.database).findById(1)
+      let article = await createArticleStore(context.app.database).findById(context.articleId)
       assert.ok(article?.missing.article != null)
 
       let text = await checkedDetailText(context)

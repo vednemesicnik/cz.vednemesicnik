@@ -1,6 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { testRowId } from '../test-row-id.ts'
 import {
   checkIssueName,
   EMPTY_NAME_MESSAGE,
@@ -43,7 +44,7 @@ function issue(overrides: Partial<Issue> = {}): Issue {
     removedAt: null,
     groupsFolderId: null,
     missing: { articles: null, issue: null },
-    id: 1,
+    id: testRowId(1),
     name: 'VDM_2026_6',
     startedAt: NOVEMBER,
     startedByEmail: 'marie@vednemesicnik.test',

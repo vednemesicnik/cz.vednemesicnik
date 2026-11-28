@@ -6,6 +6,7 @@ import type { AccessContext } from '../../auth/access.server.ts'
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
 import type { ProofreadersStore } from '../../data/proofreaders.server.ts'
+import { isRowId } from '../../data/row-id.server.ts'
 import {
   type AccessKind,
   addedMessage,
@@ -150,9 +151,8 @@ function backToSettings(): Response {
   return redirect(routes.settings.index.href(), 303)
 }
 
-function idParam(value: string | undefined): number | null {
-  let id = Number(value)
-  return Number.isSafeInteger(id) && id > 0 ? id : null
+function idParam(value: string | undefined): string | null {
+  return isRowId(value) ? value : null
 }
 
 function formText(context: PageContext, name: string): string {

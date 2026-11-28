@@ -60,7 +60,7 @@ function calloutOf(html: string): string | null {
   return found === null ? null : textOf(found[1] ?? '').trim()
 }
 
-type Context = { app: TestApp; editor: TestBrowser; groupId: number; issueId: number }
+type Context = { app: TestApp; editor: TestBrowser; groupId: string; issueId: string }
 
 /** An issue made through the app and one group in it, its files on the fake Drive. */
 async function withGroup(run: (context: Context) => Promise<void>): Promise<void> {
@@ -158,7 +158,7 @@ function metaOf(context: Context, id: string): Record<string, unknown> {
 }
 
 /** One batch through the group's link: an upload, then _Odeslat díla_, whose request goes. */
-async function sendBatch(context: Context): Promise<number> {
+async function sendBatch(context: Context): Promise<string> {
   let key = await linkKeyOf(context)
   let visitor = context.app.browser()
   let formKey = crypto.randomUUID()
@@ -168,7 +168,7 @@ async function sendBatch(context: Context): Promise<number> {
     'X-Form-Key': formKey,
   })
   assert.equal(uploaded.status, 201)
-  let { artwork } = (await uploaded.json()) as { artwork: { id: number } }
+  let { artwork } = (await uploaded.json()) as { artwork: { id: string } }
   let body = new URLSearchParams({
     formKey,
     'provider-email': KLARA.email,
@@ -179,12 +179,12 @@ async function sendBatch(context: Context): Promise<number> {
   body.append('artwork-source', '')
   assert.equal((await visitor.send(`/l/${key}/artworks`, body)).status, 200)
   let batches = await context.app.database.exec(
-    sql`SELECT id FROM artwork_batches WHERE group_id = ${context.groupId} ORDER BY id DESC`,
+    sql`SELECT id FROM artwork_batches WHERE group_id = ${context.groupId} ORDER BY rowid DESC`,
   )
-  return Number(batches.rows?.[0]?.['id'])
+  return String(batches.rows?.[0]?.['id'])
 }
 
-async function discard(context: Context, batchId: number): Promise<void> {
+async function discard(context: Context, batchId: string): Promise<void> {
   await context.app.database.exec(
     sql`UPDATE artwork_batches SET discarded_at = ${now().toString()} WHERE id = ${batchId}`,
   )
@@ -555,7 +555,7 @@ describe('removing a group (12f)', () => {
             formKey: 'late-batch',
             groupId: context.groupId,
             issueId: context.issueId,
-            linkId: Number(links.rows?.[0]?.['id']),
+            linkId: String(links.rows?.[0]?.['id']),
             provider: KLARA,
           }),
         HolderRemovedError,

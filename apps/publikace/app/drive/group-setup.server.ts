@@ -46,7 +46,7 @@ export type GroupSetup = {
 export type NewGroup = GroupInput & {
   /** The dialog's one-time key: a second send with it gets the first one's answer. */
   formKey: string
-  issueId: number
+  issueId: string
   startedBy: { email: string; name: string }
 }
 
@@ -83,7 +83,7 @@ export function createGroup(setup: GroupSetup, input: NewGroup): Promise<CreateG
 }
 
 /** The key the issue's `Skupiny obrazových děl` carries on Drive. */
-function groupsFolderKey(issueId: number): string {
+function groupsFolderKey(issueId: string): string {
   return `issue-groups:${issueId}`
 }
 

@@ -209,6 +209,9 @@ importers:
 
   apps/publikace:
     dependencies:
+      '@paralleldrive/cuid2':
+        specifier: 3.3.0
+        version: 3.3.0
       remix:
         specifier: 3.2.0
         version: 3.2.0(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.3)(mysql2@3.24.4(@types/node@26.6.6))

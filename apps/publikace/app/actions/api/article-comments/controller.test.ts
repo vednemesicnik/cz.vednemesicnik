@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { appOrigin } from '../../../auth/environment.server.ts'
+import { testRowId } from '../../../test-row-id.ts'
 import { createJobRunStore } from '../../../data/job-runs.server.ts'
 import { ARTICLE_COMMENTS_JOB, readCommentDigestRun } from '../../../domain/article-comments.ts'
 import {
@@ -21,7 +22,7 @@ const REPORT = '/api/v1/article-comments/report'
 
 type Claimed = {
   articles: {
-    articleId: number
+    articleId: string
     authorEmails: string[]
     docId: string
     issueName: string
@@ -67,7 +68,7 @@ function report(app: TestApp, runKey: string, fields: Record<string, unknown> = 
   })
 }
 
-async function digestOf(app: TestApp, articleId: number) {
+async function digestOf(app: TestApp, articleId: string) {
   let result = await app.database.exec(
     sql`SELECT * FROM comment_digests WHERE article_id = ${articleId}`,
   )
@@ -93,7 +94,7 @@ describe('the API of Article_Comments', () => {
         { outcome: 'done' },
         { sent: -1 },
         { sent: 1.5 },
-        { articles: [{ articleId: 0, suggestionHashes: [] }] },
+        { articles: [{ articleId: '', suggestionHashes: [] }] },
         { articles: [{ articleId: 1, suggestionHashes: [''] }] },
         { articles: [{ articleId: 1, suggestionHashes: ['x'.repeat(65)] }] },
         { articles: [{ articleId: 1 }] },
@@ -180,19 +181,19 @@ describe('the API of Article_Comments', () => {
       let response = await report(app, runKey, {
         articles: [
           { articleId: told.articleId, suggestionHashes: ['a1', 'b2'] },
-          { articleId: 9999, suggestionHashes: [] },
+          { articleId: testRowId(9999), suggestionHashes: [] },
         ],
         sent: 2,
         unconfirmed: [
           { articleId: unconfirmed.articleId, email: 'l.kralova@external.test' },
-          { articleId: 9998, email: 'cizi@external.test' },
+          { articleId: testRowId(9998), email: 'cizi@external.test' },
         ],
       })
       assert.equal(response.status, 200)
       assert.deepEqual(await response.json(), {
         articles: [
           { answer: 'recorded', articleId: told.articleId },
-          { answer: 'unknown', articleId: 9999 },
+          { answer: 'unknown', articleId: testRowId(9999) },
         ],
       })
 

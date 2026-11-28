@@ -57,7 +57,7 @@ async function claim(app: TestApp): Promise<Claimed> {
 }
 
 /** An article taken and marked, as the page Korektura leaves it. */
-async function marked(app: TestApp, issueName = 'VDM_2026_6'): Promise<number> {
+async function marked(app: TestApp, issueName = 'VDM_2026_6'): Promise<string> {
   let issueId = await seedIssue(app, issueName)
   let { articleId } = await seedArticle(app, issueId)
   let articles = createArticleStore(app.database)
@@ -321,8 +321,8 @@ describe('the replies of Article_Approvals', () => {
       assert.equal(await articles.reviewCount(), 1)
       let [queued] = await articles.reviewQueue()
       assert.equal(queued?.replyText, reply.text)
-      assert.equal(await articles.verifyClause(queued?.id ?? 0, 'm-0', EDITOR, AT), false)
-      assert.equal(await articles.verifyClause(queued?.id ?? 0, 'm-1', EDITOR, AT), true)
+      assert.equal(await articles.verifyClause(queued?.id ?? '', 'm-0', EDITOR, AT), false)
+      assert.equal(await articles.verifyClause(queued?.id ?? '', 'm-1', EDITOR, AT), true)
       assert.equal(await articles.reviewCount(), 0)
       assert.equal((await articles.findById(articleId))?.finalVersion?.clauses.verified, 1)
 
@@ -353,9 +353,9 @@ describe('the replies of Article_Approvals', () => {
         state: 'other_reply',
       })
       let [queued] = await articles.reviewQueue()
-      await articles.verifyClause(queued?.id ?? 0, 'm-1', EDITOR, AT)
+      await articles.verifyClause(queued?.id ?? '', 'm-1', EDITOR, AT)
       let { runKey } = await claimReplies(app)
-      assert.equal(await articles.undoClauseVerification(queued?.id ?? 0), true)
+      assert.equal(await articles.undoClauseVerification(queued?.id ?? ''), true)
       let answer = await reportReply(app, runKey, {
         archive: { fileId: 'consent-1' },
         clauseKey,
@@ -411,14 +411,14 @@ describe('the replies of Article_Approvals', () => {
       })
       let article = await articles.findById(articleId)
       assert.equal(article?.finalVersion?.clauses.unarchived, 1)
-      assert.equal((await articles.waitingCountsByIssue()).get(article?.issueId ?? 0), 1)
+      assert.equal((await articles.waitingCountsByIssue()).get(article?.issueId ?? ''), 1)
       assert.equal(await articles.reviewCount(), 1)
       /* A clause that only waits for a reply waits on nobody. */
       await app.database.exec(
         sql`UPDATE article_clauses SET archive_failed_at = NULL, archive_error = NULL,
               reply_message_id = NULL, is_exact_consent = 0`,
       )
-      assert.equal((await articles.waitingCountsByIssue()).get(article?.issueId ?? 0), undefined)
+      assert.equal((await articles.waitingCountsByIssue()).get(article?.issueId ?? ''), undefined)
     } finally {
       await app.close()
     }

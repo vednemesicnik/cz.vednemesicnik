@@ -50,7 +50,7 @@ function calloutOf(html: string): string | null {
   return found === null ? null : textOf(found[1] ?? '').trim()
 }
 
-type Context = { app: TestApp; editor: TestBrowser; issueId: number }
+type Context = { app: TestApp; editor: TestBrowser; issueId: string }
 
 async function withIssue(run: (context: Context) => Promise<void>): Promise<void> {
   let app = await createTestApp()
@@ -244,7 +244,7 @@ describe('removing an issue (12w)', () => {
           authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
           formKey: crypto.randomUUID(),
           issueId: context.issueId,
-          linkId: link?.id ?? 0,
+          linkId: link?.id ?? '',
           name: 'Školní jídelna po roce',
         }),
       )
@@ -293,7 +293,7 @@ describe('removing an issue (12w)', () => {
         authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
         formKey: crypto.randomUUID(),
         issueId: context.issueId,
-        linkId: link?.id ?? 0,
+        linkId: link?.id ?? '',
         name: 'Školní jídelna po roce',
       })
       assert.equal(refused, 'issue-removed')

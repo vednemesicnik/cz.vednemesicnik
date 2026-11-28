@@ -10,8 +10,10 @@ import {
   seedIssue,
   type TestApp,
 } from '../test-app.server.ts'
+import { testRowId } from '../test-row-id.ts'
 import { createIssueStore } from './issues.server.ts'
 import { type ClaimedIssue, createPrintHandoffStore } from './print-handoff.server.ts'
+import { newRowId } from './row-id.server.ts'
 
 const AT = Temporal.Instant.from('2026-11-23T05:00:00Z')
 const MARKED_AT = Temporal.Instant.from('2026-11-20T09:00:00Z')
@@ -25,27 +27,27 @@ let versions = 0
  */
 async function seedVersion(
   app: TestApp,
-  articleId: number,
+  articleId: string,
   options: { isApproved: boolean; markedAt?: Temporal.Instant; replacedAt?: Temporal.Instant },
-): Promise<number> {
+): Promise<string> {
   versions += 1
   let markedAt = stamp(options.markedAt ?? MARKED_AT)
   let inserted = await app.database.exec(
-    sql`INSERT INTO final_versions (article_id, marked_at, marked_by_email, pdf_file_id, pdf_hash,
+    sql`INSERT INTO final_versions (id, article_id, marked_at, marked_by_email, pdf_file_id, pdf_hash,
           attempt_key, replaced_at)
-        VALUES (${articleId}, ${markedAt}, 'lenka.svobodova@vednemesicnik.test',
+        VALUES (${newRowId()}, ${articleId}, ${markedAt}, 'lenka.svobodova@vednemesicnik.test',
           ${`pdf-${versions}`}, ${`h-${versions}`}, ${`a-${versions}`},
           ${options.replacedAt === undefined ? null : stamp(options.replacedAt)})
         RETURNING id`,
   )
-  let versionId = Number(inserted.rows?.[0]?.['id'])
+  let versionId = String(inserted.rows?.[0]?.['id'])
   let approvedAt = options.isApproved ? stamp(MARKED_AT.add({ hours: 2 })) : null
   await app.database.exec(
-    sql`INSERT INTO article_clauses (final_version_id, article_id, position, author_name,
+    sql`INSERT INTO article_clauses (id, final_version_id, article_id, position, author_name,
           author_email, signature, state, clause_key, claim_key, first_claimed_at, sent_at,
           reply_message_id, reply_received_at, reply_text, is_exact_consent, approved_at,
           consent_file_id)
-        VALUES (${versionId}, ${articleId}, 1, 'Tereza Vlková', 'tereza.vlkova@external.test',
+        VALUES (${newRowId()}, ${versionId}, ${articleId}, 1, 'Tereza Vlková', 'tereza.vlkova@external.test',
           'Tereza Vlková', 'sent', ${`clause-${versions}`}, 'run-0', ${approvedAt}, ${approvedAt},
           ${`m-${versions}`}, ${approvedAt}, 'Souhlasím', 1, ${approvedAt},
           ${approvedAt === null ? null : `c-${versions}`})`,
@@ -53,14 +55,14 @@ async function seedVersion(
   return versionId
 }
 
-async function approveBatch(app: TestApp, batchId: number): Promise<void> {
+async function approveBatch(app: TestApp, batchId: string): Promise<void> {
   await app.database.exec(
     sql`UPDATE artwork_batches SET approved_at = ${stamp(MARKED_AT)}, consent_file_id = 'c-batch'
         WHERE id = ${batchId}`,
   )
 }
 
-function only(issues: ClaimedIssue[], issueId: number): ClaimedIssue {
+function only(issues: ClaimedIssue[], issueId: string): ClaimedIssue {
   let issue = issues.find((claimed) => claimed.issueId === issueId)
   if (issue === undefined) throw new Error('The issue was not claimed.')
   return issue
@@ -138,7 +140,7 @@ describe('the print folder’s claim', () => {
       let batch = await seedBatch(app, article, issueId, { count: 1 })
       await approveBatch(app, batch.id)
       let store = createPrintHandoffStore(app.database)
-      let artworkId = batch.artworks[0]?.id ?? 0
+      let artworkId = batch.artworks[0]?.id ?? testRowId(0)
       await store.claim('run-1', AT)
       await store.record('run-1', {
         articles: [
@@ -279,8 +281,8 @@ describe('the print folder’s report', () => {
       await store.claim('run-1', AT)
       let copy = {
         artworks: [
-          { artworkId: first ?? 0, fileId: 'copy-1', name: 'obr-01.jpg' },
-          { artworkId: second ?? 0, fileId: 'copy-2', name: 'obr-02.jpg' },
+          { artworkId: first ?? testRowId(0), fileId: 'copy-1', name: 'obr-01.jpg' },
+          { artworkId: second ?? testRowId(0), fileId: 'copy-2', name: 'obr-02.jpg' },
         ],
         folderId: 'print-article',
         isTextChanged: false,
@@ -350,10 +352,14 @@ describe('the print folder’s report', () => {
             articleId: article.articleId,
             copy: {
               artworks: [
-                { artworkId: first ?? 0, fileId: 'copy-1', name: 'obr-01.jpg' },
-                { artworkId: foreign.artworks[0]?.id ?? 0, fileId: 'copy-x', name: 'obr-02.jpg' },
-                { artworkId: second ?? 0, fileId: 'copy-3', name: 'obr-03.jpg' },
-                { artworkId: first ?? 0, fileId: 'copy-4', name: 'obr-04.jpg' },
+                { artworkId: first ?? testRowId(0), fileId: 'copy-1', name: 'obr-01.jpg' },
+                {
+                  artworkId: foreign.artworks[0]?.id ?? testRowId(0),
+                  fileId: 'copy-x',
+                  name: 'obr-02.jpg',
+                },
+                { artworkId: second ?? testRowId(0), fileId: 'copy-3', name: 'obr-03.jpg' },
+                { artworkId: first ?? testRowId(0), fileId: 'copy-4', name: 'obr-04.jpg' },
               ],
               folderId: 'print-article',
               isTextChanged: false,
@@ -369,7 +375,7 @@ describe('the print folder’s report', () => {
       })
       let rows = await app.database.exec(
         sql`SELECT artwork_id, article_id, copy_file_id, name FROM print_artworks
-            ORDER BY artwork_id`,
+            ORDER BY copy_file_id`,
       )
       assert.deepEqual(
         (rows.rows ?? []).map((row) => ({ ...row })),

@@ -3,6 +3,7 @@ import { createController } from 'remix/router'
 import type { IdentityTokenVerifier } from '../../../auth/identity-token.server.ts'
 import type { ArtworkStore, ClaimedBatch } from '../../../data/artworks.server.ts'
 import type { JobRunStore } from '../../../data/job-runs.server.ts'
+import { isRowId } from '../../../data/row-id.server.ts'
 import { CONSENT_SUBJECT_PREFIX } from '../../../domain/artwork.ts'
 import {
   type BatchReport,
@@ -42,11 +43,11 @@ export type ArtworkRepliesDependencies = {
 const MAX_ID_LENGTH = 200
 const MAX_ERROR_LENGTH = 2000
 
-function readResult(value: unknown): { batchId: number; report: BatchReport } | null {
+function readResult(value: unknown): { batchId: string; report: BatchReport } | null {
   if (typeof value !== 'object' || value === null) return null
   let fields = value as Record<string, unknown>
   let { batchId } = fields
-  if (typeof batchId !== 'number' || !Number.isSafeInteger(batchId) || batchId < 1) return null
+  if (!isRowId(batchId)) return null
   let report = readConsentReport(fields)
   return report === null ? null : { batchId, report }
 }

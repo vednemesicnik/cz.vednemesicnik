@@ -6,6 +6,7 @@ import { APPROVAL_SUBJECT_PREFIX, clauseState, type ClauseStatus } from '../doma
 import { batchState, consentSubject } from '../domain/artwork.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import { answeredAtOf } from './consent-patch.server.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * The answers from _Ke kontrole_ to a provider's or an author's reply (`13d`–`13f`,
@@ -14,13 +15,13 @@ import { answeredAtOf } from './consent-patch.server.ts'
  */
 
 /** The card an answer is about. */
-export type AnswerTarget = { id: number; kind: AnswerKind }
+export type AnswerTarget = { id: string; kind: AnswerKind }
 
 export type AnswerRow = {
   editorEmail: string
   editorName: string
   failedAt: Temporal.Instant | null
-  id: number
+  id: string
   idempotencyKey: string
   inReplyToMessageId: string
   refusedAt: Temporal.Instant | null
@@ -71,16 +72,16 @@ export type NewAnswer = {
 
 export type AnswerStore = {
   /** The answers of these cards, newest first, by the card's ID. */
-  answersOf(kind: AnswerKind, ids: readonly number[]): Promise<Map<number, AnswerRow[]>>
+  answersOf(kind: AnswerKind, ids: readonly string[]): Promise<Map<string, AnswerRow[]>>
   /** Takes back an answer that never reached the Mailer, as one the daily cap stopped. */
-  discard(id: number): Promise<void>
+  discard(id: string): Promise<void>
   /** Records what the Mailer said. A sent answer puts the provider on the move (`13e`). */
-  mark(id: number, outcome: 'failed' | 'refused' | 'sent', at: Temporal.Instant): Promise<void>
+  mark(id: string, outcome: 'failed' | 'refused' | 'sent', at: Temporal.Instant): Promise<void>
   /**
    * The answer to send again after the Mailer did not confirm it: `started` with the stored
    * answer while the card still waits on that same message, else why not.
    */
-  resume(target: AnswerTarget, answerId: number, at: Temporal.Instant): Promise<StartAnswerOutcome>
+  resume(target: AnswerTarget, answerId: string, at: Temporal.Instant): Promise<StartAnswerOutcome>
   /**
    * Puts an answer on record before the Mailer is asked, in one transaction with every check, so
    * two editors or two tabs answering the same message cannot both pass (the unique index).
@@ -103,7 +104,7 @@ function toAnswer(row: Row): AnswerRow {
     editorEmail: String(row['editor_email']),
     editorName: String(row['editor_name']),
     failedAt: parseStamp(row['failed_at']),
-    id: Number(row['id']),
+    id: String(row['id']),
     idempotencyKey: String(row['idempotency_key']),
     inReplyToMessageId: String(row['in_reply_to_message_id']),
     refusedAt: parseStamp(row['refused_at']),
@@ -113,8 +114,8 @@ function toAnswer(row: Row): AnswerRow {
     signatureName: text(row['signature_name']),
     startedAt: parseStamp(row['started_at']) ?? EPOCH,
     target: isBatch
-      ? { id: Number(batchId), kind: 'artworks' }
-      : { id: Number(row['clause_id']), kind: 'articles' },
+      ? { id: String(batchId), kind: 'artworks' }
+      : { id: String(row['clause_id']), kind: 'articles' },
     text: String(row['text']),
   }
 }
@@ -135,7 +136,7 @@ type Card = {
   replyText: string
 }
 
-async function batchCard(db: Database, id: number): Promise<Card | null> {
+async function batchCard(db: Database, id: string): Promise<Card | null> {
   let result = await db.exec(
     sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name, i.name AS issue_name,
           i.closed_at AS issue_closed_at
@@ -187,7 +188,7 @@ async function batchCard(db: Database, id: number): Promise<Card | null> {
   }
 }
 
-async function clauseCard(db: Database, id: number): Promise<Card | null> {
+async function clauseCard(db: Database, id: string): Promise<Card | null> {
   let result = await db.exec(
     sql`SELECT c.*, a.name AS article_name, i.name AS issue_name, i.closed_at AS issue_closed_at,
           f.cancelled_at IS NULL AND f.replaced_at IS NULL AS is_standing
@@ -268,12 +269,12 @@ function refusalOf(card: Card | null, messageId: string): StartAnswerOutcome | n
 export function createAnswerStore(database: Database): AnswerStore {
   return {
     async answersOf(kind, ids) {
-      let byCard = new Map<number, AnswerRow[]>()
+      let byCard = new Map<string, AnswerRow[]>()
       if (ids.length === 0) return byCard
       let result = await database.exec(
         sql`SELECT * FROM consent_answers
             WHERE ${OWNERS[kind]} IN (SELECT value FROM json_each(${JSON.stringify(ids)}))
-            ORDER BY started_at DESC, id DESC`,
+            ORDER BY started_at DESC, rowid DESC`,
       )
       for (let row of result.rows ?? []) {
         let answer = toAnswer(row)
@@ -351,11 +352,11 @@ export function createAnswerStore(database: Database): AnswerStore {
         }
         let receivedAt = card.replyReceivedAt ?? at
         await db.exec(
-          sql`INSERT INTO consent_answers (${OWNERS[target.kind]}, in_reply_to_message_id,
+          sql`INSERT INTO consent_answers (id, ${OWNERS[target.kind]}, in_reply_to_message_id,
                 reply_received_at, reply_text, text, signature_name, editor_email, editor_name,
                 idempotency_key, started_at)
-              VALUES (${target.id}, ${input.messageId}, ${stamp(receivedAt)}, ${card.replyText},
-                ${input.text}, ${input.signatureName}, ${input.editor.email},
+              VALUES (${newRowId()}, ${target.id}, ${input.messageId}, ${stamp(receivedAt)},
+                ${card.replyText}, ${input.text}, ${input.signatureName}, ${input.editor.email},
                 ${input.editor.displayName},
                 ${answerIdempotencyKey(target.kind, target.id, input.messageId)}, ${stamp(at)})`,
         )

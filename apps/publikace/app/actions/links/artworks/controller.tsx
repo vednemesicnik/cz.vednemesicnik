@@ -2,6 +2,7 @@ import { createController } from 'remix/router'
 
 import { requestAssets } from '../../../assets.ts'
 import type { ArtworkRow } from '../../../data/artworks.server.ts'
+import { isRowId } from '../../../data/row-id.server.ts'
 import {
   ARTWORKS_LINK_GONE_NOTE,
   ARTWORKS_LINK_GONE_TEXT,
@@ -207,10 +208,10 @@ function formOf(context: LinkContext) {
     .slice(0, MAX_ARTWORKS + 1)
     .map((id, index) => ({
       author: authors[index] ?? '',
-      id: Number(id),
+      id,
       source: sources[index] ?? '',
     }))
-    .filter((artwork) => Number.isSafeInteger(artwork.id) && artwork.id > 0)
+    .filter((artwork) => isRowId(artwork.id))
   let formKey = text(data.get('formKey'))
   return {
     artworks,
@@ -228,9 +229,9 @@ function formOf(context: LinkContext) {
 async function cardsOf(
   context: LinkContext,
   formKey: string,
-  sent: readonly { author: string; id: number; source: string }[],
+  sent: readonly { author: string; id: string; source: string }[],
 ): Promise<ArtworkCard[]> {
-  let uploads = new Map<number, ArtworkRow>()
+  let uploads = new Map<string, ArtworkRow>()
   for (let upload of await articlesOf(context).artworks.artworks.unsentByForm(formKey)) {
     if (upload.isReadable) uploads.set(upload.id, upload)
   }
@@ -370,8 +371,8 @@ export default function createArtworksController() {
       async remove(context) {
         let data = context.get(FormData) as FormData
         let formKey = text(data.get('formKey'))
-        let id = Number(context.params.id)
-        if (!/^[0-9a-f-]{36}$/.test(formKey) || !Number.isSafeInteger(id)) {
+        let id = context.params.id
+        if (!/^[0-9a-f-]{36}$/.test(formKey) || !isRowId(id)) {
           return Response.json({ outcome: 'refused' }, { status: REFUSED })
         }
         let outcome = await removeArtwork(articlesOf(context).artworks, {

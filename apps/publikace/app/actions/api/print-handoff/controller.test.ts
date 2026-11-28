@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { appOrigin } from '../../../auth/environment.server.ts'
+import { testRowId } from '../../../test-row-id.ts'
 import { createJobRunStore } from '../../../data/job-runs.server.ts'
 import { createPrintHandoffStore } from '../../../data/print-handoff.server.ts'
 import { PRINT_HANDOFF_JOB } from '../../../domain/print-handoff.ts'
@@ -25,12 +26,12 @@ type Claimed = {
   copyProperty: string
   issues: {
     articles: {
-      articleId: number
-      artworks: { artworkId: number; copyTag: string; fileId: string }[]
+      articleId: string
+      artworks: { artworkId: string; copyTag: string; fileId: string }[]
       folderTag: string
       text: null | { revisedAfter: string }
     }[]
-    issueId: number
+    issueId: string
     printFolderId: string
   }[]
   runKey: string
@@ -75,7 +76,11 @@ describe('the API of Print_Handoff', () => {
       assert.equal((await call(app, REPORT, { issues: [], outcome: 'ok' })).status, 400)
       let unreadable = await call(app, REPORT, {
         issues: [
-          { articles: [{ articleId: 1, copy: { folderId: '' } }], isComplete: true, issueId: 1 },
+          {
+            articles: [{ articleId: testRowId(1), copy: { folderId: '' } }],
+            isComplete: true,
+            issueId: testRowId(1),
+          },
         ],
         outcome: 'ok',
         runKey: 'run',
@@ -132,7 +137,7 @@ describe('the API of Print_Handoff', () => {
             issueId,
             sheetId: 'sheet-1',
           },
-          { articles: [], isComplete: true, issueId: 9999, sheetId: null },
+          { articles: [], isComplete: true, issueId: testRowId(9999), sheetId: null },
         ],
         outcome: 'ok',
         runKey: claimed.runKey,
@@ -141,7 +146,7 @@ describe('the API of Print_Handoff', () => {
       assert.deepEqual(await response.json(), {
         issues: [
           { answer: 'accepted', issueId },
-          { answer: 'unknown', issueId: 9999 },
+          { answer: 'unknown', issueId: testRowId(9999) },
         ],
       })
       let summary = await createPrintHandoffStore(app.database).summaryOf(issueId)
@@ -162,15 +167,15 @@ describe('the API of Print_Handoff', () => {
     try {
       let issueId = await seedIssue(app)
       let claimed = await claim(app)
-      let copy = (articleId: number, artworks: number) => ({
-        articleId,
+      let copy = (articleNumber: number, artworks: number) => ({
+        articleId: testRowId(articleNumber),
         copy: {
           artworks: Array.from({ length: artworks }, (_, index) => ({
-            artworkId: articleId * 1000 + index + 1,
-            fileId: `copy-${articleId}-${index}`,
+            artworkId: testRowId(articleNumber * 1000 + index + 1),
+            fileId: `copy-${articleNumber}-${index}`,
             name: `obr-${index + 1}.jpg`,
           })),
-          folderId: `print-${articleId}`,
+          folderId: `print-${articleNumber}`,
           isTextChanged: false,
           lastImageNumber: artworks,
           textFileId: null,
@@ -196,9 +201,12 @@ describe('the API of Print_Handoff', () => {
 
       /* 251 and 250 articles: 501 in all. */
       let articles = (from: number, count: number) =>
-        Array.from({ length: count }, (_, index) => ({ articleId: from + index, copy: null }))
+        Array.from({ length: count }, (_, index) => ({
+          articleId: testRowId(from + index),
+          copy: null,
+        }))
       let tooManyArticles = await call(app, REPORT, {
-        issues: [issue(articles(1, 251)), issue(articles(1000, 250), issueId + 1)],
+        issues: [issue(articles(1, 251)), issue(articles(1000, 250), testRowId(1))],
         outcome: 'ok',
         runKey: claimed.runKey,
       })

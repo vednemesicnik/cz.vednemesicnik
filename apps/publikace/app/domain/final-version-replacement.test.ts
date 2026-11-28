@@ -1,6 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { testRowId } from '../test-row-id.ts'
 import { type ClauseDetail, type ClauseState, countClauses } from './approvals.ts'
 import {
   alreadyReplacedToast,
@@ -26,7 +27,7 @@ function clause(state: ClauseState, extra: Partial<ClauseDetail> = {}): ClauseDe
     authorEmail: 'tereza.vlkova@external.test',
     authorName: 'Tereza Vlková',
     error: null,
-    id: 1,
+    id: testRowId(1),
     position: 1,
     replyReceivedAt: null,
     replyText: null,

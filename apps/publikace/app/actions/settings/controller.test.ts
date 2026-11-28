@@ -34,9 +34,9 @@ function textOf(html: string): string {
     .replace(/ ([.,)])/g, '$1')
 }
 
-async function idOf(app: TestApp, email: string): Promise<number> {
+async function idOf(app: TestApp, email: string): Promise<string> {
   let account = (await app.directory.listAccounts()).find((candidate) => candidate.email === email)
-  return account?.id ?? 0
+  return account?.id ?? ''
 }
 
 describe('settings, Přístup', () => {

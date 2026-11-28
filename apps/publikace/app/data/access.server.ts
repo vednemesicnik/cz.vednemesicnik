@@ -2,6 +2,7 @@ import type { Database } from 'remix/data-table'
 import { sql } from 'remix/data-table'
 
 import { parseStamp, stamp } from '../domain/time.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * The access list: named accounts and Google groups, in the app's database.
@@ -16,7 +17,7 @@ export type AccessAccount = {
   addedAt: Temporal.Instant
   displayName: string | null
   email: string
-  id: number
+  id: string
   isAdmin: boolean
   lastSignedInAt: Temporal.Instant | null
 }
@@ -24,7 +25,7 @@ export type AccessAccount = {
 export type AccessGroup = {
   addedAt: Temporal.Instant
   email: string
-  id: number
+  id: string
   /** The group's name in Google Workspace, as the membership service last gave it. */
   name: string | null
 }
@@ -53,11 +54,11 @@ export type AccessDirectory = {
   /** Records a sign-in of a named account; does nothing for a member of a group. */
   recordSignIn(email: string, displayName: string, when: Temporal.Instant): Promise<void>
   /** Ends every session of the account in the same transaction. */
-  removeAccount(actor: string, id: number): Promise<ChangeResult>
-  removeGroup(actor: string, id: number): Promise<ChangeResult>
+  removeAccount(actor: string, id: string): Promise<ChangeResult>
+  removeGroup(actor: string, id: string): Promise<ChangeResult>
   /** Adds the first administrator when the list has no named account. Answers whether it did. */
   seedInitialAdmin(email: string, when: Temporal.Instant): Promise<boolean>
-  setAdmin(actor: string, id: number, isAdmin: boolean): Promise<ChangeResult>
+  setAdmin(actor: string, id: string, isAdmin: boolean): Promise<ChangeResult>
 }
 
 type Row = Record<string, unknown>
@@ -67,7 +68,7 @@ function toAccount(row: Row): AccessAccount {
     addedAt: parseStamp(row['added_at']) ?? Temporal.Instant.fromEpochMilliseconds(0),
     displayName: typeof row['display_name'] === 'string' ? row['display_name'] : null,
     email: String(row['email']),
-    id: Number(row['id']),
+    id: String(row['id']),
     isAdmin: Number(row['is_admin']) === 1,
     lastSignedInAt: parseStamp(row['last_signed_in_at']),
   }
@@ -77,7 +78,7 @@ function toGroup(row: Row): AccessGroup {
   return {
     addedAt: parseStamp(row['added_at']) ?? Temporal.Instant.fromEpochMilliseconds(0),
     email: String(row['email']),
-    id: Number(row['id']),
+    id: String(row['id']),
     name: typeof row['name'] === 'string' ? row['name'] : null,
   }
 }
@@ -96,7 +97,7 @@ export function createAccessDirectory(database: Database): AccessDirectory {
     return Number(result.rows?.[0]?.['n'] ?? 0)
   }
 
-  async function accountById(db: Database, id: number): Promise<AccessAccount | null> {
+  async function accountById(db: Database, id: string): Promise<AccessAccount | null> {
     let result = await db.exec(sql`SELECT * FROM access_accounts WHERE id = ${id}`)
     let row = result.rows?.[0]
     return row === undefined ? null : toAccount(row)
@@ -111,7 +112,8 @@ export function createAccessDirectory(database: Database): AccessDirectory {
         if ((existing.rows?.length ?? 0) > 0) return REFUSED('duplicate')
 
         await db.exec(
-          sql`INSERT INTO access_accounts (email, added_at) VALUES (${email}, ${stamp(when)})`,
+          sql`INSERT INTO access_accounts (id, email, added_at)
+              VALUES (${newRowId()}, ${email}, ${stamp(when)})`,
         )
         return DONE
       })
@@ -125,7 +127,8 @@ export function createAccessDirectory(database: Database): AccessDirectory {
         if ((existing.rows?.length ?? 0) > 0) return REFUSED('duplicate')
 
         await db.exec(
-          sql`INSERT INTO access_groups (email, name, added_at) VALUES (${email}, ${name}, ${stamp(when)})`,
+          sql`INSERT INTO access_groups (id, email, name, added_at)
+              VALUES (${newRowId()}, ${email}, ${name}, ${stamp(when)})`,
         )
         return DONE
       })
@@ -138,12 +141,12 @@ export function createAccessDirectory(database: Database): AccessDirectory {
     },
 
     async listAccounts() {
-      let result = await database.exec(sql`SELECT * FROM access_accounts ORDER BY added_at, id`)
+      let result = await database.exec(sql`SELECT * FROM access_accounts ORDER BY added_at, rowid`)
       return (result.rows ?? []).map(toAccount)
     },
 
     async listGroups() {
-      let result = await database.exec(sql`SELECT * FROM access_groups ORDER BY added_at, id`)
+      let result = await database.exec(sql`SELECT * FROM access_groups ORDER BY added_at, rowid`)
       return (result.rows ?? []).map(toGroup)
     },
 
@@ -191,7 +194,8 @@ export function createAccessDirectory(database: Database): AccessDirectory {
         if (Number(result.rows?.[0]?.['n'] ?? 0) > 0) return false
 
         await db.exec(
-          sql`INSERT INTO access_accounts (email, is_admin, added_at) VALUES (${email}, 1, ${stamp(when)})`,
+          sql`INSERT INTO access_accounts (id, email, is_admin, added_at)
+              VALUES (${newRowId()}, ${email}, 1, ${stamp(when)})`,
         )
         return true
       })

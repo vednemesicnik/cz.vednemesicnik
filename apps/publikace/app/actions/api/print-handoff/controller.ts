@@ -9,6 +9,7 @@ import type {
   IssueReport,
   PrintHandoffStore,
 } from '../../../data/print-handoff.server.ts'
+import { isRowId } from '../../../data/row-id.server.ts'
 import {
   COPY_PROPERTY,
   ERROR_TEXT_LIMIT,
@@ -84,10 +85,6 @@ const MAX_REPORT_ARTICLES = 500
 const MAX_REPORT_ARTWORKS = 5000
 const MAX_IMAGE_NUMBER = 9999
 
-function isId(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value > 0
-}
-
 function isOptionalText(value: unknown, max: number): value is string | null {
   return value === null || isText(value, max)
 }
@@ -101,7 +98,7 @@ function readCopy(value: unknown): ArticleCopy | null | undefined {
   if (
     !isText(folderId, MAX_ID_LENGTH) ||
     !isOptionalText(textFileId, MAX_ID_LENGTH) ||
-    !(textFinalVersionId === null || isId(textFinalVersionId)) ||
+    !(textFinalVersionId === null || isRowId(textFinalVersionId)) ||
     typeof isTextChanged !== 'boolean' ||
     typeof lastImageNumber !== 'number' ||
     !Number.isInteger(lastImageNumber) ||
@@ -116,7 +113,7 @@ function readCopy(value: unknown): ArticleCopy | null | undefined {
   for (let artwork of artworks as unknown[]) {
     if (typeof artwork !== 'object' || artwork === null) return undefined
     let { artworkId, fileId, name } = artwork as Record<string, unknown>
-    if (!isId(artworkId) || !isText(fileId, MAX_ID_LENGTH) || !isText(name, MAX_NAME_LENGTH)) {
+    if (!isRowId(artworkId) || !isText(fileId, MAX_ID_LENGTH) || !isText(name, MAX_NAME_LENGTH)) {
       return undefined
     }
     copies.push({ artworkId, fileId, name })
@@ -137,7 +134,7 @@ function readArtworkCopies(artworks: unknown): ArticleCopy['artworks'] | undefin
   for (let artwork of artworks as unknown[]) {
     if (typeof artwork !== 'object' || artwork === null) return undefined
     let { artworkId, fileId, name } = artwork as Record<string, unknown>
-    if (!isId(artworkId) || !isText(fileId, MAX_ID_LENGTH) || !isText(name, MAX_NAME_LENGTH)) {
+    if (!isRowId(artworkId) || !isText(fileId, MAX_ID_LENGTH) || !isText(name, MAX_NAME_LENGTH)) {
       return undefined
     }
     copies.push({ artworkId, fileId, name })
@@ -172,7 +169,7 @@ function readGroups(value: unknown): NonNullable<IssueReport['groups']> | null {
     if (typeof group !== 'object' || group === null) return null
     let fields = group as Record<string, unknown>
     let copy = readGroupCopy(fields['copy'])
-    if (!isId(fields['groupId']) || copy === undefined) return null
+    if (!isRowId(fields['groupId']) || copy === undefined) return null
     read.push({ copy, groupId: fields['groupId'] })
   }
   return read
@@ -182,7 +179,7 @@ function readIssue(value: unknown): IssueReport | null {
   if (typeof value !== 'object' || value === null) return null
   let { articles, groups, isComplete, issueId, sheetId } = value as Record<string, unknown>
   if (
-    !isId(issueId) ||
+    !isRowId(issueId) ||
     typeof isComplete !== 'boolean' ||
     !isOptionalText(sheetId ?? null, MAX_ID_LENGTH) ||
     !Array.isArray(articles) ||
@@ -195,7 +192,7 @@ function readIssue(value: unknown): IssueReport | null {
     if (typeof article !== 'object' || article === null) return null
     let fields = article as Record<string, unknown>
     let copy = readCopy(fields['copy'])
-    if (!isId(fields['articleId']) || copy === undefined) return null
+    if (!isRowId(fields['articleId']) || copy === undefined) return null
     read.push({ articleId: fields['articleId'], copy })
   }
   let readGroupList = readGroups(groups)
