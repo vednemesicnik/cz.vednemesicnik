@@ -79,7 +79,8 @@ const PHONE_PAGE = { bottom: 32, gap: 16, inline: 20 }
 const TOAST_OFFSET = 18
 const PHONE_TOAST_INSET = 16
 
-/* The tallest toast the app draws, three lines: a message on two and its detail line (`11f`). */
+/* The tallest toast the app draws, three lines: a message on two and its detail line (`11f`), or
+   a toast with an action whose message takes three beside its close button at 390 px (`11g`). */
 const TALLEST_TOAST = 83
 
 const mainStyle = css({

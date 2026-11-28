@@ -3,7 +3,8 @@ import { css } from 'remix/component'
 
 import { tied } from '../../domain/public/typography.ts'
 import { CsrfField } from '../csrf-field/component.tsx'
-import { TOAST_CLOSED_ATTRIBUTE, ToastClose } from '../public/toast-close/component.tsx'
+import { ToastClose } from '../public/toast-close/component.tsx'
+import { TOAST_CLOSED_ATTRIBUTE } from '../public/toast-closed.ts'
 
 export type ToastTone = 'error' | 'neutral'
 

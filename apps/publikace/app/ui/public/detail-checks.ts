@@ -8,7 +8,7 @@
  * showed: the rows just found, their sentence and the toast the detail opened with.
  */
 
-import { TOAST_CLOSED_ATTRIBUTE } from './toast-close/component.tsx'
+import { TOAST_CLOSED_ATTRIBUTE } from './toast-closed.ts'
 
 /**
  * The cookie naming the load whose reload the next request is, set just before it and read by the
