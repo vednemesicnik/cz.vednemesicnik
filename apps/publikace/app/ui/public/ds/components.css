@@ -464,6 +464,18 @@
 .vdm-toast:has(.vdm-toast__action) .vdm-toast__close { margin-left: 4px; }
 .vdm-toast:has(.vdm-toast__close) .vdm-toast__action::after { inset-inline-end: -4px; }
 .vdm-toast:has(.vdm-toast__close) { pointer-events: auto; }
+/* Keyboard focus on the action and the close button: the system's ring, 3px
+   out (a 1px gap, a 2px band, no alpha), from --focus-shadow-inverse, whose
+   gap is the toast's own surface and whose band has >= 3:1 against it in both
+   modes (light 6.8:1, dark 5.2:1). --focus-shadow is built for the page: on
+   the toast its gap draws a frame in a colour the toast does not have and its
+   band falls to 2.46:1 on the light toast of the dark mode. The ring follows
+   the button's own box (the word, the 16 px icon) with --radius-sm, as on
+   .vdm-link; nothing moves and the tap areas stay. Keyboard only.
+   Rozhodnuto 28. 11. 2026 (1pvb5o8r). */
+.vdm-toast__action:focus-visible, .vdm-toast__close:focus-visible { outline: none; border-radius: var(--radius-sm); box-shadow: var(--focus-shadow-inverse); }
+/* Drawings only: the same ring without a keyboard. */
+.vdm-toast__action--focus, .vdm-toast__close--focus { border-radius: var(--radius-sm); box-shadow: var(--focus-shadow-inverse); }
 /* A second line under the message: who and when, as the detail line of a
    StatusTag ("21. 11. v 9:40 · Jana Veselá"). Same colour and size as the
    message, so it keeps the toast's contrast; it wraps on its own. Rozhodnuto
