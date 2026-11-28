@@ -17,6 +17,7 @@ import {
   type NewArticle,
   replayedArticle,
 } from './article-setup.server.ts'
+import { createDriveTrust } from './drive-trust.server.ts'
 import { createFakeDrive, type FakeDrive } from './fake-drive.server.ts'
 import { createDriveFolders } from './folders.server.ts'
 import { createIssue } from './issue-setup.server.ts'
@@ -79,6 +80,7 @@ async function withHarness(
       origin: 'https://publikace.vednemesicnik.test',
       templateId: TEMPLATE,
       token: async () => options.token ?? TOKEN,
+      trust: createDriveTrust({ now }),
     }
     await run({
       app,

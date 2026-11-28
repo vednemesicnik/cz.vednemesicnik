@@ -17,6 +17,7 @@ import type { Mailer } from '../mail/mailer.server.ts'
 import { welcomeEmail } from '../mail/welcome-email.server.ts'
 import type { DriveAccessToken } from './access-token.server.ts'
 import type { ArticleFiles } from './article-files.server.ts'
+import type { DriveTrust } from './drive-trust.server.ts'
 import type { DriveFolders } from './folders.server.ts'
 import { checkIssueFolders } from './issue-folders.server.ts'
 import { logDriveFailure } from './log.server.ts'
@@ -56,6 +57,8 @@ export type ArticleSetup = {
   /** `ARTICLE_TEMPLATE_DOCUMENT_ID`. */
   templateId: string
   token(): Promise<DriveAccessToken>
+  /** What Drive said a moment ago, which the link's page may lean on when it opens. */
+  trust: DriveTrust
 }
 
 export type NewArticle = {

@@ -354,6 +354,25 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
     }
   })
 
+  it('asks Drive about a Doc once, however often the detail opens, until Drive changes behind its back (#1122)', async () => {
+    let { app, docId, editor } = await approved()
+    try {
+      let docAsks = () =>
+        app.drive.calls.filter((call) => call === `GET /drive/v3/files/${docId}`).length
+      await opened(editor)
+      await opened(editor)
+      assert.equal(docAsks(), 1)
+
+      /* An edit behind the app's back forgets what it was told, as five minutes would. */
+      app.drive.reviseDoc(docId, EDITED_AT)
+      let detail = await opened(editor)
+      assert.equal(docAsks(), 2)
+      assert.equal(detail.changed.length, 1)
+    } finally {
+      await app.close()
+    }
+  })
+
   it('does not ask Drive about the Docs of a closed issue', async () => {
     let { app, docId, editor, issueId } = await approved()
     try {

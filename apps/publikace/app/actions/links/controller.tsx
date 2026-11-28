@@ -111,7 +111,8 @@ function goneResponse(
 /**
  * What the page says under the lead when it opens (`20a`): the account first, because without it
  * nothing can be checked on Drive; then whether the issue's _Články_ is still there, which the
- * check records on the issue for its detail (`12j`).
+ * check records on the issue for its detail (`12j`). A folder found standing a few minutes ago is
+ * taken on the trust's word; creating the article asks Drive again.
  */
 async function warningOnOpen(context: LinkContext, issue: Issue): Promise<PageWarning | undefined> {
   let driveAccount = context.get(DriveAccount) as DriveAccountContext
@@ -124,7 +125,11 @@ async function warningOnOpen(context: LinkContext, issue: Issue): Promise<PageWa
   let token = await setup.token()
   if (!token.ok) return token.reason === 'unavailable' ? undefined : 'disconnected'
   let check = await checkIssueFolders(
-    { folders: setup.folders(token.accessToken), issues: setup.issues, now: () => setup.now() },
+    {
+      folders: setup.trust.trusting(setup.folders(token.accessToken)),
+      issues: setup.issues,
+      now: () => setup.now(),
+    },
     issue,
   )
   return check !== 'unavailable' && check.missing.length > 0 ? 'folder-gone' : undefined

@@ -10,12 +10,13 @@ import type { DriveFolders, FolderStanding } from './folders.server.ts'
  * same record, kept on the group (cz.vednemesicnik.publikace#133). Every place that runs into a folder asks here: the
  * link's page and its upload and send, _Poslat žádost znovu_, _Zahodit dávku_, the issue detail
  * and _Zkontrolovat znovu_. A folder found missing is marked, one found again loses its mark, and
- * none is ever created again.
+ * none is ever created again. The link's page and its upload ask through the trust, which answers
+ * for a folder found standing a few minutes ago; everything else asks Drive (#1122).
  */
 
 export type ArticleFoldersDeps = {
   articles: Pick<ArticleStore, 'clearMissing' | 'markMissing'>
-  folders: DriveFolders
+  folders: Pick<DriveFolders, 'standing'>
   /** Where a group's record goes; only the checks that may meet a group pass it. */
   groups?: Pick<GroupStore, 'clearMissing' | 'markMissing'>
   now(): Temporal.Instant
@@ -52,11 +53,13 @@ export async function checkArticleFolders(
   which: readonly ArticleFolderKind[] = ALL_FOLDERS,
 ): Promise<FolderCheck> {
   let kinds = ALL_FOLDERS.filter((kind) => which.includes(kind) || kind === 'article')
-  let standings = new Map<ArticleFolderKind, FolderStanding>()
-  for (let kind of kinds) {
-    let id = idOf(article, kind)
-    standings.set(kind, id === null ? 'gone' : await deps.folders.standing(id))
-  }
+  let answers = await Promise.all(
+    kinds.map((kind): Promise<FolderStanding> => {
+      let id = idOf(article, kind)
+      return id === null ? Promise.resolve('gone') : deps.folders.standing(id)
+    }),
+  )
+  let standings = new Map(kinds.map((kind, index) => [kind, answers[index] ?? 'unavailable']))
   if ([...standings.values()].includes('unavailable')) return 'unavailable'
 
   let isArticleMissing = standings.get('article') !== 'exists'

@@ -211,7 +211,9 @@ again.
   (_Nedokončené_).
 - **Nothing is deleted for good.** The app only bins, and never touches what a person made or
   moved. It never recreates a folder somebody removed. It marks the folder missing, shows it
-  (`12j`), and a link page that needs it accepts nothing until it is back.
+  (`12j`), and a link page that needs it accepts nothing once the app has found it missing, and
+  never sends into it: a folder found standing is trusted for five minutes, one found missing is
+  asked about again every time, and creating an article or sending a batch always asks.
 - **Any editor-in-chief can mend a mistake made in creating something.** What is written wrong is
   corrected; what should not exist is removed: binned on the shared drive, its row kept with the
   time of removal, and not brought back by restoring the folder. A sent e-mail cannot be taken

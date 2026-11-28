@@ -8,13 +8,16 @@ import type { ArtworkFiles } from './artwork-files.server.ts'
  * then hashes differently. Comments, renames and sharing move `modifiedTime` but make no
  * revision, so `modifiedTime` only says whether the revisions are worth listing.
  *
- * The issue detail asks once it stands, from its page (`12q`). What Drive said is recorded on the
- * marking, and a Drive that does not answer records nothing: the page shows what was found before.
+ * The issue detail asks once it stands, from its page (`12q`), for every Doc it did not ask about
+ * a few minutes ago (#1122). What Drive said is recorded on the marking, and a Drive that does not
+ * answer records nothing: the page shows what was found before.
  */
 
 export type DocRevisionsDeps = {
   articles: Pick<ArticleStore, 'recordDocCheck'>
   files: Pick<ArtworkFiles, 'placeOf' | 'revisionTimesOf'>
+  /** Told of every check that got its answer, so the detail can leave it out for a while. */
+  asked?(target: DocCheckTarget): void
 }
 
 /**
@@ -32,6 +35,7 @@ export async function checkDocRevisions(
   if (place.kind !== 'here') return 'unavailable'
   let modifiedAt = place.modifiedAt
   if (modifiedAt === null || Temporal.Instant.compare(modifiedAt, target.checkedAt) <= 0) {
+    deps.asked?.(target)
     return 'unchanged'
   }
   let times = await deps.files.revisionTimesOf(target.docId)
@@ -45,6 +49,7 @@ export async function checkDocRevisions(
     checkedAt: modifiedAt,
     revisedAt,
   })
+  deps.asked?.(target)
   return { revisedAt }
 }
 
