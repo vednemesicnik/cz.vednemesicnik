@@ -1,6 +1,8 @@
 import type { Handle } from 'remix/component'
 import { clientEntry, ref } from 'remix/component'
 
+import { checkInTurn } from '../detail-checks.ts'
+
 export type FolderCheckProps = {
   /**
    * _Zkontrolovat znovu_: where it posts, its label and `Kontroluje se…` while Drive is asked.
@@ -33,41 +35,22 @@ const WAITLINE_CLIP = {
   position: 'absolute',
 } as const
 
-/**
- * One check per load however many Callouts start it, so a detail with three marked folders asks
- * Drive once and reloads once. The entry goes when the check settles rather than staying for the
- * document's life, because the runtime keeps the document across navigations.
- */
-const runs = new Map<string, Promise<void>>()
-
 function isChangedOf(body: unknown): boolean {
   if (typeof body !== 'object' || body === null) return false
   return (body as Record<string, unknown>).changed === true
 }
 
 /**
- * The reload comes only when the answer says a record changed: the reload asks nothing again, and
- * a load after it that does ask finds the same records and stops there, so a folder that stays
- * missing never reloads the page in a loop.
+ * Whether a record changed: only then does the page reload, and the reload asks nothing again, so a
+ * folder that stays missing never reloads the page in a loop. A check that failed changes nothing:
+ * the records stand, and so do the Callouts.
  */
-function checkOnce(
-  check: { href: string; load: string },
-  csrfToken: string,
-  reload: () => Promise<unknown>,
-): Promise<void> {
-  let run = runs.get(check.load)
-  if (run !== undefined) return run
+async function ask(check: { href: string; load: string }, csrfToken: string): Promise<boolean> {
   let body = new FormData()
   body.set('_csrf', csrfToken)
-  /* A check that failed reloads nothing: the records stand, and so do the Callouts. */
-  run = fetch(check.href, { body, method: 'POST' })
-    .then(async (response) => {
-      if (response.ok && isChangedOf(await response.json())) await reload()
-    })
-    .catch(() => undefined)
-    .finally(() => runs.delete(check.load))
-  runs.set(check.load, run)
-  return run
+  body.set('load', check.load)
+  let response = await fetch(check.href, { body, method: 'POST' })
+  return response.ok && isChangedOf(await response.json())
 }
 
 /**
@@ -124,7 +107,12 @@ export const FolderCheck = clientEntry(
       isChecking = true
       handle.update()
       wait()
-      checkOnce(check, csrfToken, () => handle.frames.top.reload()).then(() => {
+      /* One check per load however many Callouts start it, so a detail with three marked
+         folders asks Drive once and reloads once. */
+      checkInTurn(check.load, 'marked-folders', () => ask(check, csrfToken), {
+        isCurrent: () => !handle.signal.aborted && handle.props.arrivalCheck?.load === check.load,
+        reload: () => handle.frames.top.reload(),
+      }).then(() => {
         /* A later load's check owns the waitline once it started. */
         if (handle.signal.aborted || asked !== check.load) return
         isChecking = false

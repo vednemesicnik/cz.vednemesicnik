@@ -1,6 +1,8 @@
 import type { Handle } from 'remix/component'
 import { clientEntry } from 'remix/component'
 
+import { checkInTurn } from '../detail-checks.ts'
+
 export type DocRevisionCheckProps = {
   /** Where the detail's own check posts once the page stands. */
   href: string
@@ -45,24 +47,17 @@ function untilMenusClose(ids: readonly string[], signal: AbortSignal): Promise<v
   })
 }
 
-async function ask(
-  props: DocRevisionCheckProps,
-  signal: AbortSignal,
-  reload: () => Promise<unknown>,
-): Promise<void> {
+/** Whether the answer listed a changed row, once no changed row has its menu open. */
+async function ask(props: DocRevisionCheckProps, signal: AbortSignal): Promise<boolean> {
   let body = new FormData()
   body.set('_csrf', props.csrfToken)
-  try {
-    let response = await fetch(props.href, { body, method: 'POST', signal })
-    if (!response.ok) return
-    let changed = changedOf(await response.json())
-    if (changed.length === 0 || signal.aborted) return
-    await untilMenusClose(changed, signal)
-    if (signal.aborted) return
-    await reload()
-  } catch {
-    /* A check that failed reloads nothing: the rows stand as recorded. */
-  }
+  body.set('load', props.load)
+  let response = await fetch(props.href, { body, method: 'POST', signal })
+  if (!response.ok) return false
+  let changed = changedOf(await response.json())
+  if (changed.length === 0 || signal.aborted) return false
+  await untilMenusClose(changed, signal)
+  return !signal.aborted
 }
 
 /**
@@ -98,8 +93,12 @@ export const DocRevisionCheck = clientEntry(
         pending = controller
         /* A copy: the runtime updates `handle.props` in place for the next load. */
         let props = { ...handle.props }
+        /* A check that failed reloads nothing: the rows stand as recorded. */
         handle.queueTask(() => {
-          void ask(props, controller.signal, () => handle.frames.top.reload())
+          void checkInTurn(props.load, 'doc-revisions', () => ask(props, controller.signal), {
+            isCurrent: () => !controller.signal.aborted,
+            reload: () => handle.frames.top.reload(),
+          })
         })
       }
       return null

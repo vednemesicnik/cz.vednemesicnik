@@ -157,15 +157,15 @@ export type LinkBlockView = {
 }
 
 /**
- * The Callout under an article's row, or in a group's, whose folder or a folder in it is missing
- * (`12j`).
- */
-/**
  * Where the missing folders' check posts (`12j`), and `load`, new on every load of the detail that
  * asks: the island asks again whenever it changes, also on a load the runtime reconciles in place.
  */
 export type ArrivalCheckView = { href: string; load: string }
 
+/**
+ * The Callout under an article's row, or in a group's, whose folder or a folder in it is missing
+ * (`12j`).
+ */
 export type MissingFoldersView = {
   /** The detail's own check once the page stands (`12j`); `null` on a load that asks nothing. */
   arrivalCheck: ArrivalCheckView | null
@@ -399,9 +399,9 @@ export type GroupsView = {
 
 /**
  * The detail's own question to Drive about its approved texts (`12q`): what a screen reader hears
- * on the load that shows a find, and the check, on the detail as opened only. `load` is new on
- * every load that asks, which the island tells apart and asks again on, also when the runtime
- * reconciles that load into the page that stands.
+ * on the load that shows a find, and the check, on a load that asks. `load` is new on every
+ * such load, which the island tells apart and asks again on, also when the runtime reconciles
+ * that load into the page that stands.
  */
 export type DocCheckView = {
   announcement: string | null

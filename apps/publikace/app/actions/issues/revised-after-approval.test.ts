@@ -104,7 +104,7 @@ async function opened(
 ): Promise<{ changed: string[]; first: string; html: string }> {
   let first = await (await editor.get(path)).text()
   let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(first)?.[1] ?? ''
-  let response = await editor.post(CHECK, { _csrf: csrf }, path)
+  let response = await editor.post(CHECK, { _csrf: csrf, load: loadOf(first) ?? '' }, path)
   assert.equal(response.status, 200)
   let { changed } = (await response.json()) as { changed: string[] }
   let html = changed.length === 0 ? first : await (await editor.get(path)).text()
@@ -404,6 +404,27 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       let next = await (await editor.get(DETAIL)).text()
       assert.equal(statusText(next), '')
       assert.ok(next.includes(CHECK_ISLAND))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('counts a check’s find for nothing once a later load of the detail asked (#1124)', async () => {
+    let { app, articleId, docId, editor } = await approved()
+    try {
+      let earlier = await (await editor.get(DETAIL)).text()
+      let later = await (await editor.get(DETAIL)).text()
+      assert.ok(loadOf(later) !== loadOf(earlier))
+
+      app.drive.reviseDoc(docId, EDITED_AT)
+      let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(earlier)?.[1] ?? ''
+      let response = await editor.post(CHECK, { _csrf: csrf, load: loadOf(earlier) ?? '' }, DETAIL)
+      assert.deepEqual(await response.json(), { changed: [articleId] })
+
+      /* Not the reload of the load that asked: it asks, and tints nothing. */
+      let next = await (await editor.get(DETAIL)).text()
+      assert.ok(next.includes(CHECK_ISLAND))
+      assert.deepEqual(tintedRows(next), [])
     } finally {
       await app.close()
     }

@@ -1,4 +1,4 @@
-import { createId } from '@paralleldrive/cuid2'
+import { createId, isCuid } from '@paralleldrive/cuid2'
 import { redirect } from 'remix/response/redirect'
 import {
   AGREED_AUTHOR_TAG,
@@ -304,6 +304,7 @@ import { flashToast, keepToasts, keptToasts, Toasts } from '../../middleware/toa
 import { routes } from '../../routes.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import {
+  type ArrivalCheckView,
   type ArticleRowView,
   type ArtworkRowView,
   type ArtworksView,
@@ -312,7 +313,6 @@ import {
   type DiscardView,
   type DocCheckView,
   type GroupsView,
-  type ArrivalCheckView,
   type IssueMissingView,
   type LinkBlockView,
   type MissingAddressView,
@@ -408,59 +408,52 @@ function flashSettled(context: PageContext, settled: SettledArticle): void {
 }
 
 /*
- * What the detail's own revision check just found, for the reload it starts (`12q`): the issue,
- * so it shows on that detail only, and the articles that turned _Upraveno po schválení_, which
- * that one load keeps in place, tinted, with the sentence for a screen reader. Taken once; its
- * presence also tells the reload not to ask Drive again.
+ * What the detail's own checks just changed, for the reload they start (`12q`, `12j`): the load
+ * that asked, the issue, so it counts on that detail only, and the articles that turned
+ * _Upraveno po schválení_, which that one reload keeps in place, tinted, with the sentence for a
+ * screen reader. A plain value rather than a flash: a flash is gone after the next request that
+ * reads the session, and the other check of the same load is one. The page asks its checks in turn
+ * (`app/ui/public/detail-checks.ts`), so the second adds to what the first wrote.
  */
-const DOC_CHECKED_SESSION_KEY = 'docRevisionsChecked'
+const DETAIL_CHECKED_SESSION_KEY = 'issueDetailChecked'
 
-type DocChecked = { name: string; revised: readonly string[] }
+type DetailChecked = { load: string; name: string; revised: readonly string[] }
 
-function flashDocChecked(session: Session | undefined, checked: DocChecked): void {
-  session?.flash(DOC_CHECKED_SESSION_KEY, checked)
-}
-
-function takeDocChecked(session: Session | undefined, name: string): DocChecked | null {
-  let value = session?.get(DOC_CHECKED_SESSION_KEY)
-  if (value === undefined) return null
-  session?.unset(DOC_CHECKED_SESSION_KEY)
+function readDetailChecked(session: Session | undefined, name: string): DetailChecked | null {
+  let value = session?.get(DETAIL_CHECKED_SESSION_KEY)
   if (typeof value !== 'object' || value === null) return null
-  let { name: checkedName, revised } = value as Record<string, unknown>
-  if (checkedName !== name || !Array.isArray(revised)) return null
-  return { name, revised: revised.filter((id): id is string => isRowId(id)) }
+  let { load, name: checkedName, revised } = value as Record<string, unknown>
+  if (checkedName !== name || typeof load !== 'string' || !Array.isArray(revised)) return null
+  return { load, name, revised: revised.filter((id): id is string => isRowId(id)) }
 }
 
-/*
- * That the detail's check of the folders on record as missing changed a record, for the reload it
- * starts (`12j`): the issue's name, so it counts on that detail only. Taken once; its presence
- * tells the reload not to ask again.
- */
-const FOLDERS_CHECKED_SESSION_KEY = 'missingFoldersChecked'
-
-function takeFoldersChecked(session: Session | undefined, name: string): boolean {
-  let value = session?.get(FOLDERS_CHECKED_SESSION_KEY)
-  if (value === undefined) return false
-  session?.unset(FOLDERS_CHECKED_SESSION_KEY)
-  return value === name
+/** Records a change one of the checks of `load` found, beside what another one found before. */
+function recordDetailChecked(context: PageContext, name: string, revised: readonly string[]): void {
+  let session = context.get(Session) as Session | undefined
+  let load = formText(context, 'load')
+  if (session === undefined || !isCuid(load)) return
+  let earlier = readDetailChecked(session, name)
+  let kept = earlier?.load === load ? earlier.revised : []
+  session.set(DETAIL_CHECKED_SESSION_KEY, { load, name, revised: [...kept, ...revised] })
 }
 
 /**
- * The toasts of the detail: the session's on an ordinary load, kept for the reload a check of that
- * load may start, which draws them again (`12q`, `12j`). The flash was used up by the load that
- * showed them, and the reload draws the same toast where it stands, so it neither fades in again
- * nor is announced twice. An ordinary load drops what an earlier one kept.
+ * Whether this load of the detail is the reload its own checks started, and what they found. It is
+ * when what they recorded names the load whose toasts the session kept (`keepToasts`), which is
+ * the last load that asked: a record of an earlier load, whose reload never came, counts for
+ * nothing. Read once either way.
  */
-function shownToasts(
-  context: PageContext,
+function takeCheckReload(
   session: Session | undefined,
   name: string,
-  load: { isAsking: boolean; isCheckReload: boolean },
-): readonly ToastMessage[] {
-  if (load.isCheckReload) return keptToasts(session, name)
-  let toasts = context.get(Toasts) as readonly ToastMessage[]
-  keepToasts(session, name, load.isAsking ? toasts : [])
-  return toasts
+): { revised: readonly string[]; toasts: readonly ToastMessage[] } | null {
+  let checked = readDetailChecked(session, name)
+  if (session?.get(DETAIL_CHECKED_SESSION_KEY) !== undefined) {
+    session.unset(DETAIL_CHECKED_SESSION_KEY)
+  }
+  if (checked === null) return null
+  let toasts = keptToasts(session, checked.load)
+  return toasts === null ? null : { revised: checked.revised, toasts }
 }
 
 function takeSettled(session: Session | undefined): SettledArticle | null {
@@ -1055,23 +1048,23 @@ async function renderDetail(
 ): Promise<Response> {
   let session = context.get(Session) as Session | undefined
   let fixed = takeIssueFixed(context)
-  let checked = takeDocChecked(session, issue.name)
-  /* Both flashes are taken, so neither outlives this load. */
-  let isFoldersReload = takeFoldersChecked(session, issue.name)
-  /* The reload a check started asks nothing again, and keeps the toast the detail opened with. */
-  let isCheckReload = checked !== null || isFoldersReload
-  let load = options.isShown === true && !isCheckReload ? createId() : null
+  /* The reload a check started asks nothing again, and draws again the toasts of the load that
+     asked: the flash was used up by that load, and the same toast drawn where it stands neither
+     fades in again nor is announced twice. */
+  let reload = takeCheckReload(session, issue.name)
+  let load = options.isShown === true && reload === null ? createId() : null
   let arrival =
     load === null
       ? null
       : { href: routes.issues.checkMarkedFolders.href({ name: issue.name }), load }
-  let toasts = shownToasts(context, session, issue.name, { isCheckReload, isAsking: load !== null })
+  let toasts = reload?.toasts ?? (context.get(Toasts) as readonly ToastMessage[])
+  if (load !== null) keepToasts(session, load, toasts)
   let { articles, link } = await linkAndArticles(
     context,
     issue,
     takeLinkChanged(session, issue.name),
     takeSettled(session),
-    new Set(checked?.revised ?? []),
+    new Set(reload?.revised ?? []),
     arrival,
   )
   return context.render(
@@ -1685,39 +1678,28 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         })
       },
 
-      /* `12q`: what the detail asks once it stands. What changed is recorded and flashed for
-         the reload the page's island starts, and the answer lists the articles whose rows
-         change, so the island knows what to wait for. No toast and no redirect, as
-         `checkMarkedFolders`. */
+      /* `12q`: what the detail asks once it stands. What changed is recorded, and kept for the
+         reload the page's island starts, and the answer lists the articles whose rows change, so
+         the island knows what to wait for. No toast and no redirect, as `checkMarkedFolders`. */
       async checkDocRevisions(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
         let found = await recheckDocRevisions(context, issue)
         let changed = [...found.revised, ...found.moved]
-        if (changed.length > 0) {
-          flashDocChecked(context.get(Session) as Session | undefined, {
-            name: issue.name,
-            revised: found.revised,
-          })
-        }
+        if (changed.length > 0) recordDetailChecked(context, issue.name, found.revised)
         return Response.json({ changed })
       },
 
       /* `12j`: what the detail's Callouts ask once the page stands. The records change and the
          Callouts read them on the page's next render, so this says only whether a record
          changed, which is when the page's island reloads it: no toast, whether Drive answered or
-         not, and never a redirect. What changed is flashed for that reload, which asks nothing
-         again. */
+         not, and never a redirect. That a record changed is kept for that reload, which asks
+         nothing again. */
       async checkMarkedFolders(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
         let changed = await recheckMissing(context, issue)
-        if (changed) {
-          ;(context.get(Session) as Session | undefined)?.flash(
-            FOLDERS_CHECKED_SESSION_KEY,
-            issue.name,
-          )
-        }
+        if (changed) recordDetailChecked(context, issue.name, [])
         return Response.json({ changed })
       },
 

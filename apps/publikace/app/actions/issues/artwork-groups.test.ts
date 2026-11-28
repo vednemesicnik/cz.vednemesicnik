@@ -765,23 +765,38 @@ describe('a group’s missing folder in the detail (12j, cz.vednemesicnik.publik
         context.app.drive.trash(group.folderId)
         await context.app.browser().get(`/l/${group.link?.key}/artworks`)
       }
-      let check = () => context.editor.post(`${DETAIL}/folders/check-marked`, {}, DETAIL)
+      let detail = async () => (await context.editor.get(DETAIL)).text()
+      /* As the island asks: with the load of the page that stands. */
+      let check = async (html: string) => {
+        let load = /&quot;load&quot;:&quot;([0-9a-z]+)&quot;|"load":"([0-9a-z]+)"/
+          .exec(html)
+          ?.slice(1)
+          .find(Boolean)
+        assert.ok(load !== undefined, 'the page asks')
+        /* The page's own token, so the post loads no page of its own first. */
+        let _csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(html)?.[1] ?? ''
+        let response = await context.editor.post(
+          `${DETAIL}/folders/check-marked`,
+          { _csrf, load },
+          DETAIL,
+        )
+        return response.json()
+      }
       let asks = (html: string) => html.includes(`${DETAIL}/folders/check-marked`)
-
-      assert.ok(asks(await (await context.editor.get(DETAIL)).text()))
-      assert.deepEqual(await (await check()).json(), { changed: false })
-      assert.ok(
-        asks(await (await context.editor.get(DETAIL)).text()),
-        'nothing changed, so it asks',
-      )
-
       let back = await groupOf(context, 'Zadní strana')
+
+      assert.deepEqual(await check(await detail()), { changed: false })
+      let again = await detail()
+      assert.ok(asks(again), 'nothing changed, so the next load asks')
+
       context.app.drive.restore(back.folderId)
-      assert.deepEqual(await (await check()).json(), { changed: true })
-      let reload = await (await context.editor.get(DETAIL)).text()
+      assert.deepEqual(await check(again), { changed: true })
+      let reload = await detail()
       assert.ok(textOf(reload).includes(GROUP_STEP), 'the other group is still missing')
       assert.ok(!asks(reload), 'the reload asks nothing again')
-      assert.ok(asks(await (await context.editor.get(DETAIL)).text()))
+      assert.ok(asks(await detail()))
+      let dialog = await (await context.editor.get(`${DETAIL}/artwork-groups/new`)).text()
+      assert.ok(!asks(dialog), 'a question over the detail asks nothing')
     }))
 
   it('hides under a binned issue folder, which is counted once', () =>
