@@ -3,9 +3,10 @@ import { appendFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 /*
- * The tag each application gets from a merge into `main`, worked out the same way twice: by
- * release-version.yml before the merge, so a wrong version blocks the PR, and by release.yml
- * after it, which tags the merge commit with the answer. One script, so the two cannot disagree.
+ * The tag each application gets from a merge into `main`, worked out the same way three times:
+ * by release-version.yml before the merge, so a wrong version blocks the PR, by release.yml
+ * after it, which tags the merge commit with the answer, and by deploy.yml, which bakes it into
+ * the image. One script, so the three cannot disagree.
  *
  * Every folder in apps/ has a style in RELEASE_STYLES, and its tags are `<folder>-<version>`:
  *
@@ -21,7 +22,10 @@ import { join } from 'node:path'
  * Modes (`MODE`): `check-apps` checks the folders against the table (PRs into `dev`), `check`
  * is the gate (PRs into `main`), `release` writes `releases` and `failed` to `$GITHUB_OUTPUT`
  * for the job that tags: the applications that passed are tagged even when another one
- * fails. Reads `BASE_REF`, `HEAD_REF`, `HEAD_REPO`, `REPO`, `BODY`, `SHA` and `MERGED_AT`.
+ * fails. `version` prints the tag the deploy of `SHA` runs for the application `APP`, and
+ * writes it as `version` to `$GITHUB_OUTPUT`, empty when none stands for the code.
+ * Reads `BASE_REF`, `HEAD_REF`, `HEAD_REPO`, `REPO`, `BODY`, `SHA`, `MERGED_AT` and, for
+ * `version`, `APP`.
  * Runs locally with the same variables against a merge commit into `main`, since the PR's
  * own commits are `SHA^1..SHA`: `MODE=check BASE_REF=main HEAD_REF=dev SHA=<merge-sha> node
  * scripts/release-version.ts`.
@@ -284,6 +288,20 @@ function decideSemver(facts: AppFacts, previous: string | undefined): Decision {
   return { action: 'tag', app, previous, tag: `${app}-v${named}` }
 }
 
+/**
+ * The tag of the version a deploy of this commit runs: the tag the merge gets, or, when the
+ * application did not change, its newest tag, since the code is that version's.
+ *
+ * @param facts What is known about the application at the commit.
+ * @returns The tag, or `undefined` when no tag stands for this code.
+ */
+export function deployedTag(facts: AppFacts): string | undefined {
+  const decision = decideRelease(facts)
+  if (decision.action === 'tag') return decision.tag
+  if (!facts.changed) return newestTag(facts.app, facts.style, facts.tags)
+  return undefined
+}
+
 function skip(app: string, reason: string): Decision {
   return { action: 'skip', app, reason }
 }
@@ -386,6 +404,44 @@ function commitsTouching(from: string, sha: string, app: string) {
   })
 }
 
+/* What git says of one application at `sha`, for the tagging modes and `version` alike. */
+function factsAt(
+  app: string,
+  sha: string,
+  kind: AppFacts['kind'],
+  date: string,
+  named: NamedVersion[],
+): { facts: AppFacts; from: string; previous: string | undefined } {
+  const style = RELEASE_STYLES[app]
+  const atSha = lines(git(['tag', '--points-at', sha, '--list', `${app}-*`]))
+  const tags = lines(
+    git(['tag', '--merged', sha, '--list', `${app}-*`]),
+  ).filter((tag) => !atSha.includes(tag))
+  const later = lines(
+    git(['tag', '--contains', sha, '--list', `${app}-*`]),
+  ).filter((tag) => !atSha.includes(tag))
+  const previous = newestTag(app, style, tags)
+  const from = previous ?? `${sha}^1`
+
+  return {
+    facts: {
+      app,
+      changed: folderChanged(from, sha, app),
+      coveredBy: newestTag(app, style, later),
+      date,
+      existing: newestTag(app, style, atSha),
+      kind,
+      named: named
+        .filter((entry) => entry.app === app)
+        .map((entry) => entry.version),
+      style,
+      tags,
+    },
+    from,
+    previous,
+  }
+}
+
 function main(): void {
   const mode = process.env.MODE ?? 'check'
   const folders = appFolders()
@@ -402,8 +458,10 @@ function main(): void {
     console.log(`Every application has a release style: ${folders.join(', ')}.`)
     return
   }
-  if (mode !== 'check' && mode !== 'release') {
-    console.error(`Unknown MODE ${mode}: check-apps, check or release.`)
+  if (mode !== 'check' && mode !== 'release' && mode !== 'version') {
+    console.error(
+      `Unknown MODE ${mode}: check-apps, check, release or version.`,
+    )
     process.exit(1)
   }
 
@@ -422,6 +480,21 @@ function main(): void {
   const date = pragueDate(mergedAt ? new Date(mergedAt) : new Date())
   const named = isRelease ? parseNamedVersions(process.env.BODY) : []
 
+  if (mode === 'version') {
+    const app = process.env.APP ?? ''
+    if (!folders.includes(app)) {
+      console.error(`APP ${app || '(unset)'} is no application.`)
+      process.exit(1)
+    }
+    const version =
+      deployedTag(factsAt(app, sha, kind, date, named).facts) ?? ''
+    console.log(version || `No tag stands for ${app} at ${sha}.`)
+    if (process.env.GITHUB_OUTPUT) {
+      appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`)
+    }
+    return
+  }
+
   const decisions: Decision[] = named
     .filter((entry) => !folders.includes(entry.app))
     .map((entry) =>
@@ -439,31 +512,8 @@ function main(): void {
   }[] = []
 
   for (const app of folders) {
-    const style = RELEASE_STYLES[app]
-    const atSha = lines(git(['tag', '--points-at', sha, '--list', `${app}-*`]))
-    const tags = lines(
-      git(['tag', '--merged', sha, '--list', `${app}-*`]),
-    ).filter((tag) => !atSha.includes(tag))
-    const later = lines(
-      git(['tag', '--contains', sha, '--list', `${app}-*`]),
-    ).filter((tag) => !atSha.includes(tag))
-    const existing = newestTag(app, style, atSha)
-    const previous = newestTag(app, style, tags)
-    const from = previous ?? `${sha}^1`
-
-    const decision = decideRelease({
-      app,
-      changed: folderChanged(from, sha, app),
-      coveredBy: newestTag(app, style, later),
-      date,
-      existing,
-      kind,
-      named: named
-        .filter((entry) => entry.app === app)
-        .map((entry) => entry.version),
-      style,
-      tags,
-    })
+    const { facts, from, previous } = factsAt(app, sha, kind, date, named)
+    const decision = decideRelease(facts)
     decisions.push(decision)
 
     if (decision.action === 'tag') {
@@ -473,7 +523,7 @@ function main(): void {
       )
       releases.push({
         app,
-        latest: style.latest,
+        latest: facts.style.latest,
         notes,
         previous: previous ?? '',
         tag: decision.tag,

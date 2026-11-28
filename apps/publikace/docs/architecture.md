@@ -72,6 +72,13 @@ flowchart LR
     not decrypt, a database write that should not fail. An outage of Drive, Google or the Mailer
     stays in the log; the screens and the jobs' history already say it. Without the host, as in
     `pnpm app:dev`, there is only the log.
+  - **The image knows which version it runs.** `release.yml` tags the merge beside the deploy,
+    so the deploy cannot count on the tag existing yet and works out the same tag itself
+    (`scripts/release-version.ts`, `MODE=version`): the tag the merge gets, or the newest one
+    when the release left Publikace unchanged. It goes into the image as `PUBLIKACE_VERSION`,
+    beside the short commit as `PUBLIKACE_COMMIT`. The panel's foot shows the version, or the
+    commit when no tag stands for it (`31a`), and both tag every error sent to Sentry. A deploy
+    that cannot work out the version ships with the commit alone.
   - **Its database is `/data/publikace.sqlite`** on the machine's volume, beside the web's, and
     the host's backup copies both (`scripts/backup-database.sh`, before every deploy that ships a
     migration of either).
@@ -422,6 +429,7 @@ Evidence.
 | Mail             | `GAS_MAIL_SEND_URL`, `GAS_MAIL_SEND_SECRET`, `PUBLIC_MAIL_PER_DAY`                                                      |
 | Jobs             | `SCRIPT_TOKEN_AUDIENCE`, `SCRIPT_JOB_ACCOUNT`; per job, optional, `GAS_<JOB>_URL`, `GAS_<JOB>_SECRET` (_Spustit teď_)   |
 | Storage          | `DATABASE_PATH`                                                                                                         |
+| Build            | `VERSION`, `COMMIT`, optional, set by the image from the deploy, never in `.env`                                        |
 
 ## Testing without Google
 

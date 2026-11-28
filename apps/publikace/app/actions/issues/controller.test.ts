@@ -120,6 +120,8 @@ describe('home, the shell', () => {
       assert.ok(form.includes('name="_csrf"'), 'the form carries the CSRF token')
       assert.ok(/<button [^>]*type="submit"[^>]*>Odhlásit se<\/button>/.test(form))
       assert.ok(!/<a [^>]*>Odhlásit se<\/a>/.test(html), 'no link signs out')
+      // Outside production the foot's last line says so, and links nothing (`31a`).
+      assert.match(html, /<span class="vdm-sidebar__version">Vývojové prostředí<\/span>/)
     } finally {
       await app.close()
     }

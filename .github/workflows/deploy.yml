@@ -37,11 +37,44 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [web-checks, repo-checks, publikace-checks]
+    # pull-requests: read finds the PR this push merged, for Publikace's version.
+    permissions:
+      contents: read
+      pull-requests: read
     environment:
       name: production
       url: https://vednemesicnik.cz
     steps:
+      # The whole history and its tags: the version step reads them.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      # Publikace's tag for this commit, worked out as release.yml tags it. release.yml runs
+      # beside this workflow, so its tag may not exist yet; the script gives the same answer
+      # either way (a tag already on the commit wins). The PR's fields reach the script through
+      # `env`, never through `${{ }}` in the shell. A version is never a reason to stop a
+      # deploy: without one the image carries the commit alone.
+      - name: Publikace's version
+        id: version
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          pr=$(gh api "repos/$REPO/commits/$SHA/pulls" \
+            --jq "[.[] | select(.merged_at != null and .base.ref == \"main\")][0]")
+          [[ -n "$pr" && "$pr" != null ]] || { echo "No PR merged $SHA into main."; exit 0; }
+          BASE_REF=main \
+          HEAD_REF=$(jq -r .head.ref <<<"$pr") \
+          HEAD_REPO=$(jq -r .head.repo.full_name <<<"$pr") \
+          BODY=$(jq -r '.body // ""' <<<"$pr") \
+          MERGED_AT=$(jq -r .merged_at <<<"$pr") \
+          MODE=version APP=publikace node scripts/release-version.ts
       - uses: superfly/flyctl-actions/setup-flyctl@1.6
       # Migrations run at machine startup (the web's in docker-entry-point-fly.sh,
       # Publikace's in createPublikace), so back up the still-running old machine
@@ -71,13 +104,17 @@ jobs:
       # a Fly runtime secret); org/project are non-secret build args. The build then
       # uploads source maps to Sentry and deletes them from the deployed assets. When
       # the secret/vars are unset the build simply skips Sentry (see docker/fly).
+      # Publikace's version and commit are build args too, set as ENV in the image.
       - run: >
           flyctl deploy --remote-only --wait-timeout 5m
           --build-secret sentry_auth_token="$SENTRY_AUTH_TOKEN"
           --build-arg SENTRY_ORG="$SENTRY_ORG"
           --build-arg SENTRY_PROJECT="$SENTRY_PROJECT"
+          --build-arg PUBLIKACE_VERSION="$PUBLIKACE_VERSION"
+          --build-arg PUBLIKACE_COMMIT="${GITHUB_SHA::7}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          PUBLIKACE_VERSION: ${{ steps.version.outputs.version }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}

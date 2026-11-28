@@ -43,6 +43,7 @@ import {
   mailSendEndpoint,
   publicMailPerDay,
   registrySpreadsheetId,
+  runningVersion,
   scriptJobAccount,
   scriptTokenAudiences,
 } from './auth/environment.server.ts'
@@ -99,6 +100,7 @@ import { loadReviewCount } from './middleware/review-count.server.ts'
 import { publicLinkHeaders, skipWithoutSession } from './middleware/public-link.server.ts'
 import { render } from './middleware/render.tsx'
 import { logRequests } from './middleware/request-log.server.ts'
+import { provideRunningVersion } from './middleware/running-version.server.ts'
 import { takeToasts } from './middleware/toasts.server.ts'
 import { ignoreErrors, type ReportError } from './report.server.ts'
 import { routes } from './routes.ts'
@@ -370,7 +372,8 @@ export function createAppRouter(dependencies: AppDependencies) {
      *   - `asyncContext()` above `render()`, so every page drawn, an error page included, reaches
      *     its stylesheet and script entry, and before `csrf()`, so `<CsrfField />` can reach the
      *     token while the page is drawn,
-     *   - `render()` above everything a controller uses, so every one has `context.render`,
+     *   - `render()` above everything a controller uses, so every one has `context.render`, and
+     *     `provideRunningVersion()` beside it, for the version line in the panel's foot,
      *   - `formData()` before `csrf()`, which reads the token from the submitted body,
      *   - `session()` before `csrf()`, whose token lives in it, and before `loadAuth()`, which
      *     reads the person out of it,
@@ -396,6 +399,7 @@ export function createAppRouter(dependencies: AppDependencies) {
       serveAssets(dependencies.assets),
       asyncContext(),
       render(dependencies.assets),
+      provideRunningVersion(runningVersion(dependencies.environment)),
       formData(),
       skipWithoutSession(session(sessionCookie, createSqliteSessionStorage(dependencies.database))),
       loadAccess({

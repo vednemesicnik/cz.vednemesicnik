@@ -153,4 +153,12 @@ COPY apps/publikace/app apps/publikace/app
 COPY apps/publikace/public apps/publikace/public
 COPY apps/publikace/db/migrations apps/publikace/db/migrations
 
+# Publikace's tag and commit, from deploy.yml, last so that every layer above stays cached
+# when only the commit changes. Empty outside a deploy; the app then shows the commit alone,
+# or nothing.
+ARG PUBLIKACE_VERSION=""
+ARG PUBLIKACE_COMMIT=""
+ENV PUBLIKACE_VERSION=$PUBLIKACE_VERSION
+ENV PUBLIKACE_COMMIT=$PUBLIKACE_COMMIT
+
 ENTRYPOINT [ "/srv/scripts/docker-entry-point.sh" ]

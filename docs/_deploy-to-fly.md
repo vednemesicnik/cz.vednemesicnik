@@ -90,6 +90,10 @@ The manual path still works if you ever need it (token expired, CI down):
 fly deploy --app cz-vednemesicnik
 ```
 
+It ships without Publikace's version: the panel then shows no version line. To keep it, pass
+the tag and the short commit the CI deploy would
+(`--build-arg PUBLIKACE_VERSION=publikace-vX.Y.Z --build-arg PUBLIKACE_COMMIT=<7 characters>`).
+
 ## Sign-in secrets
 
 The primary sign-in methods (Google OAuth, magic link, passkeys) are **required
