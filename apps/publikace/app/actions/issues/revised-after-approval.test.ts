@@ -354,7 +354,7 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
     }
   })
 
-  it('asks Drive about a Doc once in five minutes, however often the detail opens (#1122)', async () => {
+  it('asks Drive about a Doc once, however often the detail opens, until Drive changes behind its back (#1122)', async () => {
     let { app, docId, editor } = await approved()
     try {
       let docAsks = () =>
