@@ -235,8 +235,8 @@ styles.
 `release-tag` never checks anything out, re-validates each tag it is handed and writes the
 tag and the Release through the API.
 
-**The deploy works out the same tag for the image.** `deploy.yml` builds while `release.yml`
-tags, so it cannot read the tag: it finds the PR the push merged and runs the script with
+**The deploy works out the same tag for the image.** `deploy.yml` runs beside `release.yml`,
+so it cannot count on the tag existing yet: it finds the PR the push merged and runs the script with
 `MODE=version` for each application that shows its version (Publikace,
 [apps/publikace/docs/architecture.md](../apps/publikace/docs/architecture.md) § The stack and
 where it runs). An unchanged application runs its newest tag. A version that cannot be worked

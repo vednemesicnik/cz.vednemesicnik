@@ -52,8 +52,9 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-      # Publikace's tag for this commit, worked out as release.yml will tag it, which runs at
-      # the same moment and so cannot be read yet. The PR's fields reach the script through
+      # Publikace's tag for this commit, worked out as release.yml tags it. release.yml runs
+      # beside this workflow, so its tag may not exist yet; the script gives the same answer
+      # either way (a tag already on the commit wins). The PR's fields reach the script through
       # `env`, never through `${{ }}` in the shell. A version is never a reason to stop a
       # deploy: without one the image carries the commit alone.
       - name: Publikace's version

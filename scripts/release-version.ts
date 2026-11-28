@@ -3,9 +3,10 @@ import { appendFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 /*
- * The tag each application gets from a merge into `main`, worked out the same way twice: by
- * release-version.yml before the merge, so a wrong version blocks the PR, and by release.yml
- * after it, which tags the merge commit with the answer. One script, so the two cannot disagree.
+ * The tag each application gets from a merge into `main`, worked out the same way three times:
+ * by release-version.yml before the merge, so a wrong version blocks the PR, by release.yml
+ * after it, which tags the merge commit with the answer, and by deploy.yml, which bakes it into
+ * the image. One script, so the three cannot disagree.
  *
  * Every folder in apps/ has a style in RELEASE_STYLES, and its tags are `<folder>-<version>`:
  *
@@ -23,7 +24,8 @@ import { join } from 'node:path'
  * for the job that tags: the applications that passed are tagged even when another one
  * fails. `version` prints the tag the deploy of `SHA` runs for the application `APP`, and
  * writes it as `version` to `$GITHUB_OUTPUT`, empty when none stands for the code.
- * Reads `BASE_REF`, `HEAD_REF`, `HEAD_REPO`, `REPO`, `BODY`, `SHA` and `MERGED_AT`.
+ * Reads `BASE_REF`, `HEAD_REF`, `HEAD_REPO`, `REPO`, `BODY`, `SHA`, `MERGED_AT` and, for
+ * `version`, `APP`.
  * Runs locally with the same variables against a merge commit into `main`, since the PR's
  * own commits are `SHA^1..SHA`: `MODE=check BASE_REF=main HEAD_REF=dev SHA=<merge-sha> node
  * scripts/release-version.ts`.

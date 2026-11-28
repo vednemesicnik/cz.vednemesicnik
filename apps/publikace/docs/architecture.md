@@ -72,8 +72,8 @@ flowchart LR
     not decrypt, a database write that should not fail. An outage of Drive, Google or the Mailer
     stays in the log; the screens and the jobs' history already say it. Without the host, as in
     `pnpm app:dev`, there is only the log.
-  - **The image knows which version it runs.** `release.yml` tags the merge only after
-    `deploy.yml` has begun building, so the deploy works out the same tag itself
+  - **The image knows which version it runs.** `release.yml` tags the merge beside the deploy,
+    so the deploy cannot count on the tag existing yet and works out the same tag itself
     (`scripts/release-version.ts`, `MODE=version`): the tag the merge gets, or the newest one
     when the release left Publikace unchanged. It goes into the image as `PUBLIKACE_VERSION`,
     beside the short commit as `PUBLIKACE_COMMIT`. The panel's foot shows the version, or the
