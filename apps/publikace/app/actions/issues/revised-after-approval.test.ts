@@ -116,7 +116,7 @@ async function opened(
 async function reloaded(editor: TestBrowser, load: string, path = DETAIL): Promise<string> {
   editor.setCookie(`${CHECK_RELOAD_COOKIE}=${load}; Path=/issues`)
   let html = await (await editor.get(path)).text()
-  editor.setCookie(`${CHECK_RELOAD_COOKIE}=; Path=/issues; Max-Age=0`)
+  assert.equal(editor.cookie(CHECK_RELOAD_COOKIE), undefined, 'the reload is honoured once')
   return html
 }
 

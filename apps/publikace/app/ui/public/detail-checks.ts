@@ -24,11 +24,12 @@ type Island = {
 
 type Turn = {
   chain: Promise<void>
+  /** Each kind's own answer: whether its check changed a record. */
+  answers: Map<string, Promise<boolean>>
   done: Promise<void>
   end: () => void
   isChanged: boolean
   islands: Island[]
-  kinds: Set<string>
   waiting: number
 }
 
@@ -40,12 +41,12 @@ function newTurn(): Turn {
     end = resolve
   })
   return {
+    answers: new Map(),
     chain: Promise.resolve(),
     done,
     end,
     isChanged: false,
     islands: [],
-    kinds: new Set(),
     waiting: 0,
   }
 }
@@ -65,10 +66,11 @@ async function reloadAfter(load: string, turn: Turn): Promise<void> {
 
 /**
  * Asks `check` after every check of the same `load` asked before it, once however many islands
- * ask for the same `kind`, and answers when the whole turn has ended. A check answers whether it
- * changed a record. When the last check of the load settles and one of them changed something,
- * the page reloads, unless no island that asked is still `isCurrent`, as when the person has gone
- * on to another page or a question over this one.
+ * ask for the same `kind`. A check answers whether it changed a record. When the last check of the
+ * load settles and one of them changed something, the page reloads, unless no island that asked
+ * is still `isCurrent`, as when the person has gone on to another page or a question over this
+ * one. The promise settles once this kind's check found nothing, or once the turn has ended when
+ * it changed something, so an island that waits on it waits for its own reload and no longer.
  */
 export function checkInTurn(
   load: string,
@@ -79,15 +81,14 @@ export function checkInTurn(
   let turn = turns.get(load) ?? newTurn()
   turns.set(load, turn)
   turn.islands.push(island)
-  if (turn.kinds.has(kind)) return turn.done
-
   let current = turn
-  current.kinds.add(kind)
-  current.waiting += 1
-  current.chain = current.chain
-    .then(check)
-    .catch(() => false)
-    .then(async (isChanged) => {
+  let answer = current.answers.get(kind)
+  if (answer === undefined) {
+    let asked = current.chain.then(check).catch(() => false)
+    answer = asked
+    current.answers.set(kind, asked)
+    current.waiting += 1
+    current.chain = asked.then(async (isChanged) => {
       if (isChanged) current.isChanged = true
       current.waiting -= 1
       if (current.waiting > 0) return
@@ -95,5 +96,6 @@ export function checkInTurn(
       await reloadAfter(load, current).catch(() => undefined)
       current.end()
     })
-  return current.done
+  }
+  return answer.then((isChanged) => (isChanged ? current.done : undefined))
 }

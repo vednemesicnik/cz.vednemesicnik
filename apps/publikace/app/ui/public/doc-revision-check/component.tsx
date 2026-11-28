@@ -33,7 +33,7 @@ function changedOf(body: unknown): string[] {
 function untilMenusClose(ids: readonly string[], signal: AbortSignal): Promise<void> {
   let rows = ids.map((id) => document.getElementById(`article-${id}`)).filter((row) => row !== null)
   let isAnyOpen = () => rows.some((row) => row.querySelector(OPEN_MENU) !== null)
-  if (!isAnyOpen()) return Promise.resolve()
+  if (signal.aborted || !isAnyOpen()) return Promise.resolve()
   return new Promise((resolve) => {
     let observer = new MutationObserver(() => {
       if (isAnyOpen()) return

@@ -455,7 +455,7 @@ function reloadedLoad(request: Request): string | null {
  * kept its own since. Read once either way.
  */
 function takeCheckReload(
-  request: Request,
+  named: string | null,
   session: Session | undefined,
   name: string,
 ): { revised: readonly string[]; toasts: readonly ToastMessage[] } | null {
@@ -463,7 +463,7 @@ function takeCheckReload(
   if (session?.get(DETAIL_CHECKED_SESSION_KEY) !== undefined) {
     session.unset(DETAIL_CHECKED_SESSION_KEY)
   }
-  if (checked === null || reloadedLoad(request) !== checked.load) return null
+  if (checked === null || named !== checked.load) return null
   return { revised: checked.revised, toasts: keptToasts(session, checked.load) ?? [] }
 }
 
@@ -1062,7 +1062,8 @@ async function renderDetail(
   /* The reload a check started asks nothing again, and draws again the toasts of the load that
      asked: the flash was used up by that load, and the same toast drawn where it stands neither
      fades in again nor is announced twice. */
-  let reload = takeCheckReload(context.request, session, issue.name)
+  let named = reloadedLoad(context.request)
+  let reload = takeCheckReload(named, session, issue.name)
   let load = options.isShown === true && reload === null ? createId() : null
   let arrival =
     load === null
@@ -1078,7 +1079,7 @@ async function renderDetail(
     new Set(reload?.revised ?? []),
     arrival,
   )
-  return context.render(
+  let response = await context.render(
     <DetailPage
       articles={articles}
       missingAddress={await missingAddressOf(context, articles)}
@@ -1113,6 +1114,15 @@ async function renderDetail(
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
+  /* A load the page named is honoured once: the cookie goes with the answer, not only when the
+     page clears it, so another tab or a redirect in the same moment counts as an ordinary load. */
+  if (named !== null) {
+    response.headers.append(
+      'Set-Cookie',
+      `${CHECK_RELOAD_COOKIE}=; Path=/issues; Max-Age=0; SameSite=Strict`,
+    )
+  }
+  return response
 }
 
 /**
