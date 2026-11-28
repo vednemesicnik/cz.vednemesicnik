@@ -507,6 +507,11 @@ describe('finishing an issue (12i)', () => {
 
       let html = await (await browser.get(`/issues/VDM_${YEAR}_6`)).text()
       assert.equal(alertText(html), 'Zkuste dokončit vydání za chvíli znovu.')
+      assert.match(
+        html,
+        /<span class="vdm-toast__text">Zkuste dokončit vydání za chvíli znovu\.<\/span><!-- rmx:h:\w+ --><button aria-label="Zavřít hlášku" type="button" class="vdm-toast__close">/,
+        'an error toast ends with its close (11g)',
+      )
       assert.ok(textOf(html).includes(`Vydání VDM_${YEAR}_6 není dokončené`))
     } finally {
       await app.close()

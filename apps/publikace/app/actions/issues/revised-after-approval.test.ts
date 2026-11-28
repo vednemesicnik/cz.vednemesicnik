@@ -3,7 +3,7 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { createArticleStore } from '../../data/articles.server.ts'
-import { CHECK_RELOAD_COOKIE } from '../../ui/public/detail-checks.ts'
+import { CHECK_RELOAD_COOKIE, TOAST_CLOSED_COOKIE } from '../../ui/public/detail-checks.ts'
 import { stamp } from '../../domain/time.ts'
 import {
   connectDriveAccount,
@@ -33,6 +33,9 @@ function textOf(html: string): string {
     .replace(/\s+/g, ' ')
     .replace(/ ([.,;)])/g, '$1')
 }
+
+/** A toast the server drew closed (`11g`). */
+const CLOSED_TOAST = /<div data-closed="" class="vdm-toast[ "]/
 
 function statusText(html: string): string {
   let toasts = html.matchAll(/<div class="vdm-toast(?: [^"]*)?"[^>]*>(.*?)<\/div>/gs)
@@ -413,6 +416,50 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       let next = await (await editor.get(DETAIL)).text()
       assert.equal(statusText(next), '')
       assert.ok(next.includes(CHECK_ISLAND))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('draws the kept toast closed on its reload when the person closed it (#1137)', async () => {
+    let { app, docId, editor, issueId } = await approved()
+    try {
+      let writing = await seedArticle(app, issueId, 'Kino v tělocvičně')
+      await opened(editor)
+      app.drive.reviseDoc(docId, EDITED_AT)
+      await editor.post(`${DETAIL}/articles/${writing.articleId}/handover`, {}, DETAIL)
+      let first = await (await editor.get(DETAIL)).text()
+      let load = loadOf(first) ?? ''
+      assert.doesNotMatch(first, CLOSED_TOAST)
+      let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(first)?.[1] ?? ''
+      await editor.post(CHECK, { _csrf: csrf, load }, DETAIL)
+
+      editor.setCookie(`${TOAST_CLOSED_COOKIE}=${load}; Path=/issues`)
+      let html = await reloaded(editor, load)
+      assert.match(html, CLOSED_TOAST)
+      assert.match(textOf(html), /Článek je předaný ke korektuře\./)
+      assert.equal(editor.cookie(TOAST_CLOSED_COOKIE), undefined, 'the answer clears it')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('draws the kept toast open when the closed toast was another load’s (#1137)', async () => {
+    let { app, docId, editor, issueId } = await approved()
+    try {
+      let writing = await seedArticle(app, issueId, 'Kino v tělocvičně')
+      let fresh = await opened(editor)
+      app.drive.reviseDoc(docId, EDITED_AT)
+      await editor.post(`${DETAIL}/articles/${writing.articleId}/handover`, {}, DETAIL)
+      let first = await (await editor.get(DETAIL)).text()
+      let load = loadOf(first) ?? ''
+      let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(first)?.[1] ?? ''
+      await editor.post(CHECK, { _csrf: csrf, load }, DETAIL)
+
+      editor.setCookie(`${TOAST_CLOSED_COOKIE}=${loadOf(fresh.first) ?? ''}; Path=/issues`)
+      let html = await reloaded(editor, load)
+      assert.equal(statusText(html), 'Článek je předaný ke korektuře. Vrátit')
+      assert.doesNotMatch(html, CLOSED_TOAST)
     } finally {
       await app.close()
     }

@@ -450,6 +450,32 @@
    page under a stack that lets taps through. Rozhodnuto 22. 11. 2026 (zulb5phd). */
 .vdm-toast__action::after { content: ""; position: absolute; inset-block: min(0px, calc((100% - 44px) / 2)); inset-inline: -6px -16px; }
 .vdm-toast:has(.vdm-toast__action) { pointer-events: auto; }
+/* A toast that stays until the next load can be closed (closeLabel): a 16 px
+   Lucide x at the very end, after the action, centred on the toast's height
+   as the action is, in the message's colour. Its tap area is 44 x 44 px: out
+   to the toast's end edge (its 16 px padding) and 12 px toward what stands
+   before it. Beside an action the gap is 16 px and the action's area stops
+   4 px into it, so the two areas meet and never overlap. A toast with a close
+   button takes every tap on its surface, as one with an action does. A toast
+   that leaves by itself has none. Rozhodnuto 28. 11. 2026 (vl3galcr). */
+.vdm-toast__close { position: relative; flex: none; align-self: center; display: inline-flex; margin-left: auto; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.vdm-toast__close > svg { display: block; width: 16px; height: 16px; }
+.vdm-toast__close::after { content: ""; position: absolute; inset-block: min(0px, calc((100% - 44px) / 2)); inset-inline: -12px -16px; }
+.vdm-toast:has(.vdm-toast__action) .vdm-toast__close { margin-left: 4px; }
+.vdm-toast:has(.vdm-toast__close) .vdm-toast__action::after { inset-inline-end: -4px; }
+.vdm-toast:has(.vdm-toast__close) { pointer-events: auto; }
+/* Keyboard focus on the action and the close button: the system's ring, 3px
+   out (a 1px gap, a 2px band, no alpha), from --focus-shadow-inverse, whose
+   gap is the toast's own surface and whose band has >= 3:1 against it in both
+   modes (light 6.8:1, dark 5.2:1). --focus-shadow is built for the page: on
+   the toast its gap draws a frame in a colour the toast does not have and its
+   band falls to 2.46:1 on the light toast of the dark mode. The ring follows
+   the button's own box (the word, the 16 px icon) with --radius-sm, as on
+   .vdm-link; nothing moves and the tap areas stay. Keyboard only.
+   Rozhodnuto 28. 11. 2026 (1pvb5o8r). */
+.vdm-toast__action:focus-visible, .vdm-toast__close:focus-visible { outline: none; border-radius: var(--radius-sm); box-shadow: var(--focus-shadow-inverse); }
+/* Drawings only: the same ring without a keyboard. */
+.vdm-toast__action--focus, .vdm-toast__close--focus { border-radius: var(--radius-sm); box-shadow: var(--focus-shadow-inverse); }
 /* A second line under the message: who and when, as the detail line of a
    StatusTag ("21. 11. v 9:40 · Jana Veselá"). Same colour and size as the
    message, so it keeps the toast's contrast; it wraps on its own. Rozhodnuto

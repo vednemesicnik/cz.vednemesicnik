@@ -79,7 +79,8 @@ const PHONE_PAGE = { bottom: 32, gap: 16, inline: 20 }
 const TOAST_OFFSET = 18
 const PHONE_TOAST_INSET = 16
 
-/* The tallest toast the app draws, three lines: a message on two and its detail line (`11f`). */
+/* The tallest toast the app draws, three lines: a message on two and its detail line (`11f`), or
+   a toast with an action whose message takes three beside its close button at 390 px (`11g`). */
 const TALLEST_TOAST = 83
 
 const mainStyle = css({
@@ -115,7 +116,7 @@ const mainWithToastStyle = css({
  * then stands at its bottom. The inline margins pull it from the page's padding to the toast's own
  * offset, and give it as much width as `fixed` did, the window less the panel and 18 px on each
  * side. `alignSelf: start` keeps it as wide as its toast. It lets taps through; a toast with an
- * action takes them back (`zulb5phd`).
+ * action or a close button takes them back (`zulb5phd`, `11g`).
  */
 const toastSlotStyle = css({
   alignSelf: 'start',

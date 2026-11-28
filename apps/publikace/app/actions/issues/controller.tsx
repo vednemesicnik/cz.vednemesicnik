@@ -302,7 +302,7 @@ import { type Person, requireEditor } from '../../middleware/auth.server.ts'
 import { DriveAccount } from '../../middleware/drive-account.server.ts'
 import { flashToast, keepToasts, keptToasts, Toasts } from '../../middleware/toasts.server.ts'
 import { routes } from '../../routes.ts'
-import { CHECK_RELOAD_COOKIE } from '../../ui/public/detail-checks.ts'
+import { CHECK_RELOAD_COOKIE, TOAST_CLOSED_COOKIE } from '../../ui/public/detail-checks.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import {
   type ArrivalCheckView,
@@ -438,11 +438,14 @@ function recordDetailChecked(context: PageContext, name: string, revised: readon
   session.set(DETAIL_CHECKED_SESSION_KEY, { load, name, revised: [...kept, ...revised] })
 }
 
-/** The load the page names as the one this request reloads, set just before it. */
-function reloadedLoad(request: Request): string | null {
+/**
+ * The load a cookie the page set just before this request names: `CHECK_RELOAD_COOKIE`, the one
+ * this request reloads, or `TOAST_CLOSED_COOKIE`, the one whose toast the person closed.
+ */
+function loadInCookie(request: Request, cookie: string): string | null {
   for (let pair of (request.headers.get('Cookie') ?? '').split(';')) {
     let [name, value] = pair.trim().split('=')
-    if (name === CHECK_RELOAD_COOKIE && value !== undefined && isCuid(value)) return value
+    if (name === cookie && value !== undefined && isCuid(value)) return value
   }
   return null
 }
@@ -452,10 +455,12 @@ function reloadedLoad(request: Request): string | null {
  * when the page names the load whose checks recorded it, so a record whose reload never came,
  * left by a check that answered while the person acted or went elsewhere, counts for nothing. It
  * draws the toasts that load kept (`keepToasts`), or none when another load of the detail has
- * kept its own since. Read once either way.
+ * kept its own since, and draws them closed when the page says the person closed them (`11g`).
+ * Read once either way.
  */
 function takeCheckReload(
   named: string | null,
+  closed: string | null,
   session: Session | undefined,
   name: string,
 ): { revised: readonly string[]; toasts: readonly ToastMessage[] } | null {
@@ -464,7 +469,12 @@ function takeCheckReload(
     session.unset(DETAIL_CHECKED_SESSION_KEY)
   }
   if (checked === null || named !== checked.load) return null
-  return { revised: checked.revised, toasts: keptToasts(session, checked.load) ?? [] }
+  let toasts = keptToasts(session, checked.load) ?? []
+  return {
+    revised: checked.revised,
+    toasts:
+      closed === checked.load ? toasts.map((toast) => ({ ...toast, isClosed: true })) : toasts,
+  }
 }
 
 function takeSettled(session: Session | undefined): SettledArticle | null {
@@ -1062,8 +1072,9 @@ async function renderDetail(
   /* The reload a check started asks nothing again, and draws again the toasts of the load that
      asked: the flash was used up by that load, and the same toast drawn where it stands neither
      fades in again nor is announced twice. */
-  let named = reloadedLoad(context.request)
-  let reload = takeCheckReload(named, session, issue.name)
+  let named = loadInCookie(context.request, CHECK_RELOAD_COOKIE)
+  let closed = loadInCookie(context.request, TOAST_CLOSED_COOKIE)
+  let reload = takeCheckReload(named, closed, session, issue.name)
   let load = options.isShown === true && reload === null ? createId() : null
   let arrival =
     load === null
@@ -1114,13 +1125,15 @@ async function renderDetail(
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
-  /* The answer clears the cookie, so a load after it is an ordinary one even when the page never
-     got to clear it; that the record is read once is what makes the reload count once. */
-  if (named !== null) {
-    response.headers.append(
-      'Set-Cookie',
-      `${CHECK_RELOAD_COOKIE}=; Path=/issues; Max-Age=0; SameSite=Strict`,
-    )
+  /* The answer clears the cookies, so a load after it is an ordinary one even when the page never
+     got to clear them; that the record is read once is what makes the reload count once. */
+  for (let [cookie, value] of [
+    [CHECK_RELOAD_COOKIE, named],
+    [TOAST_CLOSED_COOKIE, closed],
+  ] as const) {
+    if (value !== null) {
+      response.headers.append('Set-Cookie', `${cookie}=; Path=/issues; Max-Age=0; SameSite=Strict`)
+    }
   }
   return response
 }

@@ -8,12 +8,22 @@
  * showed: the rows just found, their sentence and the toast the detail opened with.
  */
 
+import { TOAST_CLOSED_ATTRIBUTE } from './toast-closed.ts'
+
 /**
  * The cookie naming the load whose reload the next request is, set just before it and read by the
  * server (`takeCheckReload`): what the checks recorded counts only for the reload they started,
  * never for another load of the detail that comes first, such as the page an action redirects to.
  */
 export const CHECK_RELOAD_COOKIE = 'issueDetailReload'
+
+/**
+ * Set beside `CHECK_RELOAD_COOKIE`, to the same load, when the person closed the toast before the
+ * reload: the server draws the kept toast closed, so it does not come back (`11g`).
+ */
+export const TOAST_CLOSED_COOKIE = 'issueDetailToastClosed'
+
+const COOKIE_ATTRIBUTES = 'path=/issues; samesite=strict'
 
 type Island = {
   /** Waits before the reload, as for a menu open on a row it changes (`12q`). */
@@ -56,11 +66,16 @@ async function reloadAfter(load: string, turn: Turn): Promise<void> {
   await Promise.all(turn.islands.map((island) => island.beforeReload?.()))
   let island = turn.islands.find((each) => each.isCurrent())
   if (island === undefined) return
-  document.cookie = `${CHECK_RELOAD_COOKIE}=${load}; path=/issues; max-age=30; samesite=strict`
+  let isToastClosed = document.querySelector(`.vdm-toast[${TOAST_CLOSED_ATTRIBUTE}]`) !== null
+  document.cookie = `${CHECK_RELOAD_COOKIE}=${load}; max-age=30; ${COOKIE_ATTRIBUTES}`
+  if (isToastClosed) {
+    document.cookie = `${TOAST_CLOSED_COOKIE}=${load}; max-age=30; ${COOKIE_ATTRIBUTES}`
+  }
   try {
     await island.reload()
   } finally {
-    document.cookie = `${CHECK_RELOAD_COOKIE}=; path=/issues; max-age=0; samesite=strict`
+    document.cookie = `${CHECK_RELOAD_COOKIE}=; max-age=0; ${COOKIE_ATTRIBUTES}`
+    if (isToastClosed) document.cookie = `${TOAST_CLOSED_COOKIE}=; max-age=0; ${COOKIE_ATTRIBUTES}`
   }
 }
 

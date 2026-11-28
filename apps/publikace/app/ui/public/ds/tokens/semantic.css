@@ -138,6 +138,10 @@
   --focus-shadow:        0 0 0 1px #ffffff, 0 0 0 3px #7c3aed; /* violet-600, 5.7:1 on white */
   --focus-shadow-error:  0 0 0 1px #ffffff, 0 0 0 3px #e11d48; /* rose-600, 4.7:1 */
   --focus-shadow-danger: 0 0 0 1px #ffffff, 0 0 0 3px #be123c; /* rose-700, 6.3:1 */
+  /* The same ring on a surface of the opposite colour (--surface-inverse, the
+     toast): the gap in that surface's colour, the band the other mode's.
+     Rozhodnuto 28. 11. 2026 (1pvb5o8r). */
+  --focus-shadow-inverse: 0 0 0 1px #121418, 0 0 0 3px #a78bfa; /* violet-400, 6.8:1 on charcoal-900 */
 }
 
 /* ============================================================
@@ -264,6 +268,7 @@
   --focus-shadow:        0 0 0 1px #0a0a0f, 0 0 0 3px #a78bfa; /* violet-400, 7.3:1 on charcoal-950 */
   --focus-shadow-error:  0 0 0 1px #0a0a0f, 0 0 0 3px #fb7185; /* rose-400, 7.3:1 */
   --focus-shadow-danger: 0 0 0 1px #0a0a0f, 0 0 0 3px #fb7185; /* rose-400, 7.3:1 */
+  --focus-shadow-inverse: 0 0 0 1px #f0f4f8, 0 0 0 3px #7c3aed; /* violet-600, 5.2:1 on charcoal-100 */
 
   background-color: var(--bg-primary);
   color: var(--text-primary);
