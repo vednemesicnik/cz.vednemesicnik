@@ -10,6 +10,7 @@ import { createLinkStore } from '../../data/links.server.ts'
 import { newRowId } from '../../data/row-id.server.ts'
 import { NBSP } from '../../domain/public/typography.ts'
 import { drainRecordQueue } from '../../drive/record-queue.server.ts'
+import { testRowId } from '../../test-row-id.ts'
 import {
   connectDriveAccount,
   createTestApp,
@@ -726,7 +727,11 @@ describe('a group’s missing folder in the detail (12j, cz.vednemesicnik.publik
 
   it('answers 404 for a group of another issue or none', () =>
     withIssue(async (context) => {
-      let missing = await context.editor.post(`${DETAIL}/artwork-groups/99/folders/check`, {}, '/')
+      let missing = await context.editor.post(
+        `${DETAIL}/artwork-groups/${testRowId(99)}/folders/check`,
+        {},
+        '/',
+      )
       assert.equal(missing.status, 404)
     }))
 

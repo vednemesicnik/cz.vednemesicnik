@@ -13,6 +13,7 @@ import {
   type TestApp,
   type TestBrowser,
 } from '../../../test-app.server.ts'
+import { testRowId } from '../../../test-row-id.ts'
 
 const MARIE = 'marie@vednemesicnik.test'
 const TEREZA = { email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }
@@ -364,7 +365,7 @@ describe('the artworks in the issue detail', () => {
       )
       assert.equal(refused.status, 403)
       let elsewhere = await context.editor.post(
-        '/issues/VDM_2026_5/artworks/batches/99/resend',
+        `/issues/VDM_2026_5/artworks/batches/${testRowId(99)}/resend`,
         { _csrf: token },
         '/issues/VDM_2026_5',
       )

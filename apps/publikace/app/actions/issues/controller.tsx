@@ -378,8 +378,7 @@ function takeGroupChanged(session: Session | undefined): string | null {
   let value = session?.get(GROUP_CHANGED_SESSION_KEY)
   if (value === undefined) return null
   session?.unset(GROUP_CHANGED_SESSION_KEY)
-  let id = value
-  return isRowId(id) ? id : null
+  return isRowId(value) ? value : null
 }
 
 function flashLinkChanged(session: Session | undefined, name: string): void {
@@ -1104,10 +1103,9 @@ async function missingAddressOf(
 
 /** A created article of this issue, or `null`: an ID from another issue answers as unknown. */
 async function articleOf(context: PageContext, issue: Issue, id: string): Promise<Article | null> {
-  let articleId = id
-  if (!isRowId(articleId)) return null
+  if (!isRowId(id)) return null
   let created = await articlesOf(context).articles.listCreated(issue.id)
-  return created.find((each) => each.id === articleId) ?? null
+  return created.find((each) => each.id === id) ?? null
 }
 
 /** `?artworks=` kept on the address of a dialog over the detail. */
@@ -1117,15 +1115,15 @@ function withFilter(href: string, filter: ArtworkFilter): string {
 
 /** A committed group of this issue that is not removed, by the ID in the address. */
 async function groupOf(context: PageContext, issue: Issue, id: string): Promise<GroupRow | null> {
-  let groupId = id
-  if (!isRowId(groupId)) return null
-  let group = await articlesOf(context).artworks.groups.findById(groupId)
+  if (!isRowId(id)) return null
+  let group = await articlesOf(context).artworks.groups.findById(id)
   if (group === null || group.issueId !== issue.id || group.createdAt === null) return null
   return group.removedAt === null ? group : null
 }
 
 /** Whether the group in the address was this issue's and is removed now (`12f`). */
 async function isRemovedGroup(context: PageContext, issue: Issue, id: string): Promise<boolean> {
+  if (!isRowId(id)) return false
   let group = await articlesOf(context).artworks.groups.findById(id)
   return group?.issueId === issue.id && group.removedAt !== null
 }
@@ -1275,8 +1273,8 @@ function editableCards(authors: readonly { email: string; name: string }[]): Aut
 
 /**
  * The cards as the article stands: every author before the final version; after it, an agreed
- * author as text with the tag of `12b`, and every other one to type into, keyed by its clause,
- * whose ID the form carries.
+ * author as text with the tag of `12b`, and every other one to type into, keyed by its position,
+ * with its clause's ID in the hidden field the form carries.
  */
 function storedCards(article: Article): AuthorCardView[] {
   let finalVersion = article.finalVersion
@@ -1378,10 +1376,9 @@ function discardingView(context: PageContext, issue: Issue, batch: ListedBatch):
 
 /** A live batch of this issue, or `null`: an ID from another issue answers as unknown. */
 async function batchOf(context: PageContext, issue: Issue, id: string) {
-  let batchId = id
-  if (!isRowId(batchId)) return null
+  if (!isRowId(id)) return null
   let batches = await articlesOf(context).artworks.artworks.listByIssue(issue.id)
-  return batches.find((batch) => batch.id === batchId) ?? null
+  return batches.find((batch) => batch.id === id) ?? null
 }
 
 /**
@@ -2449,7 +2446,9 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let article = await articleOf(context, issue, context.params.id)
         if (article === null) {
           /* Removed in another tab: the row's absence says it, so no toast. */
-          let row = await articlesOf(context).articles.findById(context.params.id)
+          let row = isRowId(context.params.id)
+            ? await articlesOf(context).articles.findById(context.params.id)
+            : null
           return row?.issueId === issue.id && row.removedAt !== null ? back() : notFound()
         }
         let dialog = async (callout: FixCallout) =>
@@ -2520,7 +2519,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let names = data.getAll(AUTHOR_NAME_FIELD).map(String)
         let emails = data.getAll(AUTHOR_EMAIL_FIELD).map(String)
         let typed = names.map((name, index) => ({ email: emails[index] ?? '', name }))
-        let clauseIds = data.getAll('clause').map(String)
+        let clauseIds = data.getAll('clause').map(String).filter(isRowId)
         let marked = formText(context, 'marked')
         let markedAt = marked === '' ? null : parseStamp(marked)
         if (marked !== '' && markedAt === null) return notFound()

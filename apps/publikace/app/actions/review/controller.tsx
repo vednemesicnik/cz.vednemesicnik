@@ -104,7 +104,6 @@ function takeSettled(session: Session | undefined): string | null {
   let value = session?.get(SETTLED_SESSION_KEY)
   if (value === undefined) return null
   session?.unset(SETTLED_SESSION_KEY)
-  if (typeof value === 'number') return String(value)
   return typeof value === 'string' ? value : null
 }
 
@@ -132,7 +131,7 @@ function takeUnsent(session: Session | undefined): UnsentAnswer | null {
   return { line, note, text, title }
 }
 
-/** A batch's card is its number, an article's clause `clause-{number}`. */
+/** A batch's card is its ID, an article's clause `clause-{id}`. */
 function clauseAnchor(id: string): string {
   return `clause-${id}`
 }

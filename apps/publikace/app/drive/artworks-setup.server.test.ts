@@ -235,8 +235,9 @@ describe('uploading an artwork', () => {
 
       let artworkLink = await harness.setup.links.findByKey(harness.linkKey)
       let articleLink = await harness.setup.links.articleLinkOf(
-        artworkLink?.articleId ?? testRowId(0),
+        artworkLink?.issueId ?? testRowId(0),
       )
+      assert.ok(articleLink !== null)
       let wrongKind = await uploadArtwork(harness.setup, {
         declaredType: 'image/jpeg',
         fileName: 'a.jpg',

@@ -95,19 +95,20 @@ describe('the API of Article_Comments', () => {
         { sent: -1 },
         { sent: 1.5 },
         { articles: [{ articleId: '', suggestionHashes: [] }] },
-        { articles: [{ articleId: 1, suggestionHashes: [''] }] },
-        { articles: [{ articleId: 1, suggestionHashes: ['x'.repeat(65)] }] },
-        { articles: [{ articleId: 1 }] },
-        { unconfirmed: [{ articleId: 1, email: '' }] },
+        { articles: [{ articleId: 1, suggestionHashes: [] }] },
+        { articles: [{ articleId: testRowId(1), suggestionHashes: [''] }] },
+        { articles: [{ articleId: testRowId(1), suggestionHashes: ['x'.repeat(65)] }] },
+        { articles: [{ articleId: testRowId(1) }] },
+        { unconfirmed: [{ articleId: testRowId(1), email: '' }] },
         {
           articles: [
-            { articleId: 1, suggestionHashes: [] },
-            { articleId: 1, suggestionHashes: [] },
+            { articleId: testRowId(1), suggestionHashes: [] },
+            { articleId: testRowId(1), suggestionHashes: [] },
           ],
         },
         {
-          articles: [{ articleId: 1, suggestionHashes: [] }],
-          unconfirmed: [{ articleId: 1, email: 'tereza.vlkova@external.test' }],
+          articles: [{ articleId: testRowId(1), suggestionHashes: [] }],
+          unconfirmed: [{ articleId: testRowId(1), email: 'tereza.vlkova@external.test' }],
         },
       ]
       for (let fields of malformed) {
