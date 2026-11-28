@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import { createJobRunStore } from '../../../data/job-runs.server.ts'
+import { newKey } from '../../../data/key.server.ts'
 import { createProofreadersStore } from '../../../data/proofreaders.server.ts'
 import { REPLY_CHECK_JOB } from '../../../domain/reply-check.ts'
 import { createJobStarter } from '../../../jobs/job-starter.server.ts'
@@ -25,7 +26,7 @@ async function run(
   end?: { error?: string; outcome: 'failed' | 'ok' },
 ) {
   let runs = createJobRunStore(app.database)
-  let runKey = crypto.randomUUID()
+  let runKey = newKey()
   let at = Temporal.Now.instant().subtract({ minutes: minutesAgo })
   await runs.start({ at, intervalMinutes: 30, job: REPLY_CHECK_JOB, runKey })
   if (end !== undefined) {
@@ -329,7 +330,7 @@ describe('Přehled pro korektory among the jobs (14d, 14e, 14i)', () => {
 
   async function digestRun(app: TestApp, summary: string, outcome: 'failed' | 'ok') {
     let runs = createJobRunStore(app.database)
-    let runKey = crypto.randomUUID()
+    let runKey = newKey()
     let at = Temporal.Now.instant().subtract({ minutes: 5 })
     await runs.start({ at, intervalMinutes: 1440, job: JOB, runKey })
     await runs.finish(JOB, runKey, { at, error: null, outcome, summary })
@@ -396,7 +397,7 @@ describe('Připomínky ke článkům among the jobs (14d, 14e)', () => {
 
   async function commentsRun(app: TestApp, summary: string, outcome: 'failed' | 'ok') {
     let runs = createJobRunStore(app.database)
-    let runKey = crypto.randomUUID()
+    let runKey = newKey()
     let at = Temporal.Now.instant().subtract({ minutes: 5 })
     await runs.start({ at, intervalMinutes: 180, job: JOB, runKey })
     await runs.finish(JOB, runKey, { at, error: null, outcome, summary })

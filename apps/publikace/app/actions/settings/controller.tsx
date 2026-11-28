@@ -1,4 +1,3 @@
-import { createId } from '@paralleldrive/cuid2'
 import { redirect } from 'remix/response/redirect'
 import { createController } from 'remix/router'
 import { Session } from 'remix/session'
@@ -6,6 +5,7 @@ import { Session } from 'remix/session'
 import type { AccessContext } from '../../auth/access.server.ts'
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
+import { newKey } from '../../data/key.server.ts'
 import type { ProofreadersStore } from '../../data/proofreaders.server.ts'
 import { isRowId } from '../../data/row-id.server.ts'
 import {
@@ -94,7 +94,7 @@ async function renderSettings(
      by itself once it does. */
   let proofreadersCheck =
     state.isShown === true && proofreadersAddress !== null
-      ? { href: routes.settings.checkProofreaders.href(), load: createId() }
+      ? { href: routes.settings.checkProofreaders.href(), load: newKey() }
       : null
 
   return context.render(

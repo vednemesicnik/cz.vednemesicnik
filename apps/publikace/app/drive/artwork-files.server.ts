@@ -1,3 +1,4 @@
+import { newKey } from '../data/key.server.ts'
 import {
   type ArticleFiles,
   ATTEMPT_PROPERTY,
@@ -127,7 +128,7 @@ export function createArtworkFiles(options: ArtworkFilesOptions): ArtworkFiles {
       url.searchParams.set('uploadType', 'multipart')
       url.searchParams.set('supportsAllDrives', 'true')
       url.searchParams.set('fields', 'id')
-      let boundary = `publikace-${crypto.randomUUID()}`
+      let boundary = `publikace-${newKey()}`
       let metadata = JSON.stringify({
         appProperties: { [ATTEMPT_PROPERTY]: key },
         mimeType: DOC_TYPE,

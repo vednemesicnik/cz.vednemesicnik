@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 import { createArticleStore } from '../../data/articles.server.ts'
 import { createGroupStore } from '../../data/artwork-groups.server.ts'
 import { createIssueStore } from '../../data/issues.server.ts'
+import { newKey } from '../../data/key.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
 import { drainRecordQueue } from '../../drive/record-queue.server.ts'
 import { articleLinkPath } from '../../domain/link.ts'
@@ -89,11 +90,7 @@ async function addArticle(context: Context, name: string): Promise<string> {
 
 async function addGroup(context: Context, name: string): Promise<string> {
   let path = `${DETAIL}/artwork-groups/new`
-  let response = await context.editor.post(
-    path,
-    { formKey: crypto.randomUUID(), name, note: '' },
-    path,
-  )
+  let response = await context.editor.post(path, { formKey: newKey(), name, note: '' }, path)
   assert.equal(response.status, 303)
   let groups = await createGroupStore(context.app.database).listByIssue(context.issueId)
   let group = groups.find((each) => each.name === name)
@@ -407,7 +404,7 @@ describe('renaming an issue (12v)', () => {
         await createArticleStore(context.app.database).startAttempt({
           at: now(),
           authors: [TEREZA],
-          formKey: crypto.randomUUID(),
+          formKey: newKey(),
           issueId: context.issueId,
           linkId: link?.id ?? '',
           name: 'Školní jídelna po roce',

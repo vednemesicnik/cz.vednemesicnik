@@ -1,5 +1,5 @@
-import { createId, isCuid } from '@paralleldrive/cuid2'
 import { redirect } from 'remix/response/redirect'
+import { isFormKey, isKey, newKey } from '../../data/key.server.ts'
 import {
   AGREED_AUTHOR_TAG,
   agreedMeanwhileToast,
@@ -432,7 +432,7 @@ function readDetailChecked(session: Session | undefined, name: string): DetailCh
 function recordDetailChecked(context: PageContext, name: string, revised: readonly string[]): void {
   let session = context.get(Session) as Session | undefined
   let load = formText(context, 'load')
-  if (session === undefined || !isCuid(load)) return
+  if (session === undefined || !isKey(load)) return
   let earlier = readDetailChecked(session, name)
   let kept = earlier?.load === load ? earlier.revised : []
   session.set(DETAIL_CHECKED_SESSION_KEY, { load, name, revised: [...kept, ...revised] })
@@ -445,7 +445,7 @@ function recordDetailChecked(context: PageContext, name: string, revised: readon
 function loadInCookie(request: Request, cookie: string): string | null {
   for (let pair of (request.headers.get('Cookie') ?? '').split(';')) {
     let [name, value] = pair.trim().split('=')
-    if (name === cookie && value !== undefined && isCuid(value)) return value
+    if (name === cookie && value !== undefined && isKey(value)) return value
   }
   return null
 }
@@ -1075,7 +1075,7 @@ async function renderDetail(
   let named = loadInCookie(context.request, CHECK_RELOAD_COOKIE)
   let closed = loadInCookie(context.request, TOAST_CLOSED_COOKIE)
   let reload = takeCheckReload(named, closed, session, issue.name)
-  let load = options.isShown === true && reload === null ? createId() : null
+  let load = options.isShown === true && reload === null ? newKey() : null
   let arrival =
     load === null
       ? null
@@ -2057,7 +2057,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
           issue,
           newGroupDialog(issue, askedFrom(context), {
             errors: { name: null, note: null },
-            formKey: crypto.randomUUID(),
+            formKey: newKey(),
             refusal: null,
             values: { name: '', note: '' },
           }),
@@ -2070,7 +2070,7 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let editor = context.auth.identity
         let values = { name: formText(context, 'name'), note: formText(context, 'note') }
         let typedKey = formText(context, 'formKey')
-        let formKey = /^[0-9a-f-]{36}$/.test(typedKey) ? typedKey : crypto.randomUUID()
+        let formKey = isFormKey(typedKey) ? typedKey : newKey()
         let from = answeredFrom(context)
         let again = (
           errors: NewGroupDialogView['errors'],

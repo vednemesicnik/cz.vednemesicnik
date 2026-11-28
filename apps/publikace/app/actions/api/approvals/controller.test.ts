@@ -6,6 +6,7 @@ import { createJobRunStore } from '../../../data/job-runs.server.ts'
 
 import { appOrigin } from '../../../auth/environment.server.ts'
 import { createArticleStore } from '../../../data/articles.server.ts'
+import { newKey } from '../../../data/key.server.ts'
 import {
   createTestApp,
   fakeIdentityToken,
@@ -530,7 +531,7 @@ describe('Poslat žádost znovu', () => {
 
 /** A start by hand of the job, as `/settings/jobs` records it before the `doPost`. */
 async function requested(app: TestApp, job: string): Promise<string> {
-  let startKey = crypto.randomUUID()
+  let startKey = newKey()
   let at = Temporal.Now.instant()
   let by = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
   await createJobRunStore(app.database).requestStart({

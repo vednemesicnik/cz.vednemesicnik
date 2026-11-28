@@ -13,6 +13,7 @@ import { createArticleStore } from './data/articles.server.ts'
 import { type BatchRow, createArtworkStore } from './data/artworks.server.ts'
 import { createDriveAccountStore, type DriveAccountStore } from './data/drive-account.server.ts'
 import { createIssueStore } from './data/issues.server.ts'
+import { newKey } from './data/key.server.ts'
 import { createLinkStore } from './data/links.server.ts'
 import { migrateDatabase, type OpenDatabase, openDatabase } from './data/database.server.ts'
 import { createSqliteSessionStorage } from './data/session-storage.server.ts'
@@ -463,7 +464,7 @@ export async function seedArticle(
     await articles.startAttempt({
       at: SEEDED_AT,
       authors: [{ email: 'tereza.vlkova@external.test', name: 'Tereza Vlková' }],
-      formKey: `seeded-${issueId}-${crypto.randomUUID()}`,
+      formKey: `seeded-${issueId}-${newKey()}`,
       issueId,
       linkId: articleLink.id,
       name,
@@ -508,7 +509,7 @@ export async function seedBatch(
 ): Promise<BatchRow> {
   let artworks = createArtworkStore(app.database)
   let at = options.at ?? SEEDED_AT
-  let formKey = `seeded-batch-${crypto.randomUUID()}`
+  let formKey = `seeded-batch-${newKey()}`
   let ids: string[] = []
   for (let index = 0; index < (options.count ?? 2); index += 1) {
     let upload = await artworks.addUpload({

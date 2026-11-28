@@ -1,6 +1,7 @@
 import { createController } from 'remix/router'
 
 import { requestAssets } from '../../assets.ts'
+import { isFormKey, newKey } from '../../data/key.server.ts'
 import {
   type AuthorInput,
   checkArticle,
@@ -65,7 +66,7 @@ type FormState = {
 
 /** What an answer to a send carries for the island to focus: something new every time. */
 function answered(state: FormState): FormState {
-  return { ...state, messageKey: crypto.randomUUID() }
+  return { ...state, messageKey: newKey() }
 }
 
 function articlesOf(context: LinkContext): ArticlesContext {
@@ -193,7 +194,7 @@ function formOf(context: LinkContext): {
   return {
     authors: authors.length === 0 ? [{ email: '', name: '' }] : authors,
     /* A send without its key, from a page drawn before this one, gets a key of its own. */
-    formKey: /^[0-9a-f-]{36}$/.test(formKey) ? formKey : crypto.randomUUID(),
+    formKey: isFormKey(formKey) ? formKey : newKey(),
     intent: text(data.get('intent')),
     name: text(data.get('name')),
   }
@@ -209,7 +210,7 @@ export default function createLinksController() {
 
         return renderForm(context, resolved.issue, {
           authors: [{ email: '', name: '' }],
-          formKey: crypto.randomUUID(),
+          formKey: newKey(),
           name: '',
           warning: await warningOnOpen(context, resolved.issue),
         })

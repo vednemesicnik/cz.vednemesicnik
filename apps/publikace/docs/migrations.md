@@ -72,6 +72,9 @@ exception is a migration that has not left its branch: roll it back locally with
   its row was written: the order of writing is `ORDER BY rowid`, never by the ID. So the file
   is never `VACUUM`ed, which may renumber the rowid of a table without an `INTEGER PRIMARY KEY`;
   a backup with `.backup` copies the pages and keeps it.
+- **Every other key is a CUID too**: a form key, a run key, a Drive tag or a multipart boundary
+  comes from `newKey()` (`app/data/key.server.ts`), which `newRowId()` calls, and nothing is
+  made with `crypto.randomUUID()`. A form key a page sends passes `isFormKey()`.
 
 `db/migrations/20261117120000_access_and_sessions/up.sql` shows all of it but a foreign key,
 with a comment above each table saying what a row is.

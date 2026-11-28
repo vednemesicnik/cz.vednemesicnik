@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { appOrigin } from '../../../auth/environment.server.ts'
+import { newKey } from '../../../data/key.server.ts'
 import { testRowId } from '../../../test-row-id.ts'
 import { createJobRunStore } from '../../../data/job-runs.server.ts'
 import { createPrintHandoffStore } from '../../../data/print-handoff.server.ts'
@@ -231,7 +232,7 @@ describe('the API of Print_Handoff', () => {
 
 /** A start by hand of the job, as `/settings/jobs` records it before the `doPost`. */
 async function requested(app: TestApp, job: string): Promise<string> {
-  let startKey = crypto.randomUUID()
+  let startKey = newKey()
   let at = Temporal.Now.instant()
   let by = { email: 'marie@vednemesicnik.test', name: 'Marie Horáková' }
   await createJobRunStore(app.database).requestStart({
