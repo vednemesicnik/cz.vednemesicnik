@@ -325,6 +325,7 @@ sequenceDiagram
   A-->>E: the detail at once, from the database
   E->>A: once it stands: POST …/doc-revisions/check
   A->>D: a revision of the Doc after the PDF?
+  Note over A,D: a Doc asked about within five minutes is not asked again
   A->>A: yes: Upraveno po schválení, Označit novou verzi (12q)
 ```
 

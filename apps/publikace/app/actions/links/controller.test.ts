@@ -125,6 +125,23 @@ describe('the page behind the link (20a)', () => {
       let html = await (await visitor.get(`/l/${key}/article`)).text()
       assert.ok(textOf(html).includes('Z tohoto odkazu teď nejde založit článek.'))
     }))
+
+  it('takes Články found a moment ago on its word, and asks again to create an article (#1122)', () =>
+    withLink(async ({ app, key, visitor }) => {
+      let articles = app.drive.folders().find((folder) => folder.name === 'Články')
+      let asks = () =>
+        app.drive.calls.filter((call) => call === `GET /drive/v3/files/${articles?.id}`).length
+
+      await visitor.get(`/l/${key}/article`)
+      let formKey = formKeyOf(await (await visitor.get(`/l/${key}/article`)).text())
+      assert.equal(asks(), 1)
+
+      await visitor.send(
+        `/l/${key}/article`,
+        articleForm(formKey, 'Školní jídelna po roce', [TEREZA]),
+      )
+      assert.ok(asks() > 1)
+    }))
 })
 
 describe('one page for every link that does not work (02e)', () => {

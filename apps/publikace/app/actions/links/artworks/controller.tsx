@@ -125,7 +125,8 @@ async function targetOf(context: LinkContext): Promise<ArtworksTarget | null> {
 /**
  * What the page says under the lead when it opens (`21a`): the account first, because without it
  * nothing can be checked on Drive; then whether the article's three folders are still there
- * (`1jv85zum`, `2kig3d8m`), which also records what is missing for the issue detail.
+ * (`1jv85zum`, `2kig3d8m`), which also records what is missing for the issue detail. A folder
+ * found standing a few minutes ago is taken on the trust's word; one found missing is asked again.
  */
 async function warningOnOpen(
   context: LinkContext,
@@ -140,7 +141,7 @@ async function warningOnOpen(
   let check = await checkArticleFolders(
     {
       articles: artworks.articles,
-      folders: artworks.folders(token.accessToken),
+      folders: artworks.trust.trusting(artworks.folders(token.accessToken)),
       groups: artworks.groups,
       now: artworks.now,
     },

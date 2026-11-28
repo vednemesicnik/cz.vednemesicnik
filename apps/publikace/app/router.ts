@@ -80,7 +80,8 @@ import { createArticleFiles } from './drive/article-files.server.ts'
 import type { ArticleSetup } from './drive/article-setup.server.ts'
 import { createArtworkFiles } from './drive/artwork-files.server.ts'
 import type { ArtworksSetup } from './drive/artworks-setup.server.ts'
-import { createDriveFolders } from './drive/folders.server.ts'
+import { createDriveTrust, type DriveTrust } from './drive/drive-trust.server.ts'
+import { createDriveFolders, type DriveFolders } from './drive/folders.server.ts'
 import type { IssueFixSetup } from './drive/issue-setup.server.ts'
 import { createIssueFiles } from './drive/issue-files.server.ts'
 import { createLock } from './drive/one-at-a-time.server.ts'
@@ -154,6 +155,11 @@ export type AppDependencies = {
    * same one to the startup, the router and the record queue. Defaults to one of its own.
    */
   driveToken?: DriveToken
+  /**
+   * What Drive said a moment ago, which every setup built from one record shares. Defaults to one
+   * of its own; the fake app hands in one it can empty.
+   */
+  driveTrust?: DriveTrust
   /** Encrypts the Drive token. Defaults to `DRIVE_TOKEN_KEY`. */
   driveTokenKey?: Buffer
   /** The variables the app was started with; every default below is read from it. */
@@ -207,6 +213,28 @@ function driveTokenOf(dependencies: SetupDependencies): DriveToken {
   return drive
 }
 
+const driveTrusts = new WeakMap<SetupDependencies, DriveTrust>()
+
+/** The trust `driveTrust` names, or else one per dependencies record, as the token is. */
+function driveTrustOf(dependencies: SetupDependencies): DriveTrust {
+  if (dependencies.driveTrust !== undefined) return dependencies.driveTrust
+  let trust = driveTrusts.get(dependencies)
+  if (trust === undefined) {
+    trust = createDriveTrust({ now })
+    driveTrusts.set(dependencies, trust)
+  }
+  return trust
+}
+
+/** Folders on Drive whose every answer about a folder reaches the trust. */
+function recordedFolders(
+  dependencies: SetupDependencies,
+  accessToken: string,
+  fetch: typeof globalThis.fetch,
+): DriveFolders {
+  return driveTrustOf(dependencies).recording(createDriveFolders({ accessToken, fetch }))
+}
+
 /** A Drive access token on the dependencies' database, OAuth client and `fetch`. */
 export function createDefaultDriveToken(dependencies: SetupDependencies): DriveToken {
   let reportError = dependencies.reportError ?? ignoreErrors
@@ -234,7 +262,7 @@ export function createArticleSetup(dependencies: SetupDependencies): ArticleSetu
   return {
     articles: createArticleStore(dependencies.database),
     files: (accessToken) => createArticleFiles({ accessToken, fetch: drive.fetch }),
-    folders: (accessToken) => createDriveFolders({ accessToken, fetch: drive.fetch }),
+    folders: (accessToken) => recordedFolders(dependencies, accessToken, drive.fetch),
     issues: createIssueStore(dependencies.database),
     links: createLinkStore(dependencies.database),
     mailLog: createPublicMailLog(dependencies.database),
@@ -247,6 +275,7 @@ export function createArticleSetup(dependencies: SetupDependencies): ArticleSetu
     reportError,
     templateId: dependencies.templateId ?? articleTemplateDocumentId(dependencies.environment),
     token: drive.token,
+    trust: driveTrustOf(dependencies),
   }
 }
 
@@ -264,7 +293,7 @@ export function createArtworksSetup(
     articles: articleSetup.articles,
     artworks: createArtworkStore(dependencies.database),
     files: (accessToken) => createArtworkFiles({ accessToken, fetch: drive.fetch }),
-    folders: (accessToken) => createDriveFolders({ accessToken, fetch: drive.fetch }),
+    folders: (accessToken) => recordedFolders(dependencies, accessToken, drive.fetch),
     groups: createGroupStore(dependencies.database),
     issues: articleSetup.issues,
     links: articleSetup.links,
@@ -274,6 +303,7 @@ export function createArtworksSetup(
     now,
     reportError: articleSetup.reportError,
     token: drive.token,
+    trust: articleSetup.trust,
   }
 }
 
@@ -341,7 +371,7 @@ export function createAppRouter(dependencies: AppDependencies) {
   let issueSetup: IssueFixSetup = {
     articles: articleSetup.articles,
     files: (accessToken) => createIssueFiles({ accessToken, fetch: drive.fetch }),
-    folders: (accessToken) => createDriveFolders({ accessToken, fetch: drive.fetch }),
+    folders: (accessToken) => recordedFolders(dependencies, accessToken, drive.fetch),
     groups: artworksSetup.groups,
     issuesFolderId: dependencies.issuesFolderId ?? issuesFolderId(dependencies.environment),
     now,

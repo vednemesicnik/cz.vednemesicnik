@@ -577,17 +577,28 @@ function issueMissingView(issue: Issue): IssueMissingView | null {
 /**
  * The Docs of the issue's approved articles, asked whether they were edited after their PDF
  * (cz.vednemesicnik.publikace#101, `01a`), once the detail stands (`12q`): what Drive said is recorded and the rows read it.
- * Only an open issue, and without an account or an answer the records stand as they are.
+ * Only an open issue, and only the Docs not asked about a few minutes ago (#1122); without an
+ * account or an answer the records stand as they are.
  */
 async function recheckDocRevisions(context: PageContext, issue: Issue): Promise<DocChecks> {
   let nothing: DocChecks = { moved: [], revised: [] }
   if (issue.closedAt !== null) return nothing
   let { articles, artworks } = articlesOf(context)
-  let targets = await articles.listDocCheckTargets(issue.id)
+  let { trust } = artworks
+  let targets = (await articles.listDocCheckTargets(issue.id)).filter(
+    (target) => !trust.isDocFresh(target.articleId, target.markedAt),
+  )
   if (targets.length === 0) return nothing
   let token = await artworks.token()
   if (!token.ok) return nothing
-  return checkAllDocRevisions({ articles, files: artworks.files(token.accessToken) }, targets)
+  return checkAllDocRevisions(
+    {
+      articles,
+      asked: (target) => trust.askedDoc(target.articleId, target.markedAt),
+      files: artworks.files(token.accessToken),
+    },
+    targets,
+  )
 }
 
 /** The block for the link and the rows of _Články_, from what the database has (`12a`). */
