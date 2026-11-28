@@ -677,7 +677,10 @@ describe('settings, Korektura (14a, 14f)', () => {
       assert.ok(html.includes(CHECK_ISLAND))
       assert.ok(html.includes(CHECK))
       assert.ok(textOf(html).includes(WARNING))
-      assert.ok(/\bhidden\b/.test(warningTag(html) ?? ''))
+      let tag = warningTag(html) ?? ''
+      assert.ok(/\shidden(=""|\s|>)/.test(tag))
+      /* A load reconciled into the page keeps the live `hidden` until its own answer. */
+      assert.ok(tag.includes('data-rmx-preserve-attrs="hidden"'))
 
       let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(html)?.[1] ?? ''
       let response = await browser.post(CHECK, { _csrf: csrf })

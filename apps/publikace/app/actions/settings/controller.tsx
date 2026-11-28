@@ -92,7 +92,7 @@ async function renderSettings(
      by itself once it does. */
   let proofreadersCheck =
     state.isShown === true && proofreadersAddress !== null
-      ? { href: routes.settings.checkProofreaders.href(), key: crypto.randomUUID() }
+      ? { href: routes.settings.checkProofreaders.href(), load: crypto.randomUUID() }
       : null
 
   return context.render(

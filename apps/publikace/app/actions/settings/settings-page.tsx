@@ -96,10 +96,10 @@ export type SettingsPageProps = {
   proofreaders: string | null
   /**
    * `14f`: the check Nastavení asks the membership service once it stands, whose answer shows the
-   * warning drawn hidden under the address. Its key is new on every load, so each load asks
-   * again. `null` without an address and on a page with a dialog over it.
+   * warning drawn hidden under the address. `load` is new on every load, so each load asks again.
+   * `null` without an address and on a page with a dialog over it.
    */
-  proofreadersCheck: { href: string; key: string } | null
+  proofreadersCheck: { href: string; load: string } | null
   proofreadersForm?: ProofreadersForm
   question?: RemovalQuestion
   toasts?: readonly ToastMessage[]
@@ -760,7 +760,7 @@ const UNKNOWN_GROUP_WARNING_ID = 'proofreaders-unknown-group'
 function ProofreadersPart(
   handle: Handle<{
     address: string | null
-    check: { href: string; key: string } | null
+    check: { href: string; load: string } | null
     domain: string
     isAdmin: boolean
   }>,
@@ -794,8 +794,9 @@ function ProofreadersPart(
         {address === null || check === null ? null : (
           <>
             {/* Drawn hidden and shown by the check's answer, so the page never reloads for it
-                and keeps whatever toast it opened with. */}
-            <div hidden id={UNKNOWN_GROUP_WARNING_ID}>
+                and keeps whatever toast it opened with. A load reconciled into the page keeps
+                the live `hidden` until its own answer, so a shown warning does not blink. */}
+            <div data-rmx-preserve-attrs="hidden" hidden id={UNKNOWN_GROUP_WARNING_ID}>
               <Callout tone="warning">
                 {/* Inline, as the other Callouts write it: `css()` would lose to the design
                     system's own rules for a paragraph in the body. */}
@@ -805,7 +806,7 @@ function ProofreadersPart(
             <ProofreadersCheck
               csrfToken={getCsrfToken(getContext())}
               href={check.href}
-              key={check.key}
+              load={check.load}
               warningId={UNKNOWN_GROUP_WARNING_ID}
             />
           </>
