@@ -127,3 +127,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0094](0094-publikace-is-production-unless-node-env-names-development-or-test.md) | Publikace is production unless NODE_ENV names development or test | 2026-11-27 |  |
 | [0095](0095-a-job-started-by-hand-is-a-request-its-claim-redeems-and-says-nothing-about-its-trigger.md) | A job started by hand is a request its claim redeems, and says nothing about its trigger | 2026-11-27 |  |
 | [0096](0096-only-a-major-version-is-planned-as-a-milestone.md) | Only a major version is planned as a milestone | 2026-11-27 |  |
+| [0097](0097-publikace-keys-every-row-by-a-cuid.md) | Publikace keys every row by a CUID | 2026-11-28 |  |
