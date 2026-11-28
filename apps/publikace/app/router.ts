@@ -262,7 +262,7 @@ export function createArtworksSetup(
     articles: articleSetup.articles,
     artworks: createArtworkStore(dependencies.database),
     files: (accessToken) => createArtworkFiles({ accessToken, fetch: drive.fetch }),
-    folders: articleSetup.folders,
+    folders: (accessToken) => createDriveFolders({ accessToken, fetch: drive.fetch }),
     groups: createGroupStore(dependencies.database),
     issues: articleSetup.issues,
     links: articleSetup.links,
