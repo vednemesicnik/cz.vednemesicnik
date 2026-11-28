@@ -160,9 +160,15 @@ export type LinkBlockView = {
  * The Callout under an article's row, or in a group's, whose folder or a folder in it is missing
  * (`12j`).
  */
+/**
+ * Where the missing folders' check posts (`12j`), and `load`, new on every load of the detail that
+ * asks: the island asks again whenever it changes, also on a load the runtime reconciles in place.
+ */
+export type ArrivalCheckView = { href: string; load: string }
+
 export type MissingFoldersView = {
-  /** Where the detail's own check posts once the page stands (`12j`). */
-  arrivalCheck: string
+  /** The detail's own check once the page stands (`12j`); `null` on a load that asks nothing. */
+  arrivalCheck: ArrivalCheckView | null
   /** Where _Zkontrolovat znovu_ posts; `null` in a closed issue, whose detail is for reading. */
   checkAction: string | null
   /** The step, the subfolders' names in it linking to the very folder on Drive. */
@@ -174,8 +180,8 @@ export type MissingFoldersView = {
 
 /** The Callout under the header while the issue's `Články` or its own folder is missing (`12j`). */
 export type IssueMissingView = {
-  /** Where the detail's own check posts once the page stands (`12j`). */
-  arrivalCheck: string
+  /** The detail's own check once the page stands (`12j`); `null` on a load that asks nothing. */
+  arrivalCheck: ArrivalCheckView | null
   /** Where _Zkontrolovat znovu_ posts; `null` in a closed issue, whose detail is for reading. */
   checkAction: string | null
   heading: string
@@ -393,12 +399,13 @@ export type GroupsView = {
 
 /**
  * The detail's own question to Drive about its approved texts (`12q`): what a screen reader hears
- * on the load that shows a find, and the check, on the detail as opened only. `key` is new on
- * every render, so the island asks again on a later load rather than staying as it was.
+ * on the load that shows a find, and the check, on the detail as opened only. `load` is new on
+ * every load that asks, which the island tells apart and asks again on, also when the runtime
+ * reconciles that load into the page that stands.
  */
 export type DocCheckView = {
   announcement: string | null
-  check: { href: string; key: string } | null
+  check: { href: string; load: string } | null
 }
 
 export type DetailPageProps = {
@@ -1239,7 +1246,7 @@ function Articles(
           </div>
         )}
         {/* Stands empty from the first render, so a sentence the check's reload adds is
-            announced; outside the island, whose key changes with every load (`12q`). */}
+            announced; outside the island, which the check's reload takes away (`12q`). */}
         {docCheck === null ? null : (
           <p class="vdm-sr-only" role="status">
             {docCheck.announcement ?? ''}
@@ -1249,7 +1256,7 @@ function Articles(
           <DocRevisionCheck
             csrfToken={csrfToken}
             href={docCheck.check.href}
-            key={docCheck.check.key}
+            load={docCheck.check.load}
           />
         )}
       </Section>

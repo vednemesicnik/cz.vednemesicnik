@@ -48,6 +48,34 @@ export function takeToasts(): Middleware<{
   }
 }
 
+const KEPT_TOASTS_SESSION_KEY = 'keptToasts'
+
+/**
+ * Keeps the toasts a page showed for a reload of that page, under `scope`, the page they belong
+ * to; none drops what was kept. The flash is gone once a page has shown it, and a reload the page
+ * starts by itself would otherwise draw it away.
+ */
+export function keepToasts(
+  session: Session | undefined,
+  scope: string,
+  toasts: readonly ToastMessage[],
+): void {
+  if (toasts.length === 0) {
+    if (session?.get(KEPT_TOASTS_SESSION_KEY) !== undefined) session?.unset(KEPT_TOASTS_SESSION_KEY)
+    return
+  }
+  session?.set(KEPT_TOASTS_SESSION_KEY, { scope, toasts })
+}
+
+/** The toasts kept for `scope`, read as a flashed one is. */
+export function keptToasts(session: Session | undefined, scope: string): readonly ToastMessage[] {
+  let value = session?.get(KEPT_TOASTS_SESSION_KEY)
+  if (typeof value !== 'object' || value === null) return []
+  let { scope: keptScope, toasts } = value as { scope?: unknown; toasts?: unknown }
+  if (keptScope !== scope || !Array.isArray(toasts)) return []
+  return toasts.map(readToast).filter((toast) => toast !== null)
+}
+
 function readToast(value: unknown): ToastMessage | null {
   if (typeof value !== 'object' || value === null) return null
   let { action, detail, message, tone } = value as {

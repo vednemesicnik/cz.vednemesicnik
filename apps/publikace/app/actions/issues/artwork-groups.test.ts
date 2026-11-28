@@ -745,16 +745,43 @@ describe('a group’s missing folder in the detail (12j, cz.vednemesicnik.publik
 
       let check = () => context.editor.post(`${DETAIL}/folders/check-marked`, {}, DETAIL)
       context.app.drive.goDown()
-      assert.equal((await check()).status, 204)
+      assert.deepEqual(await (await check()).json(), { changed: false })
       assert.ok(textOf(await (await context.editor.get(DETAIL)).text()).includes(GROUP_STEP))
       context.app.drive.heal()
 
-      assert.equal((await check()).status, 204)
+      assert.deepEqual(await (await check()).json(), { changed: true })
       let text = textOf(await (await context.editor.get(DETAIL)).text())
       assert.ok(!text.includes(GROUP_STEP))
       assert.ok(!text.includes('Složka je zpátky'))
       let overview = textOf(await (await context.editor.get('/')).text())
       assert.ok(!overview.includes('čeká na vás'))
+    }))
+
+  it('asks again on every load that is not the reload its own change started (#1124)', () =>
+    withIssue(async (context) => {
+      for (let name of ['Mapa obce k rozhovoru i reportáži', 'Zadní strana']) {
+        await createGroup(context, { name })
+        let group = await groupOf(context, name)
+        context.app.drive.trash(group.folderId)
+        await context.app.browser().get(`/l/${group.link?.key}/artworks`)
+      }
+      let check = () => context.editor.post(`${DETAIL}/folders/check-marked`, {}, DETAIL)
+      let asks = (html: string) => html.includes(`${DETAIL}/folders/check-marked`)
+
+      assert.ok(asks(await (await context.editor.get(DETAIL)).text()))
+      assert.deepEqual(await (await check()).json(), { changed: false })
+      assert.ok(
+        asks(await (await context.editor.get(DETAIL)).text()),
+        'nothing changed, so it asks',
+      )
+
+      let back = await groupOf(context, 'Zadní strana')
+      context.app.drive.restore(back.folderId)
+      assert.deepEqual(await (await check()).json(), { changed: true })
+      let reload = await (await context.editor.get(DETAIL)).text()
+      assert.ok(textOf(reload).includes(GROUP_STEP), 'the other group is still missing')
+      assert.ok(!asks(reload), 'the reload asks nothing again')
+      assert.ok(asks(await (await context.editor.get(DETAIL)).text()))
     }))
 
   it('hides under a binned issue folder, which is counted once', () =>

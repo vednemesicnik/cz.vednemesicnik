@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2'
 import { redirect } from 'remix/response/redirect'
 import {
   AGREED_AUTHOR_TAG,
@@ -299,7 +300,7 @@ import { GROUP_CREATED_TOAST, groupCountText, groupNoteLine } from '../../domain
 import { Articles, type ArticlesContext } from '../../middleware/articles.server.ts'
 import { type Person, requireEditor } from '../../middleware/auth.server.ts'
 import { DriveAccount } from '../../middleware/drive-account.server.ts'
-import { flashToast, Toasts } from '../../middleware/toasts.server.ts'
+import { flashToast, keepToasts, keptToasts, Toasts } from '../../middleware/toasts.server.ts'
 import { routes } from '../../routes.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import {
@@ -311,6 +312,7 @@ import {
   type DiscardView,
   type DocCheckView,
   type GroupsView,
+  type ArrivalCheckView,
   type IssueMissingView,
   type LinkBlockView,
   type MissingAddressView,
@@ -429,6 +431,38 @@ function takeDocChecked(session: Session | undefined, name: string): DocChecked 
   return { name, revised: revised.filter((id): id is string => isRowId(id)) }
 }
 
+/*
+ * That the detail's check of the folders on record as missing changed a record, for the reload it
+ * starts (`12j`): the issue's name, so it counts on that detail only. Taken once; its presence
+ * tells the reload not to ask again.
+ */
+const FOLDERS_CHECKED_SESSION_KEY = 'missingFoldersChecked'
+
+function takeFoldersChecked(session: Session | undefined, name: string): boolean {
+  let value = session?.get(FOLDERS_CHECKED_SESSION_KEY)
+  if (value === undefined) return false
+  session?.unset(FOLDERS_CHECKED_SESSION_KEY)
+  return value === name
+}
+
+/**
+ * The toasts of the detail: the session's on an ordinary load, kept for the reload a check of that
+ * load may start, which draws them again (`12q`, `12j`). The flash was used up by the load that
+ * showed them, and the reload draws the same toast where it stands, so it neither fades in again
+ * nor is announced twice. An ordinary load drops what an earlier one kept.
+ */
+function shownToasts(
+  context: PageContext,
+  session: Session | undefined,
+  name: string,
+  load: { isAsking: boolean; isCheckReload: boolean },
+): readonly ToastMessage[] {
+  if (load.isCheckReload) return keptToasts(session, name)
+  let toasts = context.get(Toasts) as readonly ToastMessage[]
+  keepToasts(session, name, load.isAsking ? toasts : [])
+  return toasts
+}
+
 function takeSettled(session: Session | undefined): SettledArticle | null {
   let value = session?.get(SETTLED_SESSION_KEY)
   if (value === undefined) return null
@@ -480,6 +514,7 @@ function missingView(
   issue: Issue,
   holder: FoldersHolder,
   batches: readonly BatchRow[],
+  arrival: ArrivalCheckView | null,
 ): MissingFoldersView | null {
   /* With the issue folder in the bin, its one Callout stands for every folder in it (`12j`). */
   if (issue.missing.issue !== null) return null
@@ -497,7 +532,7 @@ function missingView(
   let hasBatchAwaitingConsent = issue.closedAt === null && ofHolder.some(isAwaitingConsent)
   let ids = { id: String(holder.id), name: issue.name }
   return {
-    arrivalCheck: routes.issues.checkMarkedFolders.href({ name: issue.name }),
+    arrivalCheck: arrival,
     /* A closed issue's detail is for reading (`12h`); its records stand as they are. */
     checkAction:
       issue.closedAt !== null
@@ -524,10 +559,10 @@ function missingView(
  * whole issue folder is in the bin, and the bin shows only that one, which the detail then names
  * instead. Without an account or an answer from Drive, the records stand as they are.
  */
-async function recheckMissing(context: PageContext, issue: Issue): Promise<void> {
+async function recheckMissing(context: PageContext, issue: Issue): Promise<boolean> {
   let { articles, artworks } = articlesOf(context)
   let isMarked = (holder: Pick<FoldersHolder, 'missing'>) => recordedMissing(holder).length > 0
-  let marked: ArticleFolderIds[] = [
+  let marked: (ArticleFolderIds & Pick<FoldersHolder, 'missing'>)[] = [
     ...(await articles.listCreated(issue.id))
       .filter(isMarked)
       .map((article) => ({ ...article, kind: 'article' as const })),
@@ -535,14 +570,25 @@ async function recheckMissing(context: PageContext, issue: Issue): Promise<void>
       .filter(isMarked)
       .map((group) => ({ ...group, kind: 'group' as const })),
   ]
-  let isIssueMarked = recordedIssueMissing(issue).length > 0
-  if (marked.length === 0 && !isIssueMarked) return
+  let issueMarks = recordedIssueMissing(issue)
+  if (marked.length === 0 && issueMarks.length === 0) return false
   let token = await artworks.token()
-  if (!token.ok) return
+  if (!token.ok) return false
   let folders = artworks.folders(token.accessToken)
-  await checkIssueFolders({ folders, issues: issuesOf(context).store, now }, issue)
+  let issueCheck = await checkIssueFolders({ folders, issues: issuesOf(context).store, now }, issue)
+  let isChanged = issueCheck !== 'unavailable' && !isSameKinds(issueMarks, issueCheck.missing)
   let deps = { articles, folders, groups: artworks.groups, now }
-  for (let holder of marked) await checkArticleFolders(deps, holder)
+  for (let holder of marked) {
+    let check = await checkArticleFolders(deps, holder)
+    if (check !== 'unavailable' && !isSameKinds(recordedMissing(holder), check.missing)) {
+      isChanged = true
+    }
+  }
+  return isChanged
+}
+
+function isSameKinds(recorded: readonly string[], found: readonly string[]): boolean {
+  return recorded.length === found.length && recorded.every((kind) => found.includes(kind))
 }
 
 /**
@@ -562,11 +608,11 @@ function flashTokenFailure(
 }
 
 /** The Callout under the header while the issue's `Články` or its own folder is missing. */
-function issueMissingView(issue: Issue): IssueMissingView | null {
+function issueMissingView(issue: Issue, arrival: ArrivalCheckView | null): IssueMissingView | null {
   let mark = shownIssueMark(issue)
   if (mark === null) return null
   return {
-    arrivalCheck: routes.issues.checkMarkedFolders.href({ name: issue.name }),
+    arrivalCheck: arrival,
     checkAction:
       issue.closedAt === null ? routes.issues.checkIssueFolders.href({ name: issue.name }) : null,
     heading: issueFolderHeading(mark.kind, issue.name),
@@ -701,6 +747,7 @@ async function linkAndArticles(
   isChanged: boolean,
   settled: SettledArticle | null,
   justRevised: ReadonlySet<string>,
+  arrival: ArrivalCheckView | null,
 ): Promise<{ articles: ArticleRowView[]; link: LinkBlockView | undefined }> {
   let { articles, artworks, links, origin } = articlesOf(context)
   let isOpen = issue.closedAt === null
@@ -794,7 +841,7 @@ async function linkAndArticles(
       authors: authorsLine(article.authors),
       documentUrl: documentUrl(article.docId),
       id: article.id,
-      missing: missingView(issue, { ...article, kind: 'article' }, batches),
+      missing: missingView(issue, { ...article, kind: 'article' }, batches, arrival),
       name: article.name,
       pdfUrl: finalVersion === null ? null : driveFileUrl(finalVersion.pdfFileId),
       state: articleStateTag(article),
@@ -936,6 +983,7 @@ async function groupsOf(
   context: PageContext,
   issue: Issue,
   changed: { id: string | null; isHeadingFocused: boolean },
+  arrival: ArrivalCheckView | null,
 ): Promise<GroupsView | undefined> {
   let state = issueState(issue)
   if (state === 'unfinished') return undefined
@@ -974,7 +1022,7 @@ async function groupsOf(
         isChanged: group.id === changed.id,
         isClosed: state === 'closed',
         isCopyFocused: group.id === changed.id && !changed.isHeadingFocused,
-        missing: missingView(issue, { ...group, kind: 'group' }, batches),
+        missing: missingView(issue, { ...group, kind: 'group' }, batches, arrival),
         name: group.name,
         noteLine: group.note === '' ? null : groupNoteLine(group.note),
         shown: url === null ? null : shownUrl(url),
@@ -994,7 +1042,10 @@ async function renderDetail(
     isFolderGone?: boolean
     /** `02d` over the detail, with the key of the link it shows. */
     renewing?: { shownKey: string }
-    /** The detail itself, which asks Drive about approved texts once it stands (`12q`). */
+    /**
+     * The detail itself, which asks Drive about approved texts (`12q`) and the folders on record
+     * as missing (`12j`) once it stands.
+     */
     isShown?: boolean
     newGroup?: NewGroupDialogView
     replacing?: FinalVersionDialogProps
@@ -1005,12 +1056,23 @@ async function renderDetail(
   let session = context.get(Session) as Session | undefined
   let fixed = takeIssueFixed(context)
   let checked = takeDocChecked(session, issue.name)
+  /* Both flashes are taken, so neither outlives this load. */
+  let isFoldersReload = takeFoldersChecked(session, issue.name)
+  /* The reload a check started asks nothing again, and keeps the toast the detail opened with. */
+  let isCheckReload = checked !== null || isFoldersReload
+  let load = options.isShown === true && !isCheckReload ? createId() : null
+  let arrival =
+    load === null
+      ? null
+      : { href: routes.issues.checkMarkedFolders.href({ name: issue.name }), load }
+  let toasts = shownToasts(context, session, issue.name, { isCheckReload, isAsking: load !== null })
   let { articles, link } = await linkAndArticles(
     context,
     issue,
     takeLinkChanged(session, issue.name),
     takeSettled(session),
     new Set(checked?.revised ?? []),
+    arrival,
   )
   return context.render(
     <DetailPage
@@ -1018,27 +1080,32 @@ async function renderDetail(
       missingAddress={await missingAddressOf(context, articles)}
       artworks={await artworksOf(context, issue, filterOf(context))}
       discarding={options.discarding}
-      docCheck={await docCheckOf(context, issue, articles, checked, options.isShown ?? false)}
+      docCheck={await docCheckOf(context, issue, articles, load)}
       fixing={options.fixing}
       driveAccount={await driveView(context)}
       groupFixing={options.groupFixing}
-      groups={await groupsOf(context, issue, {
-        id: takeGroupChanged(session),
-        isHeadingFocused: fixed?.focus === 'groups' && fixed.issueId === issue.id,
-      })}
+      groups={await groupsOf(
+        context,
+        issue,
+        {
+          id: takeGroupChanged(session),
+          isHeadingFocused: fixed?.focus === 'groups' && fixed.issueId === issue.id,
+        },
+        arrival,
+      )}
       isFolderGone={options.isFolderGone}
       renewing={options.renewing}
       isTitleFocused={fixed?.focus === 'title' && fixed.issueId === issue.id}
       isArticlesFocused={fixed?.focus === 'articles' && fixed.issueId === issue.id}
       issue={issue}
-      issueMissing={issueMissingView(issue)}
+      issueMissing={issueMissingView(issue, arrival)}
       link={link}
       newGroup={options.newGroup}
       person={context.auth.identity}
       print={await printOf(context, issue)}
       replacing={options.replacing}
       step={options.step}
-      toasts={context.get(Toasts) as readonly ToastMessage[]}
+      toasts={toasts}
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
@@ -1046,31 +1113,25 @@ async function renderDetail(
 
 /**
  * The detail's own revision check (`12q`) on an open issue: the sentence for a screen reader on
- * the load that shows what it found, and the check itself only on the detail as opened. A
- * dialog's page and the check's own reload ask nothing, nor an issue with no approved text. Its
- * key is new on every render, so a later load of the detail asks again.
+ * the load that shows what it found, and the check itself on a load that asks (`load`), never
+ * with no approved text. A dialog's page and a check's own reload ask nothing.
  */
 async function docCheckOf(
   context: PageContext,
   issue: Issue,
   rows: readonly ArticleRowView[],
-  checked: DocChecked | null,
-  isShown: boolean,
+  load: string | null,
 ): Promise<DocCheckView | null> {
   if (issue.closedAt !== null) return null
   let revised = rows.filter((row) => row.isChanged).length
-  let canCheck =
-    isShown &&
-    checked === null &&
-    (await articlesOf(context).articles.listDocCheckTargets(issue.id)).length > 0
+  let hasTargets =
+    load !== null && (await articlesOf(context).articles.listDocCheckTargets(issue.id)).length > 0
   return {
     announcement: revised === 0 ? null : revisedAnnouncement(revised),
-    check: canCheck
-      ? {
-          href: routes.issues.checkDocRevisions.href({ name: issue.name }),
-          key: crypto.randomUUID(),
-        }
-      : null,
+    check:
+      load === null || !hasTargets
+        ? null
+        : { href: routes.issues.checkDocRevisions.href({ name: issue.name }), load },
   }
 }
 
@@ -1643,14 +1704,21 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
       },
 
       /* `12j`: what the detail's Callouts ask once the page stands. The records change and the
-         Callouts read them on the page's next render, so this says nothing: no toast, whether
-         Drive answered or not, and never a redirect, because the page's island fetches it and
-         reloads the page itself. */
+         Callouts read them on the page's next render, so this says only whether a record
+         changed, which is when the page's island reloads it: no toast, whether Drive answered or
+         not, and never a redirect. What changed is flashed for that reload, which asks nothing
+         again. */
       async checkMarkedFolders(context) {
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
-        await recheckMissing(context, issue)
-        return new Response(null, { status: 204 })
+        let changed = await recheckMissing(context, issue)
+        if (changed) {
+          ;(context.get(Session) as Session | undefined)?.flash(
+            FOLDERS_CHECKED_SESSION_KEY,
+            issue.name,
+          )
+        }
+        return Response.json({ changed })
       },
 
       /* `12j`: every folder of the article asked again, then back to the detail with what came

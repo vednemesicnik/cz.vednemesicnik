@@ -66,6 +66,16 @@ const CHECK = `${DETAIL}/doc-revisions/check`
 /** The island of the detail's own revision check, mounted on the page (`12q`). */
 const CHECK_ISLAND = '/ui/public/doc-revision-check/component.tsx'
 
+/** The `load` the check's island got, which it asks again on whenever it changes. */
+function loadOf(html: string): string | null {
+  return (
+    /&quot;load&quot;:&quot;([0-9a-z]+)&quot;|"load":"([0-9a-z]+)"/
+      .exec(html)
+      ?.slice(1)
+      .find(Boolean) ?? null
+  )
+}
+
 /** The sentence a screen reader hears on the load that shows a find (`12q`). */
 function announcement(html: string): string {
   return textOf(/<p role="status" class="vdm-sr-only">(.*?)<\/p>/s.exec(html)?.[1] ?? '').trim()
@@ -368,6 +378,32 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       let detail = await opened(editor)
       assert.equal(docAsks(), 2)
       assert.equal(detail.changed.length, 1)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('asks again on a load after an action, and its reload keeps that load’s toast (#1124)', async () => {
+    let { app, docId, editor, issueId } = await approved()
+    try {
+      let writing = await seedArticle(app, issueId, 'Kino v tělocvičně')
+      let fresh = await opened(editor)
+      assert.deepEqual(fresh.changed, [])
+
+      app.drive.reviseDoc(docId, EDITED_AT)
+      let answer = await editor.post(`${DETAIL}/articles/${writing.articleId}/handover`, {}, DETAIL)
+      assert.equal(answer.status, 303)
+      let { changed, first, html } = await opened(editor)
+      let load = loadOf(first)
+      assert.ok(load !== null && load !== loadOf(fresh.first), 'the load after the action asks')
+      assert.equal(changed.length, 1)
+      assert.equal(statusText(first), 'Článek je předaný ke korektuře. Vrátit')
+      assert.equal(statusText(html), 'Článek je předaný ke korektuře. Vrátit')
+      assert.ok(!html.includes(CHECK_ISLAND), 'the reload asks nothing again')
+
+      let next = await (await editor.get(DETAIL)).text()
+      assert.equal(statusText(next), '')
+      assert.ok(next.includes(CHECK_ISLAND))
     } finally {
       await app.close()
     }

@@ -5,6 +5,12 @@ export type DocRevisionCheckProps = {
   /** Where the detail's own check posts once the page stands. */
   href: string
   csrfToken: string
+  /**
+   * New on every load of the detail that asks. A client entry's `key` never reaches the browser,
+   * and a load the runtime reconciles into this document only updates the island's props, so this
+   * is how the island tells a new load from a render of the same one.
+   */
+  load: string
 }
 
 /** A trigger of `⋯` whose menu is open, as `ActionMenu` marks it. */
@@ -39,11 +45,32 @@ function untilMenusClose(ids: readonly string[], signal: AbortSignal): Promise<v
   })
 }
 
+async function ask(
+  props: DocRevisionCheckProps,
+  signal: AbortSignal,
+  reload: () => Promise<unknown>,
+): Promise<void> {
+  let body = new FormData()
+  body.set('_csrf', props.csrfToken)
+  try {
+    let response = await fetch(props.href, { body, method: 'POST', signal })
+    if (!response.ok) return
+    let changed = changedOf(await response.json())
+    if (changed.length === 0 || signal.aborted) return
+    await untilMenusClose(changed, signal)
+    if (signal.aborted) return
+    await reload()
+  } catch {
+    /* A check that failed reloads nothing: the rows stand as recorded. */
+  }
+}
+
 /**
- * The detail's own question to Drive whether an approved text was edited after its PDF (`12q`).
- * The page stands from the database first and shows nothing while Drive is asked; when the
- * answer lists a changed row, this reloads the page, which reconciles into the live one, so
- * focus, an open row and the table's sideways scroll stay. That load holds a row just found
+ * The detail's own question to Drive whether an approved text was edited after its PDF (`12q`),
+ * asked once on every load of the detail that asks, after it stands. The page stands from the
+ * database first and shows nothing while Drive is asked; when the answer lists a changed row,
+ * this reloads the page, which reconciles into the live one, so focus, an open row, the table's
+ * sideways scroll and the toast the detail opened with stay. That load holds a row just found
  * _Upraveno po schválení_ where it stood, tinted, and fills the page's status line, which a
  * screen reader reads on its own. A Drive that does not answer, or an answer with nothing new,
  * changes nothing. It draws nothing itself.
@@ -57,32 +84,25 @@ function untilMenusClose(ids: readonly string[], signal: AbortSignal): Promise<v
 export const DocRevisionCheck = clientEntry(
   import.meta.url,
   function DocRevisionCheck(handle: Handle<DocRevisionCheckProps>) {
-    /* The check starts after the first render, which matches the server's markup and so
-       hydrates without a mismatch. The page gives this a new key on every load of the detail,
-       so a load the runtime reconciles mounts a new one that asks again. */
-    if (typeof document !== 'undefined') {
-      handle.queueTask(async () => {
-        let { csrfToken, href } = handle.props
-        let body = new FormData()
-        body.set('_csrf', csrfToken)
-        try {
-          let response = await fetch(href, {
-            body,
-            method: 'POST',
-            signal: handle.signal,
-          })
-          if (!response.ok) return
-          let changed = changedOf(await response.json())
-          if (changed.length === 0 || handle.signal.aborted) return
-          await untilMenusClose(changed, handle.signal)
-          if (handle.signal.aborted) return
-          await handle.frames.top.reload()
-        } catch {
-          /* A check that failed reloads nothing: the rows stand as recorded. */
-        }
-      })
-    }
+    let asked: string | null = null
+    let pending: AbortController | null = null
+    handle.signal.addEventListener('abort', () => pending?.abort())
 
-    return () => null
+    return () => {
+      /* Asked after the render, which matches the server's markup and so hydrates without a
+         mismatch; a check still on its way for an earlier load is dropped. */
+      if (typeof document !== 'undefined' && handle.props.load !== asked) {
+        asked = handle.props.load
+        pending?.abort()
+        let controller = new AbortController()
+        pending = controller
+        /* A copy: the runtime updates `handle.props` in place for the next load. */
+        let props = { ...handle.props }
+        handle.queueTask(() => {
+          void ask(props, controller.signal, () => handle.frames.top.reload())
+        })
+      }
+      return null
+    }
   },
 )
