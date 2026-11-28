@@ -271,7 +271,7 @@ export function createArtworksSetup(
     mailer: articleSetup.mailer,
     now,
     reportError: articleSetup.reportError,
-    token: articleSetup.token,
+    token: drive.token,
   }
 }
 
@@ -283,7 +283,7 @@ export function createRecordQueue(
   dependencies: SetupDependencies,
   articleSetup: ArticleSetup = createArticleSetup(dependencies),
 ): RecordQueue {
-  let { fetch } = driveTokenOf(dependencies)
+  let drive = driveTokenOf(dependencies)
   let editor = dependencies.driveAccountEmail ?? driveAccountEmail(dependencies.environment)
   return {
     articles: articleSetup.articles,
@@ -295,8 +295,8 @@ export function createRecordQueue(
     registryId:
       dependencies.registrySpreadsheetId ?? registrySpreadsheetId(dependencies.environment),
     reportError: dependencies.reportError ?? ignoreErrors,
-    sheets: (accessToken) => createRecordSheets({ accessToken, editor, fetch }),
-    token: articleSetup.token,
+    sheets: (accessToken) => createRecordSheets({ accessToken, editor, fetch: drive.fetch }),
+    token: drive.token,
   }
 }
 

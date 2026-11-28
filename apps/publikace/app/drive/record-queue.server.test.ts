@@ -57,8 +57,17 @@ describe('the record queue', () => {
       await drain(app)
       assert.equal(await pendingMarks(app), 0)
 
+      /* Counted at the queue: the token kept from the passes above would answer without a call. */
+      let asked = 0
       let calls = app.drive.calls.length
-      await drainRecordQueue(app.record)
+      await drainRecordQueue({
+        ...app.record,
+        token: () => {
+          asked += 1
+          return app.record.token()
+        },
+      })
+      assert.equal(asked, 0)
       assert.deepEqual(app.drive.calls.slice(calls), [])
     } finally {
       await app.close()
