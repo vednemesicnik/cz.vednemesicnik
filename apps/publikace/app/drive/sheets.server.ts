@@ -40,7 +40,7 @@ export type RecordSheets = {
    * The issue's Evidence in its folder, by the key on the file, or a new one with that key. A
    * write that stopped after creating it finds the same file again.
    */
-  findOrCreateEvidence(folderId: string, issueId: number): Promise<EvidenceFound>
+  findOrCreateEvidence(folderId: string, issueId: string): Promise<EvidenceFound>
   /**
    * Adds the lists of `layouts` the spreadsheet lacks, laid out, protected for `editor` alone.
    * `isOwn` for a spreadsheet the app created, the Evidence: its one empty list becomes the

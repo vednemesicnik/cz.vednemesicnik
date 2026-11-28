@@ -1,6 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { testRowId } from '../test-row-id.ts'
 import {
   answerCallout,
   answerHint,
@@ -45,8 +46,14 @@ describe('an answer from Ke kontrole', () => {
   })
 
   it('has one key per message of the provider', () => {
-    assert.equal(answerIdempotencyKey('artworks', 4, 'm-1'), 'consent-answer:batch:4:m-1')
-    assert.equal(answerIdempotencyKey('articles', 4, 'm-1'), 'consent-answer:clause:4:m-1')
+    assert.equal(
+      answerIdempotencyKey('artworks', testRowId(4), 'm-1'),
+      `consent-answer:batch:${testRowId(4)}:m-1`,
+    )
+    assert.equal(
+      answerIdempotencyKey('articles', testRowId(4), 'm-1'),
+      `consent-answer:clause:${testRowId(4)}:m-1`,
+    )
   })
 
   it('speaks of the provider or the author, and never says an article was approved', () => {

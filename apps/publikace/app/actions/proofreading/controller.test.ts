@@ -49,20 +49,20 @@ function partsOf(html: string): string[] {
 }
 
 /** Whether the card offers _Zrušit korekturu_: the „⋯“ is an island, its items in its props. */
-function canCancel(html: string, id: number): boolean {
+function canCancel(html: string, id: string): boolean {
   return html.includes(`"action":"/proofreading/articles/${id}/cancel?take=`)
 }
 
 /** One card's text, by the article's ID. */
-function cardOf(html: string, id: number): string {
+function cardOf(html: string, id: string): string {
   let card = new RegExp(`<li[^>]*id="article-${id}"[^>]*>(.*?)</li>`, 's').exec(html)
   return textOf(card?.[1] ?? '')
 }
 
 async function newsroom(): Promise<{
   app: TestApp
-  articleId: number
-  issueId: number
+  articleId: string
+  issueId: string
   editor: TestBrowser
   proofreader: TestBrowser
 }> {
@@ -87,7 +87,7 @@ async function newsroom(): Promise<{
   return { app, articleId, editor, issueId, proofreader }
 }
 
-function takePath(id: number): string {
+function takePath(id: string): string {
   return `${PAGE}/articles/${id}`
 }
 
@@ -272,7 +272,9 @@ describe('taking and cancelling proofreading (15d)', () => {
       await articles.takeProofreading(articleId, JAKUB, at.add({ hours: 1 }), 'handedOver')
 
       let page = await (await editor.get(PAGE)).text()
-      let cancel = /"action":"(\/proofreading\/articles\/\d+\/cancel\?take=[^"]*)"/.exec(page)?.[1]
+      let cancel = /"action":"(\/proofreading\/articles\/[0-9a-z]+\/cancel\?take=[^"]*)"/.exec(
+        page,
+      )?.[1]
       assert.ok(cancel !== undefined)
       await editor.post(cancel, {}, PAGE)
       let html = await (await editor.get(PAGE)).text()
@@ -305,7 +307,7 @@ describe('taking and cancelling proofreading (15d)', () => {
       )
       assert.equal((await articles.findById(articleId))?.proofreading?.email, JAKUB.email)
 
-      let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? 0, 'B')
+      let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? '', 'B')
       await editor.post(takePath(other.articleId), { shown: 'writing' }, PAGE)
       assert.equal(
         statusText(await (await editor.get(PAGE)).text()),

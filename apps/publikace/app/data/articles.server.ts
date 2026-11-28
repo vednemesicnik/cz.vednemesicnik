@@ -25,6 +25,7 @@ import { type BatchReport, decideReport } from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import { answeredAtOf, applyConsentPatch } from './consent-patch.server.ts'
 import { insertLink } from './links.server.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * Articles in the app's database, the source of truth for them (`w4i6us5r`), and the attempts
@@ -63,10 +64,10 @@ export type ArticleRow = {
    * when it was cancelled, which is what the restore must find unchanged.
    */
   cancelledHandover: { at: Temporal.Instant; cancelledAt: Temporal.Instant } | null
-  id: number
-  issueId: number
+  id: string
+  issueId: string
   licencesFolderId: string | null
-  linkId: number
+  linkId: string
   metaFileId: string | null
   missing: MissingFolders
   name: string
@@ -204,7 +205,7 @@ export type EditAuthorsOutcome =
   | { kind: 'gone' }
 
 /** One author corrected after the final version: the clause the dialog showed, and its new data. */
-export type ClauseCorrection = { clauseId: number; email: string; name: string }
+export type ClauseCorrection = { clauseId: string; email: string; name: string }
 
 /** A clause a run took to ask about its reply, and where its archive goes (cz.vednemesicnik.publikace#89). */
 export type ClaimedReply = {
@@ -222,12 +223,12 @@ export type ClaimedReply = {
 /** One author's clause as _Ke kontrole_ shows it (`13a`–`13c`). */
 export type QueuedClause = ClauseStatus & {
   archiveError: string | null
-  articleId: number
+  articleId: string
   articleName: string
   authorEmail: string
   authorName: string
   consentVerifiedByName: string | null
-  id: number
+  id: string
   issueName: string
   replyReceivedAt: Temporal.Instant | null
   replyText: string | null
@@ -253,7 +254,7 @@ export type FinalVersionPdf = {
  * check examined, and the revision found so far, so a check can tell a new find from one it knew.
  */
 export type DocCheckTarget = {
-  articleId: number
+  articleId: string
   baseline: Temporal.Instant
   checkedAt: Temporal.Instant
   docId: string
@@ -270,7 +271,7 @@ export type QueueArticle = {
   docId: string
   finalVersion: FinalVersion | null
   handover: ArticleStep | null
-  id: number
+  id: string
   issueName: string
   name: string
   proofreading: Proofreading | null
@@ -305,8 +306,8 @@ export type RemoveArticleOutcome =
 export type { DigestCandidate }
 
 export type AnnouncedDigest = {
-  cancelled: readonly { handedOverAt: Temporal.Instant; id: number }[]
-  handedOver: readonly { handedOverAt: Temporal.Instant; id: number }[]
+  cancelled: readonly { handedOverAt: Temporal.Instant; id: string }[]
+  handedOver: readonly { handedOverAt: Temporal.Instant; id: string }[]
 }
 
 /** A committed article: its files exist. */
@@ -316,8 +317,8 @@ export type NewAttempt = {
   at: Temporal.Instant
   authors: readonly Author[]
   formKey: string
-  issueId: number
-  linkId: number
+  issueId: string
+  linkId: string
   name: string
 }
 
@@ -325,22 +326,22 @@ export type ArticleStore = {
   /** Every attempt left uncommitted, for the cleanup at startup, when no request is running. */
   abandonedAttempts(): Promise<ArticleRow[]>
   /** Commits the attempt as an article and gives it its link for artworks, in one transaction. */
-  commit(id: number, at: Temporal.Instant): Promise<Article>
+  commit(id: string, at: Temporal.Instant): Promise<Article>
   /**
    * Created articles per issue, and how many of them are _Schváleno_ (`01a`), for the overview's
    * counts and the line under them (`11a`). An issue without an article is absent.
    */
-  countsByIssue(): Promise<Map<number, ApprovedCount>>
+  countsByIssue(): Promise<Map<string, ApprovedCount>>
   /** Removes an attempt whose files are in the bin; its authors go with it. */
-  discard(id: number): Promise<void>
+  discard(id: string): Promise<void>
   findByFormKey(formKey: string): Promise<ArticleRow | null>
-  findById(id: number): Promise<ArticleRow | null>
+  findById(id: string): Promise<ArticleRow | null>
   /**
    * A created article for a link from the morning digest (`15e`): its name and its issue, open or
    * closed, so that the page can say why the article is not on it. Only one that was handed over,
    * as only those were ever in a digest: an ID tried by hand learns nothing of the closed issues.
    */
-  findForQueue(id: number): Promise<{
+  findForQueue(id: string): Promise<{
     hasFinalVersion: boolean
     isIssueClosed: boolean
     issueName: string
@@ -351,7 +352,7 @@ export type ArticleStore = {
    * proofreader took it. A cancelled handover is replaced by this one.
    */
   handOver(
-    id: number,
+    id: string,
     by: { email: string; name: string | null },
     at: Temporal.Instant,
   ): Promise<HandoverOutcome>
@@ -360,7 +361,7 @@ export type ArticleStore = {
    * after a handover must not cancel one somebody made since.
    */
   cancelHandover(
-    id: number,
+    id: string,
     at: Temporal.Instant,
     handedOverAt?: Temporal.Instant,
   ): Promise<HandoverOutcome>
@@ -368,7 +369,7 @@ export type ArticleStore = {
    * _Vrátit_ after a cancellation (`12l`): the cancelled handover stands again, with its own time
    * and its own place in the digest, if it is still the one cancelled at `cancelledAt`.
    */
-  restoreHandover(id: number, cancelledAt: Temporal.Instant): Promise<HandoverOutcome>
+  restoreHandover(id: string, cancelledAt: Temporal.Instant): Promise<HandoverOutcome>
   /** Every article the morning digest may speak of, the oldest handover first (`12n`). */
   listForDigest(): Promise<DigestCandidate[]>
   /** Every created article of every open issue, for the page Korektura (`15a`). */
@@ -381,19 +382,19 @@ export type ArticleStore = {
    * unsent uploads take the same time, so the sweep of unsent uploads leaves them to the folder's
    * bin. Drive is binned after, so a refusal there is the caller's to undo with `unmarkRemoved`.
    */
-  markRemoved(id: number, at: Temporal.Instant): Promise<RemoveArticleOutcome>
+  markRemoved(id: string, at: Temporal.Instant): Promise<RemoveArticleOutcome>
   /** Takes back a removal that Drive did not finish, its unsent uploads with it. */
-  unmarkRemoved(id: number, at: Temporal.Instant): Promise<void>
+  unmarkRemoved(id: string, at: Temporal.Instant): Promise<void>
   /** Records what a digest the Mailer confirmed told, where nothing changed since. */
   markAnnounced(digest: AnnouncedDigest, at: Temporal.Instant): Promise<void>
   /** The issue's created articles, newest first. */
-  listCreated(issueId: number): Promise<Article[]>
+  listCreated(issueId: string): Promise<Article[]>
   /** The folders the app reached again: their records go. */
-  clearMissing(id: number, kinds: readonly ArticleFolderKind[]): Promise<void>
+  clearMissing(id: string, kinds: readonly ArticleFolderKind[]): Promise<void>
   /** An attempt whose cleanup did not get through, to be tried again. */
-  markForCleanup(id: number, at: Temporal.Instant): Promise<void>
+  markForCleanup(id: string, at: Temporal.Instant): Promise<void>
   /** The folders the app found missing; one already recorded keeps the time it was found. */
-  markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
+  markMissing(id: string, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
   /**
    * _Vzít si korekturu_ (`15d`), while nobody has the article and its issue is open. A cancelled
    * take is replaced. `shown` is the state the card showed: taken from _Dopsáno_, it writes only
@@ -401,7 +402,7 @@ export type ArticleStore = {
    * _Píše se_, a handover made meanwhile does not stop it: they wanted the text either way.
    */
   takeProofreading(
-    id: number,
+    id: string,
     by: { email: string; name: string | null },
     at: Temporal.Instant,
     shown: 'handedOver' | 'writing',
@@ -412,7 +413,7 @@ export type ArticleStore = {
    * proofreader cancels their own, an editor-in-chief passes none.
    */
   cancelProofreading(
-    id: number,
+    id: string,
     at: Temporal.Instant,
     options?: { owner?: string; proofreadAt?: Temporal.Instant },
   ): Promise<ProofreadingOutcome>
@@ -422,7 +423,7 @@ export type ArticleStore = {
    * article since. With `owner`, only a take of that account.
    */
   restoreProofreading(
-    id: number,
+    id: string,
     cancelledAt: Temporal.Instant,
     options?: { owner?: string },
   ): Promise<ProofreadingOutcome>
@@ -432,7 +433,7 @@ export type ArticleStore = {
    * showed; `owner` limits it to that account's take, and an editor-in-chief passes none.
    */
   checkFinalVersion(
-    id: number,
+    id: string,
     takenAt: Temporal.Instant,
     owner?: string,
   ): Promise<Exclude<FinalVersionOutcome, { kind: 'done' }> | null>
@@ -444,7 +445,7 @@ export type ArticleStore = {
   markFinalVersion(input: {
     at: Temporal.Instant
     by: { email: string; name: string | null }
-    id: number
+    id: string
     owner?: string
     pdf: FinalVersionPdf
     takenAt: Temporal.Instant
@@ -454,7 +455,7 @@ export type ArticleStore = {
    * its clauses go, the article is _Korektura_ of the same take again.
    */
   cancelFinalVersion(
-    id: number,
+    id: string,
     at: Temporal.Instant,
     markedAt: Temporal.Instant,
     owner?: string,
@@ -464,7 +465,7 @@ export type ArticleStore = {
    * before Drive is asked to store anything: `null` when it may, else what stands in the way.
    */
   checkReplaceFinalVersion(
-    id: number,
+    id: string,
     markedAt: Temporal.Instant,
   ): Promise<Exclude<ReplaceFinalOutcome, { kind: 'done' }> | null>
   /**
@@ -475,31 +476,31 @@ export type ArticleStore = {
   replaceFinalVersion(input: {
     at: Temporal.Instant
     by: { email: string; name: string | null }
-    id: number
+    id: string
     markedAt: Temporal.Instant
     pdf: FinalVersionPdf
   }): Promise<ReplaceFinalOutcome>
   /** The article's replaced markings, the newest first, each with its clauses (`12s`). */
-  replacedVersions(id: number): Promise<ReplacedVersion[]>
+  replacedVersions(id: string): Promise<ReplacedVersion[]>
   /**
    * The marking that stands in place of the one this clause belongs to, once that one was
    * replaced, for the toast of `13a`; `null` while the clause's own marking stands.
    */
-  replacingVersionOf(clauseId: number): Promise<ArticleStep | null>
+  replacingVersionOf(clauseId: string): Promise<ArticleStep | null>
   /**
    * Every clause of the issue's markings that were not cancelled, replaced ones included, for
    * Redakční doložky in the Evidence (cz.vednemesicnik.publikace#111). A cancelled marking never left the app.
    */
-  listClausesForRecord(issueId: number): Promise<RecordClause[]>
+  listClausesForRecord(issueId: string): Promise<RecordClause[]>
   /** The markings of the issue the detail asks Drive about, while the issue is open (cz.vednemesicnik.publikace#101). */
-  listDocCheckTargets(issueId: number): Promise<DocCheckTarget[]>
+  listDocCheckTargets(issueId: string): Promise<DocCheckTarget[]>
   /**
    * What a check of the Doc found: the `modifiedTime` it examined and, when it found one, the
    * newest revision after the baseline. Only ever moves forward, and only for the marking made at
    * `markedAt` while it stands; a revision once recorded is never cleared.
    */
   recordDocCheck(
-    articleId: number,
+    articleId: string,
     markedAt: Temporal.Instant,
     found: { checkedAt: Temporal.Instant; revisedAt: Temporal.Instant | null },
   ): Promise<void>
@@ -514,7 +515,7 @@ export type ArticleStore = {
    * did not confirm, or sent with no reply since, goes back to _K odeslání_ for the next run, under
    * a new attempt. `first_claimed_at` stays, so the marking stays past its way back.
    */
-  resendClauses(id: number, markedAt: Temporal.Instant): Promise<ResendClausesOutcome>
+  resendClauses(id: string, markedAt: Temporal.Instant): Promise<ResendClausesOutcome>
   /** What the run did with a clause it claimed; `unknown` for one it did not claim. */
   recordSending(
     runKey: string,
@@ -541,23 +542,23 @@ export type ArticleStore = {
    * in _Ke kontrole_ any more, its issue was closed, or a newer reply arrived meanwhile.
    */
   verifyClause(
-    id: number,
+    id: string,
     replyMessageId: string,
     editor: { displayName: string; email: string },
     at: Temporal.Instant,
   ): Promise<boolean>
   /** _Vrátit_ until the job archives (`13b`); `false` once it has or failed to, or with nothing to take back. */
-  undoClauseVerification(id: number): Promise<boolean>
+  undoClauseVerification(id: string): Promise<boolean>
   /**
    * The clauses of _Ke kontrole_, the oldest reply first, and the clause `including` names where
    * it stands, decided, approved or in a closed issue: the card just decided or answered keeps its
    * place until the next load (`13b`, `13e`).
    */
-  reviewQueue(including?: number): Promise<QueuedClause[]>
+  reviewQueue(including?: string): Promise<QueuedClause[]>
   /** How many cards of articles _Ke kontrole_ has, for the panel. */
   reviewCount(): Promise<number>
   markWelcome(
-    articleId: number,
+    articleId: string,
     position: number,
     outcome: 'failed' | 'sent',
     at: Temporal.Instant,
@@ -568,20 +569,20 @@ export type ArticleStore = {
    * each article with a missing folder, however many of its three (`12j`). An issue with nothing
    * waiting is absent.
    */
-  waitingCountsByIssue(): Promise<Map<number, number>>
+  waitingCountsByIssue(): Promise<Map<string, number>>
   /** Attempts whose cleanup failed, safe to take while other requests run. */
   pendingCleanups(): Promise<ArticleRow[]>
   /**
    * Attempts through a link since a moment, under way or committed: what the limit counts. A
    * failed one is discarded and no longer counts, as it sent nothing.
    */
-  recentAttempts(linkId: number, since: Temporal.Instant): Promise<number>
+  recentAttempts(linkId: string, since: Temporal.Instant): Promise<number>
   /**
    * Renames the article while it has no final version and still has the name the dialog showed
    * (`12x`). Drive is renamed before, so a refusal is the caller's to undo there.
    */
   rename(input: {
-    id: number
+    id: string
     /** A `_meta.json` written anew because the one on record was gone for good. */
     metaFileId?: string
     name: string
@@ -594,7 +595,7 @@ export type ArticleStore = {
    */
   replaceAuthors(input: {
     authors: readonly Author[]
-    id: number
+    id: string
     metaFileId?: string
   }): Promise<EditAuthorsOutcome>
   /**
@@ -606,12 +607,12 @@ export type ArticleStore = {
   correctAuthors(input: {
     at: Temporal.Instant
     corrections: readonly ClauseCorrection[]
-    id: number
+    id: string
     markedAt: Temporal.Instant
     metaFileId?: string
   }): Promise<EditAuthorsOutcome>
   /** Stores a file's ID once; one already stored is never replaced. */
-  setDriveId(id: number, kind: DriveFileKind, fileId: string): Promise<void>
+  setDriveId(id: string, kind: DriveFileKind, fileId: string): Promise<void>
   /**
    * The attempt for this form key, created unless it exists; `isNew` says which. `issue-removed`
    * when the issue was removed after the link was read (`12w`): the removal and the row are
@@ -661,10 +662,10 @@ function toRow(
     formKey: String(row['form_key']),
     handover: toHandover(row, false),
     cancelledHandover: toCancelledHandover(row),
-    id: Number(row['id']),
-    issueId: Number(row['issue_id']),
+    id: String(row['id']),
+    issueId: String(row['issue_id']),
     licencesFolderId: text(row['licences_folder_id']),
-    linkId: Number(row['link_id']),
+    linkId: String(row['link_id']),
     metaFileId: text(row['meta_file_id']),
     missing: {
       article: parseStamp(row['folder_missing_at']),
@@ -716,7 +717,7 @@ function refusalOf(row: ArticleRow | null): HandoverOutcome {
 }
 
 /** Where a step on the take left the article, read from it as it now is, its issue included. */
-async function proofreadingRefusalOf(db: Database, id: number): Promise<ProofreadingOutcome> {
+async function proofreadingRefusalOf(db: Database, id: string): Promise<ProofreadingOutcome> {
   let row = await byId(db, id)
   if (row === null || row.createdAt === null || row.removedAt !== null) return { kind: 'gone' }
   let issue = await db.exec(sql`SELECT name, closed_at FROM issues WHERE id = ${row.issueId}`)
@@ -731,7 +732,7 @@ async function proofreadingRefusalOf(db: Database, id: number): Promise<Proofrea
 /** The article and the name of its issue, open or closed; `null` for one not created. */
 async function withIssue(
   db: Database,
-  id: number,
+  id: string,
 ): Promise<{ issueName: string; isClosed: boolean; row: ArticleRow } | null> {
   let row = await byId(db, id)
   if (row === null || row.createdAt === null || row.removedAt !== null) return null
@@ -744,7 +745,7 @@ async function withIssue(
 /** What stands in the way of marking the take shown at `takenAt`, or `null`. */
 async function finalVersionRefusalOf(
   db: Database,
-  id: number,
+  id: string,
   takenAt: Temporal.Instant,
   owner: string | undefined,
 ): Promise<Exclude<FinalVersionOutcome, { kind: 'done' }> | null> {
@@ -767,7 +768,7 @@ async function finalVersionRefusalOf(
 /** What stands in the way of cancelling the marking made at `markedAt`, or `null`. */
 async function cancelFinalRefusalOf(
   db: Database,
-  id: number,
+  id: string,
   markedAt: Temporal.Instant,
   owner: string | undefined,
 ): Promise<Exclude<CancelFinalOutcome, { kind: 'done' }> | null> {
@@ -787,7 +788,7 @@ async function cancelFinalRefusalOf(
 /** What stands in the way of marking a new version in place of the one made at `markedAt`. */
 async function replaceFinalRefusalOf(
   db: Database,
-  id: number,
+  id: string,
   markedAt: Temporal.Instant,
 ): Promise<Exclude<ReplaceFinalOutcome, { kind: 'done' }> | null> {
   let found = await withIssue(db, id)
@@ -807,7 +808,7 @@ async function replaceFinalRefusalOf(
 }
 
 /** The `_meta.json` a fix wrote anew in place of one gone for good, when it did. */
-async function setMetaFile(db: Database, id: number, metaFileId: string | undefined) {
+async function setMetaFile(db: Database, id: string, metaFileId: string | undefined) {
   if (metaFileId === undefined) return
   await db.exec(sql`UPDATE articles SET meta_file_id = ${metaFileId} WHERE id = ${id}`)
 }
@@ -834,19 +835,19 @@ function asArticle(row: ArticleRow): Article {
 
 async function withAuthors(db: Database, rows: readonly Row[]): Promise<ArticleRow[]> {
   if (rows.length === 0) return []
-  let ids = rows.map((row) => Number(row['id']))
+  let ids = rows.map((row) => String(row['id']))
   let result = await db.exec(
     sql`SELECT * FROM article_authors WHERE article_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))
         ORDER BY article_id, position`,
   )
-  let byArticle = new Map<number, ArticleAuthor[]>()
+  let byArticle = new Map<string, ArticleAuthor[]>()
   for (let author of result.rows ?? []) {
-    let id = Number(author['article_id'])
+    let id = String(author['article_id'])
     byArticle.set(id, [...(byArticle.get(id) ?? []), toAuthor(author)])
   }
   let finalVersions = await standingFinalVersions(db, ids)
   return rows.map((row) => {
-    let id = Number(row['id'])
+    let id = String(row['id'])
     return toRow(row, byArticle.get(id) ?? [], finalVersions.get(id) ?? null)
   })
 }
@@ -874,7 +875,7 @@ function toClauseDetail(row: Row): ClauseDetail {
     authorEmail: String(row['author_email']),
     authorName: String(row['author_name']),
     error: text(row['error']),
-    id: Number(row['id']),
+    id: String(row['id']),
     position: Number(row['position']),
     replyReceivedAt: parseStamp(row['reply_received_at']),
     replyText: text(row['reply_text']),
@@ -890,8 +891,8 @@ function toClauseDetail(row: Row): ClauseDetail {
  */
 async function standingFinalVersions(
   db: Database,
-  ids: readonly number[],
-): Promise<Map<number, FinalVersion>> {
+  ids: readonly string[],
+): Promise<Map<string, FinalVersion>> {
   let versions = await db.exec(
     sql`SELECT id, article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id,
           replaces_version_id, doc_revised_at
@@ -899,22 +900,22 @@ async function standingFinalVersions(
         WHERE ${STANDING}
           AND article_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))`,
   )
-  let versionIds = (versions.rows ?? []).map((row) => Number(row['id']))
+  let versionIds = (versions.rows ?? []).map((row) => String(row['id']))
   let clauses = await db.exec(
     sql`SELECT * FROM article_clauses
         WHERE final_version_id IN (SELECT value FROM json_each(${JSON.stringify(versionIds)}))
         ORDER BY coalesce(reply_received_at, ''), position`,
   )
-  let byVersion = new Map<number, Row[]>()
+  let byVersion = new Map<string, Row[]>()
   for (let row of clauses.rows ?? []) {
-    let id = Number(row['final_version_id'])
+    let id = String(row['final_version_id'])
     byVersion.set(id, [...(byVersion.get(id) ?? []), row])
   }
-  let byArticle = new Map<number, FinalVersion>()
+  let byArticle = new Map<string, FinalVersion>()
   for (let row of versions.rows ?? []) {
-    let rows = byVersion.get(Number(row['id'])) ?? []
+    let rows = byVersion.get(String(row['id'])) ?? []
     let reviewed = rows.find((clause) => clauseState(toClauseStatus(clause)) === 'review')
-    byArticle.set(Number(row['article_id']), {
+    byArticle.set(String(row['article_id']), {
       at: parseStamp(row['marked_at']) ?? EPOCH,
       authors: rows
         .toSorted((a, b) => Number(a['position']) - Number(b['position']))
@@ -983,7 +984,7 @@ const APPROVED_F = sql`f.doc_revised_at IS NULL AND ${ALL_CLAUSES_APPROVED_F}`
  * comes whatever it is now, approved or in a closed issue: an answer that met either stays on its
  * card until the next load (`13e`), and the typed text with it.
  */
-function clauseQueueCandidates(including: number | null) {
+function clauseQueueCandidates(including: string | null) {
   return sql`SELECT c.*, a.name AS article_name, i.name AS issue_name
     FROM article_clauses c
     JOIN final_versions f ON f.id = c.final_version_id
@@ -991,7 +992,7 @@ function clauseQueueCandidates(including: number | null) {
     JOIN issues i ON i.id = a.issue_id
     WHERE c.id = ${including} OR (${STANDING_F} AND i.closed_at IS NULL AND c.approved_at IS NULL
       AND (c.reply_message_id IS NOT NULL OR c.archive_failed_at IS NOT NULL))
-    ORDER BY coalesce(c.reply_received_at, c.archive_failed_at), c.id`
+    ORDER BY coalesce(c.reply_received_at, c.archive_failed_at), c.rowid`
 }
 
 /** What _Ke kontrole_ holds of articles: a reply that waits on a person, and a failed archive. */
@@ -1004,12 +1005,12 @@ function toQueuedClause(row: Row): QueuedClause {
   return {
     ...toClauseStatus(row),
     archiveError: text(row['archive_error']),
-    articleId: Number(row['article_id']),
+    articleId: String(row['article_id']),
     articleName: String(row['article_name'] ?? ''),
     authorEmail: String(row['author_email']),
     authorName: String(row['author_name']),
     consentVerifiedByName: text(row['consent_verified_by_name']),
-    id: Number(row['id']),
+    id: String(row['id']),
     issueName: String(row['issue_name'] ?? ''),
     replyReceivedAt: parseStamp(row['reply_received_at']),
     replyText: text(row['reply_text']),
@@ -1025,7 +1026,7 @@ async function byFormKey(db: Database, formKey: string): Promise<ArticleRow | nu
   return row ?? null
 }
 
-async function byId(db: Database, id: number): Promise<ArticleRow | null> {
+async function byId(db: Database, id: string): Promise<ArticleRow | null> {
   let result = await db.exec(sql`SELECT * FROM articles WHERE id = ${id}`)
   let [row] = await withAuthors(db, result.rows ?? [])
   return row ?? null
@@ -1035,7 +1036,7 @@ export function createArticleStore(database: Database): ArticleStore {
   return {
     async abandonedAttempts() {
       let result = await database.exec(
-        sql`SELECT * FROM articles WHERE created_at IS NULL ORDER BY id`,
+        sql`SELECT * FROM articles WHERE created_at IS NULL ORDER BY rowid`,
       )
       return withAuthors(database, result.rows ?? [])
     },
@@ -1085,9 +1086,9 @@ export function createArticleStore(database: Database): ArticleStore {
                          WHERE ${STANDING_F} AND ${APPROVED_F})) AS approved
             FROM articles WHERE created_at IS NOT NULL AND removed_at IS NULL GROUP BY issue_id`,
       )
-      let counts = new Map<number, ApprovedCount>()
+      let counts = new Map<string, ApprovedCount>()
       for (let row of result.rows ?? []) {
-        counts.set(Number(row['issue_id']), {
+        counts.set(String(row['issue_id']), {
           approved: Number(row['approved']),
           total: Number(row['total']),
         })
@@ -1191,7 +1192,7 @@ export function createArticleStore(database: Database): ArticleStore {
               AND articles.handed_over_at IS NOT NULL
               AND (articles.handover_cancelled_at IS NULL
                    OR articles.handover_announced_at IS NOT NULL)
-            ORDER BY articles.handed_over_at, articles.id`,
+            ORDER BY articles.handed_over_at, articles.rowid`,
       )
       let rows = result.rows ?? []
       let withNames = await withAuthors(database, rows)
@@ -1200,7 +1201,7 @@ export function createArticleStore(database: Database): ArticleStore {
         authors: (withNames[index]?.authors ?? []).map((author) => author.name),
         cancelledAt: parseStamp(row['handover_cancelled_at']),
         handedOverAt: parseStamp(row['handed_over_at']) ?? EPOCH,
-        id: Number(row['id']),
+        id: String(row['id']),
         issueName: String(row['issue_name']),
         name: String(row['name']),
       }))
@@ -1212,7 +1213,7 @@ export function createArticleStore(database: Database): ArticleStore {
             JOIN issues ON issues.id = articles.issue_id
             WHERE issues.closed_at IS NULL AND articles.created_at IS NOT NULL
               AND articles.removed_at IS NULL
-            ORDER BY articles.created_at, articles.id`,
+            ORDER BY articles.created_at, articles.rowid`,
       )
       let rows = result.rows ?? []
       let withNames = await withAuthors(database, rows)
@@ -1295,7 +1296,7 @@ export function createArticleStore(database: Database): ArticleStore {
       let result = await database.exec(
         sql`SELECT * FROM articles
             WHERE issue_id = ${issueId} AND created_at IS NOT NULL AND removed_at IS NULL
-            ORDER BY created_at DESC, id DESC`,
+            ORDER BY created_at DESC, rowid DESC`,
       )
       return (await withAuthors(database, result.rows ?? [])).map(asArticle)
     },
@@ -1402,23 +1403,22 @@ export function createArticleStore(database: Database): ArticleStore {
         if (refusal !== null) return refusal
         let row = await byId(db, input.id)
         if (row === null) return { kind: 'gone' }
-        let inserted = await db.exec(
+        let versionId = newRowId()
+        await db.exec(
           sql`INSERT INTO final_versions
-                (article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id, pdf_hash,
-                 attempt_key, doc_modified_at, doc_checked_at)
-              VALUES (${input.id}, ${stamp(input.at)}, ${input.by.email}, ${input.by.name},
-                      ${input.pdf.fileId}, ${input.pdf.hash}, ${input.pdf.attemptKey},
-                      ${docStamp(input.pdf)}, ${docStamp(input.pdf)})
-              RETURNING id`,
+                (id, article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id,
+                 pdf_hash, attempt_key, doc_modified_at, doc_checked_at)
+              VALUES (${versionId}, ${input.id}, ${stamp(input.at)}, ${input.by.email},
+                      ${input.by.name}, ${input.pdf.fileId}, ${input.pdf.hash},
+                      ${input.pdf.attemptKey}, ${docStamp(input.pdf)}, ${docStamp(input.pdf)})`,
         )
-        let versionId = Number(inserted.rows?.[0]?.['id'])
         /* The signature is the author's name as the form took it, as the script writes it. */
         for (let author of row.authors) {
           await db.exec(
             sql`INSERT INTO article_clauses
-                  (final_version_id, article_id, position, author_name, author_email, signature,
-                   clause_key)
-                VALUES (${versionId}, ${input.id}, ${author.position}, ${author.name},
+                  (id, final_version_id, article_id, position, author_name, author_email,
+                   signature, clause_key)
+                VALUES (${newRowId()}, ${versionId}, ${input.id}, ${author.position}, ${author.name},
                         ${author.email}, ${author.name},
                         ${clauseKey(input.id, author.position, input.at)})`,
           )
@@ -1441,7 +1441,7 @@ export function createArticleStore(database: Database): ArticleStore {
         let cancelled = result.rows?.[0]
         if (cancelled === undefined) return { kind: 'too-late' }
         await db.exec(
-          sql`DELETE FROM article_clauses WHERE final_version_id = ${Number(cancelled['id'])}`,
+          sql`DELETE FROM article_clauses WHERE final_version_id = ${String(cancelled['id'])}`,
         )
         /* Nobody heard of the new version yet: the one it replaced stands again as it was, its
            clauses where they were (`12s`). */
@@ -1449,7 +1449,7 @@ export function createArticleStore(database: Database): ArticleStore {
         if (cancelled['replaces_version_id'] !== null) {
           let back = await db.exec(
             sql`UPDATE final_versions SET replaced_at = NULL
-                WHERE id = ${Number(cancelled['replaces_version_id'])}
+                WHERE id = ${String(cancelled['replaces_version_id'])}
                 RETURNING marked_at`,
           )
           restored = parseStamp(back.rows?.[0]?.['marked_at'])
@@ -1475,32 +1475,32 @@ export function createArticleStore(database: Database): ArticleStore {
                 AND marked_at = ${stamp(input.markedAt)}
               RETURNING id`,
         )
-        let replacedId = Number(replaced.rows?.[0]?.['id'])
-        let inserted = await db.exec(
+        let replacedId = String(replaced.rows?.[0]?.['id'])
+        let versionId = newRowId()
+        await db.exec(
           sql`INSERT INTO final_versions
-                (article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id, pdf_hash,
-                 attempt_key, replaces_version_id, doc_modified_at, doc_checked_at)
-              VALUES (${input.id}, ${stamp(input.at)}, ${input.by.email}, ${input.by.name},
-                      ${input.pdf.fileId}, ${input.pdf.hash}, ${input.pdf.attemptKey},
-                      ${replacedId}, ${docStamp(input.pdf)}, ${docStamp(input.pdf)})
-              RETURNING id`,
+                (id, article_id, marked_at, marked_by_email, marked_by_name, pdf_file_id,
+                 pdf_hash, attempt_key, replaces_version_id, doc_modified_at, doc_checked_at)
+              VALUES (${versionId}, ${input.id}, ${stamp(input.at)}, ${input.by.email},
+                      ${input.by.name}, ${input.pdf.fileId}, ${input.pdf.hash},
+                      ${input.pdf.attemptKey}, ${replacedId}, ${docStamp(input.pdf)},
+                      ${docStamp(input.pdf)})`,
         )
-        let versionId = Number(inserted.rows?.[0]?.['id'])
         let earlier = await db.exec(
           sql`SELECT id, author_email FROM article_clauses WHERE final_version_id = ${replacedId}`,
         )
         /* The same author by address: the authors are the article's as they are now, and one
            added since has no earlier request to replace. */
-        let earlierOf = new Map<string, number>()
+        let earlierOf = new Map<string, string>()
         for (let clause of earlier.rows ?? []) {
-          earlierOf.set(String(clause['author_email']).toLowerCase(), Number(clause['id']))
+          earlierOf.set(String(clause['author_email']).toLowerCase(), String(clause['id']))
         }
         for (let author of row.authors) {
           await db.exec(
             sql`INSERT INTO article_clauses
-                  (final_version_id, article_id, position, author_name, author_email, signature,
-                   clause_key, replaces_clause_id)
-                VALUES (${versionId}, ${input.id}, ${author.position}, ${author.name},
+                  (id, final_version_id, article_id, position, author_name, author_email,
+                   signature, clause_key, replaces_clause_id)
+                VALUES (${newRowId()}, ${versionId}, ${input.id}, ${author.position}, ${author.name},
                         ${author.email}, ${author.name},
                         ${clauseKey(input.id, author.position, input.at)},
                         ${earlierOf.get(author.email.toLowerCase()) ?? null})`,
@@ -1517,7 +1517,7 @@ export function createArticleStore(database: Database): ArticleStore {
             ORDER BY marked_at DESC`,
       )
       let rows = versions.rows ?? []
-      let ids = JSON.stringify(rows.map((row) => Number(row['id'])))
+      let ids = JSON.stringify(rows.map((row) => String(row['id'])))
       let clauses = await database.exec(
         sql`SELECT * FROM article_clauses
             WHERE final_version_id IN (SELECT value FROM json_each(${ids}))
@@ -1526,7 +1526,7 @@ export function createArticleStore(database: Database): ArticleStore {
       return rows.map((row) => ({
         at: parseStamp(row['marked_at']) ?? EPOCH,
         authors: (clauses.rows ?? [])
-          .filter((clause) => Number(clause['final_version_id']) === Number(row['id']))
+          .filter((clause) => String(clause['final_version_id']) === String(row['id']))
           .map(toClauseDetail),
         email: String(row['marked_by_email']),
         name: text(row['marked_by_name']),
@@ -1552,7 +1552,7 @@ export function createArticleStore(database: Database): ArticleStore {
         let markedAt = parseStamp(row['marked_at']) ?? EPOCH
         let baseline = parseStamp(row['doc_modified_at']) ?? markedAt
         return {
-          articleId: Number(row['article_id']),
+          articleId: String(row['article_id']),
           baseline,
           checkedAt: parseStamp(row['doc_checked_at']) ?? baseline,
           docId: String(row['doc_id']),
@@ -1606,10 +1606,10 @@ export function createArticleStore(database: Database): ArticleStore {
               WHERE c.state = 'pending' AND ${STANDING_F} AND i.closed_at IS NULL
                 AND a.removed_at IS NULL
                 AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
-              ORDER BY f.marked_at, c.id
+              ORDER BY f.marked_at, c.rowid
               LIMIT ${CLAIM_LIMIT}`,
         )
-        let ids = JSON.stringify((result.rows ?? []).map((row) => Number(row['id'])))
+        let ids = JSON.stringify((result.rows ?? []).map((row) => String(row['id'])))
         await db.exec(
           sql`UPDATE article_clauses
               SET claim_key = ${runKey}, claimed_at = ${stamp(at)},
@@ -1630,7 +1630,7 @@ export function createArticleStore(database: Database): ArticleStore {
               JOIN articles a ON a.id = c.article_id
               JOIN issues i ON i.id = a.issue_id
               WHERE c.id IN (SELECT value FROM json_each(${ids}))
-              ORDER BY f.marked_at, c.id`,
+              ORDER BY f.marked_at, c.rowid`,
         )
         return (claimed.rows ?? []).map((row) => ({
           articleName: String(row['article_name']),
@@ -1715,10 +1715,10 @@ export function createArticleStore(database: Database): ArticleStore {
               WHERE c.state != 'pending' AND c.approved_at IS NULL AND ${STANDING_F}
                 AND i.closed_at IS NULL AND a.removed_at IS NULL
                 AND (c.claimed_at IS NULL OR c.claimed_at < ${lease})
-              ORDER BY coalesce(c.checked_at, ''), c.id
+              ORDER BY coalesce(c.checked_at, ''), c.rowid
               LIMIT ${REPLY_CLAIM_LIMIT}`,
         )
-        let ids = JSON.stringify((result.rows ?? []).map((row) => Number(row['id'])))
+        let ids = JSON.stringify((result.rows ?? []).map((row) => String(row['id'])))
         await db.exec(
           sql`UPDATE article_clauses SET claim_key = ${runKey}, claimed_at = ${stamp(at)}
               WHERE id IN (SELECT value FROM json_each(${ids}))`,
@@ -1731,7 +1731,7 @@ export function createArticleStore(database: Database): ArticleStore {
               JOIN articles a ON a.id = c.article_id
               JOIN issues i ON i.id = a.issue_id
               WHERE c.id IN (SELECT value FROM json_each(${ids}))
-              ORDER BY coalesce(c.checked_at, ''), c.id`,
+              ORDER BY coalesce(c.checked_at, ''), c.rowid`,
         )
         return (claimed.rows ?? []).map((row) => ({
           articleName: String(row['article_name']),
@@ -1755,7 +1755,7 @@ export function createArticleStore(database: Database): ArticleStore {
         /* A clause still to send was claimed for sending, and has no reply to report. */
         let row = result.rows?.[0]
         if (row === undefined) return 'unknown'
-        let id = Number(row['id'])
+        let id = String(row['id'])
         /* A newer version replaced this one while the run held it: the clause stays as it stood
            then, and a conversation the job archived for it is binned, as nothing counts it. */
         if (row['replaced_at'] !== null) {
@@ -1830,7 +1830,7 @@ export function createArticleStore(database: Database): ArticleStore {
     async reviewQueue(including) {
       let result = await database.exec(clauseQueueCandidates(including ?? null))
       return (result.rows ?? [])
-        .filter((row) => Number(row['id']) === including || isQueuedClause(row))
+        .filter((row) => String(row['id']) === including || isQueuedClause(row))
         .map(toQueuedClause)
     },
 
@@ -1876,14 +1876,14 @@ export function createArticleStore(database: Database): ArticleStore {
             GROUP BY issue_id
             HAVING count > 0`,
       )
-      let counts = new Map<number, number>()
-      for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
+      let counts = new Map<string, number>()
+      for (let row of result.rows ?? []) counts.set(String(row['issue_id']), Number(row['count']))
       return counts
     },
 
     async pendingCleanups() {
       let result = await database.exec(
-        sql`SELECT * FROM articles WHERE created_at IS NULL AND cleanup_at IS NOT NULL ORDER BY id`,
+        sql`SELECT * FROM articles WHERE created_at IS NULL AND cleanup_at IS NOT NULL ORDER BY rowid`,
       )
       return withAuthors(database, result.rows ?? [])
     },
@@ -2028,7 +2028,7 @@ export function createArticleStore(database: Database): ArticleStore {
               WHERE final_version_id = (SELECT id FROM final_versions
                                         WHERE article_id = ${input.id} AND ${STANDING})`,
         )
-        let byClauseId = new Map((clauses.rows ?? []).map((each) => [Number(each['id']), each]))
+        let byClauseId = new Map((clauses.rows ?? []).map((each) => [String(each['id']), each]))
         /* Every clause first, so one that agreed meanwhile leaves the others unwritten too: the
            dialog is one step (`12y`). */
         for (let correction of input.corrections) {
@@ -2087,8 +2087,9 @@ export function createArticleStore(database: Database): ArticleStore {
         if (issue.rows?.[0]?.['removed_at'] != null) return 'issue-removed' as const
 
         await db.exec(
-          sql`INSERT INTO articles (issue_id, link_id, form_key, name, started_at)
-              VALUES (${attempt.issueId}, ${attempt.linkId}, ${attempt.formKey}, ${attempt.name}, ${stamp(attempt.at)})`,
+          sql`INSERT INTO articles (id, issue_id, link_id, form_key, name, started_at)
+              VALUES (${newRowId()}, ${attempt.issueId}, ${attempt.linkId}, ${attempt.formKey},
+                ${attempt.name}, ${stamp(attempt.at)})`,
         )
         let inserted = await byFormKey(db, attempt.formKey)
         if (inserted === null) throw new Error('The attempt was not written.')

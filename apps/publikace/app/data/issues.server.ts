@@ -4,6 +4,7 @@ import { sql } from 'remix/data-table'
 import { type FolderKind, type Issue, type IssueFolderKind, issueNameKey } from '../domain/issue.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import { ensureArticleLinkIn } from './links.server.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * The issues in the app's database, the source of truth for them (`w4i6us5r`).
@@ -23,22 +24,22 @@ export type InsertResult = { existingName: string; ok: false } | { issue: Issue;
 
 export type IssueStore = {
   /** Takes the marks of the folders the app reached again (`12j`). */
-  clearMissing(id: number, kinds: readonly IssueFolderKind[]): Promise<void>
+  clearMissing(id: string, kinds: readonly IssueFolderKind[]): Promise<void>
   /**
    * _Uzavřít vydání_ (`12g`): `false` when the issue was closed already or is not finished, so a
    * dialog drawn before somebody else's step changes nothing.
    */
-  close(id: number, at: Temporal.Instant): Promise<boolean>
+  close(id: string, at: Temporal.Instant): Promise<boolean>
   /**
    * Marks the issue finished and gives it its link for new articles. Refused by the table while
    * a folder is still missing.
    */
-  complete(id: number, when: Temporal.Instant): Promise<void>
+  complete(id: string, when: Temporal.Instant): Promise<void>
   /**
    * A removed issue too: the link pages, the answers to a race and the record queue tell it from
    * one that never existed.
    */
-  findById(id: number): Promise<Issue | null>
+  findById(id: string): Promise<Issue | null>
   /** Every issue not removed by its name, case and surrounding spaces aside. */
   findByName(name: string): Promise<Issue | null>
   /** The row first, before Drive. A name already in the app is refused, never overwritten. */
@@ -50,16 +51,16 @@ export type IssueStore = {
    * failed attempt waiting for the bin is neither, nor is a removed article; one still running
    * is, so a link's send that started before the removal stops it.
    */
-  markRemoved(id: number, at: Temporal.Instant): Promise<MarkRemovedOutcome>
+  markRemoved(id: string, at: Temporal.Instant): Promise<MarkRemovedOutcome>
   /** Marks the folders found missing; a mark already there keeps its first time (`12j`). */
-  markMissing(id: number, kinds: readonly IssueFolderKind[], at: Temporal.Instant): Promise<void>
+  markMissing(id: string, kinds: readonly IssueFolderKind[], at: Temporal.Instant): Promise<void>
   /**
    * The `_Podklady` sheet the print job reported for the issue, an app's own file in its print
    * folder (cz.vednemesicnik.publikace#110), or `null` when it reported none.
    */
-  printSheetId(id: number): Promise<string | null>
+  printSheetId(id: string): Promise<string | null>
   /** Only while Drive refused the issue folder itself, so nothing of the issue exists. */
-  remove(id: number): Promise<void>
+  remove(id: string): Promise<void>
   /**
    * _Přejmenovat vydání_ (`12v`), the database after Drive: the new name only while the issue
    * still has the name the dialog showed, is neither closed nor removed, holds exactly the
@@ -67,9 +68,9 @@ export type IssueStore = {
    * `metaFiles` are the files written anew for ones deleted for good, by article and group ID.
    */
   rename(input: {
-    expected: { articles: readonly number[]; groups: readonly number[] }
-    id: number
-    metaFiles: { articles: ReadonlyMap<number, string>; groups: ReadonlyMap<number, string> }
+    expected: { articles: readonly string[]; groups: readonly string[] }
+    id: string
+    metaFiles: { articles: ReadonlyMap<string, string>; groups: ReadonlyMap<string, string> }
     name: string
     shownName: string
   }): Promise<RenameOutcome>
@@ -77,15 +78,15 @@ export type IssueStore = {
    * _Znovu otevřít_ (`12h`): the same links and jobs work again, because they read the issue's
    * state and never their own copy of it. `false` when the issue was open already.
    */
-  reopen(id: number): Promise<boolean>
+  reopen(id: string): Promise<boolean>
   /** Stores the Evidence's ID once, as a folder's; one already stored is never replaced. */
-  setEvidence(id: number, spreadsheetId: string): Promise<void>
+  setEvidence(id: string, spreadsheetId: string): Promise<void>
   /** Stores a folder's ID once; a folder already stored is never replaced. */
-  setFolder(id: number, kind: FolderKind, folderId: string): Promise<void>
+  setFolder(id: string, kind: FolderKind, folderId: string): Promise<void>
   /** Keeps the folder of the issue's artwork groups; one already stored stays. */
-  setGroupsFolder(id: number, folderId: string): Promise<void>
+  setGroupsFolder(id: string, folderId: string): Promise<void>
   /** Takes the removal back when Drive refused the bin after it (`12w`). */
-  unmarkRemoved(id: number): Promise<void>
+  unmarkRemoved(id: string): Promise<void>
 }
 
 export type MarkRemovedOutcome = 'already-removed' | 'has-article' | 'has-group' | 'removed'
@@ -121,7 +122,7 @@ function toIssue(row: Row): Issue {
       print: text(row['print_folder_id']),
     },
     groupsFolderId: text(row['groups_folder_id']),
-    id: Number(row['id']),
+    id: String(row['id']),
     missing: {
       articles: parseStamp(row['articles_folder_missing_at']),
       issue: parseStamp(row['folder_missing_at']),
@@ -135,10 +136,10 @@ function toIssue(row: Row): Issue {
 }
 
 /** Every row created, none still running, and the IDs exactly those expected. */
-function isExactly(rows: readonly Row[], expected: readonly number[]): boolean {
+function isExactly(rows: readonly Row[], expected: readonly string[]): boolean {
   if (rows.some((row) => row['created_at'] == null)) return false
-  let ids = rows.map((row) => Number(row['id'])).sort((a, b) => a - b)
-  let wanted = [...expected].sort((a, b) => a - b)
+  let ids = rows.map((row) => String(row['id'])).sort()
+  let wanted = [...expected].sort()
   return ids.length === wanted.length && ids.every((value, index) => value === wanted[index])
 }
 
@@ -203,8 +204,9 @@ export function createIssueStore(database: Database): IssueStore {
         if (existing !== null) return { existingName: existing.name, ok: false }
 
         await db.exec(
-          sql`INSERT INTO issues (name, name_key, started_at, started_by_email, started_by_name)
-              VALUES (${name.normalize('NFC').trim()}, ${key}, ${stamp(at)}, ${startedByEmail}, ${startedByName})`,
+          sql`INSERT INTO issues (id, name, name_key, started_at, started_by_email, started_by_name)
+              VALUES (${newRowId()}, ${name.normalize('NFC').trim()}, ${key}, ${stamp(at)},
+                ${startedByEmail}, ${startedByName})`,
         )
         let issue = await byKey(db, key)
         if (issue === null) throw new Error('The issue row was not written.')

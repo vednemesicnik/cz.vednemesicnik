@@ -7,6 +7,7 @@ import { createArticleStore } from '../../data/articles.server.ts'
 import { createArtworkStore } from '../../data/artworks.server.ts'
 import type { BatchRow } from '../../data/artworks.server.ts'
 import { createJobRunStore } from '../../data/job-runs.server.ts'
+import { newRowId } from '../../data/row-id.server.ts'
 import { APPROVAL_SEND_JOB } from '../../domain/approvals.ts'
 import { REPLY_CHECK_JOB, type ReportedArchive } from '../../domain/reply-check.ts'
 import {
@@ -53,7 +54,7 @@ async function replyTo(
 }
 
 /** An article's final version whose one author answered something other than „Souhlasím“. */
-async function articleReply(app: TestApp, articleId: number, text: string): Promise<number> {
+async function articleReply(app: TestApp, articleId: string, text: string): Promise<string> {
   let articles = createArticleStore(app.database)
   let runs = createJobRunStore(app.database)
   let at = Temporal.Instant.fromEpochMilliseconds(Date.now())
@@ -93,7 +94,7 @@ async function articleReply(app: TestApp, articleId: number, text: string): Prom
     at,
   )
   let [queued] = await articles.reviewQueue()
-  return queued?.id ?? 0
+  return queued?.id ?? ''
 }
 
 async function setup() {
@@ -235,7 +236,7 @@ describe('answering a reply from Ke kontrole', () => {
       assert.match(reopened, /Odeslat znovu/)
       assert.match(reopened, /fotka vyjde na straně 12, zhruba na třetinu strany\./)
 
-      let answerId = /name="answer" type="hidden" value="(\d+)"/.exec(html)?.[1] ?? ''
+      let answerId = /name="answer" type="hidden" value="([0-9a-z]+)"/.exec(html)?.[1] ?? ''
       app.failMail(false)
       await browser.post(
         `/review/batches/${batch.id}/reply/retry`,
@@ -306,7 +307,8 @@ describe('answering a reply from Ke kontrole', () => {
       let at = Temporal.Now.instant().toString()
       for (let index = 0; index < 300; index += 1) {
         await app.database.exec(
-          sql`INSERT INTO public_mail_log (kind, sent_at) VALUES ('consent', ${at})`,
+          sql`INSERT INTO public_mail_log (id, kind, sent_at)
+              VALUES (${newRowId()}, 'consent', ${at})`,
         )
       }
       let html = await landing(browser, await answerBatch(app, browser, batch, ANSWER))
@@ -350,7 +352,7 @@ describe('answering a reply from Ke kontrole', () => {
         sql`SELECT kind, issue_id FROM record_marks WHERE kind = 'evidence'`,
       )
       assert.deepEqual(
-        (marks.rows ?? []).map((row) => Number(row['issue_id'])),
+        (marks.rows ?? []).map((row) => String(row['issue_id'])),
         [issueId],
       )
     } finally {

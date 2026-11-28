@@ -42,7 +42,7 @@ async function withLink(
     await editor.signInAs(MARIE, 'Marie Horáková')
     let created = await editor.post('/issues/new', { name: 'VDM_2026_5' }, '/issues/new')
     assert.equal(created.status, 303)
-    let issueId = Number(
+    let issueId = String(
       (await app.database.exec({ text: 'SELECT id FROM issues', values: [] } as never)).rows?.[0]?.[
         'id'
       ],
@@ -205,7 +205,7 @@ describe('creating an article from the link (20b–20d)', () => {
       assert.ok(textOf(await again.text()).includes('Článek je založený'))
       let link = await createLinkStore(app.database).findByKey(key)
       assert.equal(
-        (await createArticleStore(app.database).listCreated(link?.issueId ?? 0)).length,
+        (await createArticleStore(app.database).listCreated(link?.issueId ?? '')).length,
         1,
       )
       assert.equal(app.mail.length, 1)

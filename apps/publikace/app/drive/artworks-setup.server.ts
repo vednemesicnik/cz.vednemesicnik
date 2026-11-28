@@ -86,8 +86,8 @@ export type ArtworksHolder = HolderName & {
   artworksFolderId: string | null
   createdAt: Temporal.Instant | null
   folderId: string | null
-  id: number
-  issueId: number
+  id: string
+  issueId: string
   kind: HolderKind
   licencesFolderId: string | null
   note: string
@@ -112,7 +112,7 @@ export type ArtworksTarget = {
 /** The article or the group an upload, a batch or a link belongs to, `null` once it is gone. */
 export async function holderOf(
   setup: Pick<ArtworksSetup, 'articles' | 'groups'>,
-  ref: { articleId: number | null; groupId: number | null },
+  ref: { articleId: string | null; groupId: string | null },
 ): Promise<ArtworksHolder | null> {
   if (ref.groupId !== null) {
     let group = await setup.groups.findById(ref.groupId)
@@ -163,7 +163,7 @@ function licenceKey(formKey: string): string {
 }
 
 /** Uploads under way per link, which the cap counts before their rows exist. */
-const uploading = new Map<number, number>()
+const uploading = new Map<string, number>()
 
 /*
  * Bodies read at once, in the whole app. Each holds up to 15 MB in memory until Drive has it, and
@@ -343,7 +343,7 @@ async function store(
  */
 export async function removeArtwork(
   setup: ArtworksSetup,
-  removal: { artworkId: number; formKey: string; linkKey: string },
+  removal: { artworkId: string; formKey: string; linkKey: string },
 ): Promise<'link-gone' | 'removed' | 'unavailable'> {
   let target = await resolveArtworksLink(setup, removal.linkKey)
   if (target === null) return 'link-gone'
@@ -406,7 +406,7 @@ async function sweepExpired(setup: ArtworksSetup, files: ArtworkFiles): Promise<
 /* ─── _Odeslat díla_ ─────────────────────────────────────────────────────────────────────── */
 
 export type NewBatch = {
-  artworks: readonly { author: string; id: number; source: string }[]
+  artworks: readonly { author: string; id: string; source: string }[]
   /** The form's one-time key: a second send with it gets the first one's answer. */
   formKey: string
   linkKey: string
@@ -503,7 +503,7 @@ async function submit(setup: ArtworksSetup, input: NewBatch): Promise<SubmitOutc
   })
   if (started.kind !== 'started') return started
 
-  let pdfs: Map<number, Bytes> | null = null
+  let pdfs: Map<string, Bytes> | null = null
   let committed: BatchRow | null = null
   try {
     pdfs = await makeLicences(setup, files, started.batch, holder.licencesFolderId)
@@ -553,8 +553,8 @@ async function makeLicences(
   files: ArtworkFiles,
   batch: BatchRow,
   folderId: string,
-): Promise<Map<number, Bytes> | null> {
-  let pdfs = new Map<number, Bytes>()
+): Promise<Map<string, Bytes> | null> {
+  let pdfs = new Map<string, Bytes>()
   for (let artwork of batch.artworks) {
     let preview = await files.previewOf(artwork.driveFileId, PREVIEW_SIZE)
     let html = licenceHtml({
@@ -789,7 +789,7 @@ async function resendRequest(setup: ArtworksSetup, batch: BatchRow): Promise<Res
 }
 
 /** The editors' resend, under the batch's lock, so it and the open page never both send. */
-export async function resendBatch(setup: ArtworksSetup, batchId: number): Promise<ResendOutcome> {
+export async function resendBatch(setup: ArtworksSetup, batchId: string): Promise<ResendOutcome> {
   let batch = await setup.artworks.findBatch(batchId)
   if (batch === null) return { kind: 'gone' }
   return lock(`artworks:${batch.formKey}`, () => resendRequest(setup, batch))
@@ -824,7 +824,7 @@ export type DiscardOutcome =
  */
 export async function discardBatch(
   setup: ArtworksSetup,
-  batchId: number,
+  batchId: string,
   wasSent: boolean,
 ): Promise<DiscardOutcome> {
   let batch = await setup.artworks.findBatch(batchId)

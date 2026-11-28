@@ -11,10 +11,10 @@ export type DocRevisionCheckProps = {
 const OPEN_MENU = '[aria-expanded="true"]'
 
 /** The articles whose rows the answer changes, by the IDs it lists. */
-function changedOf(body: unknown): number[] {
+function changedOf(body: unknown): string[] {
   if (typeof body !== 'object' || body === null) return []
   let { changed } = body as Record<string, unknown>
-  return Array.isArray(changed) ? changed.filter((id) => Number.isSafeInteger(id)) : []
+  return Array.isArray(changed) ? changed.filter((id) => typeof id === 'string' && id !== '') : []
 }
 
 /**
@@ -22,7 +22,7 @@ function changedOf(body: unknown): number[] {
  * (`12q`). The rows' triggers say it in `aria-expanded`, which this watches until it clears, or
  * until the island goes.
  */
-function untilMenusClose(ids: readonly number[], signal: AbortSignal): Promise<void> {
+function untilMenusClose(ids: readonly string[], signal: AbortSignal): Promise<void> {
   let rows = ids.map((id) => document.getElementById(`article-${id}`)).filter((row) => row !== null)
   let isAnyOpen = () => rows.some((row) => row.querySelector(OPEN_MENU) !== null)
   if (!isAnyOpen()) return Promise.resolve()

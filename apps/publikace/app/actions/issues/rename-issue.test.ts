@@ -51,7 +51,7 @@ function calloutOf(html: string): string | null {
   return found === null ? null : textOf(found[1] ?? '').trim()
 }
 
-type Context = { app: TestApp; editor: TestBrowser; issueId: number }
+type Context = { app: TestApp; editor: TestBrowser; issueId: string }
 
 /** An issue made through the app, so its folders are on the fake Drive. */
 async function withIssue(run: (context: Context) => Promise<void>): Promise<void> {
@@ -71,7 +71,7 @@ async function withIssue(run: (context: Context) => Promise<void>): Promise<void
 }
 
 /** An article through the newsroom's link, with its folder, Doc and `_meta.json` on Drive. */
-async function addArticle(context: Context, name: string): Promise<number> {
+async function addArticle(context: Context, name: string): Promise<string> {
   let link = await createLinkStore(context.app.database).articleLinkOf(context.issueId)
   assert.ok(link !== null)
   let visitor = context.app.browser()
@@ -87,7 +87,7 @@ async function addArticle(context: Context, name: string): Promise<number> {
   return article.id
 }
 
-async function addGroup(context: Context, name: string): Promise<number> {
+async function addGroup(context: Context, name: string): Promise<string> {
   let path = `${DETAIL}/artwork-groups/new`
   let response = await context.editor.post(
     path,
@@ -409,7 +409,7 @@ describe('renaming an issue (12v)', () => {
           authors: [TEREZA],
           formKey: crypto.randomUUID(),
           issueId: context.issueId,
-          linkId: link?.id ?? 0,
+          linkId: link?.id ?? '',
           name: 'Školní jídelna po roce',
         }),
       )

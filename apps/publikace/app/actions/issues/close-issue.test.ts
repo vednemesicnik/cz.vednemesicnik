@@ -50,7 +50,7 @@ function dialogForm(html: string): { action: string; fields: Record<string, stri
   return { action: (form[1] ?? '').replaceAll('&amp;', '&'), fields }
 }
 
-async function issueApp(): Promise<{ app: TestApp; editor: TestBrowser; issueId: number }> {
+async function issueApp(): Promise<{ app: TestApp; editor: TestBrowser; issueId: string }> {
   let app = await createTestApp()
   await seedAdmin(app, MARIE)
   let issueId = await seedIssue(app, ISSUE)
@@ -59,13 +59,13 @@ async function issueApp(): Promise<{ app: TestApp; editor: TestBrowser; issueId:
   return { app, editor, issueId }
 }
 
-async function articleLink(app: TestApp, issueId: number): Promise<string> {
+async function articleLink(app: TestApp, issueId: string): Promise<string> {
   let link = await createLinkStore(app.database).articleLinkOf(issueId)
   if (link === null) throw new Error('The issue has no link.')
   return articleLinkPath(link.key)
 }
 
-async function closedAt(app: TestApp, issueId: number): Promise<Temporal.Instant | null> {
+async function closedAt(app: TestApp, issueId: string): Promise<Temporal.Instant | null> {
   return (await createIssueStore(app.database).findById(issueId))?.closedAt ?? null
 }
 

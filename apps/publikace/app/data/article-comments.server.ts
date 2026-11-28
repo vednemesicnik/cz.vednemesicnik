@@ -16,7 +16,7 @@ import { parseStamp, stamp } from '../domain/time.ts'
 
 /** One article as a claim hands it to the job. */
 export type ClaimedCommentArticle = {
-  articleId: number
+  articleId: string
   /** In the order of the article's form. */
   authorEmails: string[]
   docId: string
@@ -34,12 +34,12 @@ export type ClaimedCommentArticle = {
 /** What a run reported of the articles it holds. */
 export type CommentDigestReport = {
   /** Read, and every author with something new told of it; their state moves to the claim. */
-  articles: { articleId: number; suggestionHashes: readonly string[] }[]
+  articles: { articleId: string; suggestionHashes: readonly string[] }[]
   /** An e-mail to an author the Mailer did not confirm; the article stays as it was. */
-  unconfirmed: { articleId: number; email: string }[]
+  unconfirmed: { articleId: string; email: string }[]
 }
 
-export type CommentDigestAnswer = { answer: 'recorded' | 'unknown'; articleId: number }
+export type CommentDigestAnswer = { answer: 'recorded' | 'unknown'; articleId: string }
 
 export type ArticleCommentsStore = {
   /**
@@ -58,7 +58,7 @@ export type ArticleCommentsStore = {
   ): Promise<{ answers: CommentDigestAnswer[]; unconfirmed: UnconfirmedEmail[] }>
 }
 
-function idsJson(ids: readonly number[]): string {
+function idsJson(ids: readonly string[]): string {
   return JSON.stringify(ids)
 }
 
@@ -83,10 +83,10 @@ export function createArticleCommentsStore(database: Database): ArticleCommentsS
               WHERE i.completed_at IS NOT NULL AND i.closed_at IS NULL AND i.removed_at IS NULL
                 AND a.created_at IS NOT NULL AND a.removed_at IS NULL AND a.doc_id IS NOT NULL
                 AND (d.claimed_at IS NULL OR d.claimed_at < ${lease})
-              ORDER BY coalesce(d.reported_until, a.created_at), a.id
+              ORDER BY coalesce(d.reported_until, a.created_at), a.rowid
               LIMIT ${ARTICLE_CLAIM_LIMIT}`,
         )
-        let ids = idsJson((open.rows ?? []).map((row) => Number(row['id'])))
+        let ids = idsJson((open.rows ?? []).map((row) => String(row['id'])))
         await db.exec(
           sql`INSERT INTO comment_digests (article_id)
               SELECT value FROM json_each(${ids}) WHERE true
@@ -103,21 +103,21 @@ export function createArticleCommentsStore(database: Database): ArticleCommentsS
               JOIN issues i ON i.id = a.issue_id
               JOIN comment_digests d ON d.article_id = a.id
               WHERE a.id IN (SELECT value FROM json_each(${ids}))
-              ORDER BY coalesce(d.reported_until, a.created_at), a.id`,
+              ORDER BY coalesce(d.reported_until, a.created_at), a.rowid`,
         )
         let authors = await db.exec(
           sql`SELECT article_id, email FROM article_authors
               WHERE article_id IN (SELECT value FROM json_each(${ids}))
               ORDER BY article_id, position`,
         )
-        let emailsOf = new Map<number, string[]>()
+        let emailsOf = new Map<string, string[]>()
         for (let row of authors.rows ?? []) {
-          let articleId = Number(row['article_id'])
+          let articleId = String(row['article_id'])
           emailsOf.set(articleId, [...(emailsOf.get(articleId) ?? []), String(row['email'])])
         }
         let claimed: ClaimedCommentArticle[] = []
         for (let row of articles.rows ?? []) {
-          let articleId = Number(row['id'])
+          let articleId = String(row['id'])
           let reportedUntil = parseStamp(row['reported_until']) ?? parseStamp(row['created_at'])
           if (reportedUntil === null) continue
           claimed.push({
@@ -141,8 +141,8 @@ export function createArticleCommentsStore(database: Database): ArticleCommentsS
               JOIN articles a ON a.id = d.article_id
               WHERE d.claim_key = ${runKey}`,
         )
-        let names = new Map<number, string>()
-        for (let row of held.rows ?? []) names.set(Number(row['article_id']), String(row['name']))
+        let names = new Map<string, string>()
+        for (let row of held.rows ?? []) names.set(String(row['article_id']), String(row['name']))
 
         let recorded = report.articles.filter((article) => names.has(article.articleId))
         /*

@@ -247,7 +247,7 @@ function underBothNames<T>(first: string, second: string, run: () => Promise<T>)
  */
 export function renameIssue(
   setup: IssueFixSetup,
-  input: { id: number; name: string; shownName: string },
+  input: { id: string; name: string; shownName: string },
 ): Promise<RenameIssueOutcome> {
   return underBothNames(input.shownName, input.name, async () => {
     let current = await setup.store.findById(input.id)
@@ -282,7 +282,7 @@ async function renameOnDrive(
   accessToken: string,
   issue: Issue,
   folderId: string,
-  input: { id: number; name: string; shownName: string },
+  input: { id: string; name: string; shownName: string },
 ): Promise<RenameIssueOutcome | 'changed'> {
   let files = setup.files(accessToken)
   let folders = setup.folders(accessToken)
@@ -341,7 +341,7 @@ async function renameOnDrive(
   }
 
   let undo: Undo[] = []
-  let recreated = { articles: new Map<number, string>(), groups: new Map<number, string>() }
+  let recreated = { articles: new Map<string, string>(), groups: new Map<string, string>() }
   let isWritten = await files.rename(folderId, input.name)
   if (isWritten) undo.push(() => files.rename(folderId, issue.name))
   for (let meta of metas) {
@@ -389,8 +389,8 @@ async function commitRename(
   setup: IssueSetup,
   issue: Issue,
   input: { name: string; shownName: string },
-  articles: readonly number[],
-  groups: readonly number[],
+  articles: readonly string[],
+  groups: readonly string[],
 ): Promise<RenameIssueOutcome> {
   let committed = await setup.store.rename({
     expected: { articles, groups },
@@ -411,7 +411,7 @@ async function commitRename(
 /** What a refused commit says, from the row as it stands now. */
 async function answerOf(
   setup: IssueSetup,
-  id: number,
+  id: string,
   refusal: 'closed' | 'duplicate' | 'removed' | 'renamed-meanwhile',
   newName: string,
 ): Promise<RenameIssueOutcome> {
@@ -437,7 +437,7 @@ type MetaFile = {
   folderId: string
   formKey: string
   holder: 'article' | 'group'
-  id: number
+  id: string
   name: string
   renamed: string
   state: 'binned' | 'deleted' | 'here'
@@ -525,7 +525,7 @@ export type RemoveIssueOutcome =
  */
 export async function removeIssue(
   setup: IssueFixSetup,
-  input: { id: number },
+  input: { id: string },
 ): Promise<RemoveIssueOutcome> {
   let first = await setup.store.findById(input.id)
   if (first === null || first.removedAt !== null) return { kind: 'already-removed' }

@@ -60,7 +60,7 @@ export const DIGEST_REASON_LINE =
  * anchor: an anchor would be lost on the way through Google's sign-in, a query survives in
  * `redirectTo` (`sh0zp1if`).
  */
-export function articleCardUrl(origin: string, articleId: number): string {
+export function articleCardUrl(origin: string, articleId: string): string {
   return `${origin}/proofreading?article=${articleId}`
 }
 

@@ -20,6 +20,7 @@
     "format:check": "oxfmt . --check"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "3.3.0",
     "remix": "3.2.0"
   },
   "devDependencies": {

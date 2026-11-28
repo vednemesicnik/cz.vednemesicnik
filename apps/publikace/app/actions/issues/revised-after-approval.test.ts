@@ -73,14 +73,14 @@ function announcement(html: string): string {
 
 /** The IDs of the rows tinted as just found (`12q`). */
 function tintedRows(html: string): string[] {
-  return [...html.matchAll(/<div id="article-(\d+)" role="row"[^>]*class="[^"]*vdm-changed/g)].map(
-    (match) => match[1] ?? '',
-  )
+  return [
+    ...html.matchAll(/<div id="article-([0-9a-z]+)" role="row"[^>]*class="[^"]*vdm-changed/g),
+  ].map((match) => match[1] ?? '')
 }
 
 /** The articles' rows in the order the detail stands them. */
 function rowOrder(html: string): string[] {
-  return [...html.matchAll(/id="article-(\d+)" role="row"/g)].map((match) => match[1] ?? '')
+  return [...html.matchAll(/id="article-([0-9a-z]+)" role="row"/g)].map((match) => match[1] ?? '')
 }
 
 /**
@@ -91,18 +91,18 @@ function rowOrder(html: string): string[] {
 async function opened(
   editor: TestBrowser,
   path = DETAIL,
-): Promise<{ changed: number[]; first: string; html: string }> {
+): Promise<{ changed: string[]; first: string; html: string }> {
   let first = await (await editor.get(path)).text()
   let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(first)?.[1] ?? ''
   let response = await editor.post(CHECK, { _csrf: csrf }, path)
   assert.equal(response.status, 200)
-  let { changed } = (await response.json()) as { changed: number[] }
+  let { changed } = (await response.json()) as { changed: string[] }
   let html = changed.length === 0 ? first : await (await editor.get(path)).text()
   return { changed, first, html }
 }
 
 /** Every author of the article agreed through a run, archived in `Licence`: _Schváleno_. */
-async function approve(app: TestApp, articleId: number): Promise<void> {
+async function approve(app: TestApp, articleId: string): Promise<void> {
   let articles = createArticleStore(app.database)
   await articles.takeProofreading(articleId, LENKA, MARKED_AT.subtract({ hours: 1 }), 'writing')
   let marked = await articles.markFinalVersion({
@@ -135,10 +135,10 @@ async function approve(app: TestApp, articleId: number): Promise<void> {
  */
 async function approved(): Promise<{
   app: TestApp
-  articleId: number
+  articleId: string
   docId: string
   editor: TestBrowser
-  issueId: number
+  issueId: string
 }> {
   let app = await createTestApp()
   await seedAdmin(app, MARIE.email)
@@ -203,7 +203,7 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       assert.equal(announcement(first), '')
       assert.deepEqual(changed, [articleId])
       assert.ok(textOf(html).includes('Upraveno po schválení poslední úprava 22. 11.'))
-      assert.deepEqual(tintedRows(html), [String(articleId)])
+      assert.deepEqual(tintedRows(html), [articleId])
       assert.equal(announcement(html), 'Nově má 1 článek stav „Upraveno po schválení“.')
       assert.ok(!html.includes(CHECK_ISLAND), 'the reload the check started asks nothing')
       assert.equal(statusText(html), '', 'no toast')
@@ -419,15 +419,15 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       let newer = await seedArticle(app, issueId, 'Kino v tělocvičně')
       await approve(app, newer.articleId)
       let before = await opened(editor)
-      assert.deepEqual(rowOrder(before.html), [String(newer.articleId), String(articleId)])
+      assert.deepEqual(rowOrder(before.html), [newer.articleId, articleId])
 
       app.drive.reviseDoc(docId, EDITED_AT)
       let { html } = await opened(editor)
-      assert.deepEqual(rowOrder(html), [String(newer.articleId), String(articleId)])
-      assert.deepEqual(tintedRows(html), [String(articleId)])
+      assert.deepEqual(rowOrder(html), [newer.articleId, articleId])
+      assert.deepEqual(tintedRows(html), [articleId])
 
       let next = await (await editor.get(DETAIL)).text()
-      assert.deepEqual(rowOrder(next), [String(articleId), String(newer.articleId)])
+      assert.deepEqual(rowOrder(next), [articleId, newer.articleId])
       assert.deepEqual(tintedRows(next), [])
     } finally {
       await app.close()

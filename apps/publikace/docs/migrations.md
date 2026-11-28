@@ -65,6 +65,13 @@ exception is a migration that has not left its branch: roll it back locally with
 - **Foreign keys hold** because the app turns them on for its connection (`openDatabase` sets
   `PRAGMA foreign_keys = ON`) and `remix.json` sets `foreignKeys: true` for `remix db`. SQLite
   leaves them off otherwise, so a `REFERENCES` is enforced only by those two.
+- **A row's ID is a CUID**: `id TEXT PRIMARY KEY NOT NULL`, made by the app with `newRowId()`
+  (`app/data/row-id.server.ts`) and passed in the `INSERT`, never by SQLite, so a row without
+  one is refused. A column that refers to a row is `TEXT`. A table of one row keeps
+  `id INTEGER PRIMARY KEY CHECK (id = 1)`, which counts nothing. A CUID says nothing about when
+  its row was written: the order of writing is `ORDER BY rowid`, never by the ID. So the file
+  is never `VACUUM`ed, which may renumber the rowid of a table without an `INTEGER PRIMARY KEY`;
+  a backup with `.backup` copies the pages and keeps it.
 
 `db/migrations/20261117120000_access_and_sessions/up.sql` shows all of it but a foreign key,
 with a comment above each table saying what a row is.
@@ -83,7 +90,10 @@ rebuilds `links`, `artwork_batches` and `artworks` this way and is the example t
   PRAGMA foreign_keys = ON;` at the bottom. It lands whole or not at all, and the keys are on
   again for the app.
 - **One table at a time.** A rename makes SQLite read every trigger again, and a trigger that
-  names a table dropped and not yet renamed fails it.
+  names a table dropped and not yet renamed fails it. A migration that rebuilds many tables drops
+  every trigger first and makes them again last, as `20261211120000_cuid_row_ids` does, which
+  also shows how IDs change type: a map per table from the old ID to the new one, and every
+  reference translated through it.
 - **A test migrates a seeded database through it**: the rows the old tables held, then
   `PRAGMA foreign_key_check` empty, `integrity_check` `ok`, and the triggers still firing.
   `app/data/artwork-groups-migration.server.test.ts` does it, and rolls back with `down.sql`.

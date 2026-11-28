@@ -62,7 +62,7 @@ describe('the artwork groups migration', () => {
   it('keeps every row and every reference through the rebuilt tables', async () => {
     let { db, migrations, opened } = await seededBeforeGroups()
     try {
-      await db.migrate(migrations)
+      await db.migrate(migrations, { to: GROUPS })
 
       for (let table of [
         'links',
@@ -93,7 +93,7 @@ describe('the artwork groups migration', () => {
   it('marks the Evidence from the rebuilt tables, as before', async () => {
     let { db, migrations, opened } = await seededBeforeGroups()
     try {
-      await db.migrate(migrations)
+      await db.migrate(migrations, { to: GROUPS })
       await db.exec(sql`DELETE FROM record_marks`)
 
       await db.exec(sql`UPDATE artworks SET author = 'Klára Šimková' WHERE id = 1`)
@@ -112,7 +112,7 @@ describe('the artwork groups migration', () => {
   it('refuses a batch that belongs to both an article and a group, or to neither', async () => {
     let { db, migrations, opened } = await seededBeforeGroups()
     try {
-      await db.migrate(migrations)
+      await db.migrate(migrations, { to: GROUPS })
       await assert.rejects(db.exec(sql`UPDATE artwork_batches SET article_id = NULL WHERE id = 1`))
     } finally {
       await opened.close()

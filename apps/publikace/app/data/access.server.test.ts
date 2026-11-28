@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 
 import { now } from '../domain/time.ts'
 import { createTestApp } from '../test-app.server.ts'
+import { testRowId } from '../test-row-id.ts'
 
 describe('access directory', () => {
   it('seeds the first administrator only while there is no named account', async () => {
@@ -90,10 +91,13 @@ describe('access directory', () => {
         ok: false,
         reason: 'not-admin',
       })
-      assert.deepEqual(await app.directory.removeAccount('jakub@vednemesicnik.test', 999), {
-        ok: false,
-        reason: 'not-found',
-      })
+      assert.deepEqual(
+        await app.directory.removeAccount('jakub@vednemesicnik.test', testRowId(999)),
+        {
+          ok: false,
+          reason: 'not-found',
+        },
+      )
     } finally {
       await app.close()
     }
@@ -112,7 +116,7 @@ describe('access directory', () => {
         (account) => account.email === 'eva@vednemesicnik.test',
       )
       assert.deepEqual(
-        await app.directory.removeAccount('marie@vednemesicnik.test', eva?.id ?? 0),
+        await app.directory.removeAccount('marie@vednemesicnik.test', eva?.id ?? testRowId(0)),
         {
           ok: true,
         },

@@ -50,7 +50,7 @@ export function signatureOf(identity: { displayName: string; email: string }): s
  * The Mailer's key for an answer: one per message of the provider, so a retry after a send the
  * Mailer did not confirm mails nobody a second time (`13e`).
  */
-export function answerIdempotencyKey(kind: AnswerKind, id: number, messageId: string): string {
+export function answerIdempotencyKey(kind: AnswerKind, id: string, messageId: string): string {
   return `consent-answer:${kind === 'articles' ? 'clause' : 'batch'}:${id}:${messageId}`
 }
 

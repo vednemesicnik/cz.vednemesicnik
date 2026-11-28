@@ -312,7 +312,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
           JOIN articles a ON a.id = c.article_id
           WHERE f.cancelled_at IS NULL AND f.replaced_at IS NULL AND a.issue_id = ${issueId}
             AND c.state != 'pending'
-          ORDER BY c.id`,
+          ORDER BY c.rowid`,
     )
     let clauseRows = (clauseResult.rows ?? []).map((row) => {
       let id = String(row['id'])
@@ -535,14 +535,14 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
    * changes nothing. A lease left by an earlier run is cleared first, as ten minutes would.
    */
   async function runReplyCheck(
-    batch: { consentVerifiedAt: Temporal.Instant | null; id: number; replyText: string | null },
+    batch: { consentVerifiedAt: Temporal.Instant | null; id: string; replyText: string | null },
     kind: FormDataEntryValue | null,
   ): Promise<Response> {
     await app.database.exec(sql`UPDATE artwork_batches SET claimed_at = NULL`)
     let claimed = await job(routes.api.artworkReplies.claim.href(), { intervalMinutes: 30 })
     if (claimed.status !== 200) return claimed
     let { batches, runKey } = (await claimed.json()) as {
-      batches: { batchId: number }[]
+      batches: { batchId: string }[]
       runKey: string
     }
     let text =
@@ -578,7 +578,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
    * makes it: every other clause it asked about has no reply, and what waited to be sent went.
    */
   async function runClauseReplies(
-    id: number,
+    id: string,
     kind: 'archive' | 'exact' | 'exact-fail' | 'other',
   ): Promise<Response> {
     await app.database.exec(sql`UPDATE article_clauses SET claimed_at = NULL`)
@@ -639,7 +639,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
     let claimed = await job(routes.api.artworkReplies.claim.href(), { intervalMinutes: 30 })
     if (claimed.status !== 200) return claimed
     let { batches, runKey } = (await claimed.json()) as {
-      batches: { batchId: number }[]
+      batches: { batchId: string }[]
       runKey: string
     }
     return job(routes.api.artworkReplies.report.href(), {
@@ -675,7 +675,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
       await app.database.exec(
         sql`UPDATE job_runs SET started_at = ${stamp(startedAt.subtract({ hours: 2 }))},
               finished_at = ${finishedAt === null ? null : stamp(finishedAt.subtract({ hours: 2 }))}
-            WHERE id = ${Number(row['id'])}`,
+            WHERE id = ${String(row['id'])}`,
       )
     }
   }
@@ -798,11 +798,11 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         let { issues, runKey } = (await claimed.json()) as {
           issues: {
             articles: {
-              articleId: number
-              artworks: { artworkId: number; storedName: string }[]
-              text: { finalVersionId: number } | null
+              articleId: string
+              artworks: { artworkId: string; storedName: string }[]
+              text: { finalVersionId: string } | null
             }[]
-            issueId: number
+            issueId: string
             sheetId: string | null
           }[]
           runKey: string
@@ -844,7 +844,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         let claimed = await job(routes.api.articleComments.claim.href(), { intervalMinutes: 180 })
         if (claimed.status !== 200) return new Response(`The API answered ${claimed.status}`)
         let { articles, runKey } = (await claimed.json()) as {
-          articles: { articleId: number; authorEmails: string[] }[]
+          articles: { articleId: string; authorEmails: string[] }[]
           runKey: string
         }
         let [first] = articles
@@ -867,7 +867,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         return backToControls()
       }
       case '/approvals/replies': {
-        let id = Number(fileId)
+        let id = String(fileId)
         let kind = form?.get('kind') ?? null
         if (kind !== 'other' && kind !== 'exact' && kind !== 'exact-fail' && kind !== 'archive') {
           return new Response('Unknown kind', { status: 400 })
@@ -893,7 +893,7 @@ export async function createFakeApp(environment: Environment): Promise<FakeApp> 
         await silenceReplyCheck()
         return backToControls()
       case '/replies': {
-        let id = Number(fileId)
+        let id = String(fileId)
         let kind = form?.get('kind') ?? null
         if (kind !== 'other' && kind !== 'exact' && kind !== 'exact-fail' && kind !== 'archive') {
           return new Response('Unknown kind', { status: 400 })

@@ -232,6 +232,7 @@ import type {
   ReplaceFinalOutcome,
 } from '../../data/articles.server.ts'
 import type { BatchRow, ListedBatch } from '../../data/artworks.server.ts'
+import { isRowId } from '../../data/row-id.server.ts'
 import type { DriveAccessToken } from '../../drive/access-token.server.ts'
 import {
   type ArticleFolderIds,
@@ -369,16 +370,15 @@ const LINK_CHANGED_SESSION_KEY = 'issueLinkChanged'
  */
 const GROUP_CHANGED_SESSION_KEY = 'artworkGroupChanged'
 
-function flashGroupChanged(session: Session | undefined, groupId: number): void {
+function flashGroupChanged(session: Session | undefined, groupId: string): void {
   session?.flash(GROUP_CHANGED_SESSION_KEY, String(groupId))
 }
 
-function takeGroupChanged(session: Session | undefined): number | null {
+function takeGroupChanged(session: Session | undefined): string | null {
   let value = session?.get(GROUP_CHANGED_SESSION_KEY)
   if (value === undefined) return null
   session?.unset(GROUP_CHANGED_SESSION_KEY)
-  let id = Number(value)
-  return Number.isSafeInteger(id) ? id : null
+  return isRowId(value) ? value : null
 }
 
 function flashLinkChanged(session: Session | undefined, name: string): void {
@@ -399,7 +399,7 @@ function takeLinkChanged(session: Session | undefined, name: string): boolean {
  */
 const SETTLED_SESSION_KEY = 'handoverSettled'
 
-type SettledArticle = { at: string | null; id: number; state: ArticleState }
+type SettledArticle = { at: string | null; id: string; state: ArticleState }
 
 function flashSettled(context: PageContext, settled: SettledArticle): void {
   ;(context.get(Session) as Session | undefined)?.flash(SETTLED_SESSION_KEY, settled)
@@ -413,7 +413,7 @@ function flashSettled(context: PageContext, settled: SettledArticle): void {
  */
 const DOC_CHECKED_SESSION_KEY = 'docRevisionsChecked'
 
-type DocChecked = { name: string; revised: readonly number[] }
+type DocChecked = { name: string; revised: readonly string[] }
 
 function flashDocChecked(session: Session | undefined, checked: DocChecked): void {
   session?.flash(DOC_CHECKED_SESSION_KEY, checked)
@@ -426,7 +426,7 @@ function takeDocChecked(session: Session | undefined, name: string): DocChecked 
   if (typeof value !== 'object' || value === null) return null
   let { name: checkedName, revised } = value as Record<string, unknown>
   if (checkedName !== name || !Array.isArray(revised)) return null
-  return { name, revised: revised.filter((id): id is number => Number.isSafeInteger(id)) }
+  return { name, revised: revised.filter((id): id is string => isRowId(id)) }
 }
 
 function takeSettled(session: Session | undefined): SettledArticle | null {
@@ -435,7 +435,7 @@ function takeSettled(session: Session | undefined): SettledArticle | null {
   session?.unset(SETTLED_SESSION_KEY)
   if (typeof value !== 'object' || value === null) return null
   let { at, id, state } = value as Record<string, unknown>
-  if (typeof id !== 'number' || (state !== 'writing' && state !== 'handedOver')) return null
+  if (!isRowId(id) || (state !== 'writing' && state !== 'handedOver')) return null
   return { at: typeof at === 'string' ? at : null, id, state }
 }
 
@@ -689,7 +689,7 @@ async function linkAndArticles(
   issue: Issue,
   isChanged: boolean,
   settled: SettledArticle | null,
-  justRevised: ReadonlySet<number>,
+  justRevised: ReadonlySet<string>,
 ): Promise<{ articles: ArticleRowView[]; link: LinkBlockView | undefined }> {
   let { articles, artworks, links, origin } = articlesOf(context)
   let isOpen = issue.closedAt === null
@@ -699,10 +699,10 @@ async function linkAndArticles(
   let artworksLinks = await links.artworksLinksOf(issue.id)
   let batches = await artworks.artworks.listByIssue(issue.id)
   let filter = filterOf(context)
-  let openId = Number(context.url.searchParams.get('article'))
+  let openId = context.url.searchParams.get('article')
   let health = jobHealth(await articlesOf(context).runs.latestScheduled(APPROVAL_SEND_JOB), today)
   /* Only the open row shows the replaced versions, so only its are read. */
-  let replaced = Number.isSafeInteger(openId) ? await articles.replacedVersions(openId) : []
+  let replaced = isRowId(openId) ? await articles.replacedVersions(openId) : []
   let rows = created.map((article) => {
     let articleCounts = counts.get(article.id) ?? NO_ARTWORKS
     let artworksLink = artworksLinks.get(article.id)
@@ -828,7 +828,7 @@ async function linkAndArticles(
  * The address of the detail with the artworks' filter, as `12a` keeps it, and the article whose
  * row is open (`12b`), scrolled to.
  */
-function detailHref(issue: Issue, filter: ArtworkFilter, openArticle?: number): string {
+function detailHref(issue: Issue, filter: ArtworkFilter, openArticle?: string): string {
   let query = new URLSearchParams()
   if (filter !== 'all') query.set('artworks', filter)
   if (openArticle !== undefined) query.set('article', String(openArticle))
@@ -924,7 +924,7 @@ function overviewFilterOf(context: PageContext): IssueFilter {
 async function groupsOf(
   context: PageContext,
   issue: Issue,
-  changed: { id: number | null; isHeadingFocused: boolean },
+  changed: { id: string | null; isHeadingFocused: boolean },
 ): Promise<GroupsView | undefined> {
   let state = issueState(issue)
   if (state === 'unfinished') return undefined
@@ -1103,10 +1103,9 @@ async function missingAddressOf(
 
 /** A created article of this issue, or `null`: an ID from another issue answers as unknown. */
 async function articleOf(context: PageContext, issue: Issue, id: string): Promise<Article | null> {
-  let articleId = Number(id)
-  if (!Number.isSafeInteger(articleId)) return null
+  if (!isRowId(id)) return null
   let created = await articlesOf(context).articles.listCreated(issue.id)
-  return created.find((each) => each.id === articleId) ?? null
+  return created.find((each) => each.id === id) ?? null
 }
 
 /** `?artworks=` kept on the address of a dialog over the detail. */
@@ -1116,16 +1115,16 @@ function withFilter(href: string, filter: ArtworkFilter): string {
 
 /** A committed group of this issue that is not removed, by the ID in the address. */
 async function groupOf(context: PageContext, issue: Issue, id: string): Promise<GroupRow | null> {
-  let groupId = Number(id)
-  if (!Number.isSafeInteger(groupId)) return null
-  let group = await articlesOf(context).artworks.groups.findById(groupId)
+  if (!isRowId(id)) return null
+  let group = await articlesOf(context).artworks.groups.findById(id)
   if (group === null || group.issueId !== issue.id || group.createdAt === null) return null
   return group.removedAt === null ? group : null
 }
 
 /** Whether the group in the address was this issue's and is removed now (`12f`). */
 async function isRemovedGroup(context: PageContext, issue: Issue, id: string): Promise<boolean> {
-  let group = await articlesOf(context).artworks.groups.findById(Number(id))
+  if (!isRowId(id)) return false
+  let group = await articlesOf(context).artworks.groups.findById(id)
   return group?.issueId === issue.id && group.removedAt !== null
 }
 
@@ -1274,8 +1273,8 @@ function editableCards(authors: readonly { email: string; name: string }[]): Aut
 
 /**
  * The cards as the article stands: every author before the final version; after it, an agreed
- * author as text with the tag of `12b`, and every other one to type into, keyed by its clause,
- * whose ID the form carries.
+ * author as text with the tag of `12b`, and every other one to type into, keyed by its position,
+ * with its clause's ID in the hidden field the form carries.
  */
 function storedCards(article: Article): AuthorCardView[] {
   let finalVersion = article.finalVersion
@@ -1287,7 +1286,7 @@ function storedCards(article: Article): AuthorCardView[] {
       return {
         agreed: { detail: at === null ? null : formatMoment(at, today), label: AGREED_AUTHOR_TAG },
         email: clause.authorEmail,
-        key: clause.id,
+        key: clause.position,
         kind: 'agreed',
         name: clause.authorName,
         number: clause.position,
@@ -1296,7 +1295,7 @@ function storedCards(article: Article): AuthorCardView[] {
     return {
       email: clause.authorEmail,
       hidden: { name: 'clause', value: String(clause.id) },
-      key: clause.id,
+      key: clause.position,
       kind: 'editable',
       name: clause.authorName,
       number: clause.position,
@@ -1377,10 +1376,9 @@ function discardingView(context: PageContext, issue: Issue, batch: ListedBatch):
 
 /** A live batch of this issue, or `null`: an ID from another issue answers as unknown. */
 async function batchOf(context: PageContext, issue: Issue, id: string) {
-  let batchId = Number(id)
-  if (!Number.isSafeInteger(batchId)) return null
+  if (!isRowId(id)) return null
   let batches = await articlesOf(context).artworks.artworks.listByIssue(issue.id)
-  return batches.find((batch) => batch.id === batchId) ?? null
+  return batches.find((batch) => batch.id === id) ?? null
 }
 
 /**
@@ -1650,8 +1648,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
         let { articles, artworks } = articlesOf(context)
-        let articleId = Number(context.params.id)
-        let article = Number.isSafeInteger(articleId)
+        let articleId = context.params.id
+        let article = isRowId(articleId)
           ? ((await articles.listCreated(issue.id)).find((each) => each.id === articleId) ?? null)
           : null
         if (article === null) return notFound()
@@ -1682,8 +1680,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let issue = await issuesOf(context).store.findByName(context.params.name)
         if (issue === null) return notFound()
         let { articles, artworks } = articlesOf(context)
-        let groupId = Number(context.params.id)
-        let group = Number.isSafeInteger(groupId)
+        let groupId = context.params.id
+        let group = isRowId(groupId)
           ? ((await artworks.groups.listByIssue(issue.id)).find((each) => each.id === groupId) ??
             null)
           : null
@@ -1817,8 +1815,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
        */
       async rename(context) {
         let { hasRegistry, setup, store } = issuesOf(context)
-        let id = Number(formText(context, 'id'))
-        let issue = Number.isSafeInteger(id) ? await store.findById(id) : null
+        let id = formText(context, 'id')
+        let issue = isRowId(id) ? await store.findById(id) : null
         if (issue === null) return notFound()
         let from = answeredFrom(context)
         let back = (current: Issue) => stepBackHref(current, from.returnTo, from.filter)
@@ -1916,8 +1914,8 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
        */
       async remove(context) {
         let { hasRegistry, setup, store } = issuesOf(context)
-        let id = Number(formText(context, 'id'))
-        let issue = Number.isSafeInteger(id) ? await store.findById(id) : null
+        let id = formText(context, 'id')
+        let issue = isRowId(id) ? await store.findById(id) : null
         if (issue === null) return notFound()
         let from = answeredFrom(context)
         let overview = stepBackHref(issue, 'overview', from.filter)
@@ -2448,7 +2446,9 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let article = await articleOf(context, issue, context.params.id)
         if (article === null) {
           /* Removed in another tab: the row's absence says it, so no toast. */
-          let row = await articlesOf(context).articles.findById(Number(context.params.id))
+          let row = isRowId(context.params.id)
+            ? await articlesOf(context).articles.findById(context.params.id)
+            : null
           return row?.issueId === issue.id && row.removedAt !== null ? back() : notFound()
         }
         let dialog = async (callout: FixCallout) =>
@@ -2519,14 +2519,14 @@ export default function createIssuesController(signedInUntil: SignedInUntilCooki
         let names = data.getAll(AUTHOR_NAME_FIELD).map(String)
         let emails = data.getAll(AUTHOR_EMAIL_FIELD).map(String)
         let typed = names.map((name, index) => ({ email: emails[index] ?? '', name }))
-        let clauseIds = data.getAll('clause').map(Number)
+        let clauseIds = data.getAll('clause').map(String).filter(isRowId)
         let marked = formText(context, 'marked')
         let markedAt = marked === '' ? null : parseStamp(marked)
         if (marked !== '' && markedAt === null) return notFound()
         /* After the final version: the stored cards with what was typed into the editable ones. */
         let typedFinalCards = () =>
           storedCards(article).map((card) => {
-            let index = card.kind === 'editable' ? clauseIds.indexOf(card.key) : -1
+            let index = card.kind === 'editable' ? clauseIds.indexOf(card.hidden?.value ?? '') : -1
             let entered = index === -1 ? undefined : typed[index]
             return entered === undefined ? card : { ...card, ...entered }
           })

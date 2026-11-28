@@ -15,8 +15,8 @@ export type RecordKind = 'evidence' | 'registry'
 export type RecordMark = {
   attempts: number
   generation: number
-  /** `0` for the Registr. */
-  issueId: number
+  /** Empty for the Registr. */
+  issueId: string
   kind: RecordKind
 }
 
@@ -52,7 +52,7 @@ function toMark(row: Row): RecordMark {
   return {
     attempts: Number(row['attempts']),
     generation: Number(row['generation']),
-    issueId: Number(row['issue_id']),
+    issueId: String(row['issue_id']),
     kind: row['kind'] === 'registry' ? 'registry' : 'evidence',
   }
 }
@@ -63,10 +63,10 @@ export function createRecordStore(database: Database): RecordStore {
       let result = await database.exec(
         sql`SELECT i.name, i.folder_id, i.evidence_spreadsheet_id, i.closed_at, i.started_at,
               (SELECT l.key FROM links l WHERE l.issue_id = i.id AND l.kind = 'article'
-               ORDER BY l.created_at DESC, l.id DESC LIMIT 1) AS link_key
+               ORDER BY l.created_at DESC, l.rowid DESC LIMIT 1) AS link_key
             FROM issues i
             WHERE i.completed_at IS NOT NULL AND i.removed_at IS NULL
-            ORDER BY i.started_at, i.id`,
+            ORDER BY i.started_at, i.rowid`,
       )
       return (result.rows ?? []).map((row) => ({
         articleLinkKey: text(row['link_key']),
@@ -122,7 +122,7 @@ export function createRecordStore(database: Database): RecordStore {
                 SET generation = generation + 1, attempts = 0, retry_at = NULL, last_error = NULL`,
         )
         await db.exec(
-          sql`INSERT INTO record_marks (kind, issue_id) VALUES ('registry', 0)
+          sql`INSERT INTO record_marks (kind, issue_id) VALUES ('registry', '')
               ON CONFLICT (kind, issue_id) DO UPDATE
                 SET generation = generation + 1, attempts = 0, retry_at = NULL, last_error = NULL`,
         )

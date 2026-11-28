@@ -344,7 +344,7 @@ describe('Ke kontrole', () => {
  * An article's final version whose one author answered something other than „Souhlasím“, as the
  * job leaves it: marked, sent, and its reply reported.
  */
-async function articleReply(app: TestApp, articleId: number, text: string): Promise<number> {
+async function articleReply(app: TestApp, articleId: string, text: string): Promise<string> {
   let articles = createArticleStore(app.database)
   let runs = createJobRunStore(app.database)
   /* To the millisecond, as the database keeps a take: the marking must find the same one. */
@@ -385,7 +385,7 @@ async function articleReply(app: TestApp, articleId: number, text: string): Prom
     at,
   )
   let [queued] = await articles.reviewQueue()
-  return queued?.id ?? 0
+  return queued?.id ?? ''
 }
 
 describe('Ke kontrole for articles', () => {
@@ -401,7 +401,7 @@ describe('Ke kontrole for articles', () => {
       assert.ok(artworks !== -1 && final > artworks)
       assert.match(html, /Tereza Vlková · tereza\.vlkova@external\.test · přijato 14\. 11\./)
       assert.match(html, /Souhlasím, jen prosím jiný podpis\./)
-      assert.match(html, /action="\/review\/clauses\/\d+\/consent"/)
+      assert.match(html, /action="\/review\/clauses\/[0-9a-z]+\/consent"/)
 
       let detail = await (await browser.get('/issues/VDM_2026_5')).text()
       assert.match(detail, /Jiná odpověď · Tereza Vlková/)
@@ -459,7 +459,7 @@ describe('Ke kontrole narrowed to one kind', () => {
       assert.match(articles, /Finální verze článku · VDM_2026_5/)
       assert.doesNotMatch(articles, /Obrazová díla · 2 díla/)
       assert.match(articles, /aria-current="true"[^>]*href="\/review\?kind=articles"/)
-      assert.match(articles, /action="\/review\/clauses\/\d+\/consent\?kind=articles"/)
+      assert.match(articles, /action="\/review\/clauses\/[0-9a-z]+\/consent\?kind=articles"/)
 
       let artworks = await (await browser.get('/review?kind=artworks')).text()
       assert.match(artworks, /Obrazová díla · 2 díla · VDM_2026_5/)

@@ -58,10 +58,10 @@ function calloutOf(html: string): string | null {
 
 type Context = {
   app: TestApp
-  articleId: number
+  articleId: string
   artworksLink: Link
   editor: TestBrowser
-  issueId: number
+  issueId: string
 }
 
 /** An issue made through the app and one article through its link, its files on the fake Drive. */

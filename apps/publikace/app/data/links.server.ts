@@ -10,6 +10,7 @@ import {
   type LinkUsage,
 } from '../domain/link.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * The shared links in the app's database (`02a`). An issue's link for new articles comes into
@@ -19,27 +20,27 @@ import { parseStamp, stamp } from '../domain/time.ts'
 
 export type LinkStore = {
   /** The issue's valid link for new articles, created when it has none. */
-  ensureArticleLink(issueId: number, at: Temporal.Instant): Promise<Link>
+  ensureArticleLink(issueId: string, at: Temporal.Instant): Promise<Link>
   findByKey(key: string): Promise<Link | null>
   /** The issue's valid link for new articles, if any. */
-  articleLinkOf(issueId: number): Promise<Link | null>
+  articleLinkOf(issueId: string): Promise<Link | null>
   /** Every issue's valid link for new articles, by the issue's ID, for the overview (`11a`). */
-  articleLinksByIssue(): Promise<Map<number, Link>>
+  articleLinksByIssue(): Promise<Map<string, Link>>
   /** Each created article's link for its artworks, by the article's ID. */
-  artworksLinksOf(issueId: number): Promise<Map<number, Link>>
+  artworksLinksOf(issueId: string): Promise<Map<string, Link>>
   /**
    * Revokes the valid link and issues a new one, in one transaction (`02d`), while the valid link
    * is still the one the dialog showed.
    */
-  renew(issueId: number, shownKey: string, at: Temporal.Instant): Promise<RenewOutcome>
+  renew(issueId: string, shownKey: string, at: Temporal.Instant): Promise<RenewOutcome>
   /** The same for an artwork group's link, in an open issue and a group not removed (`02g`). */
   renewGroupLink(renewal: {
     at: Temporal.Instant
-    groupId: number
+    groupId: string
     shownKey: string
   }): Promise<GroupLinkRenewOutcome>
   /** How many articles came through the link, and when the last did. */
-  usage(linkId: number): Promise<LinkUsage>
+  usage(linkId: string): Promise<LinkUsage>
 }
 
 /**
@@ -80,18 +81,18 @@ export function newLinkKey(): string {
 
 export function toLink(row: Row): Link {
   return {
-    articleId: row['article_id'] == null ? null : Number(row['article_id']),
+    articleId: row['article_id'] == null ? null : String(row['article_id']),
     createdAt: parseStamp(row['created_at']) ?? EPOCH,
-    groupId: row['group_id'] == null ? null : Number(row['group_id']),
-    id: Number(row['id']),
-    issueId: Number(row['issue_id']),
+    groupId: row['group_id'] == null ? null : String(row['group_id']),
+    id: String(row['id']),
+    issueId: String(row['issue_id']),
     key: String(row['key']),
     kind: row['kind'] === 'artworks' ? 'artworks' : 'article',
     revokedAt: parseStamp(row['revoked_at']),
   }
 }
 
-async function validArticleLink(db: Database, issueId: number): Promise<Link | null> {
+async function validArticleLink(db: Database, issueId: string): Promise<Link | null> {
   let result = await db.exec(
     sql`SELECT * FROM links WHERE issue_id = ${issueId} AND kind = 'article' AND revoked_at IS NULL`,
   )
@@ -103,18 +104,18 @@ async function validArticleLink(db: Database, issueId: number): Promise<Link | n
 export async function insertLink(
   db: Database,
   link: {
-    articleId: number | null
+    articleId: string | null
     at: Temporal.Instant
     /** The artwork group an artworks link uploads to, in place of an article (cz.vednemesicnik.publikace#133). */
-    groupId?: number
-    issueId: number
+    groupId?: string
+    issueId: string
     kind: LinkKind
   },
 ): Promise<Link> {
   let key = newLinkKey()
   await db.exec(
-    sql`INSERT INTO links (key, kind, issue_id, article_id, group_id, created_at)
-        VALUES (${key}, ${link.kind}, ${link.issueId}, ${link.articleId}, ${link.groupId ?? null},
+    sql`INSERT INTO links (id, key, kind, issue_id, article_id, group_id, created_at)
+        VALUES (${newRowId()}, ${key}, ${link.kind}, ${link.issueId}, ${link.articleId}, ${link.groupId ?? null},
           ${stamp(link.at)})`,
   )
   let result = await db.exec(sql`SELECT * FROM links WHERE key = ${key}`)
@@ -126,7 +127,7 @@ export async function insertLink(
 /** The issue's valid link for new articles, created when it has none, within `db`. */
 export async function ensureArticleLinkIn(
   db: Database,
-  issueId: number,
+  issueId: string,
   at: Temporal.Instant,
 ): Promise<Link> {
   return (
@@ -145,7 +146,7 @@ export function createLinkStore(database: Database): LinkStore {
       let result = await database.exec(
         sql`SELECT * FROM links WHERE kind = 'article' AND revoked_at IS NULL`,
       )
-      let links = new Map<number, Link>()
+      let links = new Map<string, Link>()
       for (let row of result.rows ?? []) {
         let link = toLink(row)
         links.set(link.issueId, link)
@@ -157,7 +158,7 @@ export function createLinkStore(database: Database): LinkStore {
       let result = await database.exec(
         sql`SELECT * FROM links WHERE issue_id = ${issueId} AND kind = 'artworks' AND revoked_at IS NULL`,
       )
-      let links = new Map<number, Link>()
+      let links = new Map<string, Link>()
       for (let row of result.rows ?? []) {
         let link = toLink(row)
         if (link.articleId !== null) links.set(link.articleId, link)
@@ -203,9 +204,9 @@ export function createLinkStore(database: Database): LinkStore {
           return { kind: 'changed-meanwhile' }
         }
         await db.exec(
-          sql`UPDATE links SET revoked_at = ${stamp(at)} WHERE id = ${Number(validRow['id'])}`,
+          sql`UPDATE links SET revoked_at = ${stamp(at)} WHERE id = ${String(validRow['id'])}`,
         )
-        let issueId = Number(row['issue_id'])
+        let issueId = String(row['issue_id'])
         let link = await insertLink(db, { articleId: null, at, groupId, issueId, kind: 'artworks' })
         return { kind: 'renewed', link }
       })

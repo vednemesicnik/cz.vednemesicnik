@@ -55,7 +55,7 @@ const ISSUE_FIXED_SESSION_KEY = 'issueFixed'
 
 export type IssueFixed =
   | { focus: 'heading' }
-  | { focus: 'articles' | 'groups' | 'title' | 'row'; issueId: number }
+  | { focus: 'articles' | 'groups' | 'title' | 'row'; issueId: string }
 
 export function flashIssueFixed(context: PageContext, fixed: IssueFixed): void {
   ;(context.get(Session) as Session | undefined)?.flash(ISSUE_FIXED_SESSION_KEY, fixed)
@@ -100,7 +100,7 @@ export async function renderOverview(
   /* _Čeká na vás_ adds up the amber and pink tags of the issue's articles and artworks, one for
      each article or group with a missing folder, and one for the issue's own Callout of a missing
      folder (`11a`, `01d`, `12j`): a Callout counts, not a folder. */
-  let artworkCounts = new Map<number, ApprovedCount>()
+  let artworkCounts = new Map<string, ApprovedCount>()
   let waitingCounts = new Map(articleWaiting)
   for (let [issueId, count] of groupsMissing) {
     waitingCounts.set(issueId, (waitingCounts.get(issueId) ?? 0) + count)
@@ -115,7 +115,7 @@ export async function renderOverview(
   }
 
   /* What _Kopírovat odkaz na nový článek_ in a row's „⋯“ copies (`11a`). */
-  let articleLinkUrls = new Map<number, string>()
+  let articleLinkUrls = new Map<string, string>()
   for (let [issueId, link] of articleLinks) {
     articleLinkUrls.set(issueId, absoluteUrl(articles.origin, articleLinkPath(link.key)))
   }

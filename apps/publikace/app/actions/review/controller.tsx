@@ -8,6 +8,7 @@ import type { ArticleStore, QueuedClause } from '../../data/articles.server.ts'
 import type { ArtworkStore, QueuedBatch } from '../../data/artworks.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
 import type { PublicMailLog } from '../../data/public-mail.server.ts'
+import { isRowId } from '../../data/row-id.server.ts'
 import {
   type AnswerKind,
   answerSentToast,
@@ -103,7 +104,6 @@ function takeSettled(session: Session | undefined): string | null {
   let value = session?.get(SETTLED_SESSION_KEY)
   if (value === undefined) return null
   session?.unset(SETTLED_SESSION_KEY)
-  if (typeof value === 'number') return String(value)
   return typeof value === 'string' ? value : null
 }
 
@@ -131,8 +131,8 @@ function takeUnsent(session: Session | undefined): UnsentAnswer | null {
   return { line, note, text, title }
 }
 
-/** A batch's card is its number, an article's clause `clause-{number}`. */
-function clauseAnchor(id: number): string {
+/** A batch's card is its ID, an article's clause `clause-{id}`. */
+function clauseAnchor(id: string): string {
   return `clause-${id}`
 }
 
@@ -141,10 +141,10 @@ function anchorOf(target: AnswerTarget): string {
 }
 
 /** The ID of the batch or the clause a settled anchor names, of that kind only. */
-function settledIdOf(anchor: string | null, kind: 'batch' | 'clause'): number | undefined {
+function settledIdOf(anchor: string | null, kind: 'batch' | 'clause'): string | undefined {
   if (anchor === null) return undefined
-  let match = kind === 'clause' ? /^clause-(\d+)$/.exec(anchor) : /^(\d+)$/.exec(anchor)
-  return match?.[1] === undefined ? undefined : Number(match[1])
+  let id = kind === 'clause' ? /^clause-(.+)$/.exec(anchor)?.[1] : anchor
+  return isRowId(id) ? id : undefined
 }
 
 /**
@@ -616,7 +616,7 @@ export default function createReviewController(
    */
   async function flashIfReplaced(
     context: Parameters<typeof flashToast>[0],
-    clauseId: number,
+    clauseId: string,
   ): Promise<boolean> {
     let standing = await dependencies.articles.replacingVersionOf(clauseId)
     if (standing === null) return false
@@ -708,8 +708,8 @@ export default function createReviewController(
     isRetry: boolean,
   ): Promise<Response> {
     let kind = kindOf(context)
-    let id = Number(context.params.id)
-    if (!Number.isSafeInteger(id)) return redirect(reviewHref(kind), 303)
+    let id = context.params.id
+    if (!isRowId(id)) return redirect(reviewHref(kind), 303)
     let target: AnswerTarget = { id, kind: answerKind }
     let form = context.get(FormData) as FormData
     let field = (name: string) => {
@@ -718,7 +718,7 @@ export default function createReviewController(
     }
     let typed = field('text')
     let outcome = isRetry
-      ? await retryAnswer(answering, target, Number(field('answer')))
+      ? await retryAnswer(answering, target, field('answer'))
       : await sendAnswer(answering, target, {
           editor: context.auth.identity,
           messageId: field('reply'),
@@ -836,11 +836,11 @@ export default function createReviewController(
       },
 
       async verify(context) {
-        let id = Number(context.params.id)
+        let id = context.params.id
         let kind = kindOf(context)
         let reply = (context.get(FormData) as FormData).get('reply')
         let isRecorded =
-          Number.isSafeInteger(id) &&
+          isRowId(id) &&
           typeof reply === 'string' &&
           (await dependencies.artworks.verifyConsent(id, reply, context.auth.identity, now()))
         if (isRecorded) {
@@ -850,17 +850,14 @@ export default function createReviewController(
             label: UNDO_LABEL,
           })
         }
-        return redirect(
-          reviewHref(kind, { anchor: Number.isSafeInteger(id) ? String(id) : null }),
-          303,
-        )
+        return redirect(reviewHref(kind, { anchor: isRowId(id) ? String(id) : null }), 303)
       },
 
       async undo(context) {
-        let id = Number(context.params.id)
-        if (Number.isSafeInteger(id)) await dependencies.artworks.undoVerification(id)
+        let id = context.params.id
+        if (isRowId(id)) await dependencies.artworks.undoVerification(id)
         return redirect(
-          reviewHref(kindOf(context), { anchor: Number.isSafeInteger(id) ? String(id) : null }),
+          reviewHref(kindOf(context), { anchor: isRowId(id) ? String(id) : null }),
           303,
         )
       },
@@ -874,11 +871,11 @@ export default function createReviewController(
       },
 
       async clauseVerify(context) {
-        let id = Number(context.params.id)
+        let id = context.params.id
         let kind = kindOf(context)
         let reply = (context.get(FormData) as FormData).get('reply')
         let isRecorded =
-          Number.isSafeInteger(id) &&
+          isRowId(id) &&
           typeof reply === 'string' &&
           (await dependencies.articles.verifyClause(id, reply, context.auth.identity, now()))
         if (isRecorded) {
@@ -887,23 +884,20 @@ export default function createReviewController(
             action: withKind(routes.review.clauseUndo.href({ id: String(id) }), kind),
             label: UNDO_LABEL,
           })
-        } else if (Number.isSafeInteger(id)) {
+        } else if (isRowId(id)) {
           await flashIfReplaced(context, id)
         }
-        return redirect(
-          reviewHref(kind, { anchor: Number.isSafeInteger(id) ? clauseAnchor(id) : null }),
-          303,
-        )
+        return redirect(reviewHref(kind, { anchor: isRowId(id) ? clauseAnchor(id) : null }), 303)
       },
 
       async clauseUndo(context) {
-        let id = Number(context.params.id)
-        if (Number.isSafeInteger(id) && !(await dependencies.articles.undoClauseVerification(id))) {
+        let id = context.params.id
+        if (isRowId(id) && !(await dependencies.articles.undoClauseVerification(id))) {
           await flashIfReplaced(context, id)
         }
         return redirect(
           reviewHref(kindOf(context), {
-            anchor: Number.isSafeInteger(id) ? clauseAnchor(id) : null,
+            anchor: isRowId(id) ? clauseAnchor(id) : null,
           }),
           303,
         )

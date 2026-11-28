@@ -257,7 +257,7 @@ export type ArticleRowView = {
    * the dialog of a new version (`12q`).
    */
   markRevised: { accessibleLabel: string; href: string; label: string } | null
-  id: number
+  id: string
   missing: MissingFoldersView | null
   name: string
   /** _Otevřít PDF_ in `⋯`, for an article with a final version (`12q`). */
@@ -311,7 +311,7 @@ export type ArtworkRowView = {
   driveUrl: string
   /** The article or the group the artwork belongs to, the line under its name (`12a`). */
   holderName: string
-  id: number
+  id: string
   name: string
   providerEmail: string
   providerName: string
@@ -365,7 +365,7 @@ export type GroupRowView = {
   /** _Vydat nový odkaz…_ in an open issue whose group has its link (`02g`). */
   renewHref: string | null
   folderHref: string | null
-  id: number
+  id: string
   /**
    * Just created or just edited: highlighted until the next load (`12e`, `12f`). A new group has
    * focus on its _Kopírovat_; an edited one leaves it on the section's heading.

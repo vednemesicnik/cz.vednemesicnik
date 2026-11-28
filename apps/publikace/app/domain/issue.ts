@@ -38,7 +38,7 @@ export type Issue = {
   folderIds: Record<FolderKind, string | null>
   /** `Skupiny obrazových děl`, made with the issue's first artwork group and `null` until then. */
   groupsFolderId: string | null
-  id: number
+  id: string
   /** When the app found each folder missing, `null` while it is there (`12j`). */
   missing: Record<IssueFolderKind, Temporal.Instant | null>
   name: string

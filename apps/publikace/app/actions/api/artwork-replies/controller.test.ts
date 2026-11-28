@@ -25,7 +25,7 @@ const REPORT = '/api/v1/artwork-replies/report'
 
 type Claimed = {
   batches: {
-    batchId: number
+    batchId: string
     canArchiveExactReply: boolean
     isVerified: boolean
     licencesFolderId: string | null

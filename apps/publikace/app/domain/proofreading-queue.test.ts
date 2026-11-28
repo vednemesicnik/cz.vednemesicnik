@@ -1,6 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { testRowId } from '../test-row-id.ts'
 import { cardActions, partOf, type QueueItem, queueParts } from './proofreading-queue.ts'
 
 const DAY = Temporal.Instant.from('2026-11-16T08:00:00Z')
@@ -20,7 +21,7 @@ function item(id: number, overrides: Partial<QueueItem> = {}): QueueItem {
     cancelledProofreading: null,
     createdAt: at(0),
     handover: null,
-    id,
+    id: testRowId(id),
     proofreading: null,
     ...overrides,
   }
@@ -41,11 +42,16 @@ describe('the parts of the page Korektura', () => {
       Object.fromEntries(
         Object.entries(parts).map(([part, list]) => [part, list.map((a) => a.id)]),
       ),
-      { mine: [3], others: [4], waiting: [2, 1], writing: [6, 5] },
+      {
+        mine: [testRowId(3)],
+        others: [testRowId(4)],
+        waiting: [testRowId(2), testRowId(1)],
+        writing: [testRowId(6), testRowId(5)],
+      },
     )
     assert.deepEqual(
       queueParts(articles, EDITOR).others.map((a) => a.id),
-      [4, 3],
+      [testRowId(4), testRowId(3)],
     )
   })
 
@@ -54,10 +60,10 @@ describe('the parts of the page Korektura', () => {
       item(1, { handover: { at: at(1), ...MARIE }, proofreading: { at: at(4), ...LENKA } }),
       item(2, { handover: { at: at(2), ...MARIE } }),
     ]
-    let parts = queueParts(articles, PROOFREADER, { id: 1, part: 'waiting' })
+    let parts = queueParts(articles, PROOFREADER, { id: testRowId(1), part: 'waiting' })
     assert.deepEqual(
       parts.waiting.map((a) => a.id),
-      [1, 2],
+      [testRowId(1), testRowId(2)],
     )
     assert.equal(parts.mine.length, 0)
     assert.equal(partOf(articles[0] ?? item(0), PROOFREADER), 'mine')
@@ -110,7 +116,7 @@ describe('the final version on the page Korektura', () => {
     let parts = queueParts([cancellable, taken, claimed, others], PROOFREADER)
     assert.deepEqual(
       parts.mine.map((a) => a.id),
-      [1, 2],
+      [testRowId(1), testRowId(2)],
     )
     assert.equal(parts.others.length, 0)
     assert.equal(partOf(claimed, PROOFREADER), null)

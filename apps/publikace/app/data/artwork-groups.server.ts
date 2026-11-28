@@ -6,6 +6,7 @@ import type { Link } from '../domain/link.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import type { MissingFolders } from './articles.server.ts'
 import { insertLink, toLink } from './links.server.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * Artwork groups in the app's database (cz.vednemesicnik.publikace#133, `12e`), and the attempts that create them.
@@ -23,8 +24,8 @@ export type GroupRow = {
   createdAt: Temporal.Instant | null
   folderId: string | null
   formKey: string
-  id: number
-  issueId: number
+  id: string
+  issueId: string
   licencesFolderId: string | null
   metaFileId: string | null
   missing: MissingFolders
@@ -47,7 +48,7 @@ export type ListedGroup = GroupRow & {
 export type NewGroupAttempt = {
   at: Temporal.Instant
   formKey: string
-  issueId: number
+  issueId: string
   name: string
   nameKey: string
   note: string
@@ -67,7 +68,7 @@ export type EditGroupOutcome =
   | { kind: 'gone' }
 
 export type GroupEdit = {
-  id: number
+  id: string
   /** A new `_meta.json`, when the old one was deleted for good and the rename made it again. */
   metaFileId?: string
   name: string
@@ -88,38 +89,38 @@ export type RemoveGroupOutcome =
 export type GroupStore = {
   /** Every attempt left uncommitted, for the cleanup at startup. */
   abandonedAttempts(): Promise<GroupRow[]>
-  clearMissing(id: number, kinds: readonly ArticleFolderKind[]): Promise<void>
+  clearMissing(id: string, kinds: readonly ArticleFolderKind[]): Promise<void>
   /** Commits the attempt and gives the group its link, in one transaction. */
-  commit(id: number, at: Temporal.Instant): Promise<GroupRow>
+  commit(id: string, at: Temporal.Instant): Promise<GroupRow>
   /** Removes an attempt whose files are in the bin, which frees its name. */
-  discard(id: number): Promise<void>
+  discard(id: string): Promise<void>
   /** The name and the note as `12f` saves them, while nothing changed under the dialog. */
   edit(input: GroupEdit): Promise<EditGroupOutcome>
   findByFormKey(formKey: string): Promise<GroupRow | null>
-  findById(id: number): Promise<GroupRow | null>
+  findById(id: string): Promise<GroupRow | null>
   /** The issue's committed groups, the newest first (`12e`: the new one heads the list). */
-  listByIssue(issueId: number): Promise<ListedGroup[]>
-  markForCleanup(id: number, at: Temporal.Instant): Promise<void>
+  listByIssue(issueId: string): Promise<ListedGroup[]>
+  markForCleanup(id: string, at: Temporal.Instant): Promise<void>
   /**
    * The group marked removed, with its unsent uploads, while it can be removed (`12f`): in an open
    * issue, with no batch that is not discarded. Drive is binned after, so a refusal there is the
    * caller's to undo with `unmarkRemoved`.
    */
-  markRemoved(id: number, at: Temporal.Instant): Promise<RemoveGroupOutcome>
-  markMissing(id: number, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
+  markRemoved(id: string, at: Temporal.Instant): Promise<RemoveGroupOutcome>
+  markMissing(id: string, kinds: readonly ArticleFolderKind[], at: Temporal.Instant): Promise<void>
   /** By issue, the committed groups, for whether an issue can be removed (`12u`). */
-  countsByIssue(): Promise<Map<number, number>>
+  countsByIssue(): Promise<Map<string, number>>
   /** By issue, the committed groups with a folder on record as missing, for _Čeká na vás_. */
-  missingCountsByIssue(): Promise<Map<number, number>>
+  missingCountsByIssue(): Promise<Map<string, number>>
   /**
    * Every name in the issue by its key, as the dialog checks it: the groups and the attempts under
    * way. A failed attempt waiting for its cleanup is no group and does not count, though it holds
    * its name until its files reach the bin.
    */
-  namesOf(issueId: number): Promise<Map<string, string>>
+  namesOf(issueId: string): Promise<Map<string, string>>
   /** Attempts whose cleanup failed before, safe to take while other requests run. */
   pendingCleanups(): Promise<GroupRow[]>
-  setDriveId(id: number, kind: GroupDriveFileKind, fileId: string): Promise<void>
+  setDriveId(id: string, kind: GroupDriveFileKind, fileId: string): Promise<void>
   /**
    * The attempt for this form key, created unless it exists; `name-taken` when the issue holds the
    * name already, which the unique index decides even between two requests at once;
@@ -129,7 +130,7 @@ export type GroupStore = {
     attempt: NewGroupAttempt,
   ): Promise<{ attempt: GroupRow; isNew: boolean } | 'issue-removed' | 'name-taken'>
   /** Takes back the mark `markRemoved` set at `at`, and only that one. */
-  unmarkRemoved(id: number, at: Temporal.Instant): Promise<void>
+  unmarkRemoved(id: string, at: Temporal.Instant): Promise<void>
 }
 
 type Row = Record<string, unknown>
@@ -147,8 +148,8 @@ export function toGroup(row: Row): GroupRow {
     createdAt: parseStamp(row['created_at']),
     folderId: text(row['folder_id']),
     formKey: String(row['form_key']),
-    id: Number(row['id']),
-    issueId: Number(row['issue_id']),
+    id: String(row['id']),
+    issueId: String(row['issue_id']),
     licencesFolderId: text(row['licences_folder_id']),
     metaFileId: text(row['meta_file_id']),
     missing: {
@@ -163,7 +164,7 @@ export function toGroup(row: Row): GroupRow {
   }
 }
 
-async function byId(db: Database, id: number): Promise<GroupRow | null> {
+async function byId(db: Database, id: string): Promise<GroupRow | null> {
   let result = await db.exec(sql`SELECT * FROM artwork_groups WHERE id = ${id}`)
   let row = result.rows?.[0]
   return row === undefined ? null : toGroup(row)
@@ -179,7 +180,7 @@ export function createGroupStore(database: Database): GroupStore {
   return {
     async abandonedAttempts() {
       let result = await database.exec(
-        sql`SELECT * FROM artwork_groups WHERE created_at IS NULL ORDER BY id`,
+        sql`SELECT * FROM artwork_groups WHERE created_at IS NULL ORDER BY rowid`,
       )
       return (result.rows ?? []).map(toGroup)
     },
@@ -278,8 +279,8 @@ export function createGroupStore(database: Database): GroupStore {
         sql`SELECT issue_id, count(*) AS count FROM artwork_groups
             WHERE created_at IS NOT NULL AND removed_at IS NULL GROUP BY issue_id`,
       )
-      let counts = new Map<number, number>()
-      for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
+      let counts = new Map<string, number>()
+      for (let row of result.rows ?? []) counts.set(String(row['issue_id']), Number(row['count']))
       return counts
     },
 
@@ -296,8 +297,8 @@ export function createGroupStore(database: Database): GroupStore {
                 OR licences_folder_missing_at IS NOT NULL)
             GROUP BY issue_id`,
       )
-      let counts = new Map<number, number>()
-      for (let row of result.rows ?? []) counts.set(Number(row['issue_id']), Number(row['count']))
+      let counts = new Map<string, number>()
+      for (let row of result.rows ?? []) counts.set(String(row['issue_id']), Number(row['count']))
       return counts
     },
 
@@ -309,14 +310,14 @@ export function createGroupStore(database: Database): GroupStore {
                 AS artwork_count
             FROM artwork_groups g
             WHERE g.issue_id = ${issueId} AND g.created_at IS NOT NULL AND g.removed_at IS NULL
-            ORDER BY g.created_at DESC, g.id DESC`,
+            ORDER BY g.created_at DESC, g.rowid DESC`,
       )
       let links = await database.exec(
         sql`SELECT * FROM links
             WHERE issue_id = ${issueId} AND group_id IS NOT NULL AND revoked_at IS NULL`,
       )
-      let byGroup = new Map<number, Link>()
-      for (let row of links.rows ?? []) byGroup.set(Number(row['group_id']), toLink(row))
+      let byGroup = new Map<string, Link>()
+      for (let row of links.rows ?? []) byGroup.set(String(row['group_id']), toLink(row))
       return (groups.rows ?? []).map((row) => {
         let group = toGroup(row)
         return {
@@ -401,7 +402,7 @@ export function createGroupStore(database: Database): GroupStore {
     async pendingCleanups() {
       let result = await database.exec(
         sql`SELECT * FROM artwork_groups
-            WHERE created_at IS NULL AND cleanup_at IS NOT NULL ORDER BY id`,
+            WHERE created_at IS NULL AND cleanup_at IS NOT NULL ORDER BY rowid`,
       )
       return (result.rows ?? []).map(toGroup)
     },
@@ -444,10 +445,10 @@ export function createGroupStore(database: Database): GroupStore {
         )
         if ((taken.rows ?? []).length > 0) return 'name-taken' as const
         await db.exec(
-          sql`INSERT INTO artwork_groups (issue_id, form_key, name, name_key, note, started_at,
-                started_by_email, started_by_name)
-              VALUES (${attempt.issueId}, ${attempt.formKey}, ${attempt.name}, ${attempt.nameKey},
-                ${attempt.note}, ${stamp(attempt.at)}, ${attempt.startedBy.email},
+          sql`INSERT INTO artwork_groups (id, issue_id, form_key, name, name_key, note,
+                started_at, started_by_email, started_by_name)
+              VALUES (${newRowId()}, ${attempt.issueId}, ${attempt.formKey}, ${attempt.name},
+                ${attempt.nameKey}, ${attempt.note}, ${stamp(attempt.at)}, ${attempt.startedBy.email},
                 ${attempt.startedBy.name})`,
         )
         let inserted = await byFormKey(db, attempt.formKey)

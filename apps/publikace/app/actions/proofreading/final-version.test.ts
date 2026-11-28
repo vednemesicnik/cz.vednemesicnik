@@ -41,13 +41,13 @@ function toastAction(html: string): string | null {
   return /action="([^"]*)"/.exec(toast)?.[1]?.replaceAll('&amp;', '&') ?? null
 }
 
-function cardOf(html: string, id: number): string {
+function cardOf(html: string, id: string): string {
   let card = new RegExp(`<li[^>]*id="article-${id}"[^>]*>(.*?)</li>`, 's').exec(html)
   return card?.[1] ?? ''
 }
 
 /** Where the card's _Označit finální verzi…_ leads, unescaped. */
-function markHref(html: string, id: number): string | null {
+function markHref(html: string, id: string): string | null {
   let card = cardOf(html, id)
   let match = new RegExp(`href="(/proofreading/articles/${id}/final-version\\?take=[^"]*)"`).exec(
     card,
@@ -66,7 +66,7 @@ function dialogAction(html: string): string | null {
 
 async function newsroom(): Promise<{
   app: TestApp
-  articleId: number
+  articleId: string
   docId: string
   editor: TestBrowser
   folderId: string
@@ -98,7 +98,7 @@ async function newsroom(): Promise<{
 }
 
 /** Opens the dialog from the card and confirms it. */
-async function mark(browser: TestBrowser, id: number): Promise<Response> {
+async function mark(browser: TestBrowser, id: string): Promise<Response> {
   let page = await (await browser.get(PAGE)).text()
   let href = markHref(page, id)
   assert.ok(href !== null, 'the card offers the step')
@@ -255,7 +255,7 @@ describe('the final version (15f, 15g)', () => {
         editorsPage.includes(`"href":"/proofreading/articles/${articleId}/final-version?take=`),
       )
 
-      let href = /"href":"(\/proofreading\/articles\/\d+\/final-version\?take=[^"]*)"/.exec(
+      let href = /"href":"(\/proofreading\/articles\/[0-9a-z]+\/final-version\?take=[^"]*)"/.exec(
         editorsPage,
       )?.[1]
       assert.ok(href !== undefined)
