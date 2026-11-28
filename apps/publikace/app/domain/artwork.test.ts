@@ -1,6 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { testRowId } from '../test-row-id.ts'
 import {
   approvedArtworksLine,
   articleArtworksLine,
@@ -289,18 +290,21 @@ describe('checkSource', () => {
 describe('checkArtworks', () => {
   it('accepts a provider and artworks, trimmed', () => {
     let check = checkArtworks({
-      artworks: [{ author: ' Ondřej Beneš ', id: 4, source: '' }],
+      artworks: [{ author: ' Ondřej Beneš ', id: testRowId(4), source: '' }],
       provider: { email: ` ${ONDREJ.email}`, name: `${ONDREJ.name} ` },
     })
     assert.deepEqual(check, {
-      batch: { artworks: [{ author: 'Ondřej Beneš', id: 4, source: '' }], provider: ONDREJ },
+      batch: {
+        artworks: [{ author: 'Ondřej Beneš', id: testRowId(4), source: '' }],
+        provider: ONDREJ,
+      },
       ok: true,
     })
   })
 
   it('reports each field by where it belongs', () => {
     let check = checkArtworks({
-      artworks: [{ author: 'x'.repeat(201), id: 1, source: 'https://unsplash.com' }],
+      artworks: [{ author: 'x'.repeat(201), id: testRowId(1), source: 'https://unsplash.com' }],
       provider: { email: '', name: '' },
     })
     assert.deepEqual(check.ok ? [] : check.errors, [
@@ -317,12 +321,20 @@ describe('checkArtworks', () => {
       { key: 'artworks', message: NO_ARTWORKS_MESSAGE },
     ])
     let many = checkArtworks({
-      artworks: Array.from({ length: 21 }, (_, id) => ({ author: '', id, source: '' })),
+      artworks: Array.from({ length: 21 }, (_, index) => ({
+        author: '',
+        id: testRowId(index),
+        source: '',
+      })),
       provider: ONDREJ,
     })
     assert.deepEqual(many.ok ? [] : many.errors, [{ key: 'artworks', message: TOO_MANY_NOTE }])
     let twenty = checkArtworks({
-      artworks: Array.from({ length: 20 }, (_, id) => ({ author: '', id, source: '' })),
+      artworks: Array.from({ length: 20 }, (_, index) => ({
+        author: '',
+        id: testRowId(index),
+        source: '',
+      })),
       provider: ONDREJ,
     })
     assert.equal(twenty.ok, true)

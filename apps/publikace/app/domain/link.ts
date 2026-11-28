@@ -23,12 +23,12 @@ export type LinkKind = 'article' | 'artworks'
 
 export type Link = {
   /** The article an artworks link uploads to; `null` for an issue's link and a group's. */
-  articleId: number | null
+  articleId: string | null
   createdAt: Temporal.Instant
   /** The artwork group an artworks link uploads to, in place of an article (cz.vednemesicnik.publikace#133). */
-  groupId: number | null
-  id: number
-  issueId: number
+  groupId: string | null
+  id: string
+  issueId: string
   key: string
   kind: LinkKind
   revokedAt: Temporal.Instant | null

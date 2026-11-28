@@ -53,7 +53,7 @@ export async function checkDocRevisions(
  * now, `moved` already was and found a newer revision, which changes only the day on its row.
  * A revision only ever adds up, so nothing goes back to _Schváleno_.
  */
-export type DocChecks = { moved: number[]; revised: number[] }
+export type DocChecks = { moved: string[]; revised: string[] }
 
 /** Every target at once: one `files.get` each, the revisions only where the Doc moved. */
 export async function checkAllDocRevisions(

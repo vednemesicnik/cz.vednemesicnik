@@ -395,8 +395,8 @@ each author one e-mail (`20e`) and makes one `/api/v1/article-comments/report`. 
 what the app hands out and records; what it cannot cover is what Drive and Docs return for a Doc
 on the shared drive, and whether the Mailer's key keeps a retry to one e-mail. The token is
 checked as the reply check's is, so the same `testConfiguration` step applies, and the run goes
-behind the same tunnel. Its project holds `MAIL_SEND_URL` and `MAIL_SEND_SECRET` and gets no
-trigger until #1082: each step runs `sendCommentDigests` by hand. The old
+behind the same tunnel. Its project holds `MAIL_SEND_URL` and `MAIL_SEND_SECRET`, and each
+step runs `sendCommentDigests` by hand. The old
 `SCRIPT__Publication__Comment_Digest` under `publikace@` keeps the issues on the Registr's
 _Vydání_; the two never see each other's articles.
 

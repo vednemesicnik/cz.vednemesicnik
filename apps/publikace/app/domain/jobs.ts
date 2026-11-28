@@ -256,11 +256,14 @@ export function scheduleText(
 
 /**
  * The tag's line sits in a column of about 170 px. It may break between its parts, never inside
- * one: the preposition stays with its time, and _další kolem 9:30_ stays whole (`14d`).
+ * one: the preposition stays with its time, and _další kolem 9:30_ stays whole (`14d`). A word
+ * joiner after a hyphen keeps _e-mail_ whole, which a no-break space alone does not.
  */
 function unbroken(text: string): string {
-  return text.replaceAll(' ', NBSP)
+  return text.replaceAll(' ', NBSP).replaceAll('-', `-${WORD_JOINER}`)
 }
+
+const WORD_JOINER = String.fromCodePoint(0x2060)
 
 /**
  * _v 9:00_ today, _14. 11. v 9:00_ on another day, with the year in another year. The preposition
@@ -337,6 +340,11 @@ function hourWindowText(next: Temporal.Instant): string {
   return unbroken(`mezi ${clockTime(next)} a ${clockTime(end)}`)
 }
 
+/** What a failed run adds to its tag, in the job's own words (`14d`), or `null`. */
+function tagNote(job: Job, latest: JobRunRecord | null): string | null {
+  return latest === null ? null : (job.failureNote?.(latest) ?? null)
+}
+
 /** The tag and its line, as `14d`'s table defines each. */
 export function jobTag(
   state: JobState,
@@ -353,7 +361,7 @@ export function jobTag(
       return { detail: `spuštěno ${unbroken(atTime(state.startedAt))}`, label: 'Běží' }
     case 'failed': {
       let last = lastRunText(state.lastStartedAt, today)
-      let note = latest == null ? null : (job?.failureNote?.(latest) ?? null)
+      let note = job === undefined ? null : tagNote(job, latest ?? null)
       return {
         detail: note === null ? last : `${last}${NBSP}· ${unbroken(note)}`,
         label: tied`S chybou`,
@@ -394,9 +402,80 @@ export function canStartFromPage(state: JobState): boolean {
   return state.kind !== 'running'
 }
 
-/** The line under _Úlohy na pozadí_ in Settings (`14a`), for the one job that reports. */
-export function settingsSummary(job: Job, state: JobState, today: Temporal.Instant): string {
-  return `${job.name} · ${jobTag(state, today).label}`
+/** A job as the summary in Settings reads it: its latest run and the tag that run gives. */
+export type JobSummaryRow = { job: Job; latest: JobRunRecord | null; state: JobState }
+
+/** A piece of the summary; the job names stand apart, for the page's `<em>` (`14a`). */
+export type SummaryPart = { isName: boolean; text: string }
+
+/** _1 úloha_, _2 úlohy_, _5 úloh_ (`14a`). */
+function jobsCount(count: number): string {
+  if (count === 1) return '1 úloha'
+  if (count >= 2 && count <= 4) return `${count} úlohy`
+  return `${count} úloh`
+}
+
+/**
+ * What the summary says of a job that is not _V pořádku_: the tag's note as `14d` gives it, else
+ * the tag itself with its capital, which reads as the table's label and so needs no agreement
+ * with the name (`14a`, the copywriter's `acjaw50m`). It never breaks, as in `14d`.
+ */
+function summaryState(
+  row: JobSummaryRow,
+  today: Temporal.Instant,
+): { hasNote: boolean; text: string } | null {
+  if (row.state.kind === 'ok') return null
+  let note = row.state.kind === 'failed' ? tagNote(row.job, row.latest) : null
+  return { hasNote: note !== null, text: unbroken(note ?? jobTag(row.state, today).label) }
+}
+
+/* The space before the middle dot holds, so no line of the summary starts with it (`14a`). */
+const SUMMARY_DOT = `${NBSP}· `
+
+/**
+ * The sentence under _Úlohy na pozadí_ in Settings (`14a`, `bfc8qtjy`, `acjaw50m`): the number of
+ * jobs, then every job that is not _V pořádku_ by its name with its state, and _ostatní
+ * v pořádku_ while one is. Jobs with the same state stand once, their names joined by commas
+ * only, since a name carries _a_ of its own; groups keep the order of `14d`. When all of them
+ * share one state without a note, _společný stav_ stands for the names. Nothing is shortened:
+ * the banner (`14i`) leaves the names out, and this is where they are read.
+ */
+export function settingsSummary(
+  rows: readonly JobSummaryRow[],
+  today: Temporal.Instant,
+): readonly SummaryPart[] {
+  let lead = `${jobsCount(rows.length)}${SUMMARY_DOT}`
+  let text = (value: string): SummaryPart => ({ isName: false, text: value })
+  let exceptions = rows.flatMap((row) => {
+    let state = summaryState(row, today)
+    return state === null ? [] : [{ name: row.job.name, ...state }]
+  })
+  let [first] = exceptions
+  if (first === undefined) {
+    /* `tied` ties a one-letter word only after a space of the template, never after a value. */
+    if (rows.length === 1) return [text(tied`${jobsCount(1)}${NBSP}· v pořádku.`)]
+    return [text(tied`${lead}${rows.length === 2 ? 'obě' : 'všechny'} v pořádku.`)]
+  }
+  let isShared =
+    rows.length >= 2 &&
+    exceptions.length === rows.length &&
+    exceptions.every((each) => !each.hasNote && each.text === first.text)
+  if (isShared) return [text(`${lead}společný stav: ${first.text}.`)]
+
+  let groups = new Map<string, string[]>()
+  for (let each of exceptions) groups.set(each.text, [...(groups.get(each.text) ?? []), each.name])
+  let parts: SummaryPart[] = [text(lead)]
+  for (let [state, names] of groups) {
+    if (parts.length > 1) parts.push(text(SUMMARY_DOT))
+    names.forEach((name, at) => {
+      if (at > 0) parts.push(text(', '))
+      parts.push({ isName: true, text: name })
+    })
+    parts.push(text(`: ${state}`))
+  }
+  let isAnyFine = exceptions.length < rows.length
+  parts.push(text(isAnyFine ? tied`${NBSP}· ostatní v pořádku.` : '.'))
+  return parts
 }
 
 /**

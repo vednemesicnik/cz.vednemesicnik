@@ -37,22 +37,22 @@ export const ERROR_TEXT_LIMIT = 2000
 export const COPY_PROPERTY = 'publikaceHandoff'
 
 /** The tag of an article's folder inside the print folder. */
-export function articleFolderTag(articleId: number): string {
+export function articleFolderTag(articleId: string): string {
   return `article_${articleId}`
 }
 
 /** The tag of an artwork group's folder inside the print folder (cz.vednemesicnik.publikace#133). */
-export function groupFolderTag(groupId: number): string {
+export function groupFolderTag(groupId: string): string {
   return `group_${groupId}`
 }
 
 /** The tag of the copy of one approved final version of an article. */
-export function textCopyTag(articleId: number, finalVersionId: number): string {
+export function textCopyTag(articleId: string, finalVersionId: string): string {
   return `text_${articleId}_${finalVersionId}`
 }
 
 /** The tag of the copy of one artwork. */
-export function artworkCopyTag(artworkId: number): string {
+export function artworkCopyTag(artworkId: string): string {
   return `artwork_${artworkId}`
 }
 

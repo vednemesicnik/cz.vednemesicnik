@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import type { Digest, DigestCandidate } from '../domain/proofreading-digest.ts'
+import { testRowId } from '../test-row-id.ts'
 import { digestEmail, digestIdempotencyKey } from './proofreading-digest-email.server.ts'
 
 const TODAY = Temporal.Instant.from('2026-11-21T06:12:00Z')
@@ -13,7 +14,7 @@ function article(id: number, extra: Partial<DigestCandidate> = {}): DigestCandid
     authors: ['Ondřej Beneš', 'Tomáš Krejčí'],
     cancelledAt: null,
     handedOverAt: HANDED,
-    id,
+    id: testRowId(id),
     issueName: 'VDM_2026_5',
     name: `Zahrada <na> střeše ${id}`,
     ...extra,
@@ -61,7 +62,7 @@ describe('the proofreaders’ morning digest (12n)', () => {
     assert.equal(text.match(/Otevřít v Publikaci/g)?.length, 1)
     assert.ok(
       message.htmlBody.includes(
-        'href="https://publikace.vednemesicnik.test/proofreading?article=1"',
+        `href="https://publikace.vednemesicnik.test/proofreading?article=${testRowId(1)}"`,
       ),
     )
     assert.ok(

@@ -11,6 +11,7 @@ import { createPublicMailLog } from '../data/public-mail.server.ts'
 import { UPLOADS_PER_HOUR_PER_LINK } from '../domain/artwork.ts'
 import type { MailMessage, MailResult } from '../mail/mailer.server.ts'
 import { createTestApp, seedArticle, seedIssue, type TestApp } from '../test-app.server.ts'
+import { testRowId } from '../test-row-id.ts'
 import type { DriveAccessToken } from './access-token.server.ts'
 import { createArtworkFiles } from './artwork-files.server.ts'
 import {
@@ -105,13 +106,13 @@ async function withHarness(
 
 const FORM = '11111111-1111-4111-8111-111111111111'
 
-async function uploaded(harness: Harness, formKey = FORM, name?: string): Promise<number> {
+async function uploaded(harness: Harness, formKey = FORM, name?: string): Promise<string> {
   let outcome = await harness.upload(formKey, JPEG, name)
   if (outcome.kind !== 'uploaded') throw new Error(`Not uploaded: ${outcome.kind}`)
   return outcome.artwork.id
 }
 
-function batch(linkKey: string, ids: number[], overrides: Partial<NewBatch> = {}): NewBatch {
+function batch(linkKey: string, ids: string[], overrides: Partial<NewBatch> = {}): NewBatch {
   return {
     artworks: ids.map((id, index) => ({
       author: index === 0 ? '' : 'Ondřej Beneš',
@@ -177,7 +178,7 @@ describe('uploading an artwork', () => {
   it('refuses the sixty-first upload of an hour before reading its body', () =>
     withHarness(async ({ clock, linkKey, setup }) => {
       let link = await setup.links.findByKey(linkKey)
-      let article = link?.articleId ?? 0
+      let article = link?.articleId ?? testRowId(0)
       for (let index = 0; index < UPLOADS_PER_HOUR_PER_LINK; index += 1) {
         await setup.artworks.addUpload({
           articleId: article,
@@ -185,7 +186,7 @@ describe('uploading an artwork', () => {
           driveFileId: `seeded-${index}`,
           formKey: 'other',
           isReadable: true,
-          linkId: link?.id ?? 0,
+          linkId: link?.id ?? testRowId(0),
           mimeType: 'image/jpeg',
           originalName: 'x.jpg',
           size: 1,
@@ -232,7 +233,11 @@ describe('uploading an artwork', () => {
       })
       assert.equal(tooLarge.kind, 'too-large')
 
-      let articleLink = await harness.setup.links.articleLinkOf(1)
+      let artworkLink = await harness.setup.links.findByKey(harness.linkKey)
+      let articleLink = await harness.setup.links.articleLinkOf(
+        artworkLink?.issueId ?? testRowId(0),
+      )
+      assert.ok(articleLink !== null)
       let wrongKind = await uploadArtwork(harness.setup, {
         declaredType: 'image/jpeg',
         fileName: 'a.jpg',
@@ -253,7 +258,7 @@ describe('uploading an artwork', () => {
       let [, moved] = live(harness.drive)
       harness.drive.move(moved?.id ?? '', 'somewhere-else')
 
-      let remove = (artworkId: number) =>
+      let remove = (artworkId: string) =>
         removeArtwork(harness.setup, { artworkId, formKey: FORM, linkKey: harness.linkKey })
       assert.equal(await remove(first), 'removed')
       assert.equal(await remove(second), 'removed')
@@ -454,13 +459,16 @@ describe('the editors’ actions on a batch', () => {
         await submitArtworks(harness.setup, batch(harness.linkKey, ids))
         let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
         harness.mailer.isFailing = false
-        let outcome = await resendBatch(harness.setup, stored?.id ?? 0)
+        let outcome = await resendBatch(harness.setup, stored?.id ?? testRowId(0))
         assert.equal(outcome.kind, 'sent')
         assert.equal(
           harness.mail[1]?.attachments?.[0]?.data,
           harness.mail[0]?.attachments?.[0]?.data,
         )
-        assert.equal((await resendBatch(harness.setup, stored?.id ?? 0)).kind, 'already-sent')
+        assert.equal(
+          (await resendBatch(harness.setup, stored?.id ?? testRowId(0))).kind,
+          'already-sent',
+        )
       },
       { isMailFailing: true },
     ))
@@ -472,7 +480,10 @@ describe('the editors’ actions on a batch', () => {
         await submitArtworks(harness.setup, batch(harness.linkKey, ids))
         let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
         harness.drive.trash(stored?.artworks[0]?.licenceFileId ?? '')
-        assert.equal((await resendBatch(harness.setup, stored?.id ?? 0)).kind, 'pdf-gone')
+        assert.equal(
+          (await resendBatch(harness.setup, stored?.id ?? testRowId(0))).kind,
+          'pdf-gone',
+        )
       },
       { isMailFailing: true },
     ))
@@ -483,11 +494,11 @@ describe('the editors’ actions on a batch', () => {
         let ids = [await uploaded(harness)]
         await submitArtworks(harness.setup, batch(harness.linkKey, ids))
         let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
-        let outcome = await discardBatch(harness.setup, stored?.id ?? 0, false)
+        let outcome = await discardBatch(harness.setup, stored?.id ?? testRowId(0), false)
         assert.equal(outcome.kind, 'discarded')
         assert.equal(live(harness.drive).length, 0)
         assert.notEqual(
-          (await harness.setup.artworks.findBatch(stored?.id ?? 0))?.discardedAt,
+          (await harness.setup.artworks.findBatch(stored?.id ?? testRowId(0)))?.discardedAt,
           null,
         )
         assert.equal(
@@ -503,7 +514,10 @@ describe('the editors’ actions on a batch', () => {
       let ids = [await uploaded(harness)]
       await submitArtworks(harness.setup, batch(harness.linkKey, ids))
       let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
-      assert.equal((await discardBatch(harness.setup, stored?.id ?? 0, false)).kind, 'already-sent')
+      assert.equal(
+        (await discardBatch(harness.setup, stored?.id ?? testRowId(0), false)).kind,
+        'already-sent',
+      )
       assert.ok(live(harness.drive).length > 0)
     }))
 
@@ -592,12 +606,12 @@ describe('the cleanup at startup', () => {
       let id = await uploaded(harness)
       let link = await harness.setup.links.findByKey(harness.linkKey)
       let { batch: started } = await harness.setup.artworks.startBatch({
-        articleId: link?.articleId ?? 0,
+        articleId: link?.articleId ?? testRowId(0),
         artworks: [{ author: '', id, source: '' }],
         at: harness.clock.at,
         formKey: FORM,
-        issueId: link?.issueId ?? 0,
-        linkId: link?.id ?? 0,
+        issueId: link?.issueId ?? testRowId(0),
+        linkId: link?.id ?? testRowId(0),
         provider: ONDREJ,
       })
       let files = createArtworkFiles({ accessToken: 'x', fetch: harness.drive.fetch })
@@ -625,7 +639,7 @@ describe('the cleanup at startup', () => {
 describe('a missing folder of the article (12j)', () => {
   async function missingOf(harness: Harness) {
     let link = await harness.setup.links.findByKey(harness.linkKey)
-    let article = await harness.setup.articles.findById(link?.articleId ?? 0)
+    let article = await harness.setup.articles.findById(link?.articleId ?? testRowId(0))
     return article?.missing
   }
 
@@ -686,13 +700,16 @@ describe('a missing folder of the article (12j)', () => {
         let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
 
         harness.drive.trash(harness.licencesFolderId)
-        assert.equal((await resendBatch(harness.setup, stored?.id ?? 0)).kind, 'folder-gone')
+        assert.equal(
+          (await resendBatch(harness.setup, stored?.id ?? testRowId(0))).kind,
+          'folder-gone',
+        )
         assert.notEqual((await missingOf(harness))?.licences, null)
         harness.drive.restore(harness.licencesFolderId)
 
         harness.drive.trash(harness.artworksFolderId)
         harness.mailer.isFailing = false
-        assert.equal((await resendBatch(harness.setup, stored?.id ?? 0)).kind, 'sent')
+        assert.equal((await resendBatch(harness.setup, stored?.id ?? testRowId(0))).kind, 'sent')
       },
       { isMailFailing: true },
     ))
@@ -705,14 +722,17 @@ describe('a missing folder of the article (12j)', () => {
         let stored = await harness.setup.artworks.findBatchByFormKey(FORM)
         harness.drive.trash(harness.artworksFolderId)
 
-        let outcome = await discardBatch(harness.setup, stored?.id ?? 0, false)
+        let outcome = await discardBatch(harness.setup, stored?.id ?? testRowId(0), false)
         assert.deepEqual(outcome, { kind: 'folder-gone', missing: ['artworks'] })
         let artwork = stored?.artworks[0]
         let kept = harness.drive
           .files()
           .filter((file) => file.id === artwork?.driveFileId || file.id === artwork?.licenceFileId)
         assert.ok(kept.length === 2 && kept.every((file) => !file.isTrashed))
-        assert.equal((await harness.setup.artworks.findBatch(stored?.id ?? 0))?.discardedAt, null)
+        assert.equal(
+          (await harness.setup.artworks.findBatch(stored?.id ?? testRowId(0)))?.discardedAt,
+          null,
+        )
       },
       { isMailFailing: true },
     ))

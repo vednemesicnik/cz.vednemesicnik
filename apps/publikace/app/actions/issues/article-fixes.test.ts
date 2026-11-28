@@ -54,7 +54,7 @@ function calloutOf(html: string): string | null {
   return found === null ? null : textOf(found[1] ?? '').trim()
 }
 
-type Context = { app: TestApp; articleId: number; editor: TestBrowser; issueId: number }
+type Context = { app: TestApp; articleId: string; editor: TestBrowser; issueId: string }
 
 /**
  * An issue made through the app and one article through its link, so the folder, the Doc and
@@ -160,7 +160,7 @@ function rename(context: Context, name: string, shownName = NAME): Promise<Respo
 function saveAuthors(
   context: Context,
   cards: readonly { email: string; name: string }[],
-  extra: { clauses?: readonly number[]; marked?: string } = {},
+  extra: { clauses?: readonly string[]; marked?: string } = {},
 ): Promise<Response> {
   let path = authorsPath(context)
   let fields = new URLSearchParams({ intent: 'save', marked: extra.marked ?? '' })
@@ -550,13 +550,13 @@ describe('correcting the authors after the final version (12y)', () => {
           sql`UPDATE article_clauses SET state = 'sent', sent_at = ${stamp(MARKED_AT)},
                 reply_message_id = 'msg-1', reply_received_at = ${stamp(MARKED_AT)},
                 reply_text = 'Opravte mi jméno.'
-              WHERE id = ${Number(second?.['id'])}`,
+              WHERE id = ${String(second?.['id'])}`,
         )
         let mailBefore = context.app.mail.length
         let answered = await saveAuthors(
           context,
           [{ email: 'ondrej.benes@external.test', name: 'Ondřej Beneš ml.' }],
-          { clauses: [Number(second?.['id'])], marked: stamp(MARKED_AT) },
+          { clauses: [String(second?.['id'])], marked: stamp(MARKED_AT) },
         )
         assert.equal(answered.status, 303)
         assert.equal(context.app.mail.length, mailBefore)
@@ -584,7 +584,7 @@ describe('correcting the authors after the final version (12y)', () => {
         await agree(context, 1)
         let [, second] = await clausesOf(context)
         let answered = await saveAuthors(context, [{ email: TEREZA.email, name: ONDREJ.name }], {
-          clauses: [Number(second?.['id'])],
+          clauses: [String(second?.['id'])],
           marked: stamp(MARKED_AT),
         })
         assert.equal(answered.status, 400)
@@ -600,7 +600,7 @@ describe('correcting the authors after the final version (12y)', () => {
         let [, second] = await clausesOf(context)
         await agree(context, 2)
         let answered = await saveAuthors(context, [LUCIE], {
-          clauses: [Number(second?.['id'])],
+          clauses: [String(second?.['id'])],
           marked: stamp(MARKED_AT),
         })
         assert.equal(answered.status, 303)
@@ -608,7 +608,7 @@ describe('correcting the authors after the final version (12y)', () => {
         assert.ok(statusText(page).startsWith('Ondřej Beneš už souhlasí. Vaše změny se neuložily.'))
 
         let cancelled = await saveAuthors(context, [LUCIE], {
-          clauses: [Number(second?.['id'])],
+          clauses: [String(second?.['id'])],
           marked: stamp(MARKED_AT.subtract({ hours: 2 })),
         })
         assert.equal(cancelled.status, 303)

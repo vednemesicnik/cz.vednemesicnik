@@ -10,6 +10,8 @@ import { MIGRATIONS_DIRECTORY, openDatabase } from './database.server.ts'
  * marks the issue's Evidence, as every other change of an article the record shows does.
  */
 
+/* Each test stops here, so the tables are the ones this migration left. */
+const MIGRATION = '20261207120000_article_removal'
 const AT = '2026-11-20T09:00:00.000Z'
 
 describe('the migration for removing an article (cz.vednemesicnik.publikace#153)', () => {
@@ -17,7 +19,7 @@ describe('the migration for removing an article (cz.vednemesicnik.publikace#153)
     let opened = openDatabase(':memory:')
     try {
       let db = opened.database
-      await db.migrate(await loadMigrations(MIGRATIONS_DIRECTORY))
+      await db.migrate(await loadMigrations(MIGRATIONS_DIRECTORY), { to: MIGRATION })
       await db.exec(sql`INSERT INTO issues (id, name, name_key, started_at, started_by_email,
           started_by_name)
         VALUES (1, 'VDM_2026_5', 'vdm_2026_5', ${AT}, 'marie@vednemesicnik.test', 'Marie Horáková')`)

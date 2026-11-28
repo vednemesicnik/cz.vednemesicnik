@@ -46,8 +46,10 @@ export type JobsPageProps = {
 }
 
 /* `14d`'s grid, 1.6 : 0.9 : 1.5, so the digest's longer line wraps only after its full stop
-   (`tlb36tk0`); the tag's line wraps in its own column. */
-const COLUMNS = 'minmax(260px, 1.6fr) minmax(130px, 0.9fr) minmax(170px, 1.5fr) 110px'
+   (`tlb36tk0`); the tag's line wraps in its own column. Their minimums, three gaps of 12 px and
+   the row's 2 × 8 px come to 712 px, within the 719 px from which the table no longer scrolls
+   (`11a`). */
+const COLUMNS = 'minmax(250px, 1.6fr) minmax(130px, 0.9fr) minmax(170px, 1.5fr) 110px'
 
 const pageStyle = css({ display: 'flex', flexDirection: 'column', gap: '20px' })
 

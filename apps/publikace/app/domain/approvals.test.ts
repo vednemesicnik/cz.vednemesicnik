@@ -1,6 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { testRowId } from '../test-row-id.ts'
 import {
   type ClauseDetail,
   clauseKey,
@@ -29,7 +30,7 @@ const SENT: ClauseStatus = {
 
 describe('an author’s clause', () => {
   it('has a key with no address, unique for the article, the author and the marking', () => {
-    assert.equal(clauseKey(12, 2, AT), 'clause_12_2_20261121081200000')
+    assert.equal(clauseKey(testRowId(12), 2, AT), `clause_${testRowId(12)}_2_20261121081200000`)
   })
 
   it('reads its state the way the Evidence names it, by who is on the move', () => {
@@ -78,7 +79,7 @@ const DETAIL: ClauseDetail = {
   authorEmail: 'ondrej.benes@external.test',
   authorName: 'Ondřej Beneš',
   error: null,
-  id: 7,
+  id: testRowId(7),
   position: 1,
   replyReceivedAt: null,
   replyText: null,

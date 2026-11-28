@@ -69,7 +69,7 @@ function stateOf(queue: RecordQueue): PassState {
 async function writeEvidence(
   queue: RecordQueue,
   sheets: RecordSheets,
-  issueId: number,
+  issueId: string,
 ): Promise<SheetsResult> {
   let issue = await queue.issues.findById(issueId)
   let folderId = issue?.folderIds.issue ?? null

@@ -10,6 +10,7 @@
 
 import type { DailyWindow, JobRunRecord } from './job-run.ts'
 import { tied } from './public/typography.ts'
+import { compareIds } from './row-id.ts'
 
 export const PROOFREADING_DIGEST_JOB = 'proofreading-digest'
 export const PROOFREADING_DIGEST_JOB_NAME = 'Přehled pro korektory'
@@ -29,7 +30,7 @@ export type DigestCandidate = {
   authors: readonly string[]
   cancelledAt: Temporal.Instant | null
   handedOverAt: Temporal.Instant
-  id: number
+  id: string
   issueName: string
   name: string
 }
@@ -54,7 +55,7 @@ function isNewer(a: Temporal.Instant, than: Temporal.Instant | null): boolean {
  */
 export function digestOf(candidates: readonly DigestCandidate[]): Digest | null {
   let byTime = [...candidates].sort(
-    (a, b) => Temporal.Instant.compare(a.handedOverAt, b.handedOverAt) || a.id - b.id,
+    (a, b) => Temporal.Instant.compare(a.handedOverAt, b.handedOverAt) || compareIds(a.id, b.id),
   )
   let handedOver = byTime.filter(
     (each) => each.cancelledAt === null && isNewer(each.handedOverAt, each.announcedAt),

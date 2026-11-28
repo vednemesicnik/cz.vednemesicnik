@@ -107,8 +107,8 @@ You are the **planning stage** of the issue pipeline:
      ships ungated ([docs/\_branching-model.md](../../../docs/_branching-model.md)
      § Unreleased work behind a gate). When this issue is the one that removes a gate, say so.
      A migration only expands; one that drops or narrows what production still reads is split
-     out as a contract issue of its own, filed into the same or the next milestone, to ship in a
-     later release than the turn-on (§ Migrations: expand, then contract).
+     out as a contract issue of its own, to ship in a later release than the turn-on
+     (§ Migrations: expand, then contract).
    - **Implementation steps** — concrete files, referencing existing utilities to reuse.
      Read `docs/work-log/` for the area first. When the plan settles something later work
      should know (see `/log-work`), its last step writes the entry in the same PR; a plan that

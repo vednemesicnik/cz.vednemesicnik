@@ -6,6 +6,7 @@ import type { AccessContext } from '../../auth/access.server.ts'
 import type { SignedInUntilCookie } from '../../auth/session.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
 import type { ProofreadersStore } from '../../data/proofreaders.server.ts'
+import { isRowId } from '../../data/row-id.server.ts'
 import {
   type AccessKind,
   addedMessage,
@@ -43,7 +44,6 @@ import {
  */
 type PageContext = {
   get(key: unknown): unknown
-  method: string
   render: AppContext['render']
 }
 
@@ -54,6 +54,11 @@ function accessOf(context: PageContext): AccessContext {
 type PageState = {
   addForm?: AddForm
   isRoleLost?: boolean
+  /**
+   * Nastavení itself, with nothing over it: only this page asks the membership service about the
+   * proofreaders' address (`14f`), never a dialog's page or a form drawn again after a `POST`.
+   */
+  isShown?: boolean
   proofreadersForm?: ProofreadersForm
   question?: RemovalQuestion
 }
@@ -83,15 +88,13 @@ async function renderSettings(
   ])
   let today = now()
   let hasRegistry = driveFiles.registrySpreadsheetId !== ''
-  /* Asked on every visit, as when a group is added to Přístup (`03`, row 27): the warning stands
-     while the service does not know the address and goes by itself once it does. A service that
-     does not answer shows nothing, since it says nothing about the address. Not for a form drawn
-     again, which should not wait on the service for a warning beside the point. */
-  let isProofreadersUnknownGroup =
-    context.method === 'GET' &&
-    proofreadersAddress !== null &&
-    (await access.checkMembership(editor.email, proofreadersAddress.email)).status ===
-      'unknown-group'
+  /* No call to the membership service before the page: `checkProofreaders` asks once it stands,
+     on every visit, so the warning stands while the service does not know the address and goes
+     by itself once it does. */
+  let proofreadersCheck =
+    state.isShown === true && proofreadersAddress !== null
+      ? { href: routes.settings.checkProofreaders.href(), load: crypto.randomUUID() }
+      : null
 
   return context.render(
     <SettingsPage
@@ -110,12 +113,17 @@ async function renderSettings(
       }}
       editor={editor}
       groups={groups}
-      isProofreadersUnknownGroup={isProofreadersUnknownGroup}
       isRoleLost={state.isRoleLost}
-      jobsSummary={jobs.map(({ job, snapshot }) =>
-        settingsSummary(job, stateOfJob(job, snapshot.latest, today, snapshot), today),
+      jobsSummary={settingsSummary(
+        jobs.map(({ job, snapshot }) => ({
+          job,
+          latest: snapshot.latest,
+          state: stateOfJob(job, snapshot.latest, today, snapshot),
+        })),
+        today,
       )}
       proofreaders={proofreadersAddress?.email ?? null}
+      proofreadersCheck={proofreadersCheck}
       proofreadersForm={state.proofreadersForm}
       question={state.question}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
@@ -143,9 +151,8 @@ function backToSettings(): Response {
   return redirect(routes.settings.index.href(), 303)
 }
 
-function idParam(value: string | undefined): number | null {
-  let id = Number(value)
-  return Number.isSafeInteger(id) && id > 0 ? id : null
+function idParam(value: string | undefined): string | null {
+  return isRowId(value) ? value : null
 }
 
 function formText(context: PageContext, name: string): string {
@@ -164,7 +171,20 @@ export default function createSettingsController(
     middleware: [requireEditor(signedInUntil)],
     actions: {
       index(context) {
-        return renderSettings(context, stores, context.auth.identity, {})
+        return renderSettings(context, stores, context.auth.identity, { isShown: true })
+      },
+
+      /* `14f`: what Nastavení asks once it stands, as when a group is added to Přístup (`03`,
+         row 27). The answer only shows or hides the warning the page drew hidden, so nothing
+         reloads and no toast on the page is lost. A service that does not answer says nothing
+         about the address, so it shows nothing. No toast and no redirect. */
+      async checkProofreaders(context) {
+        let address = await stores.proofreaders.find()
+        if (address === null) return Response.json({ isUnknownGroup: false })
+        let answer = await context
+          .get(Access)
+          .checkMembership(context.auth.identity.email, address.email)
+        return Response.json({ isUnknownGroup: answer.status === 'unknown-group' })
       },
 
       async addAccess(context) {

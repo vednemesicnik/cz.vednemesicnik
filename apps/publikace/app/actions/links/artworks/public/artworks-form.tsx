@@ -57,7 +57,7 @@ import {
 import { REQUIRED_LEGEND, summaryTitle } from '../../../../domain/public/article-form.ts'
 
 /** An uploaded artwork the server already holds for this page, with what its card said. */
-export type ArtworkCard = { author: string; id: number; name: string; size: number; source: string }
+export type ArtworkCard = { author: string; id: string; name: string; size: number; source: string }
 
 export type ArtworksFormProps = {
   /** The address the form is sent to, the page's own. */
@@ -100,7 +100,7 @@ type Card = {
   controller: AbortController | null
   file: File | null
   /** The upload's row on the server, once it has one. */
-  id: number | null
+  id: string | null
   key: number
   /**
    * A file the server refused because a folder is missing: nothing of it is on Drive, so the card
@@ -333,7 +333,7 @@ export const ArtworksForm = clientEntry(
       return errors.find((error) => error.key === key)?.message
     }
 
-    function removeUpload(id: number): void {
+    function removeUpload(id: string): void {
       let body = new URLSearchParams({ formKey: handle.props.formKey })
       void fetch(`${handle.props.uploadAction}/${id}/remove`, { body, method: 'POST' }).catch(
         () => undefined,
@@ -512,7 +512,7 @@ export const ArtworksForm = clientEntry(
       }
       if (form === null) return
       let data = new FormData(form)
-      let ids = data.getAll(ARTWORK_ID_FIELD).map(Number)
+      let ids = data.getAll(ARTWORK_ID_FIELD).map(String)
       let authors = data.getAll(ARTWORK_AUTHOR_FIELD).map(String)
       let sources = data.getAll(ARTWORK_SOURCE_FIELD).map(String)
       let check = checkArtworks({
@@ -778,7 +778,7 @@ export const ArtworksForm = clientEntry(
            longer has (one the 24-hour sweep took) goes, the ones still uploading stay. */
         shownCards = handle.props.cards
         let held = new Set(handle.props.cards.map((card) => card.id))
-        cards = cards.filter((card) => card.state !== 'uploaded' || held.has(card.id ?? -1))
+        cards = cards.filter((card) => card.state !== 'uploaded' || held.has(card.id ?? ''))
       }
       if (handle.props.errors !== shownErrors) {
         shownErrors = handle.props.errors

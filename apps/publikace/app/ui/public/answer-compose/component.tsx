@@ -18,7 +18,7 @@ export type AnswerComposeProps = {
   /** The card's anchor: the form opens from `reply-{anchor}-answer` and hides `reply-{anchor}-actions`. */
   anchor: string
   /** The stored answer a retry sends again. */
-  answerId: number | null
+  answerId: string | null
   callout: { text: string; title: string; tone: 'error' | 'success' | 'warning' } | null
   /** _Zrušit_ or _Zavřít_ as a link to the queue without the form, for a page without script. */
   closeHref: string

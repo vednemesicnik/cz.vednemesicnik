@@ -10,6 +10,8 @@ import { MIGRATIONS_DIRECTORY, openDatabase } from './database.server.ts'
  * changing one does, and a batch keeps the name its request was sent under.
  */
 
+/* Each test stops here, so the tables are the ones this migration left. */
+const MIGRATION = '20261206120000_article_fixes'
 const AT = '2026-11-20T09:00:00.000Z'
 
 describe('the migration for fixing an article (cz.vednemesicnik.publikace#152)', () => {
@@ -17,7 +19,7 @@ describe('the migration for fixing an article (cz.vednemesicnik.publikace#152)',
     let opened = openDatabase(':memory:')
     try {
       let db = opened.database
-      await db.migrate(await loadMigrations(MIGRATIONS_DIRECTORY))
+      await db.migrate(await loadMigrations(MIGRATIONS_DIRECTORY), { to: MIGRATION })
       await db.exec(sql`INSERT INTO issues (id, name, name_key, started_at, started_by_email,
           started_by_name)
         VALUES (1, 'VDM_2026_5', 'vdm_2026_5', ${AT}, 'marie@vednemesicnik.test', 'Marie Horáková')`)

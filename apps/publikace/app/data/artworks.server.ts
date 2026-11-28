@@ -18,6 +18,7 @@ import {
 } from '../domain/reply-check.ts'
 import { parseStamp, stamp } from '../domain/time.ts'
 import { answeredAtOf, applyConsentPatch } from './consent-patch.server.ts'
+import { newRowId } from './row-id.server.ts'
 
 /**
  * Artworks in the app's database, the source of truth for them, and the batches that send them.
@@ -30,18 +31,18 @@ import { answeredAtOf, applyConsentPatch } from './consent-patch.server.ts'
 
 export type ArtworkRow = {
   /** The article the upload belongs to, or `null` for a group's (`groupId`). */
-  articleId: number | null
+  articleId: string | null
   author: string | null
-  batchId: number | null
+  batchId: string | null
   driveFileId: string
   formKey: string
-  groupId: number | null
-  id: number
+  groupId: string | null
+  id: string
   isReadable: boolean
   licenceDocId: string | null
   licenceFileId: string | null
   licenceHash: string | null
-  linkId: number
+  linkId: string
   mimeType: string
   originalName: string
   position: number | null
@@ -55,7 +56,7 @@ export type ArtworkRow = {
 
 export type BatchRow = BatchStatus & {
   /** The article the batch was sent to, or `null` for a group's (`groupId`). */
-  articleId: number | null
+  articleId: string | null
   archiveError: string | null
   /** The batch's artworks in their order. */
   artworks: ArtworkRow[]
@@ -68,10 +69,10 @@ export type BatchRow = BatchStatus & {
   consentVerifiedByName: string | null
   createdAt: Temporal.Instant | null
   formKey: string
-  groupId: number | null
-  id: number
-  issueId: number
-  linkId: number
+  groupId: string | null
+  id: string
+  issueId: string
+  linkId: string
   mailFailedAt: Temporal.Instant | null
   providerEmail: string
   providerName: string
@@ -88,7 +89,7 @@ export type BatchRow = BatchStatus & {
 export type ListedHolder = HolderName & {
   folderId: string | null
   /** The holder's ID under its own kind: an article's or a group's. */
-  id: number
+  id: string
   licencesFolderId: string | null
 }
 
@@ -116,14 +117,14 @@ export type QueuedBatch = ListedBatch & { issueName: string }
 export type ReportAnswer = 'accepted' | 'superseded' | 'unknown'
 
 /** What an upload or a batch goes to: one article or one group, never both. */
-export type HolderRef = { articleId: number; groupId?: null } | { articleId: null; groupId: number }
+export type HolderRef = { articleId: string; groupId?: null } | { articleId: null; groupId: string }
 
 export type NewUpload = HolderRef & {
   at: Temporal.Instant
   driveFileId: string
   formKey: string
   isReadable: boolean
-  linkId: number
+  linkId: string
   mimeType: string
   originalName: string
   size: number
@@ -144,11 +145,11 @@ export class HolderRemovedError extends Error {
 }
 
 export type NewBatch = HolderRef & {
-  artworks: readonly { author: string; id: number; source: string }[]
+  artworks: readonly { author: string; id: string; source: string }[]
   at: Temporal.Instant
   formKey: string
-  issueId: number
-  linkId: number
+  issueId: string
+  linkId: string
   provider: { email: string; name: string }
 }
 
@@ -160,25 +161,25 @@ export type ArtworkStore = {
    * Committed batches per issue: how many artworks, how many of them are _Schváleno_ (`01b`) and
    * how many wait on the editors.
    */
-  countsByIssue(): Promise<Map<number, ApprovedCount & { waiting: number }>>
+  countsByIssue(): Promise<Map<string, ApprovedCount & { waiting: number }>>
   /**
    * The artworks of the issue's committed batches per article, by their state (`12a`). A group's
    * batches are not here: the group's row counts them itself.
    */
-  countsByArticle(issueId: number): Promise<Map<number, ArtworkCounts>>
-  commitBatch(id: number, at: Temporal.Instant): Promise<BatchRow>
+  countsByArticle(issueId: string): Promise<Map<string, ArtworkCounts>>
+  commitBatch(id: string, at: Temporal.Instant): Promise<BatchRow>
   /**
    * Removes a failed attempt whose licences are in the bin. Its artworks go back to their page,
    * unsent and without the fields the attempt gave them.
    */
-  discardAttempt(id: number): Promise<void>
+  discardAttempt(id: string): Promise<void>
   /**
    * The editors discarded a committed batch: it stays as a record, its files are in the bin. Only
    * while it is neither approved nor has a consent recorded by _Je to souhlas_; otherwise it
    * answers which of them came meanwhile and writes nothing (`12o`).
    */
   discardBatch(
-    id: number,
+    id: string,
     at: Temporal.Instant,
   ): Promise<'approved' | 'discarded' | 'gone' | 'verified'>
   /**
@@ -189,23 +190,23 @@ export type ArtworkStore = {
   discardedOf(holder: HolderRef): Promise<{ count: number; isReplyWaiting: boolean }>
   /** Uploads never sent and never removed, uploaded before a moment (`21d`, 24 hours). */
   expiredUploads(before: Temporal.Instant): Promise<ArtworkRow[]>
-  findBatch(id: number): Promise<BatchRow | null>
+  findBatch(id: string): Promise<BatchRow | null>
   findBatchByFormKey(formKey: string): Promise<BatchRow | null>
-  findUpload(id: number): Promise<ArtworkRow | null>
+  findUpload(id: string): Promise<ArtworkRow | null>
   /** The issue's committed batches the editors have not discarded, newest first. */
-  listByIssue(issueId: number): Promise<ListedBatch[]>
-  markForCleanup(id: number, at: Temporal.Instant): Promise<void>
+  listByIssue(issueId: string): Promise<ListedBatch[]>
+  markForCleanup(id: string, at: Temporal.Instant): Promise<void>
   /**
    * The Mailer's answer to a batch's request. `sent` is final; `refused` is the Mailer refusing it
    * for good, `failed` a request it never confirmed.
    */
-  markMail(id: number, outcome: 'failed' | 'refused' | 'sent', at: Temporal.Instant): Promise<void>
-  markRemoved(id: number, at: Temporal.Instant): Promise<void>
+  markMail(id: string, outcome: 'failed' | 'refused' | 'sent', at: Temporal.Instant): Promise<void>
+  markRemoved(id: string, at: Temporal.Instant): Promise<void>
   /**
    * The name of the article or group the request is about to go under, before every sending: the
    * reply check looks for it in the subject after the holder is renamed (cz.vednemesicnik.publikace#152).
    */
-  recordRequestName(id: number, name: string): Promise<void>
+  recordRequestName(id: string, name: string): Promise<void>
   /** Batch attempts whose cleanup failed, safe to take while other requests run. */
   pendingCleanups(): Promise<BatchRow[]>
   /**
@@ -213,11 +214,11 @@ export type ArtworkStore = {
    * making their licences included, so sends in parallel cannot pass the limit of five. A failed
    * attempt's row is gone and no longer counts.
    */
-  recipientsSince(linkId: number, since: Temporal.Instant): Promise<string[]>
+  recipientsSince(linkId: string, since: Temporal.Instant): Promise<string[]>
   /** Batches through a link since a moment, under way or committed: what the limit counts. */
-  recentBatches(linkId: number, since: Temporal.Instant): Promise<number>
-  setLicenceDoc(artworkId: number, docId: string): Promise<void>
-  setLicenceFile(artworkId: number, fileId: string, hash: string): Promise<void>
+  recentBatches(linkId: string, since: Temporal.Instant): Promise<number>
+  setLicenceDoc(artworkId: string, docId: string): Promise<void>
+  setLicenceFile(artworkId: string, fileId: string, hash: string): Promise<void>
   /**
    * The batch for this form key, created unless it exists; `isNew` says which. A new one takes the
    * artworks named, with their order, author and source, in the same transaction.
@@ -230,7 +231,7 @@ export type ArtworkStore = {
   /** The page's uploads not yet in a batch and not removed, in upload order. */
   unsentByForm(formKey: string): Promise<ArtworkRow[]>
   /** Every upload stored through a link since a moment: what the cap of sixty counts. */
-  uploadsSince(linkId: number, since: Temporal.Instant): Promise<number>
+  uploadsSince(linkId: string, since: Temporal.Instant): Promise<number>
 
   /**
    * Takes the batches a run of the reply check asks about, under the run's key: committed, not
@@ -242,7 +243,7 @@ export type ArtworkStore = {
   /** What one report does to a batch the run claimed; `unknown` for one it did not. */
   recordReport(
     runKey: string,
-    batchId: number,
+    batchId: string,
     report: BatchReport,
     at: Temporal.Instant,
   ): Promise<ReportAnswer>
@@ -251,7 +252,7 @@ export type ArtworkStore = {
    * in _Ke kontrole_ any more, its issue was closed, or a newer reply arrived meanwhile.
    */
   verifyConsent(
-    id: number,
+    id: string,
     replyMessageId: string,
     editor: { displayName: string; email: string },
     at: Temporal.Instant,
@@ -260,13 +261,13 @@ export type ArtworkStore = {
    * _Vrátit_ until the job archives (`13b`); `false` once it has or failed to, or with nothing to
    * take back. Any editor-in-chief may, as any may decide.
    */
-  undoVerification(id: number): Promise<boolean>
+  undoVerification(id: string): Promise<boolean>
   /**
    * The cards of _Ke kontrole_, the oldest reply first, and the batch `including` names where it
    * stands, decided, approved or in a closed issue: the card just decided or answered keeps its
    * place until the next load (`13b`, `13e`).
    */
-  reviewQueue(including?: number): Promise<QueuedBatch[]>
+  reviewQueue(including?: string): Promise<QueuedBatch[]>
   /** How many cards _Ke kontrole_ has, for the panel. */
   reviewCount(): Promise<number>
 }
@@ -279,8 +280,8 @@ function text(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
-function idOrNull(value: unknown): number | null {
-  return value === null || value === undefined ? null : Number(value)
+function idOrNull(value: unknown): string | null {
+  return value === null || value === undefined ? null : String(value)
 }
 
 /** The holder a listed row carries, from the `holder_*` columns its query selects. */
@@ -288,7 +289,7 @@ function holderOf(row: Row | undefined): ListedHolder {
   let kind: HolderKind = row?.['holder_kind'] === 'group' ? 'group' : 'article'
   return {
     folderId: text(row?.['holder_folder_id']),
-    id: Number(kind === 'group' ? row?.['group_id'] : row?.['article_id']),
+    id: String(kind === 'group' ? row?.['group_id'] : row?.['article_id']),
     kind,
     licencesFolderId: text(row?.['holder_licences_folder_id']),
     name: String(row?.['holder_name'] ?? ''),
@@ -301,16 +302,16 @@ function toArtwork(row: Row): ArtworkRow {
   return {
     articleId: idOrNull(row['article_id']),
     author: text(row['author']),
-    batchId: batchId === null || batchId === undefined ? null : Number(batchId),
+    batchId: batchId === null || batchId === undefined ? null : String(batchId),
     driveFileId: String(row['drive_file_id']),
     formKey: String(row['form_key']),
     groupId: idOrNull(row['group_id']),
-    id: Number(row['id']),
+    id: String(row['id']),
     isReadable: Number(row['is_readable']) === 1,
     licenceDocId: text(row['licence_doc_id']),
     licenceFileId: text(row['licence_file_id']),
     licenceHash: text(row['licence_hash']),
-    linkId: Number(row['link_id']),
+    linkId: String(row['link_id']),
     mimeType: String(row['mime_type']),
     originalName: String(row['original_name']),
     position: position === null || position === undefined ? null : Number(position),
@@ -343,10 +344,10 @@ function toBatch(row: Row, artworks: ArtworkRow[]): BatchRow {
     discardedAt: parseStamp(row['discarded_at']),
     formKey: String(row['form_key']),
     groupId: idOrNull(row['group_id']),
-    id: Number(row['id']),
+    id: String(row['id']),
     isExactConsent: Number(row['is_exact_consent']) === 1,
-    issueId: Number(row['issue_id']),
-    linkId: Number(row['link_id']),
+    issueId: String(row['issue_id']),
+    linkId: String(row['link_id']),
     mailFailedAt: parseStamp(row['mail_failed_at']),
     mailRefusedAt: parseStamp(row['mail_refused_at']),
     mailSentAt: parseStamp(row['mail_sent_at']),
@@ -393,7 +394,7 @@ function isQueued(batch: BatchRow): boolean {
  * whatever it is now, approved or in a closed issue: an answer that met either stays on its card
  * until the next load (`13e`).
  */
-function queueCandidates(including: number | null) {
+function queueCandidates(including: string | null) {
   return sql`SELECT b.*, coalesce(ar.name, g.name) AS holder_name,
       CASE WHEN b.group_id IS NULL THEN 'article' ELSE 'group' END AS holder_kind,
       i.name AS issue_name
@@ -406,22 +407,22 @@ function queueCandidates(including: number | null) {
       AND (b.id = ${including} OR (
       b.approved_at IS NULL AND i.closed_at IS NULL
       AND (b.reply_message_id IS NOT NULL OR b.archive_failed_at IS NOT NULL)))
-    ORDER BY coalesce(b.reply_received_at, b.archive_failed_at), b.id`
+    ORDER BY coalesce(b.reply_received_at, b.archive_failed_at), b.rowid`
 }
 
 async function withArtworks(db: Database, rows: readonly Row[]): Promise<BatchRow[]> {
   if (rows.length === 0) return []
-  let ids = rows.map((row) => Number(row['id']))
+  let ids = rows.map((row) => String(row['id']))
   let result = await db.exec(
     sql`SELECT * FROM artworks WHERE batch_id IN (SELECT value FROM json_each(${JSON.stringify(ids)}))
         ORDER BY batch_id, position`,
   )
-  let byBatch = new Map<number, ArtworkRow[]>()
+  let byBatch = new Map<string, ArtworkRow[]>()
   for (let artwork of result.rows ?? []) {
-    let id = Number(artwork['batch_id'])
+    let id = String(artwork['batch_id'])
     byBatch.set(id, [...(byBatch.get(id) ?? []), toArtwork(artwork)])
   }
-  return rows.map((row) => toBatch(row, byBatch.get(Number(row['id'])) ?? []))
+  return rows.map((row) => toBatch(row, byBatch.get(String(row['id'])) ?? []))
 }
 
 async function batchWhere(db: Database, row: Row | undefined): Promise<BatchRow | null> {
@@ -435,7 +436,7 @@ async function batchByFormKey(db: Database, formKey: string): Promise<BatchRow |
   return batchWhere(db, result.rows?.[0])
 }
 
-async function batchById(db: Database, id: number): Promise<BatchRow | null> {
+async function batchById(db: Database, id: string): Promise<BatchRow | null> {
   let result = await db.exec(sql`SELECT * FROM artwork_batches WHERE id = ${id}`)
   return batchWhere(db, result.rows?.[0])
 }
@@ -463,17 +464,17 @@ export function createArtworkStore(database: Database): ArtworkStore {
   return {
     async abandonedBatches() {
       let result = await database.exec(
-        sql`SELECT * FROM artwork_batches WHERE created_at IS NULL ORDER BY id`,
+        sql`SELECT * FROM artwork_batches WHERE created_at IS NULL ORDER BY rowid`,
       )
       return withArtworks(database, result.rows ?? [])
     },
 
     async addUpload(upload) {
       await database.exec(
-        sql`INSERT INTO artworks (link_id, article_id, group_id, form_key, upload_key,
+        sql`INSERT INTO artworks (id, link_id, article_id, group_id, form_key, upload_key,
               drive_file_id, original_name, stored_name, mime_type, size, is_readable, uploaded_at)
-            VALUES (${upload.linkId}, ${upload.articleId}, ${upload.groupId ?? null}, ${upload.formKey},
-              ${upload.uploadKey},
+            VALUES (${newRowId()}, ${upload.linkId}, ${upload.articleId}, ${upload.groupId ?? null},
+              ${upload.formKey}, ${upload.uploadKey},
               ${upload.driveFileId}, ${upload.originalName}, ${upload.storedName}, ${upload.mimeType},
               ${upload.size}, ${upload.isReadable ? 1 : 0}, ${stamp(upload.at)})`,
       )
@@ -505,10 +506,10 @@ export function createArtworkStore(database: Database): ArtworkStore {
             WHERE b.issue_id = ${issueId} AND b.created_at IS NOT NULL AND b.discarded_at IS NULL
             GROUP BY b.id`,
       )
-      let counts = new Map<number, ArtworkCounts>()
+      let counts = new Map<string, ArtworkCounts>()
       for (let row of result.rows ?? []) {
         if (row['article_id'] == null) continue
-        let articleId = Number(row['article_id'])
+        let articleId = String(row['article_id'])
         let state: ArtworkState = batchState(toBatch(row, []))
         let current = counts.get(articleId) ?? NO_ARTWORKS
         counts.set(articleId, { ...current, [state]: current[state] + Number(row['count']) })
@@ -523,9 +524,9 @@ export function createArtworkStore(database: Database): ArtworkStore {
             WHERE b.created_at IS NOT NULL AND b.discarded_at IS NULL
             GROUP BY b.id`,
       )
-      let counts = new Map<number, ApprovedCount & { waiting: number }>()
+      let counts = new Map<string, ApprovedCount & { waiting: number }>()
       for (let row of result.rows ?? []) {
-        let issueId = Number(row['issue_id'])
+        let issueId = String(row['issue_id'])
         let count = Number(row['count'])
         let state = batchState(toBatch(row, []))
         let current = counts.get(issueId) ?? { approved: 0, total: 0, waiting: 0 }
@@ -583,7 +584,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
       let result = await database.exec(
         sql`SELECT * FROM artworks
             WHERE batch_id IS NULL AND removed_at IS NULL AND uploaded_at < ${stamp(before)}
-            ORDER BY id`,
+            ORDER BY rowid`,
       )
       return (result.rows ?? []).map(toArtwork)
     },
@@ -612,7 +613,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
             LEFT JOIN articles ar ON ar.id = b.article_id
             LEFT JOIN artwork_groups g ON g.id = b.group_id
             WHERE b.issue_id = ${issueId} AND b.created_at IS NOT NULL AND b.discarded_at IS NULL
-            ORDER BY b.created_at DESC, b.id DESC`,
+            ORDER BY b.created_at DESC, b.rowid DESC`,
       )
       return listed(database, result.rows ?? [])
     },
@@ -659,7 +660,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
     async pendingCleanups() {
       let result = await database.exec(
         sql`SELECT * FROM artwork_batches
-            WHERE created_at IS NULL AND cleanup_at IS NOT NULL ORDER BY id`,
+            WHERE created_at IS NULL AND cleanup_at IS NOT NULL ORDER BY rowid`,
       )
       return withArtworks(database, result.rows ?? [])
     },
@@ -712,10 +713,10 @@ export function createArtworkStore(database: Database): ArtworkStore {
 
         let tag = await freeTag(db, batch, batch.at)
         await db.exec(
-          sql`INSERT INTO artwork_batches (issue_id, article_id, group_id, link_id, form_key,
+          sql`INSERT INTO artwork_batches (id, issue_id, article_id, group_id, link_id, form_key,
                 provider_name, provider_email, tag, started_at)
-              VALUES (${batch.issueId}, ${batch.articleId}, ${batch.groupId ?? null}, ${batch.linkId},
-                ${batch.formKey},
+              VALUES (${newRowId()}, ${batch.issueId}, ${batch.articleId}, ${batch.groupId ?? null},
+                ${batch.linkId}, ${batch.formKey},
                 ${batch.provider.name}, ${batch.provider.email}, ${tag}, ${stamp(batch.at)})`,
         )
         let inserted = await batchByFormKey(db, batch.formKey)
@@ -740,7 +741,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
     async unsentByForm(formKey) {
       let result = await database.exec(
         sql`SELECT * FROM artworks
-            WHERE form_key = ${formKey} AND batch_id IS NULL AND removed_at IS NULL ORDER BY id`,
+            WHERE form_key = ${formKey} AND batch_id IS NULL AND removed_at IS NULL ORDER BY rowid`,
       )
       return (result.rows ?? []).map(toArtwork)
     },
@@ -764,10 +765,10 @@ export function createArtworkStore(database: Database): ArtworkStore {
                 AND (ar.id IS NULL OR ar.removed_at IS NULL)
                 AND (g.id IS NULL OR g.removed_at IS NULL)
                 AND (b.claimed_at IS NULL OR b.claimed_at < ${lease})
-              ORDER BY coalesce(b.checked_at, ''), b.id
+              ORDER BY coalesce(b.checked_at, ''), b.rowid
               LIMIT ${CLAIM_LIMIT}`,
         )
-        let ids = (result.rows ?? []).map((row) => Number(row['id']))
+        let ids = (result.rows ?? []).map((row) => String(row['id']))
         if (ids.length === 0) return []
         let idList = JSON.stringify(ids)
         await db.exec(
@@ -790,7 +791,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
               LEFT JOIN artwork_groups g ON g.id = b.group_id
               JOIN issues i ON i.id = b.issue_id
               WHERE b.id IN (SELECT value FROM json_each(${idList}))
-              ORDER BY coalesce(b.checked_at, ''), b.id`,
+              ORDER BY coalesce(b.checked_at, ''), b.rowid`,
         )
         let rows = claimed.rows ?? []
         let batches = await listed(db, rows)
@@ -848,7 +849,7 @@ export function createArtworkStore(database: Database): ArtworkStore {
     async reviewQueue(including) {
       let result = await database.exec(queueCandidates(including ?? null))
       let rows = (result.rows ?? []).filter(
-        (row) => Number(row['id']) === including || isQueued(toBatch(row, [])),
+        (row) => String(row['id']) === including || isQueued(toBatch(row, [])),
       )
       return listed(database, rows)
     },

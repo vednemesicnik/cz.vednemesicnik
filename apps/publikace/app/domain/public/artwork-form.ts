@@ -149,7 +149,7 @@ function emailMessage(email: string): string | null {
 }
 
 /** One card as the form sent it: the uploaded file's ID and its two optional fields. */
-export type ArtworkInput = { author: string; id: number; source: string }
+export type ArtworkInput = { author: string; id: string; source: string }
 
 export type ProviderInput = { email: string; name: string }
 
@@ -293,8 +293,8 @@ export const SENDING_CLOSED_LINE = tied`Díla už z tohoto odkazu nelze odeslat.
  * that is no image the server recognises; the rest store nothing.
  */
 export type UploadReply =
-  | { artwork: { id: number; name: string; size: number }; outcome: 'uploaded' }
-  | { artwork: { id: number; name: string; size: number }; outcome: 'unreadable' }
+  | { artwork: { id: string; name: string; size: number }; outcome: 'uploaded' }
+  | { artwork: { id: string; name: string; size: number }; outcome: 'unreadable' }
   | { outcome: 'disconnected' }
   | { outcome: 'folder-gone' }
   | { outcome: 'limited' }

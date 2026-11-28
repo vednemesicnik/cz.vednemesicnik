@@ -41,7 +41,7 @@ function undoAction(html: string): string | null {
 
 async function newsroom(options: { isAdmin?: boolean } = {}): Promise<{
   app: TestApp
-  articleId: number
+  articleId: string
   browser: TestBrowser
 }> {
   let app = await createTestApp()
@@ -58,7 +58,7 @@ async function newsroom(options: { isAdmin?: boolean } = {}): Promise<{
   return { app, articleId, browser }
 }
 
-function handOverPath(id: number): string {
+function handOverPath(id: string): string {
   return `${DETAIL}/articles/${id}/handover`
 }
 
@@ -97,7 +97,7 @@ describe('handing an article over to proofreading (12k, 12l)', () => {
   it('keeps a row where it stood after the step, and after its Vrátit', async () => {
     let { app, articleId, browser } = await newsroom()
     try {
-      let issueId = (await createArticleStore(app.database).findById(articleId))?.issueId ?? 0
+      let issueId = (await createArticleStore(app.database).findById(articleId))?.issueId ?? ''
       await seedArticle(app, issueId, 'Zahrada na střeše')
       await seedArticle(app, issueId, 'Volební kampaň')
       let order = async () => {
@@ -178,7 +178,7 @@ describe('handing an article over to proofreading (12k, 12l)', () => {
         'Předání už nelze zrušit. Korektura probíhá od 21. 11. · Jakub Novák.',
       )
 
-      let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? 0, 'B')
+      let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? '', 'B')
       await articles.takeProofreading(other.articleId, JAKUB, at, 'writing')
       await browser.post(handOverPath(other.articleId), {}, DETAIL)
       assert.equal(

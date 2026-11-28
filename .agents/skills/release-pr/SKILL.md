@@ -32,16 +32,14 @@ gh pr create --base main --head dev --template release.md \
 - **What ships** — one bullet per shipped PR/change with `#refs`; group related PRs.
 - **Versions** — one line `- <app>-vX.Y.Z` per semver application whose folder the release
   changes: the next patch, minor or major after its newest tag (`git tag --list 'publikace-v*'`).
-  The web is tagged by date and needs no line. Publikace has no tag until the release that has
-  the host serve it (#1082), which names `- publikace-v1.0.0`; before that, name nothing for
-  it. Once the PR is open, read the `release-version` check's summary: it lists the tag every
-  changed application will get, and fails on a missing or wrong version. Fix the body, never
-  the check. A version that has a milestone
-  ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Planning a version) is named
-  only once the milestone has no open issue left
+  The web is tagged by date and needs no line. Once the PR is open, read the
+  `release-version` check's summary: it lists the tag every changed application will get, and
+  fails on a missing or wrong version. Fix the body, never the check. Only a major has a
+  milestone ([docs/\_workflow-skills.md](../../../docs/_workflow-skills.md) § Planning a
+  version); it is named only once the milestone has no open issue left
   (`gh issue list --milestone "<title>" --state open`), the one that turns its work on included;
-  one still open is either weighed out of it or the version waits. A release that carries only
-  gated work gives the application the next patch.
+  one still open either leaves it, when its work is no longer part of the major, or the major
+  waits. A release that carries only gated work gives the application the next patch.
 - **Gates** — for each application whose **Release gate** (its `AGENTS.md` § For the workflow
   skills) names a helper, list the gates still in place on `dev`
   (`git grep -n "<helper>" origin/dev -- apps/<app>/`) and the ones this release adds or removes
@@ -74,7 +72,7 @@ question or a soft "probably fine" is not one.
    publishes its Release: `gh release list --limit 5` shows them next to the run's summary. A
    failed or cancelled run is re-run from the Actions page
    ([docs/\_branching-model.md](../../../docs/_branching-model.md) § Versions). Close the
-   milestone of each version the release named, looked up by its title:
+   milestone of each major the release named, looked up by its title:
    `gh api 'repos/{owner}/{repo}/milestones?state=open' --jq '.[] | select(.title == "<title>") | .number'`,
    then `gh api -X PATCH repos/{owner}/{repo}/milestones/<number> -f state=closed`.
 4. **Merge the back-merge.** `sync-dev.yml` opens `chore: back-merge main into dev`. Once its

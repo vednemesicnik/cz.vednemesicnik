@@ -10,13 +10,15 @@ import { MIGRATIONS_DIRECTORY, openDatabase } from './database.server.ts'
  * the issue's Evidence, and a removed group's name is free again in its issue.
  */
 
+/* Each test stops here, so the tables are the ones this migration left. */
+const MIGRATION = '20261208120000_artwork_group_fixes'
 const AT = '2026-11-20T09:00:00.000Z'
 
 async function withGroup(run: (db: Database) => Promise<void>): Promise<void> {
   let opened = openDatabase(':memory:')
   try {
     let db = opened.database
-    await db.migrate(await loadMigrations(MIGRATIONS_DIRECTORY))
+    await db.migrate(await loadMigrations(MIGRATIONS_DIRECTORY), { to: MIGRATION })
     await db.exec(sql`INSERT INTO issues (id, name, name_key, started_at, started_by_email,
         started_by_name)
       VALUES (1, 'VDM_2003_1', 'vdm_2003_1', ${AT}, 'marie@vednemesicnik.test', 'Marie Horáková')`)

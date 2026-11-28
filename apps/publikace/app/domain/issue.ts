@@ -38,7 +38,7 @@ export type Issue = {
   folderIds: Record<FolderKind, string | null>
   /** `Skupiny obrazových děl`, made with the issue's first artwork group and `null` until then. */
   groupsFolderId: string | null
-  id: number
+  id: string
   /** When the app found each folder missing, `null` while it is there (`12j`). */
   missing: Record<IssueFolderKind, Temporal.Instant | null>
   name: string
@@ -281,9 +281,9 @@ export const CLOSE_ANYWAY_LABEL = 'Přesto uzavřít'
  * does: _U 2 článků a 3 děl zatím chybí souhlas._ The counts stand in the genitive, so no verb
  * has to agree with them.
  *
- * The drawn _a do podkladů se nedostanou_ is left out while the print job runs nowhere (cz.vednemesicnik.publikace#119):
- * until it does, nothing of an issue made in the app reaches the print folder, closed or not, so
- * closing would be blamed for something it does not cause.
+ * The jobs skip a closed issue, the print folder's among them, so the second sentence says the
+ * folder gets nothing added rather than that the counted articles stay out of it: one counted for
+ * a newer final version keeps its earlier approved one there (copy `suai7kh6`).
  */
 export function closeWarningText(articles: number, artworks: number): string | null {
   if (articles === 0 && artworks === 0) return null
@@ -291,7 +291,7 @@ export function closeWarningText(articles: number, artworks: number): string | n
     ...(articles === 0 ? [] : [`${articles} ${articles === 1 ? 'článku' : 'článků'}`]),
     ...(artworks === 0 ? [] : [`${artworks} ${artworks === 1 ? 'díla' : 'děl'}`]),
   ]
-  return tied`U ${counts.join(tied` a `)} zatím chybí souhlas. Dokud je vydání uzavřené, aplikace neodesílá žádosti o souhlas ani nečte odpovědi.`
+  return tied`U ${counts.join(tied` a `)} zatím chybí souhlas. Dokud je vydání uzavřené, aplikace neodesílá žádosti o souhlas, nečte odpovědi a nedoplňuje podklady pro tisk.`
 }
 
 export function reopenDialogTitle(name: string): string {

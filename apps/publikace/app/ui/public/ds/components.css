@@ -428,8 +428,10 @@
 /* 12 px between paragraphs in every dialog body (0zgyl1ao). */
 .vdm-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
 /* A dialog taller than the window scrolls on the backdrop: a shorter one stays centred, a taller one starts at the top
-   and scrolls to its buttons; the page under it does not move (Rozhodnuto 24. 11. 2026, ta8xzaqr). */
-.vdm-dialog-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; justify-items: center; overflow-y: auto; overscroll-behavior: contain; padding: 24px; background: var(--overlay); }
+   and scrolls to its buttons; the page under it does not move (Rozhodnuto 24. 11. 2026, ta8xzaqr).
+   16 px from the window's side edges, as a toast on a phone, and 24 px above and below, at every width: a 390 px phone
+   gets a 358 px dialog; in a window 32 px wider than the dialog's max-width the max-width alone decides (Rozhodnuto 27. 11. 2026, heanoud2). */
+.vdm-dialog-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; justify-items: center; overflow-y: auto; overscroll-behavior: contain; padding: 24px 16px; background: var(--overlay); }
 .vdm-dialog-backdrop > .vdm-dialog { margin-block: auto; }
 
 /* ---------- Toast ---------- */

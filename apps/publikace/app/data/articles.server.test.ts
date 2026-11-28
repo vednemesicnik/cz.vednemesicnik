@@ -4,6 +4,7 @@ import { describe, it } from 'remix/test'
 
 import { articleState, waitsOnEditors } from '../domain/article.ts'
 import { createTestApp, seedArticle, seedIssue, started, type TestApp } from '../test-app.server.ts'
+import { testRowId } from '../test-row-id.ts'
 import { createArticleStore } from './articles.server.ts'
 import { createLinkStore } from './links.server.ts'
 
@@ -273,7 +274,11 @@ describe('the handover to proofreading', () => {
       let taken = { kind: 'proofreading', step: { at: LATER, ...JAKUB } }
       assert.deepEqual(await articles.cancelHandover(articleId, LATER), taken)
 
-      let other = await seedArticle(app, (await articles.findById(articleId))?.issueId ?? 0, 'B')
+      let other = await seedArticle(
+        app,
+        (await articles.findById(articleId))?.issueId ?? testRowId(0),
+        'B',
+      )
       await articles.takeProofreading(other.articleId, JAKUB, LATER, 'writing')
       assert.deepEqual(await articles.handOver(other.articleId, MARIE, LATER), taken)
     } finally {
@@ -625,10 +630,10 @@ describe('what the articles add to Čeká na vás (11a, 01d, 12j)', () => {
   /** A created article in the issue with a final version marked and its clause as given. */
   async function marked(
     app: TestApp,
-    issueId: number,
+    issueId: string,
     clause: keyof typeof CLAUSES,
     options: { isDocRevised?: boolean; isFolderMissing?: boolean } = {},
-  ): Promise<number> {
+  ): Promise<string> {
     let articles = createArticleStore(app.database)
     let { articleId } = await seedArticle(app, issueId)
     await articles.takeProofreading(articleId, LENKA, AT, 'writing')

@@ -153,11 +153,10 @@ merge into `main`, `release.yml` tags the merge commit for each application whos
 changed and publishes a GitHub Release with the commits that touched it. Each application
 picks its style in `scripts/release-version.ts`: the web by date (`web-2026-11-27`), Publikace
 by semver (`publikace-v1.1.0`), named under `## Versions` in the release PR's body; a hotfix
-takes the next patch. The `release-version` check shows every tag before the merge. Publikace
-stays untagged until the release that has the host serve it (#1082) names `publikace-v1.0.0`.
-A semver application plans each version as a milestone titled after its tag, which the
-release naming it closes ([docs/\_workflow-skills.md](docs/_workflow-skills.md) § Planning a
-version). A release takes everything on `dev`, so user-visible work not to be released yet
+takes the next patch. The `release-version` check shows every tag before the merge.
+A semver application plans only its majors, each as a milestone titled after its tag, which
+the release naming it closes ([docs/\_workflow-skills.md](docs/_workflow-skills.md) § Planning
+a version). A release takes everything on `dev`, so user-visible work not to be released yet
 merges there behind its application's release gate, hidden in production by `NODE_ENV` and
 404 on the server; the PR that removes the gate turns it on
 ([docs/\_branching-model.md](docs/_branching-model.md) § Unreleased work behind a gate,

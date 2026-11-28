@@ -19,7 +19,7 @@ async function marks(app: TestApp): Promise<string[]> {
     sql`SELECT kind, issue_id, generation FROM record_marks ORDER BY kind, issue_id`,
   )
   return (result.rows ?? []).map(
-    (row) => `${String(row['kind'])}:${Number(row['issue_id'])}@${Number(row['generation'])}`,
+    (row) => `${String(row['kind'])}:${String(row['issue_id'])}@${Number(row['generation'])}`,
   )
 }
 
@@ -37,7 +37,7 @@ describe('the record queue’s marks', () => {
       await createIssueStore(app.database).complete(unfinished, AT)
       let found = await marks(app)
       assert.ok(found.includes(`evidence:${unfinished}@1`))
-      assert.ok(found.some((mark) => mark.startsWith('registry:0@')))
+      assert.ok(found.some((mark) => mark.startsWith('registry:@')))
     } finally {
       await app.close()
     }
@@ -51,9 +51,9 @@ describe('the record queue’s marks', () => {
       let issues = createIssueStore(app.database)
 
       await issues.close(issueId, AT)
-      assert.deepEqual(await marks(app), ['registry:0@1'])
+      assert.deepEqual(await marks(app), ['registry:@1'])
       await issues.reopen(issueId)
-      assert.deepEqual(await marks(app), ['registry:0@2'])
+      assert.deepEqual(await marks(app), ['registry:@2'])
     } finally {
       await app.close()
     }
@@ -159,9 +159,9 @@ describe('the record store', () => {
       assert.equal(await store.markAllIfDue(AT), true)
       assert.deepEqual(
         (await store.takeDue(AT, 20)).map((mark) => `${mark.kind}:${mark.issueId}`),
-        [`evidence:${first}`, 'registry:0'],
+        [`evidence:${first}`, 'registry:'],
       )
-      assert.ok(second > first)
+      assert.notEqual(second, first)
 
       await clearMarks(app)
       assert.equal(await store.markAllIfDue(AT.add({ hours: 23 })), false)

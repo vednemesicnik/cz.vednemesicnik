@@ -43,7 +43,7 @@ function toastAction(html: string): string | null {
 }
 
 /** Where the row's _Označit novou finální verzi…_ leads, from the menu's items. */
-function replaceHref(html: string, id: number): string | null {
+function replaceHref(html: string, id: string): string | null {
   let match = new RegExp(
     `"href":"(/issues/${ISSUE}/articles/${id}/final-version/replace\\?marked=[^"]*)"`,
   ).exec(html)
@@ -64,7 +64,7 @@ function dialogAction(html: string): string | null {
  */
 async function sentToOne(): Promise<{
   app: TestApp
-  articleId: number
+  articleId: string
   editor: TestBrowser
   folderId: string
   proofreader: TestBrowser
@@ -113,7 +113,7 @@ async function sentToOne(): Promise<{
 }
 
 /** Opens the dialog from the row's „⋯“ and confirms it. */
-async function replace(editor: TestBrowser, id: number): Promise<Response> {
+async function replace(editor: TestBrowser, id: string): Promise<Response> {
   let href = replaceHref(await (await editor.get(DETAIL)).text(), id)
   assert.ok(href !== null, 'the row offers the step')
   let dialog = await editor.get(href)

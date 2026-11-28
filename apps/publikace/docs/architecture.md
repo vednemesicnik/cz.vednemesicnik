@@ -368,10 +368,10 @@ Evidence, binned with its folder, is no longer written.
 | Job                                        | Interval            | API                                  | Exists                      |
 | ------------------------------------------ | ------------------- | ------------------------------------ | --------------------------- |
 | `SCRIPT__Publication__Artwork_Replies`     | 30 min              | `artwork-replies/claim`, `…/report`  | yes                         |
-| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes, no trigger until #1082 |
-| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes, no trigger until #1082 |
+| `SCRIPT__Publication__Article_Approvals`   | 30 min              | `approvals/claim`, `…/report`        | yes                         |
+| `SCRIPT__Publication__Print_Handoff`       | 6 h                 | `print-handoff/claim`, `…/report`    | yes                         |
 | `SCRIPT__Publication__Proofreading_Digest` | daily, 7:00–8:00    | `proofreading-digest/run`            | yes, no trigger until #1082 |
-| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes, no trigger until #1082 |
+| `SCRIPT__Publication__Article_Comments`    | every 3 h from 0:00 | `article-comments/claim`, `…/report` | yes                         |
 
 Every claim opens a run in `job_runs`, unless its `startKey` is refused (below), and leases what it
 returns for 10 minutes. A claim leaves out a removed article or group, its clauses and its batches,

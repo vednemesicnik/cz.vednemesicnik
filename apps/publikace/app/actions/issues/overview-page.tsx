@@ -88,18 +88,18 @@ export type OverviewDialog =
 
 export type OverviewPageProps = {
   /** Created articles by issue ID, and how many are approved; an issue missing here has none. */
-  articleCounts: ReadonlyMap<number, ApprovedCount>
+  articleCounts: ReadonlyMap<string, ApprovedCount>
   /** The valid link for new articles by issue ID, as a row's „⋯“ copies it (`11a`). */
-  articleLinkUrls: ReadonlyMap<number, string>
+  articleLinkUrls: ReadonlyMap<string, string>
   /** The sent artworks by issue ID, and how many are approved. */
-  artworkCounts: ReadonlyMap<number, ApprovedCount>
+  artworkCounts: ReadonlyMap<string, ApprovedCount>
   dialog?: OverviewDialog
   driveAccount: { expectedEmail: string; status: DriveStatus }
   filter: IssueFilter
   /** Created artwork groups by issue ID; an issue missing here has none. */
-  groupCounts: ReadonlyMap<number, number>
+  groupCounts: ReadonlyMap<string, number>
   /** The issue just renamed from its row, on the tint of a change until the next load (`12u`). */
-  changedIssueId?: number
+  changedIssueId?: string
   /** Focus on the heading after a removal, as the removed row is gone (`12w`). */
   isHeadingFocused?: boolean
   /** Whether the deployment names a Registr, for the dialog's sentence about the record. */
@@ -108,7 +108,7 @@ export type OverviewPageProps = {
   person: PanelPerson
   toasts: readonly ToastMessage[]
   /** What waits on the editors by issue ID, the items of _Čeká na vás_ (`11a`, `01d`, `12j`). */
-  waitingCounts: ReadonlyMap<number, number>
+  waitingCounts: ReadonlyMap<string, number>
 }
 
 /*
@@ -378,14 +378,14 @@ function PhoneRow(
 
 function IssueList(
   handle: Handle<{
-    articleCounts: ReadonlyMap<number, ApprovedCount>
-    articleLinkUrls: ReadonlyMap<number, string>
-    artworkCounts: ReadonlyMap<number, ApprovedCount>
-    changedIssueId: number | undefined
+    articleCounts: ReadonlyMap<string, ApprovedCount>
+    articleLinkUrls: ReadonlyMap<string, string>
+    artworkCounts: ReadonlyMap<string, ApprovedCount>
+    changedIssueId: string | undefined
     filter: IssueFilter
-    groupCounts: ReadonlyMap<number, number>
+    groupCounts: ReadonlyMap<string, number>
     issues: readonly Issue[]
-    waitingCounts: ReadonlyMap<number, number>
+    waitingCounts: ReadonlyMap<string, number>
   }>,
 ) {
   return () => {

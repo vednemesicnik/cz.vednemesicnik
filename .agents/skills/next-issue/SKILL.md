@@ -130,7 +130,7 @@ change to that file; only what is left becomes a new issue — opened with its t
 its app's label in the same command (`gh issue create --type Bug|Feature|Task --label web|publikace`;
 both labels for the host or the repository), titled as a plain sentence, never a Conventional
 Commit, and weighed by the app's **Issue weighing**: it gets the Priority and the Effort you
-decide (§ Priority and effort), the milestone of the version that Priority puts it in
+decide (§ Priority and effort), the milestone of the major its work is part of, if any
 (§ Planning a version), and the board when the weighing names one. Do not ask the user which to file: you
 hold the context. Ask only when an item turns on something only they know, with your
 recommendation first. Report one line per item: filed as #n, added to #n, or left out and why.
@@ -158,9 +158,11 @@ order, and a new issue is recommended only when the first three are empty:
    § Priority and effort. Show each candidate's Priority and Effort beside it, with the reason
    in a sentence — unblocked, adjacent to what just shipped, or blocking something else. An
    open issue without a Priority or an Effort gets one now, and the report says which.
-   When the app plans versions as milestones, say how many of the current one's issues are open
-   and closed (`gh issue list --milestone "<title>" --state all --limit 200 --json state`), and
-   fix an open issue whose weighing and milestone disagree (§ Planning a version).
+   List the app's open majors
+   (`gh api 'repos/{owner}/{repo}/milestones?state=open' --jq '.[].title | select(startswith("<app>-v"))'`)
+   and say for each how many of its issues are open and closed
+   (`gh issue list --milestone "<title>" --state all --limit 200 --json state`; § Planning a
+   version).
    Check each candidate's blocker rather than assuming it: a hand step, a decision that is the
    user's, a merged PR waiting on a manual check. Say that 1–3 are empty.
 

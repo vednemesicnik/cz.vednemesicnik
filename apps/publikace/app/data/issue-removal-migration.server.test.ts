@@ -49,7 +49,7 @@ describe('the issue removal migration', () => {
   it('keeps every issue and every reference through the rebuilt table', async () => {
     let { db, migrations, opened } = await seededBeforeRemoval()
     try {
-      await db.migrate(migrations)
+      await db.migrate(migrations, { to: REMOVAL })
 
       assert.equal(await count(db, 'issues'), 2)
       assert.equal(await count(db, 'articles'), 1)
@@ -78,7 +78,7 @@ describe('the issue removal migration', () => {
   it('frees the name of a removed issue and keeps it taken for every other', async () => {
     let { db, migrations, opened } = await seededBeforeRemoval()
     try {
-      await db.migrate(migrations)
+      await db.migrate(migrations, { to: REMOVAL })
       let insert = (id: number) =>
         db.exec(sql`INSERT INTO issues (id, name, name_key, started_at, started_by_email,
             started_by_name)
@@ -97,7 +97,7 @@ describe('the issue removal migration', () => {
   it('marks the Registr when a complete issue is renamed or removed, as before', async () => {
     let { db, migrations, opened } = await seededBeforeRemoval()
     try {
-      await db.migrate(migrations)
+      await db.migrate(migrations, { to: REMOVAL })
       await db.exec(sql`DELETE FROM record_marks`)
 
       await db.exec(sql`UPDATE issues SET name = 'VDM_2026_7', name_key = 'vdm_2026_7'

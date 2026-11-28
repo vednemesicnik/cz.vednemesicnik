@@ -42,7 +42,7 @@ export type ClauseOutcome = { error: string; kind: 'failed' } | { kind: 'sent' }
  * unique for ever. The article, the author's place and the marking's time make it so, and carry
  * no address.
  */
-export function clauseKey(articleId: number, position: number, markedAt: Temporal.Instant): string {
+export function clauseKey(articleId: string, position: number, markedAt: Temporal.Instant): string {
   let compact = stamp(markedAt).replace(/[^0-9]/g, '')
   return `clause_${articleId}_${position}_${compact}`
 }
@@ -53,7 +53,7 @@ export function clauseKey(articleId: number, position: number, markedAt: Tempora
  * the earlier one is never paired with it.
  */
 export function correctedClauseKey(
-  articleId: number,
+  articleId: string,
   position: number,
   markedAt: Temporal.Instant,
   correctedAt: Temporal.Instant,
@@ -160,7 +160,7 @@ export type ClauseDetail = {
   authorEmail: string
   authorName: string
   error: string | null
-  id: number
+  id: string
   /** The author's place in the article, which the clause was made for. */
   position: number
   replyReceivedAt: Temporal.Instant | null

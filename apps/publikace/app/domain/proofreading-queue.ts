@@ -14,6 +14,7 @@ import {
 } from './article.ts'
 import { alreadyProofreadingToast, type RaceToast } from './handover.ts'
 import { tied } from './public/typography.ts'
+import { compareIds } from './row-id.ts'
 import { formatMoment } from './time.ts'
 
 export const PROOFREADING_TITLE = 'Korektura'
@@ -88,7 +89,7 @@ export type QueueViewer = { email: string; isEditor: boolean; isProofreader: boo
 
 export type QueueItem = ArticleProgress & {
   cancelledProofreading: ArticleStep | null
-  id: number
+  id: string
 }
 
 /**
@@ -141,7 +142,7 @@ function orderKey(article: QueueItem, part: QueuePart): number {
 export function queueParts<Item extends QueueItem>(
   articles: readonly Item[],
   viewer: QueueViewer,
-  settled: { id: number; part: QueuePart } | null = null,
+  settled: { id: string; part: QueuePart } | null = null,
 ): Record<QueuePart, Item[]> {
   let parts: Record<QueuePart, Item[]> = { mine: [], others: [], waiting: [], writing: [] }
   for (let article of articles) {
@@ -158,7 +159,7 @@ export function queueParts<Item extends QueueItem>(
         isMarked(a) - isMarked(b) ||
         orderKey(a, part) - orderKey(b, part) ||
         a.createdAt.epochMilliseconds - b.createdAt.epochMilliseconds ||
-        a.id - b.id,
+        compareIds(a.id, b.id),
     )
   }
   return parts

@@ -1,6 +1,7 @@
 import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
+import { testRowId } from '../test-row-id.ts'
 import type { JobRunRecord } from './job-run.ts'
 import { jobHealth } from './job-run.ts'
 import { isJobInBanner, jobByKey, jobTag, scheduleText, stateOfJob } from './jobs.ts'
@@ -27,7 +28,7 @@ function candidate(id: number, extra: Partial<DigestCandidate> = {}): DigestCand
     authors: ['Tereza Vlková'],
     cancelledAt: null,
     handedOverAt: THURSDAY,
-    id,
+    id: testRowId(id),
     issueName: 'VDM_2026_5',
     name: `Článek ${id}`,
     ...extra,
@@ -48,20 +49,20 @@ describe('the morning digest (12n)', () => {
       candidate(2, { announcedAt: DIGEST, handedOverAt: THURSDAY }),
       candidate(3, { announcedAt: DIGEST, handedOverAt: MONDAY }),
     ])
-    assert.deepEqual(ids(digest?.handedOver ?? []), [1])
-    assert.deepEqual(ids(digest?.waiting ?? []), [3, 2])
+    assert.deepEqual(ids(digest?.handedOver ?? []), [testRowId(1)])
+    assert.deepEqual(ids(digest?.waiting ?? []), [testRowId(3), testRowId(2)])
     assert.deepEqual(ids(digest?.cancelled ?? []), [])
   })
 
   it('tells of a cancellation only once a digest had told of the handover', () => {
     let told = candidate(1, { announcedAt: DIGEST, cancelledAt: AFTER })
-    assert.deepEqual(ids(digestOf([told])?.cancelled ?? []), [1])
+    assert.deepEqual(ids(digestOf([told])?.cancelled ?? []), [testRowId(1)])
     assert.equal(digestOf([candidate(2, { cancelledAt: AFTER })]), null)
   })
 
   it('takes a handover newer than the announcement for a new one, with its new date', () => {
     let again = candidate(1, { announcedAt: DIGEST, handedOverAt: AFTER })
-    assert.deepEqual(ids(digestOf([again])?.handedOver ?? []), [1])
+    assert.deepEqual(ids(digestOf([again])?.handedOver ?? []), [testRowId(1)])
   })
 })
 

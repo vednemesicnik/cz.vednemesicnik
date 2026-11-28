@@ -50,7 +50,7 @@ export type GroupFixSetup = {
 }
 
 export type GroupEditInput = {
-  id: number
+  id: string
   name: string
   note: string
   shownName: string
@@ -73,7 +73,7 @@ type CreatedGroup = GroupRow & {
   licencesFolderId: string
 }
 
-async function createdGroup(setup: GroupFixSetup, id: number): Promise<CreatedGroup | null> {
+async function createdGroup(setup: GroupFixSetup, id: string): Promise<CreatedGroup | null> {
   let row = await setup.groups.findById(id)
   if (row === null || row.createdAt === null || row.removedAt !== null) return null
   let { artworksFolderId, folderId, licencesFolderId } = row
@@ -239,7 +239,7 @@ export type RemoveGroupFixOutcome =
  */
 export async function removeGroup(
   setup: GroupFixSetup,
-  input: { id: number },
+  input: { id: string },
 ): Promise<RemoveGroupFixOutcome> {
   let found = await setup.groups.findById(input.id)
   if (found === null || found.createdAt === null || found.removedAt !== null) {

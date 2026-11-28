@@ -8,6 +8,7 @@ import type {
   ProofreadingOutcome,
   QueueArticle,
 } from '../../data/articles.server.ts'
+import { isRowId } from '../../data/row-id.server.ts'
 import { articleStateTag, documentUrl } from '../../domain/article.ts'
 import { driveFileUrl } from '../../domain/artwork.ts'
 import {
@@ -67,7 +68,7 @@ import {
  */
 const SETTLED_SESSION_KEY = 'proofreadingSettled'
 
-type SettledCard = { id: number; part: QueuePart; undo: string }
+type SettledCard = { id: string; part: QueuePart; undo: string }
 
 const PARTS = new Set<string>(PART_ORDER)
 
@@ -84,13 +85,13 @@ function takeSettled(session: Session | undefined): SettledCard | null {
   session?.unset(SETTLED_SESSION_KEY)
   if (typeof value !== 'object' || value === null) return null
   let { id, part, undo } = value as Record<string, unknown>
-  if (typeof id !== 'number' || typeof part !== 'string' || !PARTS.has(part)) return null
+  if (!isRowId(id) || typeof part !== 'string' || !PARTS.has(part)) return null
   if (typeof undo !== 'string') return null
   return { id, part: part as QueuePart, undo }
 }
 
 /** The page at the card, so a page drawn without script lands on it (`15d`, `15e`). */
-function cardHref(id: number): string {
+function cardHref(id: string): string {
   return `${routes.proofreading.index.href()}#article-${id}`
 }
 
@@ -98,28 +99,28 @@ function viewerOf(person: Person): QueueViewer {
   return { email: person.email, isEditor: person.isEditor, isProofreader: person.isProofreader }
 }
 
-function cancelHref(id: number, takenAt: Temporal.Instant, isUndo = false): string {
+function cancelHref(id: string, takenAt: Temporal.Instant, isUndo = false): string {
   let take = encodeURIComponent(stamp(takenAt))
   return `${routes.proofreading.cancel.href({ id: String(id) })}?take=${take}${isUndo ? '&undo=1' : ''}`
 }
 
-function restoreHref(id: number, cancelledAt: Temporal.Instant): string {
+function restoreHref(id: string, cancelledAt: Temporal.Instant): string {
   let cancelled = encodeURIComponent(stamp(cancelledAt))
   return `${routes.proofreading.restore.href({ id: String(id) })}?cancelled=${cancelled}`
 }
 
 /* The dialog and its form carry the take the card showed; the cancel the marking's time. */
-function askFinalHref(id: number, takenAt: Temporal.Instant): string {
+function askFinalHref(id: string, takenAt: Temporal.Instant): string {
   let take = encodeURIComponent(stamp(takenAt))
   return `${routes.proofreading.askFinalVersion.href({ id: String(id) })}?take=${take}`
 }
 
-function markFinalHref(id: number, takenAt: Temporal.Instant): string {
+function markFinalHref(id: string, takenAt: Temporal.Instant): string {
   let take = encodeURIComponent(stamp(takenAt))
   return `${routes.proofreading.markFinalVersion.href({ id: String(id) })}?take=${take}`
 }
 
-function cancelFinalHref(id: number, markedAt: Temporal.Instant): string {
+function cancelFinalHref(id: string, markedAt: Temporal.Instant): string {
   let marked = encodeURIComponent(stamp(markedAt))
   return `${routes.proofreading.cancelFinalVersion.href({ id: String(id) })}?marked=${marked}`
 }
@@ -328,9 +329,9 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
         /* A link from the digest carries `?article=`, which survives the way through Google's
            sign-in where an anchor would not (`15a`); the anchor is added here. */
         let viewer = viewerOf(context.auth.identity)
-        let linked = Number(context.url.searchParams.get('article'))
+        let linked = context.url.searchParams.get('article')
         let callout: { text: string; title: string | null } | null = null
-        if (context.url.searchParams.has('article') && Number.isSafeInteger(linked)) {
+        if (context.url.searchParams.has('article') && isRowId(linked)) {
           if (queue.some((article) => article.id === linked && partOf(article, viewer) !== null)) {
             return redirect(cardHref(linked), 303)
           }
@@ -349,8 +350,8 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
        * showed, so a take over a handover cancelled meanwhile writes nothing (`15d`).
        */
       async take(context) {
-        let id = Number(context.params.id)
-        if (!Number.isSafeInteger(id)) return notFound()
+        let id = context.params.id
+        if (!isRowId(id)) return notFound()
         let person = context.auth.identity
         let back = () => redirect(cardHref(id), 303)
         if (!person.isProofreader) {
@@ -391,9 +392,9 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
        * `&undo=1` it is the _Vrátit_ after a take, and answers with the card where it now stands.
        */
       async cancel(context) {
-        let id = Number(context.params.id)
+        let id = context.params.id
         let takenAt = parseStamp(context.url.searchParams.get('take'))
-        if (!Number.isSafeInteger(id) || takenAt === null) return notFound()
+        if (!isRowId(id) || takenAt === null) return notFound()
         let person = context.auth.identity
         let isUndo = context.url.searchParams.get('undo') === '1'
         let back = () => redirect(cardHref(id), 303)
@@ -434,9 +435,9 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
        * with its own time (`15d`), and the card stands where that puts it.
        */
       async restore(context) {
-        let id = Number(context.params.id)
+        let id = context.params.id
         let cancelledAt = parseStamp(context.url.searchParams.get('cancelled'))
-        if (!Number.isSafeInteger(id) || cancelledAt === null) return notFound()
+        if (!isRowId(id) || cancelledAt === null) return notFound()
         let person = context.auth.identity
         let back = () => redirect(cardHref(id), 303)
 
@@ -462,9 +463,9 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
        * no longer offers the step answers with the reason, as the step itself would.
        */
       async askFinalVersion(context) {
-        let id = Number(context.params.id)
+        let id = context.params.id
         let takenAt = parseStamp(context.url.searchParams.get('take'))
-        if (!Number.isSafeInteger(id) || takenAt === null) return notFound()
+        if (!isRowId(id) || takenAt === null) return notFound()
         let person = context.auth.identity
         let { articles } = articlesOf(context)
         let refusal = await articles.checkFinalVersion(
@@ -490,9 +491,9 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
        * with the reason (`15g`). After it the card stands where it was, with _Vrátit_.
        */
       async markFinalVersion(context) {
-        let id = Number(context.params.id)
+        let id = context.params.id
         let takenAt = parseStamp(context.url.searchParams.get('take'))
-        if (!Number.isSafeInteger(id) || takenAt === null) return notFound()
+        if (!isRowId(id) || takenAt === null) return notFound()
         let person = context.auth.identity
         let { articles, artworks } = articlesOf(context)
         let outcome = await markFinalVersion(artworks, {
@@ -532,9 +533,9 @@ export default function createProofreadingController(signedInUntil: SignedInUnti
        * a _Vrátit_ of its own: marking again goes through the dialog.
        */
       async cancelFinalVersion(context) {
-        let id = Number(context.params.id)
+        let id = context.params.id
         let markedAt = parseStamp(context.url.searchParams.get('marked'))
-        if (!Number.isSafeInteger(id) || markedAt === null) return notFound()
+        if (!isRowId(id) || markedAt === null) return notFound()
         let person = context.auth.identity
         let outcome = await cancelFinalVersion(articlesOf(context).artworks, {
           id,
