@@ -1,3 +1,4 @@
+import { newKey } from '../data/key.server.ts'
 import {
   createDriveCall,
   describe,
@@ -172,7 +173,7 @@ export function createArticleFiles(options: ArticleFilesOptions): ArticleFiles {
       url.searchParams.set('uploadType', 'multipart')
       url.searchParams.set('supportsAllDrives', 'true')
       url.searchParams.set('fields', 'id')
-      let boundary = `publikace-${crypto.randomUUID()}`
+      let boundary = `publikace-${newKey()}`
       let metadata = JSON.stringify({
         appProperties: { [ATTEMPT_PROPERTY]: attempt },
         mimeType: 'text/plain',

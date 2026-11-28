@@ -1,5 +1,6 @@
 import type { IdentityTokenVerifier } from '../../auth/identity-token.server.ts'
 import type { JobRunStore } from '../../data/job-runs.server.ts'
+import { newKey } from '../../data/key.server.ts'
 
 /**
  * What every call of a background job to the app's API goes through: the job's Google identity
@@ -129,7 +130,7 @@ export async function openRun(
   if (startKey !== undefined && !isText(startKey, MAX_START_KEY_LENGTH)) {
     return { refused: json({ error: 'invalid_request' }, 400) }
   }
-  let runKey = crypto.randomUUID()
+  let runKey = newKey()
   let isOpened = await runs.start({
     at: run.at,
     intervalMinutes: run.intervalMinutes,

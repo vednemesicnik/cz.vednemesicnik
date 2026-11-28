@@ -6,6 +6,7 @@ import { appOrigin } from '../../auth/environment.server.ts'
 import { createGroupStore } from '../../data/artwork-groups.server.ts'
 import { createArtworkStore } from '../../data/artworks.server.ts'
 import { createIssueStore } from '../../data/issues.server.ts'
+import { newKey } from '../../data/key.server.ts'
 import { createLinkStore } from '../../data/links.server.ts'
 import { newRowId } from '../../data/row-id.server.ts'
 import { NBSP } from '../../domain/public/typography.ts'
@@ -83,7 +84,7 @@ function createGroup(
 ): Promise<Response> {
   return context.editor.post(
     NEW,
-    { formKey: fields.formKey ?? crypto.randomUUID(), name: fields.name, note: fields.note ?? '' },
+    { formKey: fields.formKey ?? newKey(), name: fields.name, note: fields.note ?? '' },
     NEW,
   )
 }
@@ -302,7 +303,7 @@ describe('a new artwork group (12e)', () => {
       assert.equal((await editor.get(NEW)).status, 404)
       let refused = await editor.post(
         NEW,
-        { formKey: crypto.randomUUID(), name: 'Mapa obce k rozhovoru i reportáži', note: '' },
+        { formKey: newKey(), name: 'Mapa obce k rozhovoru i reportáži', note: '' },
         DETAIL,
       )
       assert.equal(refused.status, 404)
@@ -324,7 +325,7 @@ describe('a new artwork group (12e)', () => {
       /* The form is sent from the detail, which carries the session's token. */
       let refused = await context.editor.post(
         NEW,
-        { formKey: crypto.randomUUID(), name: 'Zadní strana', note: '' },
+        { formKey: newKey(), name: 'Zadní strana', note: '' },
         DETAIL,
       )
       assert.equal(refused.status, 404)

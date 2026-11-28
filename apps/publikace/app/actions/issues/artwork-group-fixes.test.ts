@@ -5,6 +5,7 @@ import { describe, it } from 'remix/test'
 import { createGroupStore } from '../../data/artwork-groups.server.ts'
 import { createArtworkStore, HolderRemovedError } from '../../data/artworks.server.ts'
 import { createIssueStore } from '../../data/issues.server.ts'
+import { newKey } from '../../data/key.server.ts'
 import { NBSP } from '../../domain/public/typography.ts'
 import { now } from '../../domain/time.ts'
 import {
@@ -75,7 +76,7 @@ async function withGroup(run: (context: Context) => Promise<void>): Promise<void
     assert.ok(issue !== null)
     let created = await editor.post(
       `${DETAIL}/artwork-groups/new`,
-      { formKey: crypto.randomUUID(), name: NAME, note: NOTE },
+      { formKey: newKey(), name: NAME, note: NOTE },
       `${DETAIL}/artwork-groups/new`,
     )
     assert.equal(created.status, 303)
@@ -161,7 +162,7 @@ function metaOf(context: Context, id: string): Record<string, unknown> {
 async function sendBatch(context: Context): Promise<string> {
   let key = await linkKeyOf(context)
   let visitor = context.app.browser()
-  let formKey = crypto.randomUUID()
+  let formKey = newKey()
   let uploaded = await visitor.sendBytes(`/l/${key}/artworks/files`, new Uint8Array(JPEG), {
     'Content-Type': 'image/jpeg',
     'X-File-Name': encodeURIComponent('mapa-obce.jpg'),
@@ -305,7 +306,7 @@ describe('editing a group (12f)', () => {
 
       let second = await context.editor.post(
         `${DETAIL}/artwork-groups/new`,
-        { formKey: crypto.randomUUID(), name: 'Ilustrace k volbám', note: '' },
+        { formKey: newKey(), name: 'Ilustrace k volbám', note: '' },
         `${DETAIL}/artwork-groups/new`,
       )
       assert.equal(second.status, 303)
@@ -445,7 +446,7 @@ describe('removing a group (12f)', () => {
       assert.equal((await context.editor.get(`${DETAIL}/remove`)).status, 200)
       let again = await context.editor.post(
         `${DETAIL}/artwork-groups/new`,
-        { formKey: crypto.randomUUID(), name: NAME, note: '' },
+        { formKey: newKey(), name: NAME, note: '' },
         `${DETAIL}/artwork-groups/new`,
       )
       assert.equal(again.status, 303)

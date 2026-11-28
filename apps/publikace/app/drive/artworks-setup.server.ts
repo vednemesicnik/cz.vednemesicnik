@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash } from 'node:crypto'
 
 import type { ArticleStore } from '../data/articles.server.ts'
 import type { GroupStore } from '../data/artwork-groups.server.ts'
@@ -10,6 +10,7 @@ import {
   HolderRemovedError,
 } from '../data/artworks.server.ts'
 import type { IssueStore } from '../data/issues.server.ts'
+import { newKey } from '../data/key.server.ts'
 import type { LinkStore } from '../data/links.server.ts'
 import type { PublicMailLog } from '../data/public-mail.server.ts'
 import {
@@ -306,7 +307,7 @@ async function store(
   let mimeType = type ?? claimed ?? 'application/octet-stream'
   let extension = ARTWORK_TYPES[mimeType] ?? '.bin'
   let storedName = `${createHash('sha256').update(bytes).digest('hex')}${extension}`
-  let uploadKey = randomUUID()
+  let uploadKey = newKey()
 
   let stored = await files.upload(holder.artworksFolderId, storedName, mimeType, bytes, uploadKey)
   if (!stored.ok) {

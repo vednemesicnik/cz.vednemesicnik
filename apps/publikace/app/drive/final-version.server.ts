@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash } from 'node:crypto'
 
 import type {
   CancelFinalOutcome,
@@ -6,6 +6,7 @@ import type {
   FinalVersionPdf,
   ReplaceFinalOutcome,
 } from '../data/articles.server.ts'
+import { newKey } from '../data/key.server.ts'
 import type { ArtworksSetup } from './artworks-setup.server.ts'
 import { logDriveFailure } from './log.server.ts'
 import { createLock } from './one-at-a-time.server.ts'
@@ -150,7 +151,7 @@ async function storeFinalVersion<Refusal extends { kind: string }>(
   let pdf = await files.exportPdf(article.docId)
   if (pdf === null) return { kind: 'unavailable' }
   let hash = createHash('sha256').update(pdf).digest('hex')
-  let attemptKey = `final-version:${id}:${randomUUID()}`
+  let attemptKey = `final-version:${id}:${newKey()}`
   let stored = await files.upload(
     article.folderId,
     `${hash}.pdf`,
