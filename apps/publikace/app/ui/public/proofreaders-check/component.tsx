@@ -62,7 +62,8 @@ export const ProofreadersCheck = clientEntry(
         pending?.abort()
         let controller = new AbortController()
         pending = controller
-        let props = handle.props
+        /* A copy: the runtime updates `handle.props` in place for the next load. */
+        let props = { ...handle.props }
         handle.queueTask(() => {
           void ask(props, controller.signal)
         })
