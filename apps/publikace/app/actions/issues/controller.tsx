@@ -1114,8 +1114,8 @@ async function renderDetail(
     />,
     options.status === undefined ? undefined : { status: options.status },
   )
-  /* A load the page named is honoured once: the cookie goes with the answer, not only when the
-     page clears it, so another tab or a redirect in the same moment counts as an ordinary load. */
+  /* The answer clears the cookie, so a load after it is an ordinary one even when the page never
+     got to clear it; that the record is read once is what makes the reload count once. */
   if (named !== null) {
     response.headers.append(
       'Set-Cookie',

@@ -799,7 +799,7 @@ describe('a group’s missing folder in the detail (12j, cz.vednemesicnik.publik
       /* As the island reloads: naming the load whose check found it. */
       context.editor.setCookie(`${CHECK_RELOAD_COOKIE}=${load}; Path=/issues`)
       let reload = await detail()
-      context.editor.setCookie(`${CHECK_RELOAD_COOKIE}=; Path=/issues; Max-Age=0`)
+      assert.equal(context.editor.cookie(CHECK_RELOAD_COOKIE), undefined, 'honoured once')
       assert.ok(textOf(reload).includes(GROUP_STEP), 'the other group is still missing')
       assert.ok(!asks(reload), 'the reload asks nothing again')
       assert.ok(asks(await detail()))
