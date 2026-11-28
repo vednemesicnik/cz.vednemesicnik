@@ -333,7 +333,8 @@ flowchart LR
 ```
 
 The app writes the record after the database, never inside an action. A sheet that does not
-answer delays the record and blocks nothing. The app writes only its own list, puts its
+answer delays the record and blocks nothing, and a pass that finds nothing due asks Google
+nothing. The app writes only its own list, puts its
 protection back before every write, and never reads a sheet. A column the record begins to
 show needs its trigger changed in a new migration. A group's artworks are rows of _Obrazová díla_
 with the group's name in _Název článku_ and its folder in _ID složky_, as the scripts write them,

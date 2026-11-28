@@ -271,6 +271,22 @@ describe('the dialog Nové vydání (11d, 14g)', () => {
     }
   })
 
+  it('asks Google for one access token for two issues created in its life', async () => {
+    let { app, browser } = await newsroom()
+    try {
+      await create(browser, `VDM_${YEAR}_6`)
+      await create(browser, `VDM_${YEAR}_7`)
+
+      assert.equal(app.drive.folders().length, 6)
+      assert.deepEqual(
+        app.drive.calls.filter((call) => call === 'POST /token'),
+        ['POST /token'],
+      )
+    } finally {
+      await app.close()
+    }
+  })
+
   it('refuses an empty, a long and a duplicate name, keeping what was typed', async () => {
     let { app, browser } = await newsroom()
     try {
