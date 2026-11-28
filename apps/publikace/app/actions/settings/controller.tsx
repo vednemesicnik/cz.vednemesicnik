@@ -54,8 +54,38 @@ function accessOf(context: PageContext): AccessContext {
 type PageState = {
   addForm?: AddForm
   isRoleLost?: boolean
+  /**
+   * Nastavení itself, with nothing over it: only this page asks the membership service about the
+   * proofreaders' address (`14f`), never a dialog's page or a form drawn again after a `POST`.
+   */
+  isShown?: boolean
   proofreadersForm?: ProofreadersForm
   question?: RemovalQuestion
+}
+
+/*
+ * The proofreaders' address the membership service just did not know (`14f`), for the page that
+ * follows: the reload the page's own check starts, or the page a save redirects to. Taken once;
+ * its presence also tells that page not to ask again. An address changed since does not match,
+ * so the page asks about the new one.
+ */
+const UNKNOWN_GROUP_SESSION_KEY = 'proofreadersUnknownGroup'
+
+/** Asks the membership service about the address, and flashes it when the service does not know it. */
+async function checkProofreadersGroup(context: PageContext, editor: Person, email: string) {
+  let answer = await accessOf(context).checkMembership(editor.email, email)
+  let isUnknownGroup = answer.status === 'unknown-group'
+  if (isUnknownGroup) {
+    ;(context.get(Session) as Session | undefined)?.flash(UNKNOWN_GROUP_SESSION_KEY, email)
+  }
+  return isUnknownGroup
+}
+
+function takeUnknownGroup(session: Session | undefined): string | null {
+  let value = session?.get(UNKNOWN_GROUP_SESSION_KEY)
+  if (value === undefined) return null
+  session?.unset(UNKNOWN_GROUP_SESSION_KEY)
+  return typeof value === 'string' ? value : null
 }
 
 type Stores = {
@@ -83,15 +113,17 @@ async function renderSettings(
   ])
   let today = now()
   let hasRegistry = driveFiles.registrySpreadsheetId !== ''
-  /* Asked on every visit, as when a group is added to Přístup (`03`, row 27): the warning stands
-     while the service does not know the address and goes by itself once it does. A service that
-     does not answer shows nothing, since it says nothing about the address. Not for a form drawn
-     again, which should not wait on the service for a warning beside the point. */
+  /* No call to the membership service before the page: `checkProofreaders` asks once it stands,
+     on every visit, so the warning stands while the service does not know the address and goes
+     by itself once it does. */
+  let session = context.get(Session) as Session | undefined
+  let unknownGroup = state.isShown === true ? takeUnknownGroup(session) : null
   let isProofreadersUnknownGroup =
-    context.method === 'GET' &&
-    proofreadersAddress !== null &&
-    (await access.checkMembership(editor.email, proofreadersAddress.email)).status ===
-      'unknown-group'
+    proofreadersAddress !== null && unknownGroup === proofreadersAddress.email
+  let proofreadersCheck =
+    state.isShown === true && proofreadersAddress !== null && !isProofreadersUnknownGroup
+      ? { href: routes.settings.checkProofreaders.href(), key: crypto.randomUUID() }
+      : null
 
   return context.render(
     <SettingsPage
@@ -105,7 +137,7 @@ async function renderSettings(
       driveAccount={{
         expectedEmail: driveAccount.expectedEmail,
         hasRegistry,
-        refusal: takeConnectRefusal(context.get(Session) as Session | undefined),
+        refusal: takeConnectRefusal(session),
         state: driveState,
       }}
       editor={editor}
@@ -121,6 +153,7 @@ async function renderSettings(
         today,
       )}
       proofreaders={proofreadersAddress?.email ?? null}
+      proofreadersCheck={proofreadersCheck}
       proofreadersForm={state.proofreadersForm}
       question={state.question}
       toasts={context.get(Toasts) as readonly ToastMessage[]}
@@ -169,7 +202,23 @@ export default function createSettingsController(
     middleware: [requireEditor(signedInUntil)],
     actions: {
       index(context) {
-        return renderSettings(context, stores, context.auth.identity, {})
+        return renderSettings(context, stores, context.auth.identity, { isShown: true })
+      },
+
+      /* `14f`: what Nastavení asks once it stands, as when a group is added to Přístup (`03`,
+         row 27). An unknown address is flashed for the reload the page's island starts, which
+         draws the warning. A service that does not answer says nothing about the address, so
+         it shows nothing. No toast and no redirect, as the issue detail's `checkDocRevisions`. */
+      async checkProofreaders(context) {
+        let address = await stores.proofreaders.find()
+        if (address === null) return Response.json({ isUnknownGroup: false })
+        return Response.json({
+          isUnknownGroup: await checkProofreadersGroup(
+            context,
+            context.auth.identity,
+            address.email,
+          ),
+        })
       },
 
       async addAccess(context) {
@@ -301,6 +350,10 @@ export default function createSettingsController(
           )
         }
         await dependencies.proofreaders.save(address.email, editor.email, now())
+        /* Asked at the save (`14f`), so the page it lands on shows the warning beside the toast
+           at once, rather than after a reload that would take the toast away. The address is
+           saved either way: one account is answered as a group the service does not know. */
+        await checkProofreadersGroup(context, editor, address.email)
         flashToast(context, PROOFREADERS_SAVED)
         return backToSettings()
       },

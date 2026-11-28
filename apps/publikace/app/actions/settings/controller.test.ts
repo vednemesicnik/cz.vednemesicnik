@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
+import type { MembershipAnswer } from '../../auth/group-membership.server.ts'
 import { now } from '../../domain/time.ts'
 import {
   connectDriveAccount,
@@ -11,6 +12,7 @@ import {
   TEST_REGISTRY,
   TEST_TEMPLATE,
   type TestApp,
+  type TestBrowser,
 } from '../../test-app.server.ts'
 
 /** Marie administers; Jakub and Eva are named accounts, Jakub has signed in. */
@@ -625,27 +627,169 @@ describe('settings, Korektura (14a, 14f)', () => {
     }
   })
 
-  it('warns under an address the membership service does not know, and not once it does', async () => {
+  const ADDRESS = 'korektura@vednemesicnik.test'
+  const CHECK = '/settings/proofreaders/check'
+  /** The island of Nastavení's own check, mounted on the page (`14f`). */
+  const CHECK_ISLAND = '/ui/public/proofreaders-check/component.tsx'
+  const WARNING = 'Dokud nebude možné ověřit členství'
+
+  /**
+   * Marie signed in with the proofreaders' address saved and the page after the save seen, and
+   * the service's answers counted from then on.
+   */
+  async function withAddress(
+    app: TestApp,
+    answer: MembershipAnswer,
+  ): Promise<{ browser: TestBrowser; calls: () => number }> {
+    let count = 0
+    app.setMembership(ADDRESS, () => {
+      count += 1
+      return answer
+    })
+    let browser = app.browser()
+    await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
+    await browser.post(PATH, { email: ADDRESS }, PATH)
+    await browser.get('/settings')
+    count = 0
+    return { browser, calls: () => count }
+  }
+
+  it('asks the service when the address is saved, and lands on the warning with the toast', async () => {
+    let app = await editorialBoard()
+    try {
+      let count = 0
+      app.setMembership(ADDRESS, () => {
+        count += 1
+        return { status: 'unknown-group' }
+      })
+      let browser = app.browser()
+      await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
+      assert.equal((await browser.post(PATH, { email: ADDRESS }, PATH)).status, 303)
+      assert.equal(count, 1)
+
+      let html = await (await browser.get('/settings')).text()
+      let text = textOf(html)
+      assert.ok(text.includes('Adresa korektorů je uložená.'))
+      assert.ok(text.includes(WARNING))
+      assert.ok(!html.includes(CHECK_ISLAND))
+      assert.equal(count, 1)
+    } finally {
+      await app.close()
+    }
+  })
+
+  /**
+   * Nastavení as its page leaves it: opened, its own check once it stands, then the reload the
+   * island starts when the service does not know the address (`14f`).
+   */
+  async function opened(
+    browser: TestBrowser,
+  ): Promise<{ first: string; html: string; isUnknownGroup: boolean }> {
+    let first = await (await browser.get('/settings')).text()
+    let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(first)?.[1] ?? ''
+    let response = await browser.post(CHECK, { _csrf: csrf })
+    assert.equal(response.status, 200)
+    let { isUnknownGroup } = (await response.json()) as { isUnknownGroup: boolean }
+    let html = isUnknownGroup ? await (await browser.get('/settings')).text() : first
+    return { first, html, isUnknownGroup }
+  }
+
+  it('draws Nastavení without asking the membership service, and asks once it stands', async () => {
+    let app = await editorialBoard()
+    try {
+      let { browser, calls } = await withAddress(app, { status: 'unknown-group' })
+      let { first, html, isUnknownGroup } = await opened(browser)
+      assert.ok(!textOf(first).includes(WARNING))
+      assert.ok(first.includes(CHECK_ISLAND))
+      assert.ok(first.includes(CHECK))
+      assert.equal(isUnknownGroup, true)
+      assert.equal(calls(), 1)
+
+      assert.ok(
+        textOf(html).includes(
+          'o povolení skupiny korektura@vednemesicnik.test pro ověřování členství. Dokud nebude možné ověřit členství, samotné členství ve skupině k přístupu nestačí.',
+        ),
+      )
+      assert.ok(!html.includes(CHECK_ISLAND))
+      assert.equal(calls(), 1)
+
+      /* The next visit asks again: the warning goes once the service knows the group. */
+      app.setMembership(ADDRESS, () => ({ groupName: null, status: 'not-member' }))
+      let known = await opened(browser)
+      assert.ok(known.first.includes(CHECK_ISLAND))
+      assert.equal(known.isUnknownGroup, false)
+      let text = textOf(known.html)
+      assert.ok(!text.includes(WARNING))
+      assert.ok(text.includes('Přístup ke korektuře určuje adresa v části Korektura.'))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('shows nothing for an address the service knows, or when it does not answer', async () => {
+    let answers: MembershipAnswer[] = [
+      { displayName: null, groupName: 'Korektura', status: 'member' },
+      { groupName: null, status: 'not-member' },
+      { status: 'unavailable' },
+    ]
+    for (let answer of answers) {
+      let app = await editorialBoard()
+      try {
+        let { browser, calls } = await withAddress(app, answer)
+        let { html, isUnknownGroup } = await opened(browser)
+        assert.equal(isUnknownGroup, false, answer.status)
+        assert.equal(calls(), 1, answer.status)
+        assert.ok(!textOf(html).includes(WARNING), answer.status)
+      } finally {
+        await app.close()
+      }
+    }
+  })
+
+  it('asks about the address as it is now, not the one the check found', async () => {
+    let app = await editorialBoard()
+    try {
+      let { browser } = await withAddress(app, { status: 'unknown-group' })
+      let first = await (await browser.get('/settings')).text()
+      let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(first)?.[1] ?? ''
+      assert.deepEqual(await (await browser.post(CHECK, { _csrf: csrf })).json(), {
+        isUnknownGroup: true,
+      })
+      app.setMembership('korektori@vednemesicnik.test', () => ({
+        groupName: null,
+        status: 'not-member',
+      }))
+      await browser.post(PATH, { email: 'korektori@vednemesicnik.test' }, PATH)
+
+      let html = await (await browser.get('/settings')).text()
+      assert.ok(!textOf(html).includes(WARNING))
+      assert.ok(html.includes(CHECK_ISLAND))
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('asks nothing without an address, under a dialog, or on a form drawn again', async () => {
     let app = await editorialBoard()
     try {
       let browser = app.browser()
       await browser.signInAs('marie@vednemesicnik.test', 'Marie Horáková')
-      await browser.post(PATH, { email: 'korektura@vednemesicnik.test' }, PATH)
-      let unknown = textOf(await (await browser.get('/settings')).text())
-      assert.ok(
-        unknown.includes(
-          'o povolení skupiny korektura@vednemesicnik.test pro ověřování členství. Dokud nebude možné ověřit členství, samotné členství ve skupině k přístupu nestačí.',
-        ),
-      )
+      let empty = await opened(browser)
+      assert.ok(!empty.first.includes(CHECK_ISLAND))
+      assert.equal(empty.isUnknownGroup, false)
 
-      app.setMembership('korektura@vednemesicnik.test', () => ({
-        groupName: null,
-        status: 'not-member',
-      }))
-      let known = textOf(await (await browser.get('/settings')).text())
-      assert.ok(!known.includes('Dokud nebude možné ověřit členství'))
-      assert.ok(known.includes('Přístup ke korektuře určuje adresa v části Korektura.'))
-      assert.ok(known.includes('Přístup do Publikace, soubory, účty aplikace a adresa korektorů.'))
+      let { browser: marie, calls } = await withAddress(app, { status: 'unknown-group' })
+      let dialog = await (await marie.get(PATH)).text()
+      assert.ok(!dialog.includes(CHECK_ISLAND))
+      let refused = await marie.post(PATH, { email: '' }, PATH)
+      assert.equal(refused.status, 400)
+      assert.ok(!(await refused.text()).includes(CHECK_ISLAND))
+      let refusedAccess = await marie.post('/settings/access', { email: 'nekdo', kind: 'account' })
+      assert.equal(refusedAccess.status, 400)
+      let refusedHtml = await refusedAccess.text()
+      assert.ok(!refusedHtml.includes(CHECK_ISLAND))
+      assert.ok(!textOf(refusedHtml).includes(WARNING))
+      assert.equal(calls(), 0)
     } finally {
       await app.close()
     }

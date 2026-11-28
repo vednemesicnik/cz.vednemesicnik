@@ -202,6 +202,9 @@ export const routes = route({
     /* _Adresa korektorů_ (`14f`): the dialog at its own address over Nastavení, and saving it. */
     askProofreaders: get('/settings/proofreaders'),
     saveProofreaders: post('/settings/proofreaders'),
+    /* `14f`: Nastavení's own question to the membership service whether it knows that address,
+       which the page asks once it stands, so that the service never holds the page back. */
+    checkProofreaders: post('/settings/proofreaders/check'),
     /* Connecting publikace.app@ (`14g`, `14h`): a form that sends the browser to Google, and the
        address Google sends it back to. */
     account: {
