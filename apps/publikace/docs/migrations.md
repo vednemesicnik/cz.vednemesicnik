@@ -69,7 +69,9 @@ exception is a migration that has not left its branch: roll it back locally with
   (`app/data/row-id.server.ts`) and passed in the `INSERT`, never by SQLite, so a row without
   one is refused. A column that refers to a row is `TEXT`. A table of one row keeps
   `id INTEGER PRIMARY KEY CHECK (id = 1)`, which counts nothing. A CUID says nothing about when
-  its row was written: the order of writing is `ORDER BY rowid`, never by the ID.
+  its row was written: the order of writing is `ORDER BY rowid`, never by the ID. So the file
+  is never `VACUUM`ed, which may renumber the rowid of a table without an `INTEGER PRIMARY KEY`;
+  a backup with `.backup` copies the pages and keeps it.
 
 `db/migrations/20261117120000_access_and_sessions/up.sql` shows all of it but a foreign key,
 with a comment above each table saying what a row is.
