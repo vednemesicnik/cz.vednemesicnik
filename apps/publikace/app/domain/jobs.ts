@@ -256,11 +256,14 @@ export function scheduleText(
 
 /**
  * The tag's line sits in a column of about 170 px. It may break between its parts, never inside
- * one: the preposition stays with its time, and _další kolem 9:30_ stays whole (`14d`).
+ * one: the preposition stays with its time, and _další kolem 9:30_ stays whole (`14d`). A word
+ * joiner after a hyphen keeps _e-mail_ whole, which a no-break space alone does not.
  */
 function unbroken(text: string): string {
-  return text.replaceAll(' ', NBSP)
+  return text.replaceAll(' ', NBSP).replaceAll('-', `-${WORD_JOINER}`)
 }
+
+const WORD_JOINER = String.fromCodePoint(0x2060)
 
 /**
  * _v 9:00_ today, _14. 11. v 9:00_ on another day, with the year in another year. The preposition
@@ -423,12 +426,8 @@ function summaryState(
 ): { hasNote: boolean; text: string } | null {
   if (row.state.kind === 'ok') return null
   let note = row.state.kind === 'failed' ? tagNote(row.job, row.latest) : null
-  let text = unbroken(note ?? jobTag(row.state, today).label).replaceAll('-', `-${WORD_JOINER}`)
-  return { hasNote: note !== null, text }
+  return { hasNote: note !== null, text: unbroken(note ?? jobTag(row.state, today).label) }
 }
-
-/* After a hyphen it keeps _e-mail_ whole, which a no-break space alone does not. */
-const WORD_JOINER = String.fromCodePoint(0x2060)
 
 /* The space before the middle dot holds, so no line of the summary starts with it (`14a`). */
 const SUMMARY_DOT = `${NBSP}· `

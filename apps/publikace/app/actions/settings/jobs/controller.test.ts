@@ -433,7 +433,9 @@ describe('Připomínky ke článkům among the jobs (14d, 14e)', () => {
         }),
         'failed',
       )
-      let list = textOf(await (await browser.get('/settings/jobs')).text()).replaceAll(' ', ' ')
+      let list = textOf(await (await browser.get('/settings/jobs')).text())
+        .replaceAll(' ', ' ')
+        .replaceAll('\u2060', '')
       assert.ok(list.includes('2 e-maily bez potvrzení'))
       let home = textOf(await (await browser.get('/')).text()).replaceAll(' ', ' ')
       assert.doesNotMatch(home, /nemusí autorům posílat/)
