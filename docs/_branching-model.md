@@ -235,6 +235,13 @@ styles.
 `release-tag` never checks anything out, re-validates each tag it is handed and writes the
 tag and the Release through the API.
 
+**The deploy works out the same tag for the image.** `deploy.yml` builds while `release.yml`
+tags, so it cannot read the tag: it finds the PR the push merged and runs the script with
+`MODE=version` for each application that shows its version (Publikace,
+[apps/publikace/docs/architecture.md](../apps/publikace/docs/architecture.md) § The stack and
+where it runs). An unchanged application runs its newest tag. A version that cannot be worked
+out never stops the deploy: the image then carries the commit alone.
+
 **When a run fails or is cancelled**, re-run it from the Actions page: the event is the same,
 a tag already on the merge commit counts as done, and a missing Release is published. Merges
 into `main` queue one run at a time, and GitHub keeps one waiting run: a third merge (or a
