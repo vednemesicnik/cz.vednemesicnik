@@ -1,5 +1,7 @@
 import type { Handle } from 'remix/component'
 import { css } from 'remix/component'
+import { getContext } from 'remix/middleware/async-context'
+import { getCsrfToken } from 'remix/middleware/csrf'
 
 import type { AccessAccount, AccessGroup } from '../../data/access.server.ts'
 import type { DriveAccountState } from '../../data/drive-account.server.ts'
@@ -46,6 +48,7 @@ import { Dialog } from '../../ui/dialog/component.tsx'
 import { DialogTitle } from '../../ui/dialog-title/component.tsx'
 import { Layout } from '../../ui/layout/component.tsx'
 import { NewTabMark } from '../../ui/public/new-tab-mark/component.tsx'
+import { ProofreadersCheck } from '../../ui/public/proofreaders-check/component.tsx'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import { StatusTag } from '../../ui/status-tag/component.tsx'
 import { Document } from '../document.tsx'
@@ -85,17 +88,18 @@ export type SettingsPageProps = {
   driveFiles: { intro: string; rows: readonly DriveFileRow[] }
   editor: Person
   groups: readonly AccessGroup[]
-  /**
-   * `14f`: the membership service does not know the proofreaders' address as a group, asked
-   * whenever Nastavení opens, so the warning goes once the group is allowed there.
-   */
-  isProofreadersUnknownGroup: boolean
   /** `14b`: a change was sent from a page opened before the role was taken away. */
   isRoleLost?: boolean
   /** The sentence under _Úlohy na pozadí_, its job names apart (`14a`). */
   jobsSummary: readonly SummaryPart[]
   /** The proofreaders' address, `null` until it is first set (`14a`, `14f`). */
   proofreaders: string | null
+  /**
+   * `14f`: the check Nastavení asks the membership service once it stands, whose answer shows the
+   * warning drawn hidden under the address. `load` is new on every load, so each load asks again.
+   * `null` without an address and on a page with a dialog over it.
+   */
+  proofreadersCheck: { href: string; load: string } | null
   proofreadersForm?: ProofreadersForm
   question?: RemovalQuestion
   toasts?: readonly ToastMessage[]
@@ -747,6 +751,8 @@ const addressTextStyle = css({
 
 const addressLabelStyle = css({ color: 'var(--text-secondary)' })
 
+const UNKNOWN_GROUP_WARNING_ID = 'proofreaders-unknown-group'
+
 /**
  * `14a`, `14f`: the proofreaders' address and where it can be changed. Only an administrator
  * sets or changes it; everybody else sees it with the sentence that says so.
@@ -754,13 +760,13 @@ const addressLabelStyle = css({ color: 'var(--text-secondary)' })
 function ProofreadersPart(
   handle: Handle<{
     address: string | null
+    check: { href: string; load: string } | null
     domain: string
     isAdmin: boolean
-    isUnknownGroup: boolean
   }>,
 ) {
   return () => {
-    let { address, domain, isAdmin, isUnknownGroup } = handle.props
+    let { address, check, domain, isAdmin } = handle.props
     return (
       <section aria-labelledby="proofreading-title" id="proofreading" mix={partStyle}>
         <h2 id="proofreading-title">{PROOFREADERS_TITLE}</h2>
@@ -785,13 +791,26 @@ function ProofreadersPart(
             </a>
           ) : null}
         </div>
-        {address !== null && isUnknownGroup ? (
-          <Callout tone="warning">
-            {/* Inline, as the other Callouts write it: `css()` would lose to the design system's
-                own rules for a paragraph in the body. */}
-            <p style={{ margin: 0 }}>{proofreadersUnknownGroupMessage(address)}</p>
-          </Callout>
-        ) : null}
+        {address === null || check === null ? null : (
+          <>
+            {/* Drawn hidden and shown by the check's answer, so the page never reloads for it
+                and keeps whatever toast it opened with. A load reconciled into the page keeps
+                the live `hidden` until its own answer, so a shown warning does not blink. */}
+            <div data-rmx-preserve-attrs="hidden" hidden id={UNKNOWN_GROUP_WARNING_ID}>
+              <Callout tone="warning">
+                {/* Inline, as the other Callouts write it: `css()` would lose to the design
+                    system's own rules for a paragraph in the body. */}
+                <p style={{ margin: 0 }}>{proofreadersUnknownGroupMessage(address)}</p>
+              </Callout>
+            </div>
+            <ProofreadersCheck
+              csrfToken={getCsrfToken(getContext())}
+              href={check.href}
+              load={check.load}
+              warningId={UNKNOWN_GROUP_WARNING_ID}
+            />
+          </>
+        )}
       </section>
     )
   }
@@ -939,10 +958,10 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
       driveFiles,
       editor,
       groups,
-      isProofreadersUnknownGroup,
       isRoleLost = false,
       jobsSummary,
       proofreaders,
+      proofreadersCheck,
       proofreadersForm,
       question,
       toasts,
@@ -1022,9 +1041,9 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
 
             <ProofreadersPart
               address={proofreaders}
+              check={proofreadersCheck}
               domain={domain}
               isAdmin={editor.isAdmin}
-              isUnknownGroup={isProofreadersUnknownGroup}
             />
 
             <section aria-labelledby="jobs-title" mix={partStyle}>
