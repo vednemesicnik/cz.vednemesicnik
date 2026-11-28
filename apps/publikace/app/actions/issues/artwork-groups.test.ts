@@ -21,6 +21,7 @@ import {
   type TestApp,
   type TestBrowser,
 } from '../../test-app.server.ts'
+import { CHECK_RELOAD_COOKIE } from '../../ui/public/detail-checks.ts'
 
 /**
  * Artwork groups end to end (cz.vednemesicnik.publikace#133): the dialog of `12e` over the detail, the group on Drive, its
@@ -791,7 +792,14 @@ describe('a group’s missing folder in the detail (12j, cz.vednemesicnik.publik
 
       context.app.drive.restore(back.folderId)
       assert.deepEqual(await check(again), { changed: true })
+      let load = /&quot;load&quot;:&quot;([0-9a-z]+)&quot;|"load":"([0-9a-z]+)"/
+        .exec(again)
+        ?.slice(1)
+        .find(Boolean)
+      /* As the island reloads: naming the load whose check found it. */
+      context.editor.setCookie(`${CHECK_RELOAD_COOKIE}=${load}; Path=/issues`)
       let reload = await detail()
+      context.editor.setCookie(`${CHECK_RELOAD_COOKIE}=; Path=/issues; Max-Age=0`)
       assert.ok(textOf(reload).includes(GROUP_STEP), 'the other group is still missing')
       assert.ok(!asks(reload), 'the reload asks nothing again')
       assert.ok(asks(await detail()))

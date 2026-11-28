@@ -302,6 +302,7 @@ import { type Person, requireEditor } from '../../middleware/auth.server.ts'
 import { DriveAccount } from '../../middleware/drive-account.server.ts'
 import { flashToast, keepToasts, keptToasts, Toasts } from '../../middleware/toasts.server.ts'
 import { routes } from '../../routes.ts'
+import { CHECK_RELOAD_COOKIE } from '../../ui/public/detail-checks.ts'
 import type { ToastMessage } from '../../ui/toast/component.tsx'
 import {
   type ArrivalCheckView,
@@ -437,13 +438,24 @@ function recordDetailChecked(context: PageContext, name: string, revised: readon
   session.set(DETAIL_CHECKED_SESSION_KEY, { load, name, revised: [...kept, ...revised] })
 }
 
+/** The load the page names as the one this request reloads, set just before it. */
+function reloadedLoad(request: Request): string | null {
+  for (let pair of (request.headers.get('Cookie') ?? '').split(';')) {
+    let [name, value] = pair.trim().split('=')
+    if (name === CHECK_RELOAD_COOKIE && value !== undefined && isCuid(value)) return value
+  }
+  return null
+}
+
 /**
- * Whether this load of the detail is the reload its own checks started, and what they found. It is
- * when what they recorded names the load whose toasts the session kept (`keepToasts`), which is
- * the last load that asked: a record of an earlier load, whose reload never came, counts for
- * nothing. Read once either way.
+ * Whether this load of the detail is the reload its own checks started, and what they found: only
+ * when the page names the load whose checks recorded it, so a record whose reload never came,
+ * left by a check that answered while the person acted or went elsewhere, counts for nothing. It
+ * draws the toasts that load kept (`keepToasts`), or none when another load of the detail has
+ * kept its own since. Read once either way.
  */
 function takeCheckReload(
+  request: Request,
   session: Session | undefined,
   name: string,
 ): { revised: readonly string[]; toasts: readonly ToastMessage[] } | null {
@@ -451,9 +463,8 @@ function takeCheckReload(
   if (session?.get(DETAIL_CHECKED_SESSION_KEY) !== undefined) {
     session.unset(DETAIL_CHECKED_SESSION_KEY)
   }
-  if (checked === null) return null
-  let toasts = keptToasts(session, checked.load)
-  return toasts === null ? null : { revised: checked.revised, toasts }
+  if (checked === null || reloadedLoad(request) !== checked.load) return null
+  return { revised: checked.revised, toasts: keptToasts(session, checked.load) ?? [] }
 }
 
 function takeSettled(session: Session | undefined): SettledArticle | null {
@@ -1051,7 +1062,7 @@ async function renderDetail(
   /* The reload a check started asks nothing again, and draws again the toasts of the load that
      asked: the flash was used up by that load, and the same toast drawn where it stands neither
      fades in again nor is announced twice. */
-  let reload = takeCheckReload(session, issue.name)
+  let reload = takeCheckReload(context.request, session, issue.name)
   let load = options.isShown === true && reload === null ? createId() : null
   let arrival =
     load === null

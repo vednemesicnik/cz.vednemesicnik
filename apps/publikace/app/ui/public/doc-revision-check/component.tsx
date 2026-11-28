@@ -28,7 +28,7 @@ function changedOf(body: unknown): string[] {
 /**
  * Resolves once no changed row has its `⋯` open, so a menu never changes under the hand
  * (`12q`). The rows' triggers say it in `aria-expanded`, which this watches until it clears, or
- * until the island goes.
+ * until the island goes, when it resolves too and the island, no longer current, reloads nothing.
  */
 function untilMenusClose(ids: readonly string[], signal: AbortSignal): Promise<void> {
   let rows = ids.map((id) => document.getElementById(`article-${id}`)).filter((row) => row !== null)
@@ -43,21 +43,24 @@ function untilMenusClose(ids: readonly string[], signal: AbortSignal): Promise<v
     for (let row of rows) {
       observer.observe(row, { attributeFilter: ['aria-expanded'], attributes: true, subtree: true })
     }
-    signal.addEventListener('abort', () => observer.disconnect(), { once: true })
+    signal.addEventListener(
+      'abort',
+      () => {
+        observer.disconnect()
+        resolve()
+      },
+      { once: true },
+    )
   })
 }
 
-/** Whether the answer listed a changed row, once no changed row has its menu open. */
-async function ask(props: DocRevisionCheckProps, signal: AbortSignal): Promise<boolean> {
+/** The rows the answer changes; none when Drive did not answer or found nothing new. */
+async function ask(props: DocRevisionCheckProps, signal: AbortSignal): Promise<string[]> {
   let body = new FormData()
   body.set('_csrf', props.csrfToken)
   body.set('load', props.load)
   let response = await fetch(props.href, { body, method: 'POST', signal })
-  if (!response.ok) return false
-  let changed = changedOf(await response.json())
-  if (changed.length === 0 || signal.aborted) return false
-  await untilMenusClose(changed, signal)
-  return !signal.aborted
+  return response.ok ? changedOf(await response.json()) : []
 }
 
 /**
@@ -93,9 +96,14 @@ export const DocRevisionCheck = clientEntry(
         pending = controller
         /* A copy: the runtime updates `handle.props` in place for the next load. */
         let props = { ...handle.props }
-        /* A check that failed reloads nothing: the rows stand as recorded. */
+        let changed: string[] = []
+        let check = async () => {
+          changed = await ask(props, controller.signal)
+          return changed.length > 0
+        }
         handle.queueTask(() => {
-          void checkInTurn(props.load, 'doc-revisions', () => ask(props, controller.signal), {
+          void checkInTurn(props.load, 'doc-revisions', check, {
+            beforeReload: () => untilMenusClose(changed, controller.signal),
             isCurrent: () => !controller.signal.aborted,
             reload: () => handle.frames.top.reload(),
           })

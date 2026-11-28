@@ -3,6 +3,7 @@ import { sql } from 'remix/data-table'
 import { describe, it } from 'remix/test'
 
 import { createArticleStore } from '../../data/articles.server.ts'
+import { CHECK_RELOAD_COOKIE } from '../../ui/public/detail-checks.ts'
 import { stamp } from '../../domain/time.ts'
 import {
   connectDriveAccount,
@@ -107,8 +108,16 @@ async function opened(
   let response = await editor.post(CHECK, { _csrf: csrf, load: loadOf(first) ?? '' }, path)
   assert.equal(response.status, 200)
   let { changed } = (await response.json()) as { changed: string[] }
-  let html = changed.length === 0 ? first : await (await editor.get(path)).text()
+  let html = changed.length === 0 ? first : await reloaded(editor, loadOf(first) ?? '', path)
   return { changed, first, html }
+}
+
+/** The reload the island starts, naming the load whose checks found something, as it does. */
+async function reloaded(editor: TestBrowser, load: string, path = DETAIL): Promise<string> {
+  editor.setCookie(`${CHECK_RELOAD_COOKIE}=${load}; Path=/issues`)
+  let html = await (await editor.get(path)).text()
+  editor.setCookie(`${CHECK_RELOAD_COOKIE}=; Path=/issues; Max-Age=0`)
+  return html
 }
 
 /** Every author of the article agreed through a run, archived in `Licence`: _Schváleno_. */
@@ -425,6 +434,55 @@ describe('an approved article whose Doc was edited afterwards (01a, 12b, 12q)', 
       let next = await (await editor.get(DETAIL)).text()
       assert.ok(next.includes(CHECK_ISLAND))
       assert.deepEqual(tintedRows(next), [])
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('counts a check’s find for nothing on a load the page did not reload for it (#1124)', async () => {
+    let { app, articleId, docId, editor, issueId } = await approved()
+    try {
+      let writing = await seedArticle(app, issueId, 'Kino v tělocvičně')
+      let page = await (await editor.get(DETAIL)).text()
+      app.drive.reviseDoc(docId, EDITED_AT)
+      let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(page)?.[1] ?? ''
+      let response = await editor.post(CHECK, { _csrf: csrf, load: loadOf(page) ?? '' }, DETAIL)
+      assert.deepEqual(await response.json(), { changed: [articleId] })
+
+      /* The person hands a text over before the island reloads: the page it lands on asks, and
+         says what the action did. */
+      await editor.post(`${DETAIL}/articles/${writing.articleId}/handover`, { _csrf: csrf }, DETAIL)
+      let landed = await (await editor.get(DETAIL)).text()
+      assert.ok(landed.includes(CHECK_ISLAND))
+      assert.equal(statusText(landed), 'Článek je předaný ke korektuře. Vrátit')
+      assert.deepEqual(tintedRows(landed), [])
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps what both checks of one load found for the one reload (#1124)', async () => {
+    let { app, articleId, docId, editor } = await approved()
+    try {
+      await createArticleStore(app.database).markMissing(articleId, ['licences'], MARKED_AT)
+      let page = await (await editor.get(DETAIL)).text()
+      let load = loadOf(page) ?? ''
+      let csrf = /name="_csrf" type="hidden" value="([^"]+)"/.exec(page)?.[1] ?? ''
+      app.drive.reviseDoc(docId, EDITED_AT)
+      let doc = await editor.post(CHECK, { _csrf: csrf, load }, DETAIL)
+      assert.deepEqual(await doc.json(), { changed: [articleId] })
+      let folders = await editor.post(
+        `${DETAIL}/folders/check-marked`,
+        { _csrf: csrf, load },
+        DETAIL,
+      )
+      assert.deepEqual(await folders.json(), { changed: true })
+
+      let html = await reloaded(editor, load)
+      assert.deepEqual(tintedRows(html), [articleId])
+      assert.ok(announcement(html) !== '')
+      assert.ok(!html.includes(CHECK_ISLAND), 'the reload asks nothing again')
+      assert.ok(!html.includes('/folders/check-marked'))
     } finally {
       await app.close()
     }
