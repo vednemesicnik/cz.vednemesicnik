@@ -35,7 +35,7 @@ import {
   type DriveFileValue,
   READ_ONLY_TAG,
 } from '../../domain/drive-files.ts'
-import { JOBS_TITLE, SHOW_JOBS_LABEL } from '../../domain/jobs.ts'
+import { JOBS_TITLE, SHOW_JOBS_LABEL, type SummaryPart } from '../../domain/jobs.ts'
 import { formatDate, formatDay } from '../../domain/time.ts'
 import type { Person } from '../../middleware/auth.server.ts'
 import { routes } from '../../routes.ts'
@@ -92,8 +92,8 @@ export type SettingsPageProps = {
   isProofreadersUnknownGroup: boolean
   /** `14b`: a change was sent from a page opened before the role was taken away. */
   isRoleLost?: boolean
-  /** The line under _Úlohy na pozadí_, one per job that reports (`14a`). */
-  jobsSummary: readonly string[]
+  /** The sentence under _Úlohy na pozadí_, its job names apart (`14a`). */
+  jobsSummary: readonly SummaryPart[]
   /** The proofreaders' address, `null` until it is first set (`14a`, `14f`). */
   proofreaders: string | null
   proofreadersForm?: ProofreadersForm
@@ -1034,9 +1034,9 @@ export function SettingsPage(handle: Handle<SettingsPageProps>) {
                   {SHOW_JOBS_LABEL}
                 </a>
               </div>
-              {jobsSummary.map((line) => (
-                <p mix={metaStyle}>{line}</p>
-              ))}
+              <p mix={metaStyle}>
+                {jobsSummary.map((part) => (part.isName ? <em>{part.text}</em> : part.text))}
+              </p>
             </section>
           </div>
         </Layout>
